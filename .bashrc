@@ -16,3 +16,5 @@ export CVSROOT=":ext:nyx:/usr/local/shape/cvsroot"
 alias cgit='git --git-dir=.cgit'
 alias pgit='git --git-dir=.pgit'
 alias agit='git --git-dir=.agit'
+
+PATH=$PATH:~/bin/
