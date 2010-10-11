@@ -29,6 +29,10 @@ CDPATH=.:~/src/projects/
 # Where my scripts live
 PATH=$PATH:~/bin/
 
+# Pager using vim
+export PAGER=~/bin/vimpager
+alias less=$PAGER
+
 # To be executed only on lab computers
 if [ "${HOSTNAME:(-11)}" == '.cse.sc.edu' ] ; then
 	export QARCHITECTURE_PATH=`~/bin/architecture-path`
