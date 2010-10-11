@@ -18,3 +18,11 @@ alias pgit='git --git-dir=.pgit'
 alias agit='git --git-dir=.agit'
 
 PATH=$PATH:~/bin/
+
+if [ "${HOSTNAME:(-11)}" == '.cse.sc.edu' ] ; then
+	export QARCHITECTURE_PATH=`~/bin/architecture-path`
+	export ARCHITECTURE_PATH=`~/bin/architecture-path`
+	export QINSTALLDIR=~
+	export PATH=~/bin/$QARCHITECTURE_PATH:~/local-install/bin:~/bins/bin:$PATH
+	export SCMAXHEAP=900
+fi
