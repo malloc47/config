@@ -23,7 +23,10 @@ alias cgit='git --git-dir=.cgit'
 alias pgit='git --git-dir=.pgit'
 alias agit='git --git-dir=.agit'
 
-# Where my main scripts live
+# Include paths for most frequently visited folders
+CDPATH=.:~/src/projects/
+
+# Where my scripts live
 PATH=$PATH:~/bin/
 
 # To be executed only on lab computers
