@@ -53,8 +53,11 @@ fi
 
 # Multiple-git overlays for my home folder
 alias cgit='git --git-dir=.cgit'
+alias cgits='git --git-dir=.cgit status -s'
 alias pgit='git --git-dir=.pgit'
+alias pgits='git --git-dir=.pgit status -s'
 alias agit='git --git-dir=.agit'
+alias agits='git --git-dir=.agit status -s'
 
 alias ':q'='exit' # Obvious reasons here
 
