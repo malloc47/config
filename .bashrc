@@ -2,6 +2,11 @@ if [ -f /etc/skel/.bashrc ]; then
 	source /etc/skel/.bashrc
 fi
 
+if [ -f /etc/profile.d/bash_completion.sh ]; then
+	source /etc/profile.d/bash_completion.sh
+fi
+
+
 # Give me vi control within the terminal
 set -o vi
 
