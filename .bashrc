@@ -9,6 +9,8 @@ fi
 
 # Give me vi control within the terminal
 set -o vi
+# ^l clear screen
+bind -m vi-insert "\C-l":clear-screen
 
 
 # Check for current bash version
