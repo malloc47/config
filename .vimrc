@@ -2,7 +2,7 @@ syn on
 
 set tabstop=4
 " set expandtab
-" set shiftwidth=2
+set shiftwidth=4
 
 set smartindent
 set cindent 
