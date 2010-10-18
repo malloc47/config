@@ -9,6 +9,8 @@ set cindent
 
 set mouse=a
 
+set foldmethod=marker
+
 set nu
 
 set t_Co=256
