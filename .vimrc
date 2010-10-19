@@ -15,3 +15,6 @@ set nu
 
 set t_Co=256
 colorscheme zenburn
+
+filetype on
+filetype plugin on
