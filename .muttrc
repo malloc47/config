@@ -3,6 +3,7 @@ source ~/.muttrcp # Account settings
 set header_cache=~/.mutt/cache/headers
 set message_cachedir=~/.mutt/cache/bodies
 set certificate_file=~/.mutt/certificates
+set record="~/.mutt/sent"
 
 set sort = 'threads'
 set sort_aux = 'last-date-received'
@@ -18,8 +19,24 @@ set delete = no
 set imap_keepalive = 900
 
 set editor = "vim"
+set signature="~/.signature"
 
 bind editor <space> noop
+
+set collapse_unread=yes
+set uncollapse_jump=yes
+
+# Vi-like "folding" commands
+bind index zo collapse-thread
+bind index zc collapse-thread
+bind index zO collapse-all
+bind index zC collapse-all
+
+folder-hook . "exec collapse-all"
+
+#set index_format="%?M?+& ?%2M %2e %Z %D %-20.20F (%4c) %s"
+set index_format="%4C %?M?+& ?%2M %Z %{%b %d} | %-16.16L | %s"
+
 macro index gi "<change-folder>=INBOX<enter>" "Go to inbox"
 macro index ga "<change-folder>=[Gmail]/All Mail<enter>" "Go to all mail"
 macro index gs "<change-folder>=[Gmail]/Sent Mail<enter>" "Go to Sent Mail"
@@ -35,6 +52,8 @@ set markers=no # don't put '+' at the beginning of wrapped lines
 set pager_index_lines= 5 # how large is the index window?
 
 set mail_check=60
+set timeout=30
+
 
 # general-doesn't-fit stuff
 color normal     color188 color237
