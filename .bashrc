@@ -81,3 +81,5 @@ alias .....='.. 4'
 alias .......='.. 5'
 
 alias xkcd='feh `lynx --dump http://xkcd.com/| grep png`'
+
+export TERM="xterm-256color"
