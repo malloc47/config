@@ -18,3 +18,5 @@ colorscheme zenburn
 
 filetype on
 filetype plugin on
+
+set pastetoggle=<F12>
