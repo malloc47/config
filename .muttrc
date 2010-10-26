@@ -17,9 +17,12 @@ hdr_order Date From To Cc
 set move = no  #Stop asking to "move read messages to mbox"!
 set delete = no
 set imap_keepalive = 900
+set imap_peek = no 
 
 set editor = "vim"
 set signature="~/.signature"
+
+set help = no
 
 bind editor <space> noop
 
@@ -32,7 +35,9 @@ bind index zc collapse-thread
 bind index zO collapse-all
 bind index zC collapse-all
 
-folder-hook . "exec collapse-all"
+#folder-hook . "exec collapse-all"
+
+folder-hook . "push \eV"
 
 #set index_format="%?M?+& ?%2M %2e %Z %D %-20.20F (%4c) %s"
 set index_format="%4C %?M?+& ?%2M %Z %{%b %d} | %-16.16L | %s"
