@@ -73,6 +73,8 @@ cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
 else builtin cd && ls; fi; }
 ,cd() { [[ -n "$1" ]] && builtin cd "$1" || builtin cd; }
 
+wiki() { dig +short txt "$*".wp.dg.cx; }
+
 # Going up directories
 function ..(){ for ((j=${1:-1},i=0;i<j;i++));do builtin cd ..;done;}
 alias ...='.. 2'
@@ -83,3 +85,5 @@ alias .......='.. 5'
 alias xkcd='feh `lynx --dump http://xkcd.com/| grep png`'
 
 export TERM="xterm-256color"
+
+
