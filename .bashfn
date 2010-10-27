@@ -1,0 +1,16 @@
+# Going up directories
+function ..(){ for ((j=${1:-1},i=0;i<j;i++));do builtin cd ..;done;}
+alias ...='.. 2'
+alias ....='.. 3'
+alias .....='.. 4'
+alias .......='.. 5'
+
+# Ls after CD
+cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
+else builtin cd && ls; fi; }
+,cd() { [[ -n "$1" ]] && builtin cd "$1" || builtin cd; }
+
+xkcd(){ wget -qO- http://xkcd.com/|tee >(feh $(grep -Po '(?<=")http://imgs[^/]+/comics/[^"]+\.\w{3}'))|grep -Po '(?<=(\w{3})" title=").*(?=" alt)';}
+#alias xkcd='feh `lynx --dump http://xkcd.com/| grep png`'
+
+wiki() { dig +short txt "$*".wp.dg.cx; }

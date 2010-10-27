@@ -20,8 +20,7 @@ if [[ ${BASH_VERSINFO[0]} -ge 4 ]]; then
 fi
 
 # General options
-shopt -s cmdhist nocaseglob
-shopt -s histappend extglob
+shopt -s cmdhist nocaseglob histappend extglob
 
 # Larger history and ignore common commands
 export HISTCONTROL=ignoreboth
@@ -34,7 +33,7 @@ export SDL_VIDEO_FULLSCREEN_HEAD="1"
 
 # CVS-related variables
 export CVS_RSH="ssh"
-export CVSROOT=":ext:nyx:/usr/local/shape/cvsroot"
+export CVSROOT=":ext:nyx:/usr/local/cvsroot"
 
 # Include paths for most frequently visited folders
 CDPATH=.:~/src/projects/
@@ -68,22 +67,6 @@ alias agits='git --git-dir=$HOME/.agit status -s'
 
 alias ':q'='exit' # Obvious reasons here
 
-# Ls after CD
-cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
-else builtin cd && ls; fi; }
-,cd() { [[ -n "$1" ]] && builtin cd "$1" || builtin cd; }
-
-wiki() { dig +short txt "$*".wp.dg.cx; }
-
-# Going up directories
-function ..(){ for ((j=${1:-1},i=0;i<j;i++));do builtin cd ..;done;}
-alias ...='.. 2'
-alias ....='.. 3'
-alias .....='.. 4'
-alias .......='.. 5'
-
-alias xkcd='feh `lynx --dump http://xkcd.com/| grep png`'
-
 export TERM="xterm-256color"
 
-
+source .bashfn
