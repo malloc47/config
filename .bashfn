@@ -14,3 +14,5 @@ xkcd(){ wget -qO- http://xkcd.com/|tee >(feh $(grep -Po '(?<=")http://imgs[^/]+/
 #alias xkcd='feh `lynx --dump http://xkcd.com/| grep png`'
 
 wiki() { dig +short txt "$*".wp.dg.cx; }
+
+calc () { echo "$*" | bc -l; }
