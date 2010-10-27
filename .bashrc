@@ -69,4 +69,4 @@ alias ':q'='exit' # Obvious reasons here
 
 export TERM="xterm-256color"
 
-source .bashfn
+source ~/.bashfn
