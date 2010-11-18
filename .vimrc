@@ -20,3 +20,5 @@ filetype on
 filetype plugin on
 
 set pastetoggle=<F12>
+
+au BufRead,BufNewFile *.sc set filetype=scheme
