@@ -67,6 +67,8 @@ alias agits='git --git-dir=$HOME/.agit status -s'
 
 alias ':q'='exit' # Obvious reasons here
 
+alias lsd="ls -al | grep -E '^(d|l)'"
+
 export TERM="xterm-256color"
 
 source ~/.bashfn
