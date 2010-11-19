@@ -49,7 +49,7 @@ alias less=$PAGER
 export EDITOR=vim
 
 # To be executed only on lab computers
-if [ "${HOSTNAME:(-11)}" == '.cse.sc.edu' ] ; then
+if [ -d ~/QobiScheme-1.44 ] ; then
 	export QARCHITECTURE_PATH=`~/bin/architecture-path`
 	export ARCHITECTURE_PATH=`~/bin/architecture-path`
 	export QINSTALLDIR=~
