@@ -22,3 +22,5 @@ filetype plugin on
 set pastetoggle=<F12>
 
 au BufRead,BufNewFile *.sc set filetype=scheme
+
+map <F2> :call Send_to_Screen("make\n")<CR> 
