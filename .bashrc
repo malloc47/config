@@ -72,3 +72,7 @@ alias lsd="ls -al | grep -E '^(d|l)'"
 export TERM="xterm-256color"
 
 source ~/.bashfn
+
+export PS1="└─[\h:\w]/-/ "
+
+echo ┌─[`logname`@`hostname -s`]─[`pwd`]─[`date +%a\ %b\ %d,\ %r`]
