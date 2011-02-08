@@ -76,6 +76,8 @@ alias lsd="ls -al | grep -E '^(d|l)'"
 
 source ~/.bashfn
 
+if [ "$TERM" != "vt100" -a "$TERM" != "dumb" -a "$EMACS" != "t" ] ; then
 export PS1="└─[\h:\w]/-/ "
+fi
 
 echo ┌─[`logname`@`hostname -s`]─[`pwd`]─[`date +%a\ %b\ %d,\ %r`]
