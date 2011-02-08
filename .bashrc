@@ -56,7 +56,7 @@ if [ -d ~/QobiScheme-1.44 -o -d ~/QobiScheme-1.41 ] ; then
 	export QARCHITECTURE_PATH=`~/bin/architecture-path`
 	export ARCHITECTURE_PATH=`~/bin/architecture-path`
 	export QINSTALLDIR=~
-	export PATH=~/bin/$QARCHITECTURE_PATH:~/local-install/bin:~/bins/bin:$PATH
+	export PATH=~/bin/$QARCHITECTURE_PATH:~/local-install/bin:~/bins/bin:~/darpa-collaboration/bin:$PATH
 	export SCMAXHEAP=900
 fi
 
