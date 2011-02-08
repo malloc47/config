@@ -5,6 +5,8 @@ alias ....='.. 3'
 alias .....='.. 4'
 alias .......='.. 5'
 
+alias rsyncr="rsync --partial --progress"
+
 # Ls after CD
 cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
 else builtin cd && ls; fi; }
