@@ -2,6 +2,9 @@ if [ -f /etc/skel/.bashrc ]; then
 	source /etc/skel/.bashrc
 fi
 
+# Don't bother if we're running noninteractively
+[ -z "$PS1" ] && return
+
 if [ -f /etc/profile.d/bash_completion.sh ]; then
 	source /etc/profile.d/bash_completion.sh
 fi
