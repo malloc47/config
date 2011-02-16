@@ -18,3 +18,35 @@ xkcd(){ wget -qO- http://xkcd.com/|tee >(feh $(grep -Po '(?<=")http://imgs[^/]+/
 wiki() { dig +short txt "$*".wp.dg.cx; }
 
 calc () { echo "$*" | bc -l; }
+
+#http://hbfs.wordpress.com/2009/09/01/short-pwd-in-bash-prompts/
+shorten_path()
+ {
+  x=${1}
+  len=${#x}
+  max_len=$2
+
+  if [ $len -gt $max_len ] ; then
+      pos=()
+      for ((i=0;i<len;i++)) ; do
+          if [ "${x:i:1}" == "/" ] ; then
+              pos=(${pos[@]} $i)
+          fi
+      done
+      pos=(${pos[@]} $len)
+      i=0
+      while [ $((len-pos[i])) -gt $((max_len-3)) ] ; do
+          i=$((i+1))
+      done
+      if [ ${pos[i]} == 0 ] ; then
+          echo ${x}
+
+      elif [ ${pos[i]} == $len ] ; then
+          echo ...${x:((len-max_len+3))}
+      else
+          echo ...${x:pos[i]}
+      fi
+  else
+      echo ${x}
+  fi
+ }

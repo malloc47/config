@@ -52,11 +52,11 @@ alias less=$PAGER
 export EDITOR=vim
 
 # To be executed only on lab computers
-if [ -d ~/QobiScheme-1.44 -o -d ~/QobiScheme-1.41 ] ; then
+if [ -d ~/QobiScheme-1.44 ] ; then
 	export QARCHITECTURE_PATH=`~/bin/architecture-path`
 	export ARCHITECTURE_PATH=`~/bin/architecture-path`
 	export QINSTALLDIR=~
-	export PATH=~/bin/$QARCHITECTURE_PATH:~/local-install/bin:~/bins/bin:~/darpa-collaboration/bin:$PATH
+	export PATH=~/bin/$QARCHITECTURE_PATH:~/local-install/bin:~/bins/bin:$PATH
 	export SCMAXHEAP=900
 fi
 
@@ -76,9 +76,8 @@ alias lsd="ls -al | grep -E '^(d|l)'"
 
 source ~/.bashfn
 
-if [ "$TERM" != "vt100" -a "$TERM" != "dumb" -a "$EMACS" != "t" ] ; then
-	echo ┌─[`logname`@`hostname -s`]─[`pwd`]─[`date +%a\ %b\ %d,\ %r`]
-	export PS1="└─[\h:\w]/-/ "
-else
-	export PS1="\h [\W]> "
-fi
+export PS1='\[\e[1;32m\]└─[\[\e[33m\]\h\[\e[1;32m\]:\[\e[1;31m\]$(shorten_path "${PWD/$HOME/~}" 30)\[\e[1;32m\]]/-/\[\e[0m\] '
+#Root prompt variant
+#export PS1="\[\e[1;32m\]└─[\[\e[33m\]\h\[\e[1;32m\]:\[\e[1;31m\]\w\[\e[1;32m\]]/\[\e[1;31m\]-\[\e[1;32m\]/\[\e[0m\] "
+
+echo -e "\033[1;32m┌─[\033[1;36m`logname`\033[32m@\033[1;33m`hostname -s`\033[1;32m]─[\033[1;31m`pwd`\033[1;32m]─[\033[1;35m`date +%a\ %b\ %d,\ %r`\033[1;32m]"

@@ -1,5 +1,23 @@
-! anrxc X application resource database
 ! xrdb -merge ~/.Xdefaults
+
+!{{{ Color
+*color0:      #262626
+*color1:      #bc6c4c
+*color2:      #313c36
+*color3:      #f8f893
+*color4:      #000d18
+*color5:      #41363c 
+*color6:      #93b3a3
+*color7:      #dcdccc
+*color8:      #2c2e2e 
+*color9:      #cc9393
+*color10:     #7f9f7f
+*color11:     #f0dfaf
+*color12:     #9fafaf
+*color13:     #bca3a3
+*color14:     #8cd0d3 
+*color15:     #ffffff
+!}}}
 
 !{{{ XFT
 Xft.dpi:       96
@@ -56,28 +74,45 @@ urxvt*background:  #3f3f3f
 urxvt*foreground:  #dcdccc
 ! black + red
 !urxvt*color0:     #3f3f3f
-urxvt*color0:      #1E2320
-urxvt*color1:      #705050
+!urxvt*color0:      #1E2320
+!urxvt*color1:      #705050
 ! green + yellow
-urxvt*color2:      #60b48a
-urxvt*color3:      #dfaf8f
+!urxvt*color2:      #60b48a
+!urxvt*color3:      #dfaf8f
 ! blue + purple
-urxvt*color4:      #506070
-urxvt*color5:      #dc8cc3
+!urxvt*color4:      #506070
+!urxvt*color5:      #dc8cc3
 ! cyan + white
-urxvt*color6:      #8cd0d3
-urxvt*color7:      #dcdccc
+!urxvt*color6:      #8cd0d3
+!urxvt*color7:      #dcdccc
 ! bright-black + bright-red
-urxvt*color8:      #709080
-urxvt*color9:      #dca3a3
+!urxvt*color8:      #709080
+!urxvt*color9:      #dca3a3
 ! bright-green + bright-yellow
-urxvt*color10:     #c3bf9f
-urxvt*color11:     #f0dfaf
+!urxvt*color10:     #c3bf9f
+!urxvt*color11:     #f0dfaf
 ! bright-blue + bright-purple
-urxvt*color12:     #94bff3
-urxvt*color13:     #ec93d3
+!urxvt*color12:     #94bff3
+!urxvt*color13:     #ec93d3
 ! bright-cyan + bright-white
-urxvt*color14:     #93e0e3
+!urxvt*color14:     #93e0e3
+!urxvt*color15:     #ffffff
+
+urxvt*color0:      #262626
+urxvt*color1:      #bc6c4c
+urxvt*color2:      #313c36
+urxvt*color3:      #f8f893
+urxvt*color4:      #000d18
+urxvt*color5:      #41363c 
+urxvt*color6:      #93b3a3
+urxvt*color7:      #dcdccc
+urxvt*color8:      #2c2e2e 
+urxvt*color9:      #cc9393
+urxvt*color10:     #7f9f7f
+urxvt*color11:     #f0dfaf
+urxvt*color12:     #9fafaf
+urxvt*color13:     #bca3a3
+urxvt*color14:     #8cd0d3 
 urxvt*color15:     #ffffff
 !}}}
 
@@ -100,22 +135,22 @@ xterm*cursorColor: #DCDCCC
 ! Zenburn
 xterm*background:  #3f3f3f
 xterm*foreground:  #dcdccc
-xterm*color0:      #1E2320
-xterm*color1:      #705050
-xterm*color2:      #60b48a
-xterm*color3:      #dfaf8f
-xterm*color4:      #506070
-xterm*color5:      #dc8cc3
-xterm*color6:      #8cd0d3
-xterm*color7:      #dcdccc
-xterm*color8:      #709080
-xterm*color9:      #dca3a3
-xterm*color10:     #c3bf9f
-xterm*color11:     #f0dfaf
-xterm*color12:     #94bff3
-xterm*color13:     #ec93d3
-xterm*color14:     #93e0e3
-xterm*color15:     #ffffff
+!xterm*color0:      #262626
+!xterm*color1:      #bc6c4c
+!xterm*color2:      #313c36
+!xterm*color3:      #f8f893
+!xterm*color4:      #000d18
+!xterm*color5:      #41363c 
+!xterm*color6:      #93b3a3
+!xterm*color7:      #dcdccc
+!xterm*color8:      #2c2e2e 
+!xterm*color9:      #cc9393
+!xterm*color10:     #7f9f7f
+!xterm*color11:     #f0dfaf
+!xterm*color12:     #9fafaf
+!xterm*color13:     #bca3a3
+!xterm*color14:     #8cd0d3 
+!xterm*color15:     #ffffff
 !}}}
 
 
