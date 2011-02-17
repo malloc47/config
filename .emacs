@@ -127,6 +127,12 @@
 ;; (put 'call-with-postscript-file 'scheme-indent-function 1)
 ;; (put 'parallel-do 'scheme-indent-function 2)
 
+;;; TeX stuff
+(setq latex-run-command "pdflatex")
+(eval-after-load "tex" 
+  '(add-to-list 'TeX-command-list '("Make" "make" TeX-run-command nil t))) 
+(add-hook 'LaTeX-mode-hook 'turn-on-flyspell) 
+
 ;;; Life gets easier when you don't have duplicate buffer names
 (require 'uniquify)
 
