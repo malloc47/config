@@ -83,5 +83,5 @@ if [ "$TERM" != "vt100" -a "$TERM" != "dumb" -a "$EMACS" != "t" ] ; then
 	echo -e "\033[1;32m┌─[\033[1;36m`logname`\033[32m@\033[1;33m`hostname -s`\033[1;32m]─[\033[1;31m`pwd`\033[1;32m]─[\033[1;35m`date +%a\ %b\ %d,\ %r`\033[1;32m]"
 
 else
-	export PS1="\h [\W]/-/ "
+	export PS1="\h [\W]> "
 fi
