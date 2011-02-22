@@ -6,16 +6,16 @@
 *color2:      #313c36
 *color3:      #f8f893
 *color4:      #000d18
-*color5:      #41363c 
+*color5:      #41363c
 *color6:      #93b3a3
 *color7:      #dcdccc
-*color8:      #2c2e2e 
+*color8:      #2c2e2e
 *color9:      #cc9393
 *color10:     #7f9f7f
 *color11:     #f0dfaf
 *color12:     #9fafaf
 *color13:     #bca3a3
-*color14:     #8cd0d3 
+*color14:     #8cd0d3
 *color15:     #ffffff
 !}}}
 
@@ -103,16 +103,16 @@ urxvt*color1:      #bc6c4c
 urxvt*color2:      #313c36
 urxvt*color3:      #f8f893
 urxvt*color4:      #000d18
-urxvt*color5:      #41363c 
+urxvt*color5:      #41363c
 urxvt*color6:      #93b3a3
 urxvt*color7:      #dcdccc
-urxvt*color8:      #2c2e2e 
+urxvt*color8:      #2c2e2e
 urxvt*color9:      #cc9393
 urxvt*color10:     #7f9f7f
 urxvt*color11:     #f0dfaf
 urxvt*color12:     #9fafaf
 urxvt*color13:     #bca3a3
-urxvt*color14:     #8cd0d3 
+urxvt*color14:     #8cd0d3
 urxvt*color15:     #ffffff
 !}}}
 
