@@ -1,3 +1,7 @@
 [user]
 	name = Jarrell Waggoner
 	email = malloc47@gmail.com
+
+[alias]
+        s = status -s -uno 
+
