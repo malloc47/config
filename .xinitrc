@@ -16,7 +16,7 @@ xsetroot -cursor_name left_ptr
 
 #trayer --transparent true --widthtype pixel --width 103 --height 8 --align right --edge top --expand true --tint 0x000000 --alpha 0 &
 
-feh --bg-scale ~/media/img/wallpaper/moonset.jpg
+feh --bg-scale ~/media/img/wallpaper/current.jpg
 
 urxvtd &
 
