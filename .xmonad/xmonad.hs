@@ -114,15 +114,15 @@ myUrgencyHintBgColor = "blue"
 myDzenGenOpts = "-fg '" ++ myFgColor ++ "' -bg '" ++ myBgColor ++ "' -h '15'" ++ " -e 'onstart=lower' -fn '" ++ myFont ++ "'"
  
 -- Status Bar
-myStatusBar = "dzen2 -w 600 -ta l " ++ myDzenGenOpts
+myStatusBar = "dzen2 -w 900 -ta l " ++ myDzenGenOpts
  
 -- Conky Bar
-myConkyBar = "conky -c ~/.conky_bar | dzen2 -x 600 -w 424 -ta l " ++ myDzenGenOpts
+myConkyBar = "conky -c ~/.conky_bar | dzen2 -x 900 -w 466 -ta l " ++ myDzenGenOpts
  
 -- Layouts
 myLayoutHook = avoidStruts $ onWorkspace " 2 im " imLayout $ standardLayouts
                where standardLayouts = tiled ||| Mirror tiled ||| Full
-                     imLayout = reflectHoriz $  withIM (1/7) (Role "buddy_list") (standardLayouts)
+                     imLayout = reflectHoriz $  withIM (1/8) (Role "buddy_list") (standardLayouts)
                      tiled = ResizableTall nmaster delta ratio []
                      nmaster = 1 
                      delta = 0.03
@@ -132,10 +132,10 @@ myWorkspaces =
    [
       " 1 www ",
       " 2 im ",
-      " 3 ed ",
-      " 4 sh ",
-      " 5 ssh ",
-      " 6 mus ",
+      " 3 ",
+      " 4 ",
+      " 5 ",
+      " 6 ",
       " 7 ",
       " 8 ",
       " 9 "
@@ -158,7 +158,7 @@ myManageHook = composeAll
      className =? "Pidgin"           --> doShift " 2 im ",      -- Shift Pidgin to im desktop 
      className =? "Chrome"           --> doShift " 1 www ",     -- Shift Chromium to www
      className =? "Firefox"          --> doShift " 1 www ",     -- Shift Firefox to www
-     className =? "Emacs"            --> doShift " 3 ed ",      -- Shift emacs to emacs
+--     className =? "Emacs"            --> doShift " 3 ed ",      -- Shift emacs to emacs
      className =? "Wicd-client.py"   --> doFloat,                -- Float Wicd window 
      isFullscreen 		     --> (doF W.focusDown <+> doFullFloat)
    ]
@@ -171,26 +171,19 @@ myKeys x  = M.union (M.fromList (newKeys x)) (keys defaultConfig x)
 --    Add new and/or redefine key bindings
 newKeys conf@(XConfig {XMonad.modMask = modm}) = [
   ((modm, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'"),  --Uses a colourscheme with dmenu
-  {-((modm, xK_b), spawn "firefox"),-}
-  {-((modm, xK_s), spawn "firefox manage.sugarstats.com/stats/today"),-}
-  {-((modm, xK_c), spawn "chromium --app='https://calendar.google.com'"),-}
-  {-((modm, xK_f), spawn "urxvt -e mc"),-}
-  {-((modm, xK_m), spawn "chromium --app='https://mail.google.com'"),-}
-  {-((modm, xK_g), spawn "chromium --app='https://www.nirvanahq.com/app'"),-}
-  {-((0, xK_Print), spawn "scrot"),-}
-  {-((modm, xK_v), spawn "VirtualBox"),-}
+--  {-((modm, xK_b), spawn "firefox"),-}
   ((modm, xK_z), goToSelected myGSConfig),
   ((0, xF86XK_AudioMute), spawn "amixer -q set Master toggle"),
   ((0, xF86XK_AudioRaiseVolume), spawn "amixer -q set Master 2+"),
   ((0, xF86XK_AudioLowerVolume), spawn "amixer -q set Master 2-"),
   ((modm .|. shiftMask, xK_l), spawn "xscreensaver-command --lock"),
-  {-((0, xF86XK_AudioPlay), spawn "exaile -t"),-}
-  {-((0, xF86XK_AudioStop), spawn "exaile -s"),-}
-  {-((0, xF86XK_AudioNext), spawn "exaile -n"),-}
-  {-((0, xF86XK_AudioPrev), spawn "exaile -p"),-}
-  ((modm, xK_y), sendMessage ToggleStruts),
-  ((modm, xK_u), sendMessage MirrorShrink),
-  ((modm, xK_i), sendMessage MirrorExpand)
+--  {-((0, xF86XK_AudioPlay), spawn "exaile -t"),-}
+--  {-((0, xF86XK_AudioStop), spawn "exaile -s"),-}
+--  {-((0, xF86XK_AudioNext), spawn "exaile -n"),-}
+--  {-((0, xF86XK_AudioPrev), spawn "exaile -p"),-}
+  ((modm, xK_y), sendMessage ToggleStruts)
+--  ((modm, xK_u), sendMessage MirrorShrink),
+--  ((modm, xK_i), sendMessage MirrorExpand)
    ]
 --}}}
 
