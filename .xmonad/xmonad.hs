@@ -105,8 +105,8 @@ myTitleFgColor = myFgColor
 
 
 --- Urgency
-myUrgencyHintFgColor = "red"
-myUrgencyHintBgColor = "blue"
+myUrgencyHintFgColor = "#DCDCCC"
+myUrgencyHintBgColor = "#DCA3A3"
  
 -- }}}
 
@@ -122,7 +122,7 @@ myConkyBar = "conky -c ~/.conky_bar | dzen2 -x 900 -w 466 -ta l " ++ myDzenGenOp
 -- Layouts
 myLayoutHook = avoidStruts $ onWorkspace " 2 im " imLayout $ standardLayouts
                where standardLayouts = tiled ||| Mirror tiled ||| Full
-                     imLayout = reflectHoriz $  withIM (1/8) (Role "buddy_list") (standardLayouts)
+                     imLayout = reflectHoriz $  withIM (1/9) (Role "buddy_list") (standardLayouts)
                      tiled = ResizableTall nmaster delta ratio []
                      nmaster = 1 
                      delta = 0.03
@@ -145,10 +145,11 @@ myWorkspaces =
 myUrgencyHook = withUrgencyHook dzenUrgencyHook
     {
       args = [
-         "-x", "0", "-y", "576", "-h", "15", "-w", "1024",
-         "-ta", "r",
+         "-x", "0", "-y", "15", "-h", "20", "-w", "1366",
+         "-ta", "l",
          "-fg", "" ++ myUrgencyHintFgColor ++ "",
-         "-bg", "" ++ myUrgencyHintBgColor ++ ""
+         "-bg", "" ++ myUrgencyHintBgColor ++ "",
+		 "-fn", "" ++myFont ++ ""
          ]
     }
  
