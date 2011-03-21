@@ -60,6 +60,11 @@ if [ -d ~/QobiScheme-1.44 ] ; then
 	export SCMAXHEAP=900
 fi
 
+
+if [ -d ~/darpa-collaboration ] ; then
+	export PATH=$PATH:~/darpa-collaboratio/bin/
+fi
+
 # Multiple-git overlays for my home folder
 alias cgit='git --git-dir=$HOME/.cgit'
 alias cgits='git --git-dir=$HOME/.cgit status -s'
@@ -78,8 +83,7 @@ source ~/.bashfn
 
 if [ "$TERM" != "vt100" -a "$TERM" != "dumb" -a "$EMACS" != "t" ] ; then
 	export PS1='\[\e[1;32m\]└─[\[\e[33m\]\h\[\e[1;32m\]:\[\e[1;31m\]$(shorten_path "${PWD/$HOME/~}" 30)\[\e[1;32m\]]/-/\[\e[0m\] '
-#Root prompt variant
-#export PS1="\[\e[1;32m\]└─[\[\e[33m\]\h\[\e[1;32m\]:\[\e[1;31m\]\w\[\e[1;32m\]]/\[\e[1;31m\]-\[\e[1;32m\]/\[\e[0m\] "
+#Root prompt variant #export PS1="\[\e[1;32m\]└─[\[\e[33m\]\h\[\e[1;32m\]:\[\e[1;31m\]\w\[\e[1;32m\]]/\[\e[1;31m\]-\[\e[1;32m\]/\[\e[0m\] "
 	echo -e "\033[1;32m┌─[\033[1;36m`logname`\033[32m@\033[1;33m`hostname -s`\033[1;32m]─[\033[1;31m`pwd`\033[1;32m]─[\033[1;35m`date +%a\ %b\ %d,\ %r`\033[1;32m]"
 
 else
