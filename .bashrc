@@ -62,7 +62,7 @@ fi
 
 
 if [ -d ~/darpa-collaboration ] ; then
-	export PATH=$PATH:~/darpa-collaboratio/bin/
+	export PATH=$PATH:~/darpa-collaboration/bin/
 fi
 
 # Multiple-git overlays for my home folder
