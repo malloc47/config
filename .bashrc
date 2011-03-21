@@ -29,7 +29,7 @@ shopt -s cmdhist nocaseglob histappend extglob
 export HISTCONTROL=ignoreboth
 export HISTSIZE=5000
 export HISTFILESIZE=5000
-export HISTIGNORE="ls*:cd*"
+# export HISTIGNORE="ls*:cd*"
 
 # Workaround for a few games
 export SDL_VIDEO_FULLSCREEN_HEAD="1"
