@@ -62,7 +62,8 @@ fi
 
 
 if [ -d ~/darpa-collaboration ] ; then
-	export PATH=$PATH:~/darpa-collaboration/bin/
+	export PATH=$PATH:~/darpa-collaboration/bin
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/darpa-collaboration/lib
 fi
 
 # Multiple-git overlays for my home folder
