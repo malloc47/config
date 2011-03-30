@@ -49,6 +49,7 @@ urxvt*urgentOnBell:       true
 !urxvt*borderLess:       false
 !urxvt*internalBorder:       0
 !urxvt*externalBorder:       0
+urxvt*iso14755:          false
 !
 ! Extensions
 urxvt*perl-lib:        /usr/lib/urxvt/perl/

@@ -52,7 +52,7 @@ alias less=$PAGER
 export EDITOR=vim
 
 # To be executed only on lab computers
-if [ -d ~/QobiScheme-1.44 ] ; then
+if [ -d ~/QobiScheme-1.41 ] ; then
 	export QARCHITECTURE_PATH=`~/bin/architecture-path`
 	export ARCHITECTURE_PATH=`~/bin/architecture-path`
 	export QINSTALLDIR=~

@@ -15,20 +15,27 @@
 		       (lambda () (delete-windows-on "*Compile-Log*"))))))
 (add-hook 'after-save-hook 'autocompile)
 
-;;; Keybindings
+;;; keybindings
 (global-set-key (kbd "C-;") 'comment-region)
 (global-set-key (kbd "C-:") 'uncomment-region)
 ;; (windmove-default-keybindings)
-(global-set-key [M-left] 'windmove-left)          ; move to left windnow
-(global-set-key [M-right] 'windmove-right)        ; move to right window
-(global-set-key [M-up] 'windmove-up)              ; move to upper window
-(global-set-key [M-down] 'windmove-down)          ; move to downer window
+;; (global-set-key [M-left] 'windmove-left)          ; move to left windnow
+;; (global-set-key [M-right] 'windmove-right)        ; move to right window
+;; (global-set-key [M-up] 'windmove-up)              ; move to upper window
+;; (global-set-key [M-down] 'windmove-down)          ; move to downer window
+(global-set-key (kbd "M-h") 'windmove-left)          ; move to left windnow
+(global-set-key (kbd "M-l") 'windmove-right)        ; move to right window
+(global-set-key (kbd "M-k") 'windmove-up)              ; move to upper window
+(global-set-key (kbd "M-j") 'windmove-down)          ; move to downer window
+(global-set-key (kbd "M-p") 'mark-paragraph)
 
 
 ;;; Setup colors
 (require 'color-theme)
 (require 'zenburn)
 (color-theme-zenburn)
+
+(load-library "matlab-load")
 
 ;;; Fixes issues with color in the shell
 (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)

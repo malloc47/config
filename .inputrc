@@ -8,3 +8,5 @@ set keymap emacs
 
 "\ep": history-search-backward
 "\en": history-search-forward
+
+set echo-control-characters off
