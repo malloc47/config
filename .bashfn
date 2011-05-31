@@ -7,6 +7,27 @@ alias .......='.. 5'
 
 alias rsyncr="rsync --partial --progress"
 
+alias a1="awk '{print \$1}'"
+alias a2="awk '{print \$2}'"
+alias a3="awk '{print \$3}'"
+alias a4="awk '{print \$4}'"
+alias a5="awk '{print \$5}'"
+alias a6="awk '{print \$6}'"
+alias a7="awk '{print \$7}'"
+alias a8="awk '{print \$8}'"
+alias a9="awk '{print \$9}'"
+alias a10="awk '{print \$10}'"
+alias a11="awk '{print \$11}'"
+alias a12="awk '{print \$12}'"
+alias a13="awk '{print \$13}'"
+alias a14="awk '{print \$14}'"
+alias a15="awk '{print \$15}'"
+alias a16="awk '{print \$16}'"
+alias a17="awk '{print \$17}'"
+alias a18="awk '{print \$18}'"
+alias a19="awk '{print \$19}'"
+alias a20="awk '{print \$20}'"
+
 # Ls after CD
 cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
 else builtin cd && ls; fi; }
