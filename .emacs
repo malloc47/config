@@ -4,6 +4,24 @@
 (custom-set-faces
  '(default ((t (:inherit nil :stipple nil :background "#3f3f3f" :foreground "#dcdccc" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 100 :width normal :family "Terminus")))))
 
+(setq default-frame-alist '((font . "Terminus-11")))
+
+;; (set-face-attribute 'default nil :font "-xos4-Terminus-normal-normal-normal-*-16-*-*-*-c-80-iso10646-1")
+;; (set-face-attribute 'default nil :height 110)
+
+(setq window-system-default-frame-alist
+      '(;; if frame created on x display
+        (x
+	 (menu-bar-lines . nil) (tool-bar-lines . nil)
+	 (mouse-wheel-mode . 1)
+	 (mouse-wheel-follow-mouse . t)
+	 (mouse-avoidance-mode . 'exile))
+        ;; if on term
+        (nil
+	 (menu-bar-lines . 0) (tool-bar-lines . 0)
+	 (background-color . "black")
+	 (foreground-color . "white"))))
+
 ;;; Recompile .emacs on demand
 (require 'bytecomp)
 (defun autocompile nil
