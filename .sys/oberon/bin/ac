@@ -1,0 +1,6 @@
+#!/bin/bash
+#echo ondemand > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+#echo ondemand > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
+echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo performance > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
+echo "15" > /sys/devices/virtual/backlight/acpi_video0/brightness

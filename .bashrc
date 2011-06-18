@@ -52,7 +52,7 @@ alias less=$PAGER
 export EDITOR=vim
 
 # To be executed only on lab computers
-if [ -d ~/QobiScheme-1.41 ] ; then
+if [ -d ~/QobiScheme-cvs ] ; then
 	export QARCHITECTURE_PATH=`~/bin/architecture-path`
 	export ARCHITECTURE_PATH=`~/bin/architecture-path`
 	export QINSTALLDIR=~
@@ -63,7 +63,7 @@ fi
 
 if [ -d ~/darpa-collaboration ] ; then
 	export PATH=$PATH:~/darpa-collaboration/bin
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/darpa-collaboration/lib
+#	export LD_LIBRARY_PATH=~/darpa-collaboration/lib:$LD_LIBRARY_PATH
 fi
 
 # Multiple-git overlays for my home folder
@@ -81,6 +81,15 @@ alias lsd="ls -al | grep -E '^(d|l)'"
 #export TERM="xterm-256color"
 
 source ~/.bashfn
+
+# Source machine-specific files
+if [ -f ~/.sys/`hostname`/.bashrc ] ; then
+	source ~/.sys/`hostname`/.bashrc 
+fi
+
+if [ -d ~/.sys/`hostname`/bin ] ; then
+	export PATH=~/.sys/`hostname`/bin:$PATH
+fi
 
 if [ "$TERM" != "vt100" -a "$TERM" != "dumb" -a "$EMACS" != "t" ] ; then
 	export PS1='\[\e[1;32m\]└─[\[\e[33m\]\h\[\e[1;32m\]:\[\e[1;31m\]$(shorten_path "${PWD/$HOME/~}" 30)\[\e[1;32m\]]/-/\[\e[0m\] '

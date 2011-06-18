@@ -1,0 +1,3 @@
+#!/bin/bash
+sudo wpa_supplicant -B -D wext -c ~/.wpa -i wlan0
+sudo dhcpcd wlan0
