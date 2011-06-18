@@ -22,6 +22,8 @@ set imap_peek = no
 set editor = "vim"
 set signature="~/.signature"
 
+set sig_dashes = no
+
 set help = no
 
 bind editor <space> noop
