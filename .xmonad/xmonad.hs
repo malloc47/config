@@ -174,10 +174,12 @@ newKeys conf@(XConfig {XMonad.modMask = modm}) = [
   ((modm, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'"),  --Uses a colourscheme with dmenu
 --  {-((modm, xK_b), spawn "firefox"),-}
   ((modm, xK_z), goToSelected myGSConfig),
-  ((0, xF86XK_AudioMute), spawn "amixer -q set Master toggle"),
-  ((0, xF86XK_AudioRaiseVolume), spawn "amixer -q set Master 2+"),
-  ((0, xF86XK_AudioLowerVolume), spawn "amixer -q set Master 2-"),
+--  ((0, xF86XK_AudioMute), spawn "amixer -q set Master toggle"),
+--  ((0, xF86XK_AudioRaiseVolume), spawn "amixer -q set Master 2+"),
+--  ((0, xF86XK_AudioLowerVolume), spawn "amixer -q set Master 2-"),
   ((modm .|. shiftMask, xK_l), spawn "xscreensaver-command --lock"),
+  ((modm .|. shiftMask, xK_e), spawn "emacsclient -c"),
+  ((modm .|. shiftMask, xK_t), spawn "urxvtc"),
 --  {-((0, xF86XK_AudioPlay), spawn "exaile -t"),-}
 --  {-((0, xF86XK_AudioStop), spawn "exaile -s"),-}
 --  {-((0, xF86XK_AudioNext), spawn "exaile -n"),-}
