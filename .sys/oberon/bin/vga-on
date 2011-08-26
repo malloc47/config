@@ -1,2 +1,3 @@
 #!/bin/bash
-xrandr --output VGA-0 --mode 800x600
+xrandr --output LVDS --mode 800x600
+xrandr --output CRT1 --mode 800x600
