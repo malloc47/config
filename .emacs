@@ -172,6 +172,9 @@
   '(add-to-list 'TeX-command-list '("Make" "make" TeX-run-command nil t))) 
 (add-hook 'LaTeX-mode-hook 'turn-on-flyspell) 
 
+(load "auctex.el" nil t t)
+(load "preview-latex.el" nil t t)
+
 ;;; Life gets easier when you don't have duplicate buffer names
 (require 'uniquify)
 
@@ -269,3 +272,5 @@
       (ansi-term term-cmd))
     (ansi-term term-cmd)))))
 (global-set-key (kbd "<f2>") 'visit-ansi-term)
+
+(require 'org-latex)
