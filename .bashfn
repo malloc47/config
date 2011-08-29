@@ -28,6 +28,8 @@ alias a18="awk '{print \$18}'"
 alias a19="awk '{print \$19}'"
 alias a20="awk '{print \$20}'"
 
+alias rand="od -N1 -An -i /dev/urandom"
+
 # Ls after CD
 cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
 else builtin cd && ls; fi; }
