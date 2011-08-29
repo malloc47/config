@@ -42,7 +42,7 @@ export CVSROOT=":ext:nyx:/usr/local/cvsroot"
 CDPATH=.:~/src/projects/
 
 # Where my scripts live
-PATH=$PATH:~/bin/
+PATH=$PATH:~/bin:~/src/projects/term-do
 
 # Pager using vim
 export PAGER=~/bin/vimpager

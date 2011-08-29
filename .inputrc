@@ -4,9 +4,13 @@ set editing-mode emacs
 #set keymap vi
 set keymap emacs
 
-#set convert-meta on
+set convert-meta on
 
 "\ep": history-search-backward
 "\en": history-search-forward
 
 set echo-control-characters off
+
+$if Bash
+"\M-x": "term-do\C-M"
+$endif
