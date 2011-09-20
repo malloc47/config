@@ -30,6 +30,10 @@ alias a20="awk '{print \$20}'"
 
 alias rand="od -N1 -An -i /dev/urandom"
 
+alias h='history'
+
+hs() { history | grep $1 ; }
+
 # Ls after CD
 cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
 else builtin cd && ls; fi; }
