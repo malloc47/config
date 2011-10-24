@@ -7,7 +7,7 @@ then
   exit 65 
 fi
 DEST=$1
-FILES=$(git ls-files | grep -v ^config$)
+FILES=$(git ls-files | grep -v ^$(basename $0)$)
 
 for f in $FILES ; do
     echo $f
