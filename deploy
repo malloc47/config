@@ -15,8 +15,8 @@ for f in $FILES ; do
 	mkdir -p $DEST/$(dirname $f)
     fi
 	# system specific files take precidence
-    if [ -e ".sys/$(hostname)/$f" ] ; then
-	ln -sf $(pwd)/.sys/$(hostname)/$f $DEST/$f
+    if [ -e ".sys/$(hostname -s)/$f" ] ; then
+	ln -sf $(pwd)/.sys/$(hostname -s)/$f $DEST/$f
     else
 	ln -sf $(pwd)/$f $DEST/$f
     fi
