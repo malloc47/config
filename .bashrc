@@ -15,6 +15,7 @@ set -o vi
 # ^l clear screen
 bind -m vi-insert "\C-l":clear-screen
 
+umask 077
 
 # Check for current bash version
 if [[ ${BASH_VERSINFO[0]} -ge 4 ]]; then
