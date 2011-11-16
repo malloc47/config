@@ -93,7 +93,6 @@
  '(inhibit-startup-echo-area-message nil)
  '(inhibit-startup-screen t)
  '(initial-frame-alist (quote ((menu-bar-lines . 0) (tool-bar-lines . 0))))
- '(python-python-command "python2.7")
  '(scroll-bar-mode nil)
  '(set-fill-column 80)
  '(show-paren-mode t)
