@@ -46,6 +46,8 @@ wiki() { dig +short txt "$*".wp.dg.cx; }
 
 calc () { echo "$*" | bc -l; }
 
+term-do ()  { /home/malloc47/src/projects/term-do/term-do "$*" ; cd $(cat ~/.term-do.d/pwd); }
+
 #http://hbfs.wordpress.com/2009/09/01/short-pwd-in-bash-prompts/
 shorten_path()
  {
