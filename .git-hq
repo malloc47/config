@@ -1,18 +1,19 @@
 [DEFAULT]
-uname=malloc47
+uname = malloc47
 
 [remotes]
-github=git@github.com:{uname}/{repo}.git
-bitbucket=git@bitbucket.org:{uname}/{repo}.git
+github = git@github.com:{uname}/{repo}.git
+bitbucket = git@bitbucket.org:{uname}/{repo}.git
 
 [term-do]
-id=51f850ca0920aa5a8912bd6c3b906952f25e25f0
-repos=bitbucket
+id = 51f850ca0920aa5a8912bd6c3b906952f25e25f0
+repos = bitbucket
 
 [config]
-id=d4e5412c2a42d09ac1b1799f7fae56adc4a1c9b5
-repos=github,bitbucket
+id = d4e5412c2a42d09ac1b1799f7fae56adc4a1c9b5
+repos = github,bitbucket
 
 [git-hq]
-id=a3f5a4f80bde1faaedc2c82fc325e7c7f5ca67a0
-repos=github,bitbucket
+id = a3f5a4f80bde1faaedc2c82fc325e7c7f5ca67a0
+repos = github,bitbucket
+
