@@ -17,3 +17,43 @@ repos = github,bitbucket
 id = a3f5a4f80bde1faaedc2c82fc325e7c7f5ca67a0
 repos = github,bitbucket
 
+[sfacademy]
+id = a8dcea3409aac5dd2c6144a5564b2a8a523b6bd9
+repos = github,bitbucket
+
+[return-of-thrawn]
+id = 72a51128aff185830d62f89711b3ce535b310b80
+repos = github,bitbucket
+
+[org]
+id = c1cd836ad860622173ddf7063e74f1c3e5a66e45
+repos = bitbucket
+
+[notes]
+id = c1cd836ad860622173ddf7063e74f1c3e5a66e45
+repos = bitbucket
+
+[gco]
+id = 98410efeb80aad95707effa537197d27c257f7dc
+repos = bitbucket
+
+[matsci-slides]
+id = ee9678f43baf8d22a42abc60c8c02c33247b65c7
+repos = bitbucket
+
+[matsciskel]
+id = 577669655345df5b06787392ef2af008b4ff9829
+repos = bitbucket
+
+[matscicut]
+id = 374ab3a26836fec472c70ac69203fde893c069cc
+repos = bitbucket
+
+[waggoner2011]
+id = 867fb7e3c5542275409da39380b04495d0df0a38
+repos = bitbucket
+
+[hc-servlet]
+id = 8ff99ef1541ab953305407dad84a0ba049a3bec2
+repos = bitbucket
+
