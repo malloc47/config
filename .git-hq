@@ -57,3 +57,27 @@ repos = bitbucket
 id = 8ff99ef1541ab953305407dad84a0ba049a3bec2
 repos = bitbucket
 
+[hellokitty]
+id = b9d9461dadeff29ce1746850fb8cfe71174de5df
+repos = bitbucket
+
+[JOM]
+id = 8250f73e7ab716319c03f940b6999b4065e7347c
+repos = bitbucket
+
+[icdar2011]
+id = 3b013e5431984542d0678b10819e84e5fa3a8ed2
+repos = bitbucket
+
+[whitetiger]
+id = caaf7a956927b001279f16809d6d73d7ad8ff027
+repos = bitbucket
+
+[JRatioCut]
+id = 3ca3a396b025694b2341daeb9aa33c2023825b7a
+repos = bitbucket
+
+[cvutil]
+id = 2bee319b831f5212424e1492b53fc2df623b6c42
+repos = bitbucket
+
