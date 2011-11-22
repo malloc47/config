@@ -25,10 +25,6 @@ repos = github,bitbucket
 id = 72a51128aff185830d62f89711b3ce535b310b80
 repos = github,bitbucket
 
-[org]
-id = c1cd836ad860622173ddf7063e74f1c3e5a66e45
-repos = bitbucket
-
 [notes]
 id = c1cd836ad860622173ddf7063e74f1c3e5a66e45
 repos = bitbucket
@@ -69,8 +65,12 @@ repos = bitbucket
 id = 3b013e5431984542d0678b10819e84e5fa3a8ed2
 repos = bitbucket
 
-[whitetiger]
+[digital-collation]
 id = caaf7a956927b001279f16809d6d73d7ad8ff027
+repos = bitbucket
+
+[WHITETIGER]
+id = d51f0f5995ae9c57287b14f51add155ec610d9d4
 repos = bitbucket
 
 [JRatioCut]
@@ -79,5 +79,9 @@ repos = bitbucket
 
 [cvutil]
 id = 2bee319b831f5212424e1492b53fc2df623b6c42
+repos = bitbucket
+
+[TrapezoidalMap]
+id = 00ccd51bb4bf34323a9a6566bed282125787f15d
 repos = bitbucket
 
