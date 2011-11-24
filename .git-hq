@@ -85,3 +85,7 @@ repos = bitbucket
 id = 00ccd51bb4bf34323a9a6566bed282125787f15d
 repos = bitbucket
 
+[config-personal]
+id = f5327d2d2e65a07d0a92a822d78faa27e9d968c7
+repos = bitbucket
+
