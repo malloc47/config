@@ -37,7 +37,7 @@ export SDL_VIDEO_FULLSCREEN_HEAD="1"
 
 # CVS-related variables
 export CVS_RSH="ssh"
-export CVSROOT=":ext:nyx:/usr/local/cvsroot"
+export CVSROOT=":ext:munsell@brent:/usr/local/cvs"
 
 # Include paths for most frequently visited folders
 CDPATH=.:~/src/projects/
