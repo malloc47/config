@@ -43,7 +43,7 @@ export CVSROOT=":ext:munsell@brent:/usr/local/cvs"
 CDPATH=.:~/src/projects/
 
 # Where my scripts live
-PATH=~/bin:~/src/projects/term-do:$PATH
+PATH=~/bin:~/src/projects/term-do:~/src/projects/git-hq:$PATH
 
 # Pager using vim
 export PAGER=~/bin/vimpager
