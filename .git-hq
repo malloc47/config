@@ -89,3 +89,7 @@ repos = bitbucket
 id = f5327d2d2e65a07d0a92a822d78faa27e9d968c7
 repos = bitbucket
 
+[vote-cms]
+id = 3f9e2f47f5d799d54d3fa9498a0ed89ab048099a
+repos = github,bitbucket
+
