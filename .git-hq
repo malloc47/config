@@ -93,3 +93,7 @@ repos = bitbucket
 id = 3f9e2f47f5d799d54d3fa9498a0ed89ab048099a
 repos = github,bitbucket
 
+[ratio-contour]
+id = e122a94eadeb4f87b71ddb1be87f91b5bcf87cf1
+repos = github,bitbucket
+
