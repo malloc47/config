@@ -2,7 +2,7 @@
 uname = malloc47
 
 [remotes]
-github = git@github.com:%(uname)s/{repo}.git
+github = git@github.com:%(uname)s/{Repo}.git
 bitbucket = git@bitbucket.org:%(uname)s/{repo}.git
 
 [term-do]
@@ -75,7 +75,7 @@ repos = bitbucket
 
 [JRatioCut]
 id = 3ca3a396b025694b2341daeb9aa33c2023825b7a
-repos = bitbucket
+repos = bitbucket,github
 
 [cvutil]
 id = 2bee319b831f5212424e1492b53fc2df623b6c42
