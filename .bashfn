@@ -46,6 +46,12 @@ wiki() { dig +short txt "$*".wp.dg.cx; }
 
 calc () { echo "$*" | bc -l; }
 
+pdfcat () {
+    first=$1
+    shift
+    gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$first $*
+}
+
 term-do ()  { /home/malloc47/src/projects/term-do/term-do "$*" ; cd $(cat ~/.term-do.d/pwd); }
 
 #http://hbfs.wordpress.com/2009/09/01/short-pwd-in-bash-prompts/
