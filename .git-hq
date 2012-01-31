@@ -89,3 +89,11 @@ repos = bitbucket
 id = f5327d2d2e65a07d0a92a822d78faa27e9d968c7
 repos = bitbucket
 
+[waggoner2012]
+id = 4dfdde9ab8c44550bda9b9a92173f79a0b87a3e1
+repos = bitbucket
+
+[junction-propagate]
+id = 2b03b56d915d1ec5e2738ddbce622a1160f27280
+repos = bitbucket
+
