@@ -2,12 +2,12 @@
 uname = malloc47
 
 [remotes]
-github = git@github.com:%(uname)s/{repo}.git
+github = git@github.com:%(uname)s/{Repo}.git
 bitbucket = git@bitbucket.org:%(uname)s/{repo}.git
 
 [term-do]
 id = 51f850ca0920aa5a8912bd6c3b906952f25e25f0
-repos = bitbucket
+repos = bitbucket,github
 
 [config]
 id = d4e5412c2a42d09ac1b1799f7fae56adc4a1c9b5
@@ -43,7 +43,7 @@ repos = bitbucket
 
 [matscicut]
 id = 374ab3a26836fec472c70ac69203fde893c069cc
-repos = bitbucket
+repos = bitbucket,github
 
 [waggoner2011]
 id = 867fb7e3c5542275409da39380b04495d0df0a38
@@ -75,7 +75,7 @@ repos = bitbucket
 
 [JRatioCut]
 id = 3ca3a396b025694b2341daeb9aa33c2023825b7a
-repos = bitbucket
+repos = bitbucket,github
 
 [cvutil]
 id = 2bee319b831f5212424e1492b53fc2df623b6c42
@@ -97,3 +97,10 @@ repos = bitbucket
 id = 2b03b56d915d1ec5e2738ddbce622a1160f27280
 repos = bitbucket
 
+[vote-cms]
+id = 3f9e2f47f5d799d54d3fa9498a0ed89ab048099a
+repos = github,bitbucket
+
+[ratio-contour]
+id = e122a94eadeb4f87b71ddb1be87f91b5bcf87cf1
+repos = github,bitbucket
