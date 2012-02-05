@@ -6,8 +6,8 @@
 
 . $HOME/.bashrc
 
-if [ -f ~/.sys/`hostname`/.bash_profile ] ; then
-	source ~/.sys/`hostname`/.bash_profile 
+if [ -f ~/.sys/`hostname`/bash_profile ] ; then
+	source ~/.sys/`hostname`/bash_profile 
 fi
 
 function set-eterm-dir {
