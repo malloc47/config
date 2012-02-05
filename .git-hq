@@ -4,6 +4,7 @@ uname = malloc47
 [remotes]
 github = git@github.com:%(uname)s/{Repo}.git
 bitbucket = git@bitbucket.org:%(uname)s/{repo}.git
+rhinegold = rhinegold:/mnt/extern1/var/git/{repo}.git
 
 [term-do]
 id = 51f850ca0920aa5a8912bd6c3b906952f25e25f0
@@ -104,3 +105,36 @@ repos = github,bitbucket
 [ratio-contour]
 id = e122a94eadeb4f87b71ddb1be87f91b5bcf87cf1
 repos = github,bitbucket
+
+[cv]
+id = 05178c1c1b3b835b02f0ca338fca2cf518d156d4
+repos = bitbucket
+
+[templates]
+id = 311c8e5394699c3dd69b893c7255d47ee7fb862d
+repos = bitbucket
+
+[papers]
+id = 65d2f4c136551dfcf9cdeb11123dcc410e9362f4
+repos = bitbucket
+
+[wedding]
+id = 15b1c8501bab07476ddbf170f0ed08b48df92579
+repos = bitbucket
+
+[ol-presentations]
+id = 6e5c157b311233900abfbcf1060ab4967691aa84
+repos = rhinegold
+
+[reference]
+id = a3774b5382228d219e3e3220008677d8eae42d26
+repos = rhinegold
+
+[research]
+id = adf5399e1c6dbd3deafcb200b5aa35f1885d54f8
+repos = rhinegold
+
+[school]
+id = 84dcba7c6781cf0e3657dcc5a69e3f79a722ee44
+repos = rhinegold
+
