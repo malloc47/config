@@ -46,8 +46,8 @@ CDPATH=.:~/src/projects/
 PATH=~/bin:~/src/projects/term-do:~/src/projects/git-hq:$PATH
 
 # Pager using vim
-export PAGER=~/bin/vimpager
-alias less=$PAGER
+#export PAGER=~/bin/vimpager
+#alias less=$PAGER
 
 # Use vim as the primary editor
 export EDITOR=vim
