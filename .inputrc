@@ -13,4 +13,5 @@ set echo-control-characters off
 
 $if Bash
 "\M-x": "term-do\C-M"
+"\M-z": "term-do -r\C-M"
 $endif
