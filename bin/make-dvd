@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+EXPECTED_ARGS=1
+E_BADARGS=65
+if [ $# -lt $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` [drive] [iso file] [temp-folder]"
+  exit $E_BADARGS
+fi
+DRIVE=$1
+FILE=$2
+FOLDER=$3
+dvdbackup -i $DRIVE -M -o $FOLDER
+genisoimage -dvd-video -o $FILE $FOLDER/*
