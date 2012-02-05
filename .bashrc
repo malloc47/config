@@ -5,10 +5,10 @@ fi
 # Don't bother if we're running noninteractively
 [ -z "$PS1" ] && return
 
-if [ -f /etc/profile.d/bash_completion.sh ]; then
-	source /etc/profile.d/bash_completion.sh
-fi
+#-z "`ps aux | grep term-do | grep -v grep`"
 
+[ -r /etc/profile.d/bash_completion.sh -a -z "`ps aux | grep term-do | grep -v grep`" ] && . /etc/profile.d/bash_completion.sh
+[ -r /etc/bash_completion -a -z "`ps aux | grep term-do | grep -v grep`"  ] && . /etc/bash_completion
 
 # Give me vi control within the terminal
 set -o vi
