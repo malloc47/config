@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # do this first
 # git clone --no-hardlinks /XYZ /ABC
 EXPECTED_ARGS=1
