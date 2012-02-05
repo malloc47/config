@@ -178,7 +178,7 @@ newKeys conf@(XConfig {XMonad.modMask = modm}) = [
 --  ((0, xF86XK_AudioRaiseVolume), spawn "amixer -q set Master 2+"),
 --  ((0, xF86XK_AudioLowerVolume), spawn "amixer -q set Master 2-"),
   ((modm .|. shiftMask, xK_l), spawn "xscreensaver-command --lock"),
-  ((modm .|. shiftMask, xK_e), spawn "emacsclient -c"),
+  ((modm .|. shiftMask, xK_e), spawn "emacsclient -c -a \"\""),
   ((modm .|. shiftMask, xK_t), spawn "urxvtc"),
 --  {-((0, xF86XK_AudioPlay), spawn "exaile -t"),-}
 --  {-((0, xF86XK_AudioStop), spawn "exaile -s"),-}
