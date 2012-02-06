@@ -36,6 +36,10 @@ hg() { history | grep $1 ; }
 
 pg() { ps aux | grep $1 ; }
 
+dg() { du -hcs * .[!.]* | grep $1 ; }
+
+ds() { du -hcs * .[!.]* | sort -h ; }
+
 # Ls after CD
 cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls;
 else builtin cd && ls; fi; }
