@@ -6,9 +6,7 @@
 
 . $HOME/.bashrc
 
-if [ -f ~/.sys/`hostname`/bash_profile ] ; then
-	source ~/.sys/`hostname`/bash_profile 
-fi
+[ -r ~/.sys/`hostname`/bash_profile ] && . ~/.sys/`hostname`/bash_profile 
 
 function set-eterm-dir {
     echo -e "\033AnSiTu" "$LOGNAME"
