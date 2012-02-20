@@ -3,7 +3,7 @@ function ..(){ for ((j=${1:-1},i=0;i<j;i++));do builtin cd ..;done;}
 alias ...='.. 2'
 alias ....='.. 3'
 alias .....='.. 4'
-alias .......='.. 5'
+alias ......='.. 5'
 
 alias rsyncr="rsync --partial --progress"
 
