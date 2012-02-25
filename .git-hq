@@ -171,3 +171,8 @@ id = 84dcba7c6781cf0e3657dcc5a69e3f79a722ee44
 repos = rhinegold
 path = /home/malloc47/usr/school
 
+[miccai12]
+id = d7ac84239f1ccb7df0fc49b59f0c6cc92f4cc88f
+repos = bitbucket
+path = /home/malloc47/src/projects/medical/miccai12
+
