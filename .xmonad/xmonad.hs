@@ -180,6 +180,7 @@ newKeys conf@(XConfig {XMonad.modMask = modm}) = [
   ((modm .|. shiftMask, xK_l), spawn "xscreensaver-command --lock"),
   ((modm .|. shiftMask, xK_e), spawn "emacsclient -c -a \"\""),
   ((modm .|. shiftMask, xK_t), spawn "urxvtc"),
+  ((0, xK_Print), spawn "import -window root ~/screenshot-`date '+%Y%m%d-%H%M%S'`.png"),
 --  {-((0, xF86XK_AudioPlay), spawn "exaile -t"),-}
 --  {-((0, xF86XK_AudioStop), spawn "exaile -s"),-}
 --  {-((0, xF86XK_AudioNext), spawn "exaile -n"),-}
