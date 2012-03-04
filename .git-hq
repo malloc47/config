@@ -176,3 +176,8 @@ id = d7ac84239f1ccb7df0fc49b59f0c6cc92f4cc88f
 repos = bitbucket
 path = /home/malloc47/src/projects/medical/miccai12
 
+[malloc47.github.com]
+id = 6eb795c212502ce0ab18d307a4121679b12e25ba
+repos = github
+path = /home/malloc47/src/projects/malloc47.github.com
+
