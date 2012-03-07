@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+EXPECTED_ARGS=1
+E_BADARGS=65
+if [ $# -lt $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` [directory]"
+  exit $E_BADARGS
+fi
+fullname=$(git ls-tree --name-only --full-name HEAD $1)
+if [ -z $fullname ] ; then
+    echo "$1 not a tracked file" 1>&2
+    exit 1
+fi
+hash=$(git log --format=oneline $1 | head -2 | tail -n 1 | awk '{print $1}')
+if [ -n $bash ] ; then
+    if [ $# -lt 2 ]; then
+	git show $hash:$fullname > $1
+    else
+	git show $hash:$fullname > $2
+    fi
+else
+    echo "no history found for $1" 1>&2
+    exit 1
+fi
