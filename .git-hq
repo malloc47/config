@@ -1,10 +1,13 @@
 [DEFAULT]
 uname = malloc47
+uname2 = open-it-lab
 
 [remotes]
 github = git@github.com:%(uname)s/{Repo}.git
 bitbucket = git@bitbucket.org:%(uname)s/{repo}.git
 rhinegold = rhinegold:/mnt/extern1/var/git/{repo}.git
+github-ol = git@github.com:%(uname2)s/{Repo}.git
+bitbucket-ol = git@bitbucket.org:%(uname2)s/{repo}.git
 
 [term-do]
 id = 51f850ca0920aa5a8912bd6c3b906952f25e25f0
@@ -180,4 +183,9 @@ path = /home/malloc47/src/projects/medical/miccai12
 id = 6eb795c212502ce0ab18d307a4121679b12e25ba
 repos = github
 path = /home/malloc47/src/projects/malloc47.github.com
+
+[ol-curriculum]
+id = 89ab53c329169608ef2c15748640e2080d3c5ed5
+repos = github-ol
+path = /home/malloc47/usr/ol-curriculum
 
