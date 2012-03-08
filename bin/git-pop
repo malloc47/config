@@ -1,15 +1,9 @@
 #!/bin/bash
 set -e
-# EXPECTED_ARGS=1
 E_BADARGS=65
-# if [ $# -lt $EXPECTED_ARGS ]
-# then
-#   echo "Usage: `basename $0` [directory]"
-#   exit $E_BADARGS
-# fi
 
 cmd_help () {
-    echo "Usage: `basename $0` [directory]"
+    echo "Usage: `basename $0` [-o output-file] [-n hist-num] directory"
     exit $E_BADARGS
 }
 
