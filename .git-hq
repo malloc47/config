@@ -136,7 +136,7 @@ path = /home/malloc47/src/projects/segmentation/ratio-contour
 
 [cv]
 id = 05178c1c1b3b835b02f0ca338fca2cf518d156d4
-repos = bitbucket
+repos = bitbucket,github
 path = /home/malloc47/usr/cv
 
 [templates]
