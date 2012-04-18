@@ -199,3 +199,8 @@ id = 06e6164bda8775a518be19faac059de2305b18ee
 repos = bitbucket
 path = /home/malloc47/src/projects/pmldap
 
+[cli-workshop]
+id = d17a4d93c40b6b06b8049a4ba965a9508e83a117
+repos = github-ol
+path = /home/malloc47/usr/ol-cli-workshop
+
