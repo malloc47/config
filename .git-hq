@@ -196,7 +196,7 @@ path = /home/malloc47/src/projects/matsci/waggoner2013
 
 [pmldap]
 id = 06e6164bda8775a518be19faac059de2305b18ee
-repos = bitbucket
+repos = bitbucket,github
 path = /home/malloc47/src/projects/pmldap
 
 [cli-workshop]
