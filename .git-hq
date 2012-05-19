@@ -204,3 +204,8 @@ id = d17a4d93c40b6b06b8049a4ba965a9508e83a117
 repos = github-ol
 path = /home/malloc47/usr/ol-cli-workshop
 
+[shell-parse.el]
+id = ad77d08acd573485cfd6e2d1f2adc699caf71f91
+repos = github
+path = /home/malloc47/src/projects/shell-parse.el
+
