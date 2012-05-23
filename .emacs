@@ -179,6 +179,7 @@
 
 (load "auctex.el" nil t t)
 (load "preview-latex.el" nil t t)
+(load "shell-parse.el" nil t t)
 
 ;;; Life gets easier when you don't have duplicate buffer names
 (require 'uniquify)
