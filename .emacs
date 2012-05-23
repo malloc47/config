@@ -47,7 +47,6 @@
 (global-set-key (kbd "M-j") 'windmove-down)          ; move to downer window
 (global-set-key (kbd "M-p") 'mark-paragraph)
 
-
 ;;; Setup colors
 (require 'color-theme)
 (require 'zenburn)
@@ -59,7 +58,12 @@
 (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
 
 ;;; Scroll line-by-line
-(setq scroll-step 1 scroll-conservatively 10000)
+;;; http://stackoverflow.com/questions/3631220/fix-to-get-smooth-scrolling-in-emacs
+(setq redisplay-dont-pause t
+  scroll-margin 3
+  scroll-step 1
+  scroll-conservatively 10
+  scroll-preserve-screen-position 1)
 
 ;;; http://emacs-fu.blogspot.com/2009/11/copying-lines-without-selecting-them.html
 (defadvice kill-ring-save (before slick-copy activate compile) "When called
