@@ -83,6 +83,8 @@
  '(display-time-mode t)
  '(fringe-mode 0 nil (fringe))
  '(global-font-lock-mode t)
+ '(haskell-font-lock-symbols t)
+ '(haskell-mode-hook (quote (turn-on-haskell-indentation)))
  '(icomplete-mode t)
  '(inhibit-startup-echo-area-message nil)
  '(inhibit-startup-screen t)
