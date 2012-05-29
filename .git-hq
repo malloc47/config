@@ -156,7 +156,7 @@ path = /home/malloc47/usr/wedding
 
 [ol-presentations]
 id = 6e5c157b311233900abfbcf1060ab4967691aa84
-repos = rhinegold
+repos = rhinegold,github-ol
 path = /home/malloc47/usr/ol-presentations
 
 [reference]
