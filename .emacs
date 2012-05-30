@@ -100,6 +100,8 @@
  '(tooltip-mode nil))
  ;; Get rid of tooltips
 
+(global-auto-revert-mode t)
+
 ;; Ammend the auto-mode-alist with new aliases for appropriate modes
 (setq auto-mode-alist
       (append '(("\\.sc$" . scheme-mode)
