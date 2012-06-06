@@ -1,3 +1,8 @@
 #!/bin/bash
-xrandr --output LVDS --mode 800x600
-xrandr --output CRT1 --mode 800x600
+if [ $# -lt 1 ] ; then
+	xrandr --output LVDS --mode 800x600
+	xrandr --output CRT1 --mode 800x600
+else
+	xrandr --output LVDS --mode $1
+	xrandr --output CRT1 --mode $1
+fi
