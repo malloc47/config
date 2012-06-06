@@ -209,3 +209,8 @@ id = ad77d08acd573485cfd6e2d1f2adc699caf71f91
 repos = github
 path = /home/malloc47/src/projects/shell-parse.el
 
+[dissertation]
+id = 037095d57a33c2e14fe163824e0aff2843f169c0
+repos = bitbucket
+path = /home/malloc47/src/projects/dissertation
+
