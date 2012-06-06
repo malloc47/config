@@ -87,6 +87,8 @@
  '(display-time-mode t)
  '(fringe-mode 0 nil (fringe))
  '(global-font-lock-mode t)
+ '(haskell-font-lock-symbols t)
+ '(haskell-mode-hook (quote (turn-on-haskell-indentation)))
  '(icomplete-mode t)
  '(inhibit-startup-echo-area-message nil)
  '(inhibit-startup-screen t)
@@ -97,6 +99,8 @@
  '(tool-bar-mode nil)
  '(tooltip-mode nil))
  ;; Get rid of tooltips
+
+(global-auto-revert-mode t)
 
 ;; Ammend the auto-mode-alist with new aliases for appropriate modes
 (setq auto-mode-alist
