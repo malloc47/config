@@ -162,6 +162,10 @@
 (define-key inferior-scheme-mode-map "\C-c>" 'scheme2c-down)
 (define-key inferior-scheme-mode-map "\C-z)" 'check-parens)
 
+;;; Python
+
+(setenv "PYTHONPATH" ".")
+
 ;;; Highlight parens
 (setq show-paren-delay 0
       show-paren-style 'parenthesis)
