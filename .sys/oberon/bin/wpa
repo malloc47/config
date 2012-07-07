@@ -1,3 +1,4 @@
 #!/bin/bash
+sudo ifconfig eth0 down
 sudo wpa_supplicant -B -D wext -c ~/.wpa -i wlan0
-sudo dhcpcd -d -n wlan0
+sudo dhcpcd -A -d -n wlan0
