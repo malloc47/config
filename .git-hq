@@ -214,3 +214,8 @@ id = 037095d57a33c2e14fe163824e0aff2843f169c0
 repos = bitbucket
 path = /home/malloc47/src/projects/dissertation
 
+[snippets]
+id = 97aea228fe7fd64627930b82392b25dc022d5e3e
+repos = bitbucket
+path = /home/malloc47/src/projects/snippets
+
