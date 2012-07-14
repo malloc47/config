@@ -52,8 +52,6 @@ wiki() { dig +short txt "$*".wp.dg.cx; }
 
 calc () { echo "$*" | bc -l; }
 
-term-do ()  { /home/malloc47/src/projects/term-do/term-do "$*" ; builtin cd $(cat ~/.term-do.d/pwd); }
-
 IFS_OLD="$IFS"
 
 ifs-old () { IFS=$IFS_OLD; }

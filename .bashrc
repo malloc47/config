@@ -41,7 +41,7 @@ export CVSROOT=":ext:malloc47@brent:/usr/local/cvs"
 CDPATH=.:~/src/projects/
 
 # Where my scripts live
-PATH=~/bin:~/src/projects/term-do:~/src/projects/git-hq:$PATH
+PATH=~/bin:~/src/projects/git-hq:$PATH
 
 # Pager using vim
 #export PAGER=~/bin/vimpager
