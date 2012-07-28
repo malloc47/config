@@ -219,3 +219,8 @@ id = 97aea228fe7fd64627930b82392b25dc022d5e3e
 repos = bitbucket,github
 path = /home/malloc47/src/projects/snippets
 
+[huntstand]
+id = a641e9d8bb6d7695bbbbe73081d83dd4fae65ae6
+repos = bitbucket
+path = /home/malloc47/src/projects/huntstand
+
