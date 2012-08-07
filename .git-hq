@@ -229,3 +229,8 @@ id = fdd6b36f01b34cdf8c978ce2144784baf995fc57
 repos = github
 path = /home/malloc47/src/projects/reveal.js
 
+[android-intro-workshop]
+id = 04189c18ea8a2129c51aab404ad241282a7c0c29
+repos = github
+path = /home/malloc47/src/projects/android-intro-workshop
+
