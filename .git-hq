@@ -224,13 +224,13 @@ id = a641e9d8bb6d7695bbbbe73081d83dd4fae65ae6
 repos = bitbucket
 path = /home/malloc47/src/projects/huntstand
 
-[reveal.js]
-id = fdd6b36f01b34cdf8c978ce2144784baf995fc57
-repos = github
-path = /home/malloc47/src/projects/reveal.js
-
 [android-intro-workshop]
 id = 04189c18ea8a2129c51aab404ad241282a7c0c29
 repos = github
 path = /home/malloc47/src/projects/android-intro-workshop
+
+[android-intro-slides]
+id = 36828aea437d9c86a3e1b812eec8e6dfc370ea99
+repos = github
+path = /home/malloc47/src/projects/android-intro-slides
 
