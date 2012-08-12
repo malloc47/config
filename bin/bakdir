@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+EXPECTED_ARGS=2
+E_BADARGS=65
+if [ $# -lt $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` [source] [target-dir] [num-backups]"
+  exit $E_BADARGS
+fi
+
+source=$1
+target=$2
+num=7
+
+if [ $# -gt 2 ] ; then
+    num=$3
+fi
+
+if [ ! -e "$source" ] ; then
+    echo "Source doesn't exist!"
+    exit 1
+fi
+
+if [ ! -d "$target" ] ; then
+    echo "Target doesn't exist!"
+    exit 1
+fi
+
+rotatef 7 $target/$(basename $source)
+if [ -e $target/$(basename $source).1 ] ; then
+    rsync -au --link-dest=$target/$(basename $source).1 $source $target/$(basename $source).0
+else
+    rsync -au $source $target/$(basename $source).0
+fi
