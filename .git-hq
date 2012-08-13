@@ -234,3 +234,8 @@ id = 36828aea437d9c86a3e1b812eec8e6dfc370ea99
 repos = github
 path = /home/malloc47/src/projects/android-intro-slides
 
+[weibo]
+id = da949d8206bda55543d146312571b3232f459785
+repos = bitbucket
+path = /home/malloc47/src/projects/weibo
+
