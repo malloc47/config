@@ -239,3 +239,8 @@ id = da949d8206bda55543d146312571b3232f459785
 repos = bitbucket
 path = /home/malloc47/src/projects/weibo
 
+[jobapp]
+id = 20b89ecd79e12f0b5b9e3c80674e323de8905918
+repos = bitbucket
+path = /home/malloc47/src/projects/jobapp
+
