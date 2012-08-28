@@ -239,3 +239,8 @@ id = da949d8206bda55543d146312571b3232f459785
 repos = bitbucket
 path = /home/malloc47/src/projects/weibo
 
+[nonpartisan.me]
+id = e2224e19efa076ba966b7235e242db47bb4217d4
+repos = bitbucket
+path = /home/malloc47/src/projects/nonpartisan.me
+
