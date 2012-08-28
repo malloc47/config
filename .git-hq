@@ -244,3 +244,8 @@ id = 20b89ecd79e12f0b5b9e3c80674e323de8905918
 repos = bitbucket
 path = /home/malloc47/src/projects/jobapp
 
+[nonpartisan.me]
+id = e2224e19efa076ba966b7235e242db47bb4217d4
+repos = bitbucket
+path = /home/malloc47/src/projects/nonpartisan.me
+
