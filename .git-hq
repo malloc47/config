@@ -1,6 +1,7 @@
 [DEFAULT]
 uname = malloc47
 uname2 = open-it-lab
+uname3 = huntstand
 
 [remotes]
 github = git@github.com:%(uname)s/{Repo}.git
@@ -8,6 +9,7 @@ bitbucket = git@bitbucket.org:%(uname)s/{repo}.git
 rhinegold = rhinegold:/mnt/extern1/var/git/{repo}.git
 github-ol = git@github.com:%(uname2)s/{Repo}.git
 bitbucket-ol = git@bitbucket.org:%(uname2)s/{repo}.git
+bitbucket-hs = git@bitbucket.org:%(uname3)s/{repo}.git
 
 [term-do]
 id = 51f850ca0920aa5a8912bd6c3b906952f25e25f0
@@ -246,6 +248,11 @@ path = /home/malloc47/src/projects/jobapp
 
 [nonpartisan.me]
 id = e2224e19efa076ba966b7235e242db47bb4217d4
-repos = bitbucket
+repos = bitbucket,github
 path = /home/malloc47/src/projects/nonpartisan.me
+
+[hs-web]
+id = 2ed41dcd15d47df625b1adb70069951eab8fcf69
+repos = bitbucket-hs
+path = /home/malloc47/src/projects/hs-web
 
