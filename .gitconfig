@@ -6,3 +6,5 @@
         s = status -s -uno 
         gl = log --oneline --graph
 
+[branch]
+	autosetuprebase = always
