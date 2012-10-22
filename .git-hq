@@ -256,3 +256,8 @@ id = 2ed41dcd15d47df625b1adb70069951eab8fcf69
 repos = bitbucket-hs
 path = /home/malloc47/src/projects/hs-web
 
+[expirefield]
+id = d62ab8af50366e850f081f1546e91a6076ead666
+repos = github,bitbucket
+path = /home/malloc47/src/projects/expirefield
+
