@@ -229,9 +229,11 @@
 				     `((,(concatenate 'string "\\(^\\|[^a-zA-Z0-9]\\)\\(" word "\\)[^a-zA-Z]")
 					(0 (progn (compose-region (match-beginning 2) (match-end 2)
 								  ,greek-char)
-						  nil)))))))))  (add-hook 'lisp-mode-hook 'pretty-greek)
+						  nil)))))))))
+(add-hook 'lisp-mode-hook 'pretty-greek)
 (add-hook 'emacs-lisp-mode-hook 'pretty-greek)
 (add-hook 'scheme-mode-hook 'pretty-greek)
+(add-hook 'python-mode-hook 'pretty-greek)
 
 ;; TODO fix terminal bindings with this
 ;; (defvar real-keyboard-keys
