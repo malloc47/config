@@ -261,3 +261,8 @@ id = d62ab8af50366e850f081f1546e91a6076ead666
 repos = github,bitbucket
 path = /home/malloc47/src/projects/expirefield
 
+[git-workshop]
+id = cda75410c4f15ea8bebacf2832e371ff0be67f5a
+repos = github-ol
+path = /home/malloc47/usr/git-workshop
+
