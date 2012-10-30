@@ -266,3 +266,8 @@ id = cda75410c4f15ea8bebacf2832e371ff0be67f5a
 repos = github-ol
 path = /home/malloc47/usr/git-workshop
 
+[cvpr2013]
+id = 025b5459a1b7dcf1bcf2811d9b78f1e89ee8010d
+repos = bitbucket
+path = /home/malloc47/src/projects/matsci/cvpr2013
+
