@@ -271,3 +271,8 @@ id = 025b5459a1b7dcf1bcf2811d9b78f1e89ee8010d
 repos = bitbucket
 path = /home/malloc47/src/projects/matsci/cvpr2013
 
+[proposal]
+id = ca502f2d61693f9fa1353d038eda3cc1e2abb8b6
+repos = bitbucket
+path = /home/malloc47/src/projects/proposal
+
