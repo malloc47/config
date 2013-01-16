@@ -191,10 +191,10 @@ id = 89ab53c329169608ef2c15748640e2080d3c5ed5
 repos = github-ol
 path = /home/malloc47/usr/ol-curriculum
 
-[waggoner2013]
+[tip2013]
 id = 3d880f263e932d535113ee630567dd90c9e3ed5a
 repos = bitbucket
-path = /home/malloc47/src/projects/matsci/waggoner2013
+path = /home/malloc47/src/projects/matsci/tip2013
 
 [pmldap]
 id = 06e6164bda8775a518be19faac059de2305b18ee
