@@ -166,6 +166,10 @@
 
 (setenv "PYTHONPATH" ".")
 
+;;; JS
+
+(setq-default indent-tabs-mode nil)
+
 ;;; Highlight parens
 (setq show-paren-delay 0
       show-paren-style 'parenthesis)
@@ -234,6 +238,7 @@
 (add-hook 'emacs-lisp-mode-hook 'pretty-greek)
 (add-hook 'scheme-mode-hook 'pretty-greek)
 (add-hook 'python-mode-hook 'pretty-greek)
+(add-hook 'latex-mode-hook 'pretty-greek)
 
 ;; TODO fix terminal bindings with this
 ;; (defvar real-keyboard-keys
