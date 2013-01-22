@@ -281,3 +281,8 @@ id = a0d6065e2860adb1485abcb2b36612997e633e10
 repos = bitbucket
 path = /home/malloc47/src/projects/matsci/spie2013
 
+[job-search]
+id = b44f20346ebc4e36c69cf8ac9cd412bb93649f2c
+repos = bitbucket
+path = /home/malloc47/usr/job-search
+
