@@ -286,3 +286,8 @@ id = b44f20346ebc4e36c69cf8ac9cd412bb93649f2c
 repos = bitbucket
 path = /home/malloc47/usr/job-search
 
+[comps]
+id = 67cda72794882a9ce3e3d833380bee46adf90dcf
+repos = bitbucket
+path = /home/malloc47/src/projects/comps
+
