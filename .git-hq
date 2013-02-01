@@ -291,3 +291,8 @@ id = 67cda72794882a9ce3e3d833380bee46adf90dcf
 repos = bitbucket
 path = /home/malloc47/src/projects/comps
 
+[posscon]
+id = f0861d43f3d85dda0371b4d51a45115bcddbf6c4
+repos = bitbucket,github-ol
+path = /home/malloc47/usr/posscon
+
