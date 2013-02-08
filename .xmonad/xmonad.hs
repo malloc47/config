@@ -24,6 +24,7 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.UrgencyHook
+import XMonad.Hooks.EwmhDesktops
 
 import XMonad.Layout
 import XMonad.Layout.Grid
@@ -67,6 +68,7 @@ main = do
       , manageHook = manageDocks <+> myManageHook <+> manageHook defaultConfig
       , layoutHook = smartBorders $ avoidStruts $ myLayoutHook
       , logHook = dynamicLogWithPP $ myDzenPP myStatusBarPipe
+      , handleEventHook = fullscreenEventHook
       , modMask = mod4Mask
       , keys = myKeys
       , XMonad.Core.workspaces = myWorkspaces
