@@ -7,6 +7,6 @@
         gl = log --oneline --graph
 
 [branch]
-	autosetuprebase = always
+	autosetuprebase = never
 [push]
 	default = simple
