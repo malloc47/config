@@ -165,10 +165,12 @@
 ;;; Python
 
 (setenv "PYTHONPATH" ".")
+(setq-default python-indent 4)
 
 ;;; JS
 
 (setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
 
 ;;; Highlight parens
 (setq show-paren-delay 0
