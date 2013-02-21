@@ -278,7 +278,7 @@ path = /home/malloc47/src/projects/proposal
 
 [spie2013]
 id = a0d6065e2860adb1485abcb2b36612997e633e10
-repos = bitbucket
+repos = bitbucket,github
 path = /home/malloc47/src/projects/matsci/spie2013
 
 [job-search]
@@ -295,4 +295,14 @@ path = /home/malloc47/src/projects/comps
 id = f0861d43f3d85dda0371b4d51a45115bcddbf6c4
 repos = bitbucket,github-ol
 path = /home/malloc47/usr/posscon
+
+[maxflow.js]
+id = f77bd122a17e491ab9be45cb1a8b955c928d2eb5
+repos = github
+path = /home/malloc47/src/projects/maxflow.js
+
+[pytopocut]
+id = 1f93bdd0200668f499aefd4c5dd342c5adcfcfaa
+repos = bitbucket
+path = /home/malloc47/src/projects/matsci/pytopocut
 
