@@ -18,6 +18,7 @@ xsetroot -cursor_name left_ptr
 
 feh --bg-scale ~/media/img/wallpaper/current.jpg
 urxvtd &
+rm ~/.emacs.desktop.lock
 emacs --daemon &
 xscreensaver -no-splash &
 xmodmap .Xmodmap
