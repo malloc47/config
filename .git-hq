@@ -266,8 +266,13 @@ id = cda75410c4f15ea8bebacf2832e371ff0be67f5a
 repos = github-ol
 path = /home/malloc47/usr/git-workshop
 
+[iccv2013]
+id = ba6eebd12a9d6c6c3cf9bd356ed9f68f52d97ad0
+repos = bitbucket
+path = /home/malloc47/src/projects/matsci/iccv2013
+
 [cvpr2013]
-id = 025b5459a1b7dcf1bcf2811d9b78f1e89ee8010d
+id = 7e4fcc3afa005fcb415dcc8019d218ce4e550c6b
 repos = bitbucket
 path = /home/malloc47/src/projects/matsci/cvpr2013
 
@@ -305,4 +310,19 @@ path = /home/malloc47/src/projects/maxflow.js
 id = 1f93bdd0200668f499aefd4c5dd342c5adcfcfaa
 repos = bitbucket
 path = /home/malloc47/src/projects/matsci/pytopocut
+
+[cs-careers]
+id = d3507b9dd83f5b06ede08e860a82f49dd9595bb3
+repos = github
+path = /home/malloc47/src/projects/talks/cs-careers
+
+[posscon2013]
+id = 202af35033bcc37576bab66b641c87a3934a22c6
+repos = github
+path = /home/malloc47/src/projects/talks/posscon2013
+
+[rewrite-buffer]
+id = c73d58c542f91e49d0fa35a65ef1487598157a35
+repos = github
+path = /home/malloc47/src/projects/rewrite-buffer
 
