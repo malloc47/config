@@ -326,3 +326,8 @@ id = c73d58c542f91e49d0fa35a65ef1487598157a35
 repos = github
 path = /home/malloc47/src/projects/rewrite-buffer
 
+[gsd2013]
+id = c4d80b1b2aafce5c1ef794482c01f7aa95d8cc3b
+repos = github
+path = /home/malloc47/src/projects/matsci/gsd2013
+
