@@ -331,3 +331,8 @@ id = c4d80b1b2aafce5c1ef794482c01f7aa95d8cc3b
 repos = github
 path = /home/malloc47/src/projects/matsci/gsd2013
 
+[cover-letter]
+id = 49b466b3bd73ae83f4b7b3d0c28d40a559a8df7f
+repos = bitbucket
+path = /home/malloc47/usr/cover-letter
+
