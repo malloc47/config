@@ -51,10 +51,10 @@ id = ee9678f43baf8d22a42abc60c8c02c33247b65c7
 repos = bitbucket
 path = /home/malloc47/src/projects/matsci/matsci-slides
 
-[matsciskel]
+[matsciseg]
 id = 577669655345df5b06787392ef2af008b4ff9829
 repos = bitbucket
-path = /home/malloc47/src/projects/matsci/matsciskel
+path = /home/malloc47/src/projects/matsci/matsciseg
 
 [matscicut]
 id = 374ab3a26836fec472c70ac69203fde893c069cc
