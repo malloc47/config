@@ -53,7 +53,7 @@ path = /home/malloc47/src/projects/matsci/matsci-slides
 
 [matsciseg]
 id = 577669655345df5b06787392ef2af008b4ff9829
-repos = bitbucket
+repos = bitbucket,github
 path = /home/malloc47/src/projects/matsci/matsciseg
 
 [matscicut]
