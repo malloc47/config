@@ -336,3 +336,8 @@ id = 49b466b3bd73ae83f4b7b3d0c28d40a559a8df7f
 repos = bitbucket
 path = /home/malloc47/usr/cover-letter
 
+[befunge.py]
+id = b186e36afb47535f8c23591c168b42b13b032f1f
+repos = github
+path = /home/malloc47/src/projects/befunge.py
+
