@@ -341,3 +341,8 @@ id = b186e36afb47535f8c23591c168b42b13b032f1f
 repos = github
 path = /home/malloc47/src/projects/befunge.py
 
+[etsy]
+id = f5a8f97b7bb6ae371f56df15c519bf753b810049
+repos = bitbucket
+path = /home/malloc47/src/projects/etsy
+
