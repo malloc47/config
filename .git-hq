@@ -277,7 +277,7 @@ repos = bitbucket
 path = /home/malloc47/src/projects/matsci/cvpr2013
 
 [dissertation]
-id = bff21cf1e464d34209091e9d6449d2e437a11897 
+id = bff21cf1e464d34209091e9d6449d2e437a11897
 repos = bitbucket
 path = /home/malloc47/src/projects/dissertation
 
@@ -350,4 +350,9 @@ path = /home/malloc47/src/projects/befunge.py
 id = f5a8f97b7bb6ae371f56df15c519bf753b810049
 repos = bitbucket
 path = /home/malloc47/src/projects/etsy
+
+[mva2014]
+id = b3032ab63ab6cb7de284d846327d75540fca79c2
+repos = bitbucket
+path = /home/malloc47/src/projects/matsci/mva2014
 
