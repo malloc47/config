@@ -356,3 +356,8 @@ id = b3032ab63ab6cb7de284d846327d75540fca79c2
 repos = bitbucket
 path = /home/malloc47/src/projects/matsci/mva2014
 
+[cs-phd-jobs]
+id = c0d7fb0f4991ee49721c107aa9bd03694190a893
+repos = bitbucket
+path = /home/malloc47/src/projects/talks/cs-phd-jobs
+
