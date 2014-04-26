@@ -361,3 +361,7 @@ id = c0d7fb0f4991ee49721c107aa9bd03694190a893
 repos = bitbucket
 path = /home/malloc47/src/projects/talks/cs-phd-jobs
 
+[prelude]
+id = f462aca2b2b1f9276a1449d33ad0752dd759eeba
+repos = github
+path = /home/malloc47/src/cfg/config/.emacs.d/

@@ -16,12 +16,19 @@ xsetroot -cursor_name left_ptr
 
 #trayer --transparent true --widthtype pixel --width 103 --height 8 --align right --edge top --expand true --tint 0x000000 --alpha 0 &
 
-feh --bg-scale ~/media/img/wallpaper/current.jpg
 urxvtd &
 rm ~/.emacs.desktop.lock
 emacs --daemon &
-xscreensaver -no-splash &
+[ "`hostname`" != "groupon" ] && xscreensaver -no-splash &
 xmodmap .Xmodmap
 xset r rate 200 30
+
+if [ "`hostname`" == "groupon" ] ; then
+	xrdb -merge ~/.Xresources
+	# xrandr -s 2560x1600
+	vmware-user-suid-wrapper
+fi
+
+feh --bg-scale ~/media/img/wallpaper/current.jpg
 
 exec xmonad
