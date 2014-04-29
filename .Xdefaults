@@ -84,6 +84,7 @@ urxvt*saveLines:         65535
 urxvt*cursorBlink:       false
 urxvt*urgentOnBell:       true
 urxvt*iso14755:          false
+urxvt*loginShell:         true
 
 urxvt*font:     xft:Inconsolata:size=10 
 urxvt*boldFont: xft:Inconsolata:bold:size=10
