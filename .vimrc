@@ -1,28 +1,14 @@
-syn on
-
 set tabstop=4
-" set expandtab
-set shiftwidth=4
-
 set smartindent
 set cindent 
-
 set mouse=a
-
-set foldmethod=marker
-
 set nu
 
 set t_Co=256
-colorscheme zenburn
+syntax enable
+set background=light
+colorscheme solarized
 
 filetype on
-filetype plugin on
 
 set pastetoggle=<F12>
-
-au BufRead,BufNewFile *.sc set filetype=scheme
-
-map <F2> :call Send_to_Screen("make\n")<CR> 
-
-set clipboard=unnamedplus
