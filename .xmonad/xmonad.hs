@@ -1,6 +1,7 @@
 import XMonad
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.SetWMName
 import qualified Data.Map as M
 
 -- The main function.
@@ -18,6 +19,7 @@ myConfig = defaultConfig
   , borderWidth = myBorderWidth
   , workspaces  = myWorkspaces
   , keys = myKeys
+  , startupHook = setWMName "LG3D"
   }
 
 myTerminal    = "urxvtc"
