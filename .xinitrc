@@ -8,9 +8,9 @@ emacs --daemon &
 [ "`hostname`" != "groupon" ] && xscreensaver -no-splash &
 xmodmap .Xmodmap
 xset r rate 200 30
+xrdb -merge ~/.Xdefaults
 
 if [ "`hostname`" == "groupon" ] ; then
-	xrdb -merge ~/.Xresources
 	# xrandr -s 2560x1600
 	vmware-user-suid-wrapper
 fi
