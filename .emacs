@@ -1,8 +1,6 @@
 (require 'cl)
 (setq load-path (append load-path '("~/.emacs.d/")))
 
-(setq default-frame-alist '((font . "Inconsolata-12")))
-
 (setq window-system-default-frame-alist
       '(;; if frame created on x display
         (x
