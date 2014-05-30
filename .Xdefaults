@@ -72,7 +72,8 @@
 *color14:                 S_base1
 *color15:                 S_base3
 
-Xft.dpi:       184
+! 184, 227
+Xft.dpi:       109
 Xft.antialias: 1
 Xft.hinting:   1
 Xft.hintstyle: hintfull
@@ -86,11 +87,11 @@ urxvt*urgentOnBell:       true
 urxvt*iso14755:          false
 urxvt*loginShell:         true
 
-urxvt*font:     xft:Inconsolata:size=7
-urxvt*boldFont: xft:Inconsolata:bold:size=7
+urxvt*font:     xft:Inconsolata:size=10
+urxvt*boldFont: xft:Inconsolata:bold:size=10
 
 xterm*faceName: Inconsolata
-xterm*faceSize: 7
+xterm*faceSize: 10
 
-Emacs*Font: Inconsolata-7:antialias=True
+Emacs*Font: Inconsolata-12:antialias=True
 emacs.FontBackend: xft
