@@ -21,8 +21,10 @@
     markdown-mode
     magit
     find-file-in-project
+    ido-ubiquitous
     solarized-theme
-    zenburn-theme)
+    zenburn-theme
+    haskell-mode)
   "Custom package list installed on launch")
 
 (defun all-packages-installed-p ()

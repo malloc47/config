@@ -5,3 +5,5 @@
 (global-set-key (kbd "M-j") 'windmove-down)
 
 (global-set-key (kbd "C-x C-S-f") 'find-file-in-project)
+
+(global-set-key (kbd "C-x C-g") 'magit-status)
