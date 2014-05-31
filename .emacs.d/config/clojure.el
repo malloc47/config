@@ -4,6 +4,8 @@
 (require 'align-cljlet)
 (require 'clojure-mode)
 
+(setq nrepl-hide-special-buffers t)
+
 (defun clojure-reload-buffer ()
   (interactive)
   (if (and (cider-connected-p) (string= "(ns " (buffer-substring-no-properties 1 5)))
@@ -18,3 +20,5 @@
 	    (dolist (macro '(fresh conde run run* for-all for-map go go-loop
 				   for> doseq> fn> defn> defprotocol> gen-for))
 	      (put-clojure-indent macro 'defun))))
+
+(add-hook 'cider-repl-mode-hook 'paredit-mode)
