@@ -1,4 +1,9 @@
-(provide 'global)
+(provide 'config)
+
+(ensure-packages-installed 'markdown-mode
+			   'haskell-mode
+			   'find-file-in-project
+			   'ido-ubiquitous)
 
 ;; smooth scrolling
 (setq redisplay-dont-pause t

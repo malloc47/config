@@ -1,5 +1,7 @@
 (provide 'vc)
 
+(ensure-packages-installed 'magit)
+
 (require 'magit)
 (setq magit-completing-read-function
     'magit-ido-completing-read)

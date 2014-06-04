@@ -1,10 +1,11 @@
 (add-to-list 'load-path (concat user-emacs-directory
 				(convert-standard-filename "config/")))
 
-(require 'package-config)
-(require 'global)
+;; Load package-related utilities for other libraries
+(require 'package-manager)
+
+(require 'config)
 (require 'theme)
-(require 'line-numbers)
 (require 'backup)
 (require 'vc)
 (require 'lisp)
