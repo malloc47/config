@@ -9,6 +9,8 @@
 (add-to-list 'package-archives
              '("gnu" . "http://elpa.gnu.org/packages/"))
 
+;; inspired by https://github.com/rexim/emacs.rc/blob/master/.emacs.rc/package-manager-rc.el
+
 (defvar package-manager-refreshed nil)
 
 (defun package-manager-refresh-once ()
