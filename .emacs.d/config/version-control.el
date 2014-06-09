@@ -1,4 +1,4 @@
-(provide 'vc)
+(provide 'version-control)
 
 (ensure-packages-installed 'magit)
 

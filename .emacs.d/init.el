@@ -7,7 +7,7 @@
 (require 'config)
 (require 'theme)
 (require 'backup)
-(require 'vc)
+(require 'version-control)
 (require 'lisp)
 (require 'clojure)
 (require 'elisp)
