@@ -6,6 +6,8 @@
 (setq magit-completing-read-function
     'magit-ido-completing-read)
 
+(setq vc-follow-symlinks t)
+
 (defun my-magit-hook ()
   ;; prevent magit from stealing M-h from winmove
   (define-key magit-mode-map (kbd "M-h") nil)
