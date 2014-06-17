@@ -6,8 +6,6 @@
 (require 'align-cljlet)
 (require 'clojure-mode)
 
-(setq nrepl-hide-special-buffers t)
-
 (defun clojure-reload-buffer ()
   (interactive)
   (if (and (cider-connected-p) (string= "(ns " (buffer-substring-no-properties 1 5)))
