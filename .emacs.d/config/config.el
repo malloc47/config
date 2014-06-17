@@ -56,3 +56,7 @@
        (interactive "P")
        (let* ((fn-list (dired-get-marked-files nil arg)))
          (mapc 'find-file fn-list)))))
+
+;; ERC settings
+
+(setq erc-hide-list '("JOIN" "PART" "QUIT" "NICK"))
