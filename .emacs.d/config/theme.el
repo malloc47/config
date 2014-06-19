@@ -8,9 +8,11 @@
 (scroll-bar-mode -1)
 (fringe-mode 0)
 
+(setq solarized-distinct-fringe-background t)
+
 ;; load color theme
 (load-theme 'solarized-light t)
 
 ;; line numbers
 (add-hook 'find-file-hook (lambda () (linum-mode 1)))
-(setq linum-format "%3d\u2506")
+(setq linum-format "%3d ")
