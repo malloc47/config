@@ -6,7 +6,8 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
-(fringe-mode 0)
+;; show fringe on right for git-gutter-fringe
+(fringe-mode '(0 . 8))
 
 (setq solarized-distinct-fringe-background t)
 
