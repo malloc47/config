@@ -1,6 +1,6 @@
 (provide 'version-control)
 
-(ensure-packages-installed 'magit 'git-gutter-fringe)
+(ensure-packages-installed 'magit 'git-gutter-fringe 'git-timemachine)
 
 (require 'magit)
 (setq magit-completing-read-function
