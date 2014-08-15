@@ -21,6 +21,6 @@
 				   for> doseq> fn> defn> defprotocol> gen-for))
 	      (put-clojure-indent macro 'defun))
 	    (clj-refactor-mode 1)
-	    (cljr-add-keybindings-with-prefix "C-c C-u")))
+	    (cljr-add-keybindings-with-prefix "C-c C-v")))
 
 (add-hook 'cider-repl-mode-hook 'paredit-mode)
