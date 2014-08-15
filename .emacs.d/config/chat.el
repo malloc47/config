@@ -13,3 +13,4 @@
 (setq jabber-chat-buffer-show-avatar nil)
 (setq jabber-show-resources nil)
 (setq jabber-roster-line-format "%c %-25n %u %-8s  %S")
+(setq jabber-alert-presence-message-function (lambda (who oldstatus newstatus statustext) nil))
