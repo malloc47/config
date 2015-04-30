@@ -3,7 +3,7 @@ xset +fp /usr/share/fonts/local
 xset fp rehash
 xsetroot -cursor_name left_ptr
 urxvtd &
-rm ~/.emacs.desktop.lock
+rm ~/.emacs.d/.emacs.desktop.lock
 emacs --daemon &
 [ "`hostname`" != "groupon" ] && xscreensaver -no-splash &
 xmodmap .Xmodmap
