@@ -1,6 +1,6 @@
 (provide 'version-control)
 
-(ensure-packages-installed 'magit 'git-gutter-fringe 'git-timemachine)
+(ensure-packages-installed 'magit 'git-timemachine)
 
 (require 'magit)
 (setq magit-completing-read-function
@@ -15,10 +15,6 @@
   (define-key magit-mode-map (kbd "M-H") 'magit-show-only-files))
 
 (add-hook 'magit-mode-hook 'my-magit-hook)
-
-(require 'git-gutter-fringe)
-(global-git-gutter-mode t)
-(setq git-gutter-fr:side 'right-fringe)
 
 (defun shell->list (cmd)
   (split-string
