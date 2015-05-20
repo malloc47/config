@@ -1,7 +1,7 @@
 {:user {:plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]
                   [com.palletops/lein-shorthand "0.4.0"]
-                  [lein-cljfmt "0.1.7"]
-                  [refactor-nrepl "1.0.4"]]
+                  [lein-cljfmt "0.1.10"]
+                  [refactor-nrepl "1.1.0-SNAPSHOT"]]
         :dependencies [[org.clojure/tools.nrepl "0.2.7"]]
         :shorthand {. [clojure.repl/apropos
                        clojure.repl/doc
