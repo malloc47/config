@@ -5,9 +5,13 @@
 (add-to-list 'package-archives
              '("marmalade" . "http://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives
-             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+             '("melpa" . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives
+             '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives
              '("gnu" . "http://elpa.gnu.org/packages/"))
+
+(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 
 ;; inspired by https://github.com/rexim/emacs.rc/blob/master/.emacs.rc/package-manager-rc.el
 
