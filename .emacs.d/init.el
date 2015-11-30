@@ -11,6 +11,7 @@
 (require 'lisp)
 (require 'clojure)
 (require 'elisp)
+(require 'python)
 (require 'email)
 (require 'chat)
 (require 'keys)
