@@ -12,6 +12,8 @@
              '("gnu" . "http://elpa.gnu.org/packages/"))
 
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(clj-refactor . "melpa-stable") t)
 
 ;; inspired by https://github.com/rexim/emacs.rc/blob/master/.emacs.rc/package-manager-rc.el
 
