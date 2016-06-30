@@ -1,6 +1,6 @@
 (provide 'clojure)
 
-(ensure-packages-installed 'clojure-mode 'cider 'align-cljlet 'paredit 'clj-refactor)
+(ensure-packages-installed 'clojure-mode 'cider 'align-cljlet 'paredit)
 
 (require 'paredit)
 (require 'align-cljlet)
@@ -13,9 +13,7 @@
 	    (define-key clojure-mode-map (kbd "C-c C-a") 'align-cljlet)
 	    (dolist (macro '(fresh conde run run* for-all for-map go go-loop
 				   for> doseq> fn> defn> defprotocol> gen-for))
-	      (put-clojure-indent macro 'defun))
-	    (clj-refactor-mode 1)
-	    (cljr-add-keybindings-with-prefix "C-c C-v")))
+	      (put-clojure-indent macro 'defun))))
 
 (setq cider-prompt-for-symbol nil)
 

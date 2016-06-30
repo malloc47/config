@@ -31,4 +31,5 @@
 (add-hook 'python-mode-hook
           (lambda ()
 	    (python-pretty-lambda)
-	    (prettify-symbols-mode +1)))
+	    ;(prettify-symbols-mode +1)
+	    ))

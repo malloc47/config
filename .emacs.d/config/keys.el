@@ -26,3 +26,8 @@
 				     "Go to middle of page."
 				     (interactive)
 				     (move-to-window-line (/ (window-height) 2)))))
+
+(keyboard-translate ?\[ ?\()
+(keyboard-translate ?\] ?\))
+(keyboard-translate ?\( ?\[)
+(keyboard-translate ?\) ?\])
