@@ -1,0 +1,12 @@
+[user]
+	name = Jarrell Waggoner
+	email = jwaggoner@drw.com
+
+[alias]
+        s = status -s -uno 
+        gl = log --oneline --graph
+
+[branch]
+	autosetuprebase = never
+[push]
+	default = simple
