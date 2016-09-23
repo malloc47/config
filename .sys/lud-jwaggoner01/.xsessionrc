@@ -1,0 +1,6 @@
+#!/bin/sh
+urxvtd &
+rm ~/.emacs.d/.emacs.desktop.lock
+emacs --daemon &
+xmodmap .Xmodmap
+xrdb -merge ~/.Xdefaults
