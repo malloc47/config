@@ -38,7 +38,7 @@ export CVS_RSH="ssh"
 export CVSROOT=":ext:malloc47@brent:/usr/local/cvs"
 
 # Include paths for most frequently visited folders
-CDPATH=.:~/src/quantumlead/
+CDPATH=.:~/src/drw/
 
 # Where my scripts live
 PATH=~/bin:~/src/projects/git-hq:$PATH
