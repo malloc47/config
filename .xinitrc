@@ -10,11 +10,6 @@ xmodmap .Xmodmap
 xset r rate 200 30
 xrdb -merge ~/.Xdefaults
 
-if [ "`hostname`" == "groupon" ] ; then
-	# xrandr -s 2560x1600
-	vmware-user-suid-wrapper
-fi
-
 feh --bg-scale ~/media/img/wallpaper/current.jpg
 
 exec xmonad
