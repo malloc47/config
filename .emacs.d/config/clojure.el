@@ -15,8 +15,14 @@
 				   for> doseq> fn> defn> defprotocol> gen-for))
 	      (put-clojure-indent macro 'defun))
 	    (clj-refactor-mode 1)
-	    (cljr-add-keybindings-with-prefix "C-c C-v")))
+	    (cljr-add-keybindings-with-prefix "C-c C-v")
+	    (local-set-key (kbd "RET") 'newline-and-indent)))
 
 (setq cider-prompt-for-symbol nil)
 
 (add-hook 'cider-repl-mode-hook 'paredit-mode)
+
+(fset 'clj-align-ns
+   (lambda (&optional arg) "Keyboard macro." (interactive "p") (kmacro-exec-ring-item (quote ([67108896 67108896 134217788 19 58 114 101 113 117 105 114 101 return 67108896 19 41 2 134217848 97 108 105 103 110 45 114 101 103 101 tab 58 97 115 backspace backspace return return 67108911 21 67108896 21 67108896 21 67108896] 0 "%d")) arg)))
+
+(setq cljr-auto-sort-ns nil)
