@@ -14,6 +14,8 @@
 
 ;; ido-mode
 (require 'ido)
+(setq ido-default-buffer-method 'selected-window)
+(setq ido-default-file-method 'selected-window)
 (setq ido-everywhere t)
 (setq ido-enable-flex-matching t)
 (setq ido-max-directory-size 1000000)
