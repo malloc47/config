@@ -2,14 +2,14 @@
 xset +fp /usr/share/fonts/local
 xset fp rehash
 xsetroot -cursor_name left_ptr
-urxvtd &
+command -v urxvtd && urxvtd &
 rm ~/.emacs.d/.emacs.desktop.lock
-emacs --daemon &
-[ "`hostname`" != "groupon" ] && xscreensaver -no-splash &
+command -v emacs && emacs --daemon &
+command -v xscreensaver && xscreensaver -no-splash &
 xmodmap .Xmodmap
 xset r rate 200 30
 xrdb -merge ~/.Xdefaults
-
-feh --bg-scale ~/media/img/wallpaper/current.jpg
+command -v xbindkeys && xbindkeys
+command -v feh && feh --bg-scale ~/media/img/wallpaper/current.jpg
 
 exec xmonad
