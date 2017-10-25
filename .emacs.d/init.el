@@ -15,3 +15,4 @@
 (require 'email)
 (require 'chat)
 (require 'keys)
+(require 'osx)
