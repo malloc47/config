@@ -12,6 +12,7 @@
 (require 'clojure)
 (require 'elisp)
 (require 'python)
+(require 'scala)
 (require 'email)
 (require 'chat)
 (require 'keys)
