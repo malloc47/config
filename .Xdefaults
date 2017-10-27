@@ -73,7 +73,6 @@
 *color15:                 S_base3
 
 ! 184, 227
-Xft.dpi:       109
 Xft.antialias: 1
 Xft.hinting:   1
 Xft.hintstyle: hintfull
