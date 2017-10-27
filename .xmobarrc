@@ -1,9 +1,9 @@
-Config { font     = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
+Config { font     = "xft:Inconsolata-8"
        , bgColor  = "#000000"
        , fgColor  = "#BFBFBF"
        , position = Top
        , lowerOnStart = True
-       , commands = [ Run $ Date "%a %b %_d %Y * %H:%M:%S" "theDate" 10
+       , commands = [ Run Date "%a %b %_d %Y * %H:%M:%S" "theDate" 10
                     , Run StdinReader]
        , sepChar  = "%"
        , alignSep = "}{"
