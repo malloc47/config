@@ -1,3 +1,3 @@
 (provide 'scala)
 
-(ensure-packages-installed 'ensime)
+(ensure-packages-installed 'ensime 'scala-mode 'sbt-mode)
