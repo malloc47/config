@@ -17,3 +17,4 @@
 (require 'chat)
 (require 'keys)
 (require 'osx)
+(require 'typescript)
