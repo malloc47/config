@@ -14,6 +14,12 @@
   (setq solarized-distinct-fringe-background t)
   (load-theme 'solarized-light t))
 
+(defun new-frame-setup (frame)
+  (when (display-graphic-p frame)
+    (setq solarized-distinct-fringe-background t)
+    (load-theme 'solarized-light t)))
+(add-hook 'after-make-frame-functions 'new-frame-setup)
+
 ;; line numbers
 (add-hook 'find-file-hook (lambda () (linum-mode 1)))
 (setq linum-format "%3d ")
