@@ -13,6 +13,7 @@
 (require 'elisp)
 (require 'python)
 (require 'scala)
+(require 'haskell)
 (require 'email)
 (require 'chat)
 (require 'keys)
