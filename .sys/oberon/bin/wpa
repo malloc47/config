@@ -1,8 +1,0 @@
-#!/bin/bash
-sudo ifconfig eth0 down
-if [ $# -lt  1 ] ; then
-	sudo wpa_supplicant -B -D wext -c ~/.wpa -i wlan0
-else
-	sudo wpa_supplicant -B -D wext -c $1 -i wlan0
-fi
-sudo dhcpcd -A -d -n wlan0
