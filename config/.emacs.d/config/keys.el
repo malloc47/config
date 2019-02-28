@@ -5,6 +5,9 @@
 (global-set-key (kbd "M-k") 'windmove-up)
 (global-set-key (kbd "M-j") 'windmove-down)
 
+;; Disable M-h in org-mode in favor of windmove-left
+(define-key org-mode-map (kbd "M-h") nil)
+
 (global-set-key (kbd "C-x C-S-f") 'find-file-in-project)
 
 (global-set-key (kbd "C-x C-g") 'magit-status)
