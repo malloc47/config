@@ -3,6 +3,10 @@
 {
   nixpkgs.config.allowUnfree = true;
 
+  nixpkgs.overlays = [
+    (import ../pkgs/default.nix)
+  ];
+
   time.timeZone = "America/Chicago";
 
   environment.systemPackages = with pkgs; [
@@ -10,6 +14,7 @@
   ];
 
   fonts.fonts = with pkgs; [
+    geosanslight
     inconsolata
     libertine
     libre-baskerville
