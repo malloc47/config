@@ -11,6 +11,8 @@
 
   fonts.fonts = with pkgs; [
     inconsolata
+    libertine
+    libre-baskerville
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
