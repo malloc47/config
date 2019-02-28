@@ -26,6 +26,8 @@
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
 
+  programs.ssh.startAgent = true;
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
   services.xserver.layout = "us";
