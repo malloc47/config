@@ -8,9 +8,12 @@ in
 
   home.packages = with pkgs; [
     alacritty
+    evince
     firefox
     google-chrome
     home-manager
+    jq
+    python37
     tmux
   ];
 
