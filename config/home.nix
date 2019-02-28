@@ -45,7 +45,7 @@ in
         "${mod}+Shift+c" = "kill";
         "${mod}+Return" = "exec alacritty";
         "${mod}+Shift+Return" = "exec alacritty -e tmux";
-        "${mod}+Shift+e" = "exec emacsclient -c -a \"\"";
+        "${mod}+Shift+e" = "exec emacsclient -c";
         "${mod}+j" = "focus down";
         "${mod}+k" = "focus up";
         "${mod}+l" = "focus right";
