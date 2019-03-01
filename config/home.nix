@@ -2,6 +2,9 @@
 
 let
   mod = "Mod4";
+  compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
+    ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${../xkb/macbook-modified.xkb} $out
+  '';
 in
 {
   nixpkgs.config.allowUnfree = true;
@@ -80,6 +83,8 @@ in
       window.titlebar = false;
     };
   };
+
+  xsession.initExtra = "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY";
 
   services.screen-locker = {
     enable = true;

@@ -37,8 +37,6 @@
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
-  services.xserver.layout = "us";
-  services.xserver.xkbOptions = "ctrl:nocaps, altwin:swap_lalt_lwin";
 
   #services.xserver.dpi = 128;
 
