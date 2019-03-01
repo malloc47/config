@@ -36,8 +36,6 @@
   programs.ssh.startAgent = true;
 
   services.xserver.enable = true;
-  services.xserver.autoRepeatDelay = 250;
-  #services.xserver.dpi = 128;
 
   services.xserver.windowManager.i3.enable = true;
 
