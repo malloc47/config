@@ -35,9 +35,8 @@
 
   programs.ssh.startAgent = true;
 
-  # Enable the X11 windowing system.
   services.xserver.enable = true;
-
+  services.xserver.autoRepeatDelay = 250;
   #services.xserver.dpi = 128;
 
   services.xserver.windowManager.i3.enable = true;
