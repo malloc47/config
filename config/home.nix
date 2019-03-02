@@ -111,6 +111,41 @@ in
     };
   };
 
+  programs.zsh = {
+    enable = true;
+    enableAutosuggestions = true;
+    enableCompletion = true;
+    defaultKeymap = "emacs";
+    dotDir = ".config/zsh";
+    history = {
+      expireDuplicatesFirst = true;
+      path = ".config/zsh/.zsh_history";
+    };
+    oh-my-zsh = {
+      enable = true;
+      plugins = ["lein" "sudo"];
+      theme = "";
+    };
+    shellAliases = {
+      "ll" = "ls -al";
+    };
+    initExtra = ''
+      hg() { history | grep $1 }
+      pg() { ps aux | grep $1 }
+
+      function chpwd() {
+        emulate -L zsh
+        ls
+      }
+
+      cdpath=($HOME/src)
+    '';
+    sessionVariables = {
+      EDITOR = "vim";
+      ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=10";
+    };
+  };
+
   home.file.".inputrc".source = ./.inputrc;
   home.file.".lein" = { source = ./.lein; recursive = true; };
   home.file.".sbt" = { source = ./.sbt; recursive = true; };
