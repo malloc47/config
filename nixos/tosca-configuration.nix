@@ -22,12 +22,14 @@
     accelFactor = "0.001";
     buttonsMap = [ 1 3 2 ];
     palmDetect = true;
+    minSpeed = "1.0";
+    maxSpeed = "1.5";
     additionalOptions = ''
       Option "VertScrollDelta" "-480"
       Option "HorizScrollDelta" "-480"
       Option "FingerLow" "40"
       Option "FingerHigh" "70"
-      Option "Resolution" "720"
+      Option "Resolution" "100"
       Option "SoftButtonAreas" "93% 0 95% 0 0 0 0 0"
     '';
   };
