@@ -18,6 +18,7 @@ in
     jq
     python37
     tmux
+    feh
   ];
 
   programs.emacs.enable = true;
