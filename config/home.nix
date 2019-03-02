@@ -176,4 +176,5 @@ in
   home.file.".sbt" = { source = ./.sbt; recursive = true; };
   home.file.".alacritty.yml" = { source = ./.alacritty.yml; target = ".config/alacritty/alacritty.yml"; };
   home.file.".i3status.conf" = { source = ./.i3status.conf; target = ".config/i3status/config"; };
+  home.file.".user-dirs.dirs" = {source = ./.user-dirs.dirs; target = ".config/user-dirs.dirs";};
 }
