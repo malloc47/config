@@ -146,6 +146,31 @@ in
     };
   };
 
+  programs.bash = {
+    enable = true;
+    historyFile = "\$HOME/.config/bash/.bash_history";
+    shellAliases = {
+      "ll" = "ls -al";
+      ".." = "cd ..";
+      "..." = "cd ../../";
+      "...." = "cd ../../../";
+      "....." = "cd ../../../../";
+      "......" = "cd ../../../../../";
+    };
+    initExtra = ''
+      hg() { history | grep "$1"; }
+      pg() { ps aux | grep "$1"; }
+      cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls; else builtin cd && ls; fi }
+    '';
+    sessionVariables = {
+      CDPATH = "CDPATH=.:~/src/";
+      EDITOR = "vim";
+    };
+    shellOptions = [
+    "autocd" "cdspell" "dirspell" "globstar" # bash >= 4
+    "cmdhist" "nocaseglob" "histappend" "extglob"];
+  };
+
   home.file.".inputrc".source = ./.inputrc;
   home.file.".lein" = { source = ./.lein; recursive = true; };
   home.file.".sbt" = { source = ./.sbt; recursive = true; };
