@@ -17,7 +17,6 @@ in
     home-manager
     jq
     python37
-    tmux
     feh
   ];
 
@@ -27,6 +26,11 @@ in
   home.file.".emacs.d" = {
     source = ./.emacs.d;
     recursive = true;
+  };
+
+  programs.tmux = {
+    enable = true;
+    terminal = "tmux-256color";
   };
 
   xsession.enable = true;
