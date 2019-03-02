@@ -92,6 +92,9 @@ in
       };
       window.titlebar = false;
     };
+    extraConfig = ''
+      focus_wrapping no
+    '';
   };
 
   xsession.initExtra = "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY";
