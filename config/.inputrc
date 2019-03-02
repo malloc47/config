@@ -1,7 +1,5 @@
 set show-all-if-ambiguous on
-#set editing-mode vi
 set editing-mode emacs
-#set keymap vi
 set keymap emacs
 
 set convert-meta on
