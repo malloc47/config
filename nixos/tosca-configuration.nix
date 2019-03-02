@@ -28,6 +28,7 @@
       Option "FingerLow" "40"
       Option "FingerHigh" "70"
       Option "Resolution" "720"
+      Option "SoftButtonAreas" "93% 0 95% 0 0 0 0 0"
     '';
   };
 
