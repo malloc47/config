@@ -11,6 +11,7 @@ in
 
   home.packages = with pkgs; [
     alacritty
+    autocutsel
     evince
     feh
     firefox
@@ -177,6 +178,20 @@ in
     shellOptions = [
     "autocd" "cdspell" "dirspell" "globstar" # bash >= 4
     "cmdhist" "nocaseglob" "histappend" "extglob"];
+  };
+
+  systemd.user.services.autocutsel = {
+    Unit.Description = "AutoCutSel";
+    Install = {
+      WantedBy = [ "default.target" ];
+    };
+    Service = {
+      Type = "forking";
+      Restart = "always";
+      RestartSec = 2;
+      ExecStartPre = "${pkgs.autocutsel}/bin/autocutsel -fork";
+      ExecStart = "${pkgs.autocutsel}/bin/autocutsel -selection PRIMARY -fork";
+    };
   };
 
   home.file.".inputrc".source = ./.inputrc;
