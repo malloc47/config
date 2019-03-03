@@ -10,7 +10,9 @@
   time.timeZone = "America/Chicago";
 
   environment.systemPackages = with pkgs; [
-    wget vim
+    vim
+    wget
+    xorg.xkill
   ];
 
   fonts.fonts = with pkgs; [
