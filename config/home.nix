@@ -44,6 +44,7 @@ in
         {
           id = "bar-0";
           position = "top";
+          fonts = ["Inconsolata 10"];
         }
       ];
       keybindings = pkgs.lib.mkOptionDefault {
