@@ -12,12 +12,12 @@ in
   home.packages = with pkgs; [
     alacritty
     evince
+    feh
     firefox
     google-chrome
     home-manager
     jq
     python37
-    feh
   ];
 
   programs.emacs.enable = true;
