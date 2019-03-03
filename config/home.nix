@@ -5,6 +5,7 @@ let
   compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
     ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${../xkb/macbook-modified.xkb} $out
   '';
+  terminal = "alacritty";
 in
 {
   nixpkgs.config.allowUnfree = true;
@@ -53,8 +54,8 @@ in
         "${mod}+Control+q" = "restart";
         "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
         "${mod}+Shift+c" = "kill";
-        "${mod}+Return" = "exec alacritty";
-        "${mod}+Shift+Return" = "exec alacritty -e tmux";
+        "${mod}+Return" = "exec ${terminal}";
+        "${mod}+Shift+Return" = "exec ${terminal} -e tmux";
         "${mod}+Shift+e" = "exec emacsclient -c";
         "${mod}+j" = "focus down";
         "${mod}+k" = "focus up";
