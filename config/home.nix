@@ -202,4 +202,13 @@ in
   home.file.".alacritty.yml" = { source = ./.alacritty.yml; target = ".config/alacritty/alacritty.yml"; };
   home.file.".i3status.conf" = { source = ./.i3status.conf; target = ".config/i3status/config"; };
   home.file.".user-dirs.dirs" = {source = ./.user-dirs.dirs; target = ".config/user-dirs.dirs";};
+
+  home.file."wifi" = {
+    target = "bin/wifi";
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      ${terminal} -e nmtui
+    '';
+  };
 }
