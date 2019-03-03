@@ -70,7 +70,7 @@ in
         "${mod}+z" = "split h";
         "${mod}+space" = "layout toggle splitv splith tabbed";
         "${mod}+y" = "bar mode toggle";
-        "${mod}+Shift+N" = "exec \"xterm -e 'sudo nixos-rebuild switch; echo COMPLETE ; read -n 1 -s'\"";
+        "${mod}+Shift+N" = "exec \"xterm -e 'sudo nixos-rebuild switch; read -s -k \\?COMPLETE'\"";
         "${mod}+Shift+Control+L" = "exec i3lock";
         "${mod}+equal" = "workspace next";
         "${mod}+minus" = "workspace prev";
