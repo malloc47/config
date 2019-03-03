@@ -22,7 +22,7 @@
     accelFactor = "0.001";
     buttonsMap = [ 1 3 2 ];
     palmDetect = true;
-    minSpeed = "1.0";
+    minSpeed = "0.85";
     maxSpeed = "1.5";
     additionalOptions = ''
       Option "VertScrollDelta" "-480"
