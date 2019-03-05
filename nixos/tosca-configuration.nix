@@ -1,12 +1,11 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [
-      ./configuration.nix
-      ./macbook-air-hardware-configuration.nix
-      ./users.nix
-    ];
+  imports = [
+    ./configuration.nix
+    ./macbook-air-hardware-configuration.nix
+    ./users.nix
+  ];
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
