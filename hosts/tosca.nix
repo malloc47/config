@@ -2,9 +2,9 @@
 
 {
   imports = [
-    ../../configuration.nix
-    ../../hardware/macbook-air.nix
-    ../../../modules/settings.nix
+    ../nixos/configuration.nix
+    ../hardware/macbook-air.nix
+    ../modules/settings.nix
   ];
 
   settings.vm = false;
