@@ -5,10 +5,13 @@ let
   compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
     ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${../xkb/macbook-modified.xkb} $out
   '';
-  terminal = "alacritty";
 in
 {
   nixpkgs.config.allowUnfree = true;
+
+  imports = [
+    ../modules/settings.nix
+  ];
 
   home.packages = with pkgs; [
     alacritty
@@ -48,43 +51,53 @@ in
           fonts = ["Inconsolata 10"];
         }
       ];
-      keybindings = pkgs.lib.mkOptionDefault {
-        "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run";
-        "${mod}+q" = "reload";
-        "${mod}+Control+q" = "restart";
-        "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
-        "${mod}+Shift+c" = "kill";
-        "${mod}+Return" = "exec ${terminal}";
-        "${mod}+Shift+Return" = "exec ${terminal} -e tmux";
-        "${mod}+Shift+e" = "exec emacsclient -c";
-        "${mod}+j" = "focus down";
-        "${mod}+k" = "focus up";
-        "${mod}+l" = "focus right";
-        "${mod}+h" = "focus left";
-        "${mod}+u" = "focus parent";
-        "${mod}+Shift+U" = "focus child";
-        "${mod}+Shift+J" = "move down";
-        "${mod}+Shift+K" = "move up";
-        "${mod}+Shift+L" = "move right";
-        "${mod}+Shift+H" = "move left";
-        "${mod}+c" = "layout tabbed";
-        "${mod}+x" = "split v";
-        "${mod}+z" = "split h";
-        "${mod}+space" = "layout toggle splitv splith tabbed";
-        "${mod}+y" = "bar mode toggle";
-        "${mod}+Shift+N" = "exec \"xterm -e 'sudo nixos-rebuild switch; read -s -k \\?COMPLETE'\"";
-        "${mod}+Shift+Control+L" = "exec i3lock";
-        "${mod}+equal" = "workspace next";
-        "${mod}+minus" = "workspace prev";
-        "${mod}+grave" = "workspace 1";
-        "${mod}+Shift+r" = "nop";
-        "${mod}+v" = "nop";
-        "${mod}+e" = "nop";
-        "${mod}+s" = "nop";
-        "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
-        "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
-        "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
-      };
+      keybindings = pkgs.lib.mkOptionDefault (
+      let
+        keys = {
+          "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run";
+          "${mod}+q" = "reload";
+          "${mod}+Control+q" = "restart";
+          "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
+          "${mod}+Shift+c" = "kill";
+          "${mod}+Return" = "exec ${config.settings.terminal}";
+          "${mod}+Shift+Return" = "exec ${config.settings.terminal} -e tmux";
+          "${mod}+Shift+e" = "exec emacsclient -c";
+          "${mod}+j" = "focus down";
+          "${mod}+k" = "focus up";
+          "${mod}+l" = "focus right";
+          "${mod}+h" = "focus left";
+          "${mod}+u" = "focus parent";
+          "${mod}+Shift+U" = "focus child";
+          "${mod}+Shift+J" = "move down";
+          "${mod}+Shift+K" = "move up";
+          "${mod}+Shift+L" = "move right";
+          "${mod}+Shift+H" = "move left";
+          "${mod}+c" = "layout tabbed";
+          "${mod}+x" = "split v";
+          "${mod}+z" = "split h";
+          "${mod}+space" = "layout toggle splitv splith tabbed";
+          "${mod}+y" = "bar mode toggle";
+          "${mod}+Shift+N" = "exec \"xterm -e 'sudo nixos-rebuild switch; read -s -k \\?COMPLETE'\"";
+          "${mod}+Shift+Control+L" = "exec i3lock";
+          "${mod}+Shift+r" = "nop";
+          "${mod}+v" = "nop";
+          "${mod}+e" = "nop";
+          "${mod}+s" = "nop";
+        };
+        systemKeys = {
+          "${mod}+equal" = "workspace next";
+          "${mod}+minus" = "workspace prev";
+          "${mod}+grave" = "workspace 1";
+          "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
+          "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
+          "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
+        };
+      in
+        if config.settings.vm then
+          keys
+        else
+          keys // systemKeys
+      );
       modes.resize = {
         "h" = "resize shrink width 10 px or 10 ppt";
         "j" = "resize grow height 10 px or 10 ppt";
@@ -110,7 +123,7 @@ in
   programs.git = {
     enable = true;
     userName = "Jarrell Waggoner";
-    userEmail = "malloc47@gmail.com";
+    userEmail = config.settings.email;
     aliases = {
       s = "status -s -uno";
       gl = "log --oneline --graph";
@@ -203,12 +216,12 @@ in
   home.file.".i3status.conf" = { source = ./.i3status.conf; target = ".config/i3status/config"; };
   home.file.".user-dirs.dirs" = {source = ./.user-dirs.dirs; target = ".config/user-dirs.dirs";};
 
-  home.file."wifi" = {
+  home.file."wifi" = pkgs.lib.mkIf (!config.settings.vm) {
     target = "bin/wifi";
     executable = true;
     text = ''
       #!/usr/bin/env bash
-      ${terminal} -e nmtui
+      ${config.settings.terminal} -e nmtui
     '';
   };
 }

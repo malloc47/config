@@ -2,16 +2,18 @@
 
 {
   imports = [
-    ./configuration.nix
-    ./macbook-air-hardware-configuration.nix
-    ./users.nix
+    ../../configuration.nix
+    ../../hardware/macbook-air.nix
+    ../../../modules/settings.nix
   ];
+
+  settings.vm = false;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "tosca"; # Define your hostname.
+  networking.hostName = "tosca";
   networking.networkmanager.enable = true;
 
   services.xserver.synaptics = {
@@ -52,4 +54,6 @@
   powerManagement = { enable = true; cpuFreqGovernor = "ondemand"; };
 
   boot.initrd.kernelModules = [ "fbcon" ];
+
+  home-manager.users.${config.settings.username}.settings.vm = config.settings.vm;
 }

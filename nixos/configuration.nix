@@ -7,6 +7,11 @@
     (import ../pkgs/default.nix)
   ];
 
+  imports = [
+    ../modules/settings.nix
+    "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/master.tar.gz}/nixos"
+  ];
+
   time.timeZone = "America/Chicago";
 
   environment.systemPackages = with pkgs; [
@@ -44,6 +49,20 @@
   services.xserver.autorun = true;
 
   security.sudo.wheelNeedsPassword = false;
+
+  programs.zsh.enable = true;
+
+  users.users.${config.settings.username} = {
+    isNormalUser = true;
+    createHome = true;
+    home = "/home/malloc47";
+    description = "Jarrell Waggoner";
+    extraGroups = ["wheel" "networkmanager" "audio"];
+    uid = 1000;
+    shell = pkgs.zsh;
+  };
+
+  home-manager.users.${config.settings.username} = import ../config/home.nix ;
 
   system.stateVersion = "18.09";
 
