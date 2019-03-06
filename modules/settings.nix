@@ -9,6 +9,10 @@
  {
    options = {
      settings = {
+       name = mkOption {
+         default = "Jarrell Waggoner";
+         type = with types; uniq string;
+       };
        username = mkOption {
          default = "malloc47";
          type = with types; uniq string;

@@ -122,7 +122,7 @@ in
 
   programs.git = {
     enable = true;
-    userName = "Jarrell Waggoner";
+    userName = config.settings.name;
     userEmail = config.settings.email;
     aliases = {
       s = "status -s -uno";
