@@ -49,6 +49,8 @@
     ];
   };
 
+  sound.mediaKeys.enable = true;
+
   services.logind.extraConfig = "HandlePowerKey=suspend";
 
   powerManagement = { enable = true; cpuFreqGovernor = "ondemand"; };

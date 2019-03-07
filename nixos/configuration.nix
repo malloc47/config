@@ -35,7 +35,6 @@
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;
-  sound.mediaKeys.enable = true;
 
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
@@ -55,7 +54,7 @@
   users.users.${config.settings.username} = {
     isNormalUser = true;
     createHome = true;
-    home = "/home/malloc47";
+    home = "/home/${config.settings.username}";
     description = "Jarrell Waggoner";
     extraGroups = ["wheel" "networkmanager" "audio"];
     uid = 1000;
