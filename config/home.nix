@@ -47,6 +47,18 @@ in
     terminal = "tmux-256color";
   };
 
+  programs.ssh.enable = true;
+
+  home.file."id_rsa" = {
+    source = ./. + "/../personal/ssh/${config.settings.profile}/id_rsa";
+    target = ".ssh/id_rsa";
+  };
+
+  home.file."id_rsa.pub" = {
+    source = ./. + "/../personal/ssh/${config.settings.profile}/id_rsa.pub";
+    target = ".ssh/id_rsa.pub";
+  };
+
   xsession.enable = true;
 
   xsession.windowManager.i3 = {

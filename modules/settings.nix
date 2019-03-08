@@ -29,6 +29,15 @@ with lib;
         default = 12;
         type = types.int;
       };
+      profile = mkOption {
+        default = "malloc47";
+        type = with types; uniq string;
+        description = ''
+          Profiles are a higher-level grouping than hosts. They are
+          useful to combine multiple related things (e.g. ssh keys)
+          that should be available on multiple hosts.
+        '';
+      };
     };
   };
 }
