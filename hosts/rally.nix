@@ -10,7 +10,6 @@
   settings = {
     vm = true;
     username = "jwaggoner";
-    terminal = "WINIT_HIDPI_FACTOR=3 alacritty";
     fontSize = 9;
     profile = "rally";
   };
@@ -31,4 +30,7 @@
   fonts.fontconfig.dpi = 277;
 
   home-manager.users.${config.settings.username}.settings = config.settings;
+  # HiDPI fix for alacritty
+  environment.variables.WINIT_HIDPI_FACTOR = "3";
+
 }
