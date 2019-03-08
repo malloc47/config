@@ -132,7 +132,10 @@ in
   };
 
 
-  #xsession.initExtra = "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY";
+  xsession.initExtra = if (!config.settings.vm) then
+            "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
+          else
+            "";
 
   services.screen-locker = {
     enable = true;
