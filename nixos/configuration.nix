@@ -43,6 +43,11 @@
 
   services.xserver.enable = true;
 
+  services.xserver.desktopManager = {
+    default = "none";
+    xterm.enable = false;
+  };
+
   services.xserver.windowManager.i3.enable = true;
 
   services.xserver.autorun = true;
