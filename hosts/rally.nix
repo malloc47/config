@@ -11,6 +11,7 @@
     vm = true;
     username = "jwaggoner";
     terminal = "WINIT_HIDPI_FACTOR=3 alacritty";
+    fontSize = 9;
   };
 
   services.vmwareGuest.enable = true;

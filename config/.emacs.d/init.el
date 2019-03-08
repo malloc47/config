@@ -4,6 +4,7 @@
 ;; Load package-related utilities for other libraries
 (require 'package-manager)
 
+(require 'fonts)
 (require 'config)
 (require 'theme)
 (require 'backup)

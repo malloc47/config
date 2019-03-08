@@ -33,6 +33,15 @@ in
     recursive = true;
   };
 
+  home.file."fonts.el" = {
+    target = ".emacs.d/config/fonts.el";
+    text = ''
+      (provide 'fonts)
+      (set-default-font "Inconsolata-${toString config.settings.fontSize}")
+      (setq default-frame-alist '((font . "Inconsolata-${toString config.settings.fontSize}")))
+    '';
+  };
+
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
@@ -48,7 +57,7 @@ in
         {
           id = "bar-0";
           position = "top";
-          fonts = ["Inconsolata 10"];
+          fonts = ["Inconsolata ${toString config.settings.fontSize}"];
         }
       ];
       keybindings = pkgs.lib.mkOptionDefault (
@@ -113,7 +122,17 @@ in
     '';
   };
 
-  xsession.initExtra = "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY";
+  home.file.".Xresourcesn" = {
+    target = ".Xresources";
+    text = ''
+      Xcursor.size: 32
+      xterm*faceName: Inconsolata
+      xterm*faceSize: ${toString config.settings.fontSize}
+    '';
+  };
+
+
+  #xsession.initExtra = "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY";
 
   services.screen-locker = {
     enable = true;

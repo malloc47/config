@@ -68,5 +68,3 @@
 ;; ERC settings
 
 (setq erc-hide-list '("JOIN" "PART" "QUIT" "NICK"))
-
-(set-default-font "Inconsolata-10")

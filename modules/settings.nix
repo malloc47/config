@@ -29,6 +29,10 @@
          default = "alacritty";
          type = with types; uniq string;
        };
+       fontSize = mkOption {
+         default = 10;
+         type = types.int;
+       };
      };
    };
  }
