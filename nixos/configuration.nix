@@ -15,6 +15,7 @@
   time.timeZone = "America/Chicago";
 
   environment.systemPackages = with pkgs; [
+    feh
     vim
     wget
     xorg.xkill
