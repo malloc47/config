@@ -149,7 +149,7 @@ in
             "";
 
   services.screen-locker = {
-    enable = true;
+    enable = !config.settings.vm;
     lockCmd = "i3lock";
   };
 
