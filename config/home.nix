@@ -37,7 +37,7 @@ in
     target = ".emacs.d/config/fonts.el";
     text = ''
       (provide 'fonts)
-      (set-default-font "Inconsolata-${toString config.settings.fontSize}")
+      (set-frame-font "Inconsolata-${toString config.settings.fontSize}")
       (setq default-frame-alist '((font . "Inconsolata-${toString config.settings.fontSize}")))
     '';
   };
