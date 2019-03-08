@@ -33,7 +33,13 @@
 ;; y/n vs yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;; save sessions
+(setq desktop-dirname             "~/.emacs.d/desktop/"
+      desktop-base-file-name      "emacs.desktop"
+      desktop-base-lock-name      "lock"
+      desktop-path                (list desktop-dirname)
+      desktop-save                t
+      desktop-files-not-to-save   "^$"
+      desktop-load-locked-desktop t)
 (desktop-save-mode 1)
 
 ;; unique buffer names
