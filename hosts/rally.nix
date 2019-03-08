@@ -10,7 +10,10 @@
   settings = {
     vm = true;
     username = "jwaggoner";
+    terminal = "WINIT_HIDPI_FACTOR=3 alacritty";
   };
+
+  services.vmwareGuest.enable = true;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -21,7 +24,9 @@
 
   services.xserver.autoRepeatDelay = 250;
 
-  #services.xserver.dpi = 128;
+  services.xserver.dpi = 277;
+
+  fonts.fontconfig.dpi = 277;
 
   home-manager.users.${config.settings.username}.settings = config.settings;
 }
