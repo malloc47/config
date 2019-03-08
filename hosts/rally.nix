@@ -29,8 +29,15 @@
 
   fonts.fontconfig.dpi = 277;
 
-  home-manager.users.${config.settings.username}.settings = config.settings;
   # HiDPI fix for alacritty
   environment.variables.WINIT_HIDPI_FACTOR = "3";
 
+  home-manager.users.${config.settings.username} = {
+    settings = config.settings;
+    xsession.pointerCursor = {
+      package = pkgs.vanilla-dmz;
+      name = "Vanilla-DMZ";
+      size = 64;
+    };
+  };
 }

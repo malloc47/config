@@ -134,10 +134,9 @@ in
     '';
   };
 
-  home.file.".Xresourcesn" = {
+  home.file.".Xresources" = {
     target = ".Xresources";
     text = ''
-      Xcursor.size: 32
       xterm*faceName: Inconsolata
       xterm*faceSize: ${toString config.settings.fontSize}
     '';
