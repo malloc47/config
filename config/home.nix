@@ -97,7 +97,6 @@ in
           "${mod}+space" = "layout toggle splitv splith tabbed";
           "${mod}+y" = "bar mode toggle";
           "${mod}+Shift+N" = "exec \"xterm -e 'sudo nixos-rebuild switch; read -s -k \\?COMPLETE'\"";
-          "${mod}+Shift+Control+L" = "exec i3lock";
           "${mod}+Shift+r" = "nop";
           "${mod}+v" = "nop";
           "${mod}+e" = "nop";
@@ -107,6 +106,7 @@ in
           "${mod}+equal" = "workspace next";
           "${mod}+minus" = "workspace prev";
           "${mod}+grave" = "workspace 1";
+          "${mod}+Shift+Control+L" = "exec i3lock";
           "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
           "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
           "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
@@ -141,7 +141,6 @@ in
       xterm*faceSize: ${toString config.settings.fontSize}
     '';
   };
-
 
   xsession.initExtra =
     if (config.settings.xkbFile != "none" ) then
