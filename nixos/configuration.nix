@@ -22,6 +22,7 @@
   ];
 
   fonts.fonts = with pkgs; [
+    corefonts
     geosanslight
     inconsolata
     libertine
