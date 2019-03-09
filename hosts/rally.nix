@@ -32,6 +32,14 @@
   # HiDPI fix for alacritty
   environment.variables.WINIT_HIDPI_FACTOR = "3";
 
+  # Used for file sharing between host and guest
+  services.openssh.enable = true;
+  users.users.${config.settings.username} = {
+    openssh.authorizedKeys.keys = [
+      (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_rsa.pub"))
+    ];
+  };
+
   home-manager.users.${config.settings.username} = {
     settings = config.settings;
     xsession.pointerCursor = {
