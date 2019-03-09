@@ -21,6 +21,7 @@ in
     firefox
     google-chrome
     home-manager
+    ispell
     jq
     python37
   ];
