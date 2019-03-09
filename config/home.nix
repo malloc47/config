@@ -35,8 +35,8 @@ in
     target = ".emacs.d/config/fonts.el";
     text = ''
       (provide 'fonts)
-      (set-frame-font "Inconsolata-${toString config.settings.fontSize}")
-      (setq default-frame-alist '((font . "Inconsolata-${toString config.settings.fontSize}")))
+      (set-frame-font "${config.settings.fontName}-${toString config.settings.fontSize}")
+      (setq default-frame-alist '((font . "${config.settings.fontName}-${toString config.settings.fontSize}")))
     '';
   };
 
@@ -68,7 +68,7 @@ in
         {
           id = "bar-0";
           position = "top";
-          fonts = ["Inconsolata ${toString config.settings.fontSize}"];
+          fonts = ["${config.settings.fontName} ${toString config.settings.fontSize}"];
         }
       ];
       keybindings = pkgs.lib.mkOptionDefault (
@@ -138,7 +138,7 @@ in
   home.file.".Xresources" = {
     target = ".Xresources";
     text = ''
-      xterm*faceName: Inconsolata
+      xterm*faceName: ${config.settings.fontName}
       xterm*faceSize: ${toString config.settings.fontSize}
     '';
   };

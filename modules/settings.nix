@@ -25,6 +25,10 @@ with lib;
         default = "alacritty";
         type = with types; uniq string;
       };
+      fontName = mkOption {
+        default = "Inconsolata";
+        type = with types; uniq string;
+      };
       fontSize = mkOption {
         default = 12;
         type = types.int;
