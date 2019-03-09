@@ -130,8 +130,10 @@ in
       };
       window.titlebar = false;
     };
+    # inexplicably xserver wrapper doesn't set the background image
     extraConfig = ''
       focus_wrapping no
+      exec_always "if [[ -e $HOME/.background-image ]]; then feh --bg-scale $HOME/.background-image ; fi"
     '';
   };
 
