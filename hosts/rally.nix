@@ -32,6 +32,10 @@
 
   # HiDPI fix for alacritty
   environment.variables.WINIT_HIDPI_FACTOR = "3";
+  # Chrome scaling fix
+  environment.variables.GDK_SCALE = "3.0";
+  environment.variables.GDK_DPI_SCALE="0.25";
+
 
   # Used for file sharing between host and guest
   services.openssh.enable = true;
