@@ -7,7 +7,9 @@
     ../modules/settings.nix
   ];
 
-  settings.vm = false;
+  settings = {
+    xkbFile = "macbook-modified";
+  };
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -57,5 +59,5 @@
 
   boot.initrd.kernelModules = [ "fbcon" ];
 
-  home-manager.users.${config.settings.username}.settings.vm = config.settings.vm;
+  home-manager.users.${config.settings.username}.settings = config.settings;
 }

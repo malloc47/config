@@ -38,6 +38,15 @@ with lib;
           that should be available on multiple hosts.
         '';
       };
+      xkbFile = mkOption {
+        default = "none";
+        type = with types; uniq string;
+        description = ''
+          Filename of the xkb file to load (or "none" if no keyboard
+          layout is desired). File is specified without extension and
+          must be present in the xkb directory.
+        '';
+      };
     };
   };
 }

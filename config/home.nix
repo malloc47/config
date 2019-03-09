@@ -2,9 +2,6 @@
 
 let
   mod = "Mod4";
-  compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
-    ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${../xkb/macbook-modified.xkb} $out
-  '';
 in
 {
   nixpkgs.config.allowUnfree = true;
@@ -146,10 +143,17 @@ in
   };
 
 
-  xsession.initExtra = if (!config.settings.vm) then
-            "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
-          else
-            "";
+  xsession.initExtra =
+    if (config.settings.xkbFile != "none" ) then
+      let
+        xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
+        compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
+          ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
+       '';
+      in
+        "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
+    else
+      "";
 
   services.screen-locker = {
     enable = !config.settings.vm;

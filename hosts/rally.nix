@@ -12,6 +12,7 @@
     username = "jwaggoner";
     fontSize = 9;
     profile = "rally";
+    xkbFile = "vm";
   };
 
   services.vmwareGuest.enable = true;
