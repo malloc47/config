@@ -19,6 +19,7 @@
     vim
     wget
     xorg.xkill
+    docker_compose
   ];
 
   fonts.fonts = with pkgs; [
@@ -43,6 +44,9 @@
 
   programs.ssh.startAgent = true;
 
+  virtualisation.docker.enable = true;
+  virtualisation.docker.enableOnBoot = false;
+
   services.xserver.enable = true;
 
   services.xserver.desktopManager = {
@@ -63,7 +67,7 @@
     createHome = true;
     home = "/home/${config.settings.username}";
     description = "Jarrell Waggoner";
-    extraGroups = ["wheel" "networkmanager" "audio"];
+    extraGroups = ["audio" "docker" "networkmanager" "wheel"];
     uid = 1000;
     shell = pkgs.zsh;
   };
