@@ -187,6 +187,7 @@ in
     };
     shellAliases = {
       "ll" = "ls -al";
+      "ns" = "nix-shell --command zsh";
     };
     initExtra = ''
       hg() { history | grep $1 }
@@ -209,12 +210,13 @@ in
     enable = true;
     historyFile = "\$HOME/.config/bash/.bash_history";
     shellAliases = {
-      "ll" = "ls -al";
       ".." = "cd ..";
       "..." = "cd ../../";
       "...." = "cd ../../../";
       "....." = "cd ../../../../";
       "......" = "cd ../../../../../";
+      "ll" = "ls -al";
+      "ns" = "nix-shell --command zsh";
     };
     initExtra = ''
       hg() { history | grep "$1"; }
