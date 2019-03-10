@@ -20,6 +20,7 @@ in
     home-manager
     ispell
     jq
+    leiningen
     python37
   ];
 
