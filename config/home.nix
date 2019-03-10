@@ -72,8 +72,7 @@ in
         }
       ];
       keybindings = pkgs.lib.mkOptionDefault (
-      let
-        keys = {
+        {
           "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run";
           "${mod}+q" = "reload";
           "${mod}+Control+q" = "restart";
@@ -102,8 +101,9 @@ in
           "${mod}+v" = "nop";
           "${mod}+e" = "nop";
           "${mod}+s" = "nop";
-        };
-        systemKeys = {
+        }
+        // pkgs.lib.optionalAttrs (!config.settings.vm)
+        {
           "${mod}+equal" = "workspace next";
           "${mod}+minus" = "workspace prev";
           "${mod}+grave" = "workspace 1";
@@ -111,13 +111,7 @@ in
           "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
           "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
           "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
-        };
-      in
-        if config.settings.vm then
-          keys
-        else
-          keys // systemKeys
-      );
+        });
       modes.resize = {
         "h" = "resize shrink width 10 px or 10 ppt";
         "j" = "resize grow height 10 px or 10 ppt";
