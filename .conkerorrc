@@ -1,2 +1,0 @@
-require("page-modes/gmail.js");
-mode_line_mode(false);
