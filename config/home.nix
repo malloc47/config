@@ -3,6 +3,7 @@
 let
   mod = "Mod4";
 in
+with pkgs.lib;
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -72,7 +73,7 @@ in
           fonts = ["${config.settings.fontName} ${toString config.settings.fontSize}"];
         }
       ];
-      keybindings = pkgs.lib.mkOptionDefault (
+      keybindings = mkOptionDefault (
         {
           "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run";
           "${mod}+q" = "reload";
@@ -103,7 +104,7 @@ in
           "${mod}+e" = "nop";
           "${mod}+s" = "nop";
         }
-        // pkgs.lib.optionalAttrs (!config.settings.vm)
+        // optionalAttrs (!config.settings.vm)
         {
           "${mod}+equal" = "workspace next";
           "${mod}+minus" = "workspace prev";
@@ -253,7 +254,7 @@ in
   home.file.".i3status.conf" = { source = ./.i3status.conf; target = ".config/i3status/config"; };
   home.file.".user-dirs.dirs" = {source = ./.user-dirs.dirs; target = ".config/user-dirs.dirs";};
 
-  home.file."wifi" = pkgs.lib.mkIf (!config.settings.vm) {
+  home.file."wifi" = mkIf (!config.settings.vm) {
     target = "bin/wifi";
     executable = true;
     text = ''
