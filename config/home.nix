@@ -190,7 +190,12 @@ with pkgs.lib;
       "ll" = "ls -al";
       "ns" = "nix-shell --command zsh";
     };
-    initExtra = ''
+    initExtra = let
+      cdpath = "$HOME/src" +
+        optionalString (config.settings.profile != "malloc47")
+          " $HOME/src/${config.settings.profile}";
+    in
+    ''
       hg() { history | grep $1 }
       pg() { ps aux | grep $1 }
 
@@ -199,7 +204,7 @@ with pkgs.lib;
         ls
       }
 
-      cdpath=($HOME/src)
+      cdpath=(${cdpath})
     '';
     sessionVariables = {
       EDITOR = "vim";
@@ -225,7 +230,9 @@ with pkgs.lib;
       cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls; else builtin cd && ls; fi }
     '';
     sessionVariables = {
-      CDPATH = "CDPATH=.:~/src/";
+      CDPATH = ".:~/src/" +
+        optionalString (config.settings.profile != "malloc47")
+        ":~/src/${config.settings.profile}";
       EDITOR = "vim";
     };
     shellOptions = [
