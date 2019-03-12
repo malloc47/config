@@ -33,7 +33,7 @@
       Option "FingerLow" "40"
       Option "FingerHigh" "70"
       Option "Resolution" "100"
-      Option "SoftButtonAreas" "93% 0 95% 0 0 0 0 0"
+      Option "SoftButtonAreas" "93% 0 93% 0 0 0 0 0"
     '';
   };
 
