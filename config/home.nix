@@ -16,6 +16,7 @@ with pkgs.lib;
     autocutsel
     evince
     feh
+    ffmpeg
     firefox
     google-chrome
     home-manager
@@ -23,6 +24,8 @@ with pkgs.lib;
     jq
     leiningen
     python37
+    unzip
+    zip
   ];
 
   programs.emacs.enable = true;
