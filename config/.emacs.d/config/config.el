@@ -68,3 +68,7 @@
 ;; ERC settings
 
 (setq erc-hide-list '("JOIN" "PART" "QUIT" "NICK"))
+
+;; move customize to separate file
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file 'noerror)
