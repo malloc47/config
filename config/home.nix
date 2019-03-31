@@ -266,9 +266,9 @@ with pkgs.lib;
   home.file.".inputrc".source = ./.inputrc;
   home.file.".lein" = { source = ./.lein; recursive = true; };
   home.file.".sbt" = { source = ./.sbt; recursive = true; };
-  home.file.".alacritty.yml" = { source = ./.alacritty.yml; target = ".config/alacritty/alacritty.yml"; };
-  home.file.".i3status.conf" = { source = ./.i3status.conf; target = ".config/i3status/config"; };
-  home.file.".user-dirs.dirs" = {source = ./.user-dirs.dirs; target = ".config/user-dirs.dirs";};
+  xdg.configFile."alacritty/alacritty.yml".source = ./.alacritty.yml;
+  xdg.configFile."i3status/config".source = ./.i3status.conf;
+  xdg.configFile.".user-dirs.dirs".source = ./.user-dirs.dirs;
 
   home.file."wifi" = mkIf (!config.settings.vm) {
     target = "bin/wifi";
