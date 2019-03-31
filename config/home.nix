@@ -6,6 +6,9 @@ in
 with pkgs.lib;
 {
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [
+    (import ../pkgs/default.nix)
+  ];
 
   imports = [
     ../modules/settings.nix
