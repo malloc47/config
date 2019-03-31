@@ -5,10 +5,13 @@ let
 in
 with pkgs.lib;
 {
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = import ../pkgs/config.nix;
+
   nixpkgs.overlays = [
     (import ../pkgs/default.nix)
   ];
+
+  xdg.configFile."nixpkgs/config.nix".source = ../pkgs/config.nix;
 
   imports = [
     ../modules/settings.nix
