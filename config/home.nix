@@ -5,17 +5,13 @@ let
 in
 with pkgs.lib;
 {
-  nixpkgs.config = import ../pkgs/config.nix;
-
-  nixpkgs.overlays = [
-    (import ../pkgs/default.nix)
-  ];
-
-  xdg.configFile."nixpkgs/config.nix".source = ../pkgs/config.nix;
-
   imports = [
     ../modules/settings.nix
   ];
+
+  nixpkgs.config = import ./nixpkgs.nix;
+  xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
+  nixpkgs.overlays = [(import ../pkgs/default.nix)];
 
   home.packages = with pkgs; [
     alacritty

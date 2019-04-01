@@ -1,16 +1,34 @@
-{ config, pkgs, ... }:
+{ config, pkgs, options, ... }:
 
 {
-  nixpkgs.config = import ../pkgs/config.nix;
-
-  nixpkgs.overlays = [
-    (import ../pkgs/default.nix)
-  ];
-
   imports = [
     ../modules/settings.nix
     "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/master.tar.gz}/nixos"
   ];
+
+  nixpkgs.config = import ../config/nixpkgs.nix;
+  nixpkgs.overlays = [(import ../pkgs/default.nix)];
+
+  # Using https://nixos.wiki/wiki/Overlays to let the local nix tools
+  # get the same overlays as we define in this file
+  environment.etc."overlays-compat" = {
+    text = ''
+      self: super:
+      with super.lib;
+      let
+        eval = import <nixpkgs/nixos/lib/eval-config.nix>;
+        paths = (eval {modules = [(import <nixos-config>)];})
+          .config.nixpkgs.overlays;
+      in
+      foldl' (flip extends) (_: super) paths self
+    '';
+    target = "nixos/overlays-compat/overlays.nix";
+  };
+
+  nix.nixPath =
+    options.nix.nixPath.default ++
+    [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
+
 
   time.timeZone = "America/Chicago";
 
