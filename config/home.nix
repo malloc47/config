@@ -53,7 +53,11 @@ with pkgs.lib;
     shortcut = "u";
   };
 
-  programs.ssh.enable = true;
+  programs.ssh = {
+    enable = true;
+    controlPath = "~/.ssh/master-%C";
+  };
+
 
   home.file."id_rsa" = {
     source = ./. + "/../personal/ssh/${config.settings.profile}/id_rsa";
