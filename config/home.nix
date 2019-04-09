@@ -51,8 +51,8 @@ with pkgs.lib;
 
   programs.tmux = {
     enable = true;
-    terminal = "tmux-256color";
-    shortcut = "u";
+    # terminal = "tmux-256color";
+    # shortcut = "u";
   };
 
   programs.ssh = {
