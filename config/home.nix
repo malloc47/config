@@ -25,7 +25,9 @@ with pkgs.lib;
     ispell
     jq
     leiningen
+    openjdk8
     python37
+    sbt
     unzip
     zip
   ];
