@@ -15,7 +15,7 @@
     xkbFile = "vm";
   };
 
-  services.vmwareGuest.enable = true;
+  virtualisation.vmware.guest.enable = true;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
