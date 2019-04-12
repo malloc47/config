@@ -58,8 +58,12 @@ with pkgs.lib;
   programs.ssh = {
     enable = true;
     controlPath = "~/.ssh/master-%C";
+    matchBlocks."*".extraOptions = {
+      # Work around VMWare bug:
+      # https://github.com/vmware/open-vm-tools/issues/287
+      IPQoS="throughput";
+    };
   };
-
 
   home.file."id_rsa" = {
     source = ./. + "/../personal/ssh/${config.settings.profile}/id_rsa";
