@@ -52,5 +52,8 @@
       name = "Vanilla-DMZ";
       size = 64;
     };
+    # Work around VMWare bug:
+    # https://github.com/vmware/open-vm-tools/issues/287
+    programs.ssh.matchBlocks."*".extraOptions.IPQoS="throughput";
   };
 }
