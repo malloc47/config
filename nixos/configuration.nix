@@ -3,7 +3,7 @@
 {
   imports = [
     ../modules/settings.nix
-    "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/release-18.09.tar.gz}/nixos"
+    "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/release-19.03.tar.gz}/nixos"
   ];
 
   nixpkgs.config = import ../config/nixpkgs.nix;
@@ -28,7 +28,6 @@
   nix.nixPath =
     options.nix.nixPath.default ++
     [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
-
 
   time.timeZone = "America/Chicago";
 
@@ -92,6 +91,6 @@
 
   home-manager.users.${config.settings.username} = import ../config/home.nix ;
 
-  system.stateVersion = "18.09";
+  system.stateVersion = "19.03";
 
 }
