@@ -16,7 +16,6 @@ with pkgs.lib;
   home.packages = with pkgs; [
     alacritty
     autocutsel
-    busybox
     evince
     feh
     ffmpeg
