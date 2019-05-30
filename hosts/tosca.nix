@@ -39,6 +39,10 @@
 
   services.xserver.autoRepeatDelay = 250;
 
+  services.xserver.deviceSection = ''
+    Option "TearFree" "true"
+  '';
+
   #services.xserver.dpi = 128;
 
   programs.light.enable = true;
