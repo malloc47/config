@@ -20,10 +20,12 @@ with pkgs.lib;
     feh
     ffmpeg
     firefox
+    gitAndTools.pre-commit
     google-chrome
     home-manager
     ispell
     jq
+    killall
     leiningen
     openjdk8
     python37
