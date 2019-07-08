@@ -28,6 +28,7 @@ with pkgs.lib;
     killall
     leiningen
     openjdk8
+    pv
     python37
     sbt
     unzip
