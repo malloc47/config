@@ -29,7 +29,7 @@
     options.nix.nixPath.default ++
     [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
 
-  time.timeZone = "America/Chicago";
+  time.timeZone = "America/New_York";
 
   environment.systemPackages = with pkgs; [
     feh
