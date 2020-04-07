@@ -29,7 +29,7 @@ with pkgs.lib;
     leiningen
     openjdk8
     pv
-    python37
+    (python37.withPackages (ps: with ps; [virtualenv wheel]))
     sbt
     unzip
     zip
@@ -181,6 +181,8 @@ with pkgs.lib;
     extraConfig = {
       branch.autosetuprebase = "never";
       push.default = "simple";
+      # TODO: bring this file under nix control
+      core.excludesfile = "/home/jwaggoner/.config/git/gitignore";
     };
   };
 

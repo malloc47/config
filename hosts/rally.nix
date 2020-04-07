@@ -45,6 +45,8 @@
     ];
   };
 
+  networking.firewall.enable = false;
+
   home-manager.users.${config.settings.username} = {
     settings = config.settings;
     xsession.pointerCursor = {
@@ -55,5 +57,6 @@
     # Work around VMWare bug:
     # https://github.com/vmware/open-vm-tools/issues/287
     programs.ssh.matchBlocks."*".extraOptions.IPQoS="throughput";
+    programs.ssh.matchBlocks."*".user = "jarrell.waggoner";
   };
 }
