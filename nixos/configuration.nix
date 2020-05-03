@@ -37,6 +37,7 @@
     wget
     xorg.xkill
     docker_compose
+    exfat
   ];
 
   fonts.fonts = with pkgs; [
