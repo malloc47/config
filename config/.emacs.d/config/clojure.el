@@ -1,6 +1,6 @@
 (provide 'clojure)
 
-(ensure-packages-installed 'clojure-mode 'cider 'align-cljlet 'paredit)
+(ensure-packages-installed 'clojure-mode 'cider 'align-cljlet 'paredit inf-clojure)
 
 (require 'paredit)
 (require 'align-cljlet)
@@ -16,6 +16,11 @@
 	      (put-clojure-indent macro 'defun))
 	    (cljr-add-keybindings-with-prefix "C-c C-v")
 	    (local-set-key (kbd "RET") 'newline-and-indent)))
+
+(add-hook 'inf-clojure-mode-hook
+          (lambda ()
+	    (paredit-mode +1)
+	    (enable-show-paren-mode)))
 
 (setq cider-prompt-for-symbol nil)
 

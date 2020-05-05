@@ -16,6 +16,7 @@ with pkgs.lib;
   home.packages = with pkgs; [
     alacritty
     autocutsel
+    clojure
     evince
     feh
     ffmpeg
@@ -26,7 +27,8 @@ with pkgs.lib;
     ispell
     jq
     killall
-    leiningen
+    lumo
+    nodejs
     openjdk8
     pv
     (python37.withPackages (ps: with ps; [virtualenv wheel]))
