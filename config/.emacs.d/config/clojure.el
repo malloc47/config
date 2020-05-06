@@ -1,6 +1,6 @@
 (provide 'clojure)
 
-(ensure-packages-installed 'clojure-mode 'cider 'align-cljlet 'paredit inf-clojure)
+(ensure-packages-installed 'clojure-mode 'cider 'align-cljlet 'paredit 'inf-clojure)
 
 (require 'paredit)
 (require 'align-cljlet)
