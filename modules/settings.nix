@@ -7,15 +7,15 @@ with lib;
     settings = {
       name = mkOption {
         default = "Jarrell Waggoner";
-        type = with types; uniq string;
+        type = with types; uniq str;
       };
       username = mkOption {
         default = "malloc47";
-        type = with types; uniq string;
+        type = with types; uniq str;
       };
       email = mkOption {
         default = "malloc47@gmail.com";
-        type = with types; uniq string;
+        type = with types; uniq str;
       };
       vm = mkOption {
         type = types.bool;
@@ -23,11 +23,11 @@ with lib;
       };
       terminal = mkOption {
         default = "alacritty";
-        type = with types; uniq string;
+        type = with types; uniq str;
       };
       fontName = mkOption {
         default = "Inconsolata";
-        type = with types; uniq string;
+        type = with types; uniq str;
       };
       fontSize = mkOption {
         default = 12;
@@ -35,7 +35,7 @@ with lib;
       };
       profile = mkOption {
         default = "malloc47";
-        type = with types; uniq string;
+        type = with types; uniq str;
         description = ''
           Profiles are a higher-level grouping than hosts. They are
           useful to combine multiple related things (e.g. ssh keys)
@@ -44,7 +44,7 @@ with lib;
       };
       xkbFile = mkOption {
         default = "none";
-        type = with types; uniq string;
+        type = with types; uniq str;
         description = ''
           Filename of the xkb file to load (or "none" if no keyboard
           layout is desired). File is specified without extension and
