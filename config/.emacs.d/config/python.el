@@ -1,5 +1,7 @@
 (provide 'python)
 
+(ensure-packages-installed 'python-mode)
+
 (defun python-pretty-lambda ()
   (setq prettify-symbols-alist
         '(("lambda" . ?λ)
