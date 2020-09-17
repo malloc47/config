@@ -3,7 +3,7 @@
 {
   imports = [
     ../modules/settings.nix
-    "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/release-19.03.tar.gz}/nixos"
+    "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/release-20.03.tar.gz}/nixos"
   ];
 
   nixpkgs.config = import ../config/nixpkgs.nix;
@@ -71,10 +71,9 @@
 
   services.xserver.enable = true;
 
-  services.xserver.desktopManager = {
-    default = "none";
-    xterm.enable = false;
-  };
+  services.xserver.desktopManager.xterm.enable = false;
+
+  services.xserver.displayManager.defaultSession = "none+i3";
 
   services.xserver.windowManager.i3.enable = true;
 
@@ -96,6 +95,6 @@
 
   home-manager.users.${config.settings.username} = import ../config/home.nix ;
 
-  system.stateVersion = "19.03";
+  system.stateVersion = "20.03";
 
 }
