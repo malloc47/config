@@ -13,6 +13,7 @@
     fontSize = 9;
     profile = "rally";
     xkbFile = "vm";
+    terminal = "kitty";
   };
 
   virtualisation.vmware.guest.enable = true;
