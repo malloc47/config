@@ -1,16 +1,14 @@
 (provide 'config)
 
 (ensure-packages-installed 'markdown-mode
-			   'haskell-mode
 			   'find-file-in-project
-			   'ido-ubiquitous)
+			   'ido-ubiquitous
+			   'smooth-scrolling)
 
 ;; smooth scrolling
-(setq redisplay-dont-pause t
-  scroll-margin 3
-  scroll-step 1
-  scroll-conservatively 10
-  scroll-preserve-screen-position 1)
+(require 'smooth-scrolling)
+(smooth-scrolling-mode 1)
+(setq smooth-scroll-margin 5)
 
 ;; ido-mode
 (require 'ido)
