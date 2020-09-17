@@ -28,7 +28,6 @@ with pkgs.lib;
     ispell
     jq
     killall
-    lumo
     nodejs
     openjdk8
     pv
