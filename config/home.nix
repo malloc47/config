@@ -15,7 +15,6 @@ with pkgs.lib;
 
   home.packages = with pkgs; [
     alacritty
-    kitty
     autocutsel
     clojure
     evince
@@ -28,6 +27,7 @@ with pkgs.lib;
     ispell
     jq
     killall
+    kitty
     nodejs
     openjdk8
     pv
