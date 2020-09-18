@@ -244,7 +244,7 @@ with pkgs.lib;
     oh-my-zsh = {
       enable = true;
       plugins = ["lein" "sudo"];
-      theme = "";
+      theme = "lambda";
     };
     shellAliases = {
       "ll" = "ls -al";
