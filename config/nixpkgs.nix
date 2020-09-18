@@ -1,2 +1,3 @@
 { allowUnfree = true;
-  allowBroken = false;}
+  allowBroken = false;
+  tarball-ttl = 604800;}

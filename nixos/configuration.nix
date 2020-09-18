@@ -1,9 +1,15 @@
 { config, pkgs, options, ... }:
 
+let
+  hm-src = {
+    url = "https://github.com/rycee/home-manager/archive/e6f96b6aa3e99495f9f6f3488ecf78dd316e5bec.tar.gz" ;
+    sha256 = "1xvxqw5cldlhcl7xsbw11n2s3x1h2vmbm1b9b69a641rzj3srg11";
+  };
+in
 {
   imports = [
     ../modules/settings.nix
-    "${builtins.fetchTarball https://github.com/rycee/home-manager/archive/release-20.03.tar.gz}/nixos"
+    "${builtins.fetchTarball hm-src}/nixos"
   ];
 
   nixpkgs.config = import ../config/nixpkgs.nix;
