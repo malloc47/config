@@ -31,6 +31,7 @@ with pkgs.lib;
     leiningen
     nodejs
     openjdk8
+    protobuf
     pv
     (python37.withPackages (ps: with ps; [virtualenv wheel]))
     sbt
