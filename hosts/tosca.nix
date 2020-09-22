@@ -18,6 +18,8 @@
   networking.hostName = "tosca";
   networking.networkmanager.enable = true;
 
+  # networking.firewall.allowedTCPPorts = [8280];
+
   services.xserver.synaptics = {
     enable = true;
     twoFingerScroll = true;
