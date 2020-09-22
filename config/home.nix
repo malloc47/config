@@ -28,6 +28,7 @@ with pkgs.lib;
     jq
     killall
     kitty
+    leiningen
     nodejs
     openjdk8
     pv
