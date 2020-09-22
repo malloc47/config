@@ -3,7 +3,8 @@
 (ensure-packages-installed 'markdown-mode
 			   'find-file-in-project
 			   'ido-ubiquitous
-			   'smooth-scrolling)
+			   'smooth-scrolling
+			   'multiple-cursors)
 
 ;; smooth scrolling
 (require 'smooth-scrolling)
@@ -66,6 +67,9 @@
 ;; ERC settings
 
 (setq erc-hide-list '("JOIN" "PART" "QUIT" "NICK"))
+
+;; multiple-cursor keybinding
+(global-set-key (kbd "C-c m c") 'mc/edit-lines)
 
 ;; move customize to separate file
 (setq custom-file "~/.emacs.d/custom.el")
