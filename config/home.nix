@@ -267,6 +267,10 @@ with pkgs.lib;
       }
 
       cdpath=(${cdpath})
+
+      if [[ -n "$IN_NIX_SHELL" ]]; then
+        export PS1="${"\${PS1}%F{red}ns%f"} "
+      fi
     '';
     sessionVariables = {
       EDITOR = "vim";
