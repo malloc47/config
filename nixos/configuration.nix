@@ -46,6 +46,10 @@ in
     exfat
   ];
 
+  # I rely on this behavior, but it should probably be moved to
+  # home.nix at some point
+  environment.homeBinInPath = true;
+
   fonts.fonts = with pkgs; [
     corefonts
     geosanslight
