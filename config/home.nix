@@ -29,12 +29,14 @@ with pkgs.lib;
     killall
     kitty
     leiningen
+    moreutils
     nodejs
     openjdk8
     protobuf
     pv
     (python37.withPackages (ps: with ps; [virtualenv wheel]))
     sbt
+    scrot
     unzip
     zip
   ];
