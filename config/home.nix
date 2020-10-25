@@ -21,6 +21,7 @@ with pkgs.lib;
     feh
     ffmpeg
     firefox
+    gimp
     gitAndTools.pre-commit
     google-chrome
     home-manager
