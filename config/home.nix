@@ -33,7 +33,7 @@ with pkgs.lib;
     openjdk8
     protobuf
     pv
-    (python37.withPackages (ps: with ps; [virtualenv wheel]))
+    (python38.withPackages (ps: with ps; [virtualenv wheel]))
     sbt
     unzip
     zip
