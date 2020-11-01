@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/rycee/home-manager/archive/e6f96b6aa3e99495f9f6f3488ecf78dd316e5bec.tar.gz" ;
-    sha256 = "1xvxqw5cldlhcl7xsbw11n2s3x1h2vmbm1b9b69a641rzj3srg11";
+    url = "https://github.com/rycee/home-manager/archive/abaebf3b346c4bef500c5bd2fdebbed109261a0c.tar.gz";
+    sha256 = "1gcv2ni4nsicpmi4ain568msvgxch8cj04fxf6qgvhdklmh2y84k";
   };
 in
 {
@@ -106,6 +106,6 @@ in
 
   home-manager.users.${config.settings.username} = import ../config/home.nix ;
 
-  system.stateVersion = "20.03";
+  system.stateVersion = "20.09";
 
 }
