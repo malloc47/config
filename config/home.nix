@@ -21,6 +21,7 @@ with pkgs.lib;
     feh
     ffmpeg
     firefox
+    gimp
     gitAndTools.pre-commit
     google-chrome
     home-manager
@@ -29,12 +30,14 @@ with pkgs.lib;
     killall
     kitty
     leiningen
+    moreutils
     nodejs
     openjdk8
     protobuf
     pv
     (python38.withPackages (ps: with ps; [virtualenv wheel]))
     sbt
+    scrot
     unzip
     zip
   ];
