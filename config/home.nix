@@ -190,6 +190,7 @@ with pkgs.lib;
       push.default = "simple";
       # TODO: bring this file under nix control
       core.excludesfile = "/home/jwaggoner/.config/git/gitignore";
+      pull.ff = "only";
     };
   };
 
