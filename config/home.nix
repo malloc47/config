@@ -33,6 +33,7 @@ with pkgs.lib;
     moreutils
     nodejs
     openjdk8
+    pandoc
     protobuf
     pv
     (python38.withPackages (ps: with ps; [virtualenv wheel]))
