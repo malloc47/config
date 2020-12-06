@@ -14,7 +14,8 @@
 	    (cider-mode)
 	    (define-key clojure-mode-map (kbd "C-c C-a") 'align-cljlet)
 	    (dolist (macro '(fresh conde run run* for-all for-map go go-loop
-				   for> doseq> fn> defn> defprotocol> gen-for))
+				   for> doseq> fn> defn> defprotocol> gen-for
+				   ANY DELETE GET HEAD OPTIONS PATCH POST PUT))
 	      (put-clojure-indent macro 'defun))
 	    (local-set-key (kbd "RET") 'newline-and-indent)))
 
