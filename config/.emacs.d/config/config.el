@@ -71,6 +71,8 @@
 ;; multiple-cursor keybinding
 (global-set-key (kbd "C-c m c") 'mc/edit-lines)
 
+(setq markdown-command "pandoc --from=markdown --to=html")
+
 ;; move customize to separate file
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file 'noerror)

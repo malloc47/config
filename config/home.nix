@@ -34,6 +34,7 @@ with pkgs.lib;
     moreutils
     nodejs
     openjdk8
+    pandoc
     protobuf
     pv
     (python38.withPackages (ps: with ps; [virtualenv wheel]))
@@ -192,6 +193,7 @@ with pkgs.lib;
       push.default = "simple";
       # TODO: bring this file under nix control
       core.excludesfile = "/home/jwaggoner/.config/git/gitignore";
+      pull.ff = "only";
     };
   };
 
