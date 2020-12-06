@@ -194,6 +194,8 @@ with pkgs.lib;
     };
   };
 
+  services.dropbox.enable = true;
+
   programs.kitty = {
     enable = true;
     font = {
