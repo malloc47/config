@@ -40,6 +40,7 @@ with pkgs.lib;
     scrot
     unzip
     zip
+    zoom-us
   ];
 
   programs.emacs.enable = true;
