@@ -15,6 +15,7 @@ with pkgs.lib;
 
   home.packages = with pkgs; [
     alacritty
+    anki
     autocutsel
     clojure
     evince
