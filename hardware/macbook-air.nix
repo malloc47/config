@@ -6,17 +6,12 @@
 {
   imports =
     [ <nixpkgs/nixos/modules/installer/scan/not-detected.nix>
+      "${builtins.fetchGit { url = "https://github.com/NixOS/nixos-hardware.git"; }}/apple/macbook-air/6"
     ];
 
-  boot.initrd.kernelModules = [ "i915" ];
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "usbhid" "sd_mod" ];
-  boot.kernel.sysctl = {
-    "vm.swappiness" = lib.mkDefault 1;
-  };
-  boot.kernelModules = [ "kvm-intel" "wl" "mba6x_bl"];
-  boot.kernelParams = [ "acpi_osi=" ];
-  boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta
-                               config.boot.kernelPackages.mba6x_bl ];
+  boot.kernelModules = [ "kvm-intel" "wl" ];
+  boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/af2fb0cc-99eb-4f46-acd3-afc4bbc555eb";
@@ -35,25 +30,7 @@
   nix.maxJobs = lib.mkDefault 4;
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-
   hardware.facetimehd.enable = true;
-
-  hardware.opengl.enable = true;
-  hardware.opengl.extraPackages = with pkgs; [
-    vaapiIntel
-    vaapiVdpau
-    libvdpau-va-gl
-    intel-media-driver
-  ];
-
-  services.xserver.deviceSection = lib.mkDefault ''
-    Option "Backlight" "mba6x_backlight"
-    Option "TearFree" "true"
-  '';
-
-  services.tlp.enable = lib.mkDefault true;
-  services.fstrim.enable = lib.mkDefault true;
 
   services.xserver.libinput.enable = false;
 
