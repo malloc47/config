@@ -356,4 +356,13 @@ with pkgs.lib;
       ${config.settings.terminal} -e nmtui
     '';
   };
+
+  home.file."brightness" = mkIf (!config.settings.vm) {
+    target = "bin/brightness";
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      sudo bash -c 'echo $1 > /sys/class/backlight/mba6x_backlight/brightness'
+    '';
+  };
 }
