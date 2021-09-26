@@ -30,8 +30,8 @@ with lib;
         type = with types; uniq str;
       };
       fontSize = mkOption {
-        default = 12;
-        type = types.int;
+        default = 12.0;
+        type = types.float;
       };
       profile = mkOption {
         default = "malloc47";

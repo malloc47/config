@@ -63,7 +63,5 @@
 
   powerManagement = { enable = true; cpuFreqGovernor = "ondemand"; };
 
-  boot.initrd.kernelModules = [ "fbcon" ];
-
   home-manager.users.${config.settings.username}.settings = config.settings;
 }

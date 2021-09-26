@@ -1,4 +1,4 @@
-{stdenv, fetchzip}:
+{lib, fetchzip}:
 
 fetchzip {
   name = "geosanslight";
@@ -16,6 +16,6 @@ fetchzip {
   meta = {
     description = "Geo Sans Light font";
     homepage = https://www.dafont.com/geo-sans-light.font;
-    platforms = stdenv.lib.platforms.unix;
+    platforms = lib.platforms.unix;
   };
 }

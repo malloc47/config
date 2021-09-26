@@ -10,7 +10,7 @@
   settings = {
     vm = true;
     username = "jwaggoner";
-    fontSize = 9;
+    fontSize = 9.0;
     profile = "rally";
     xkbFile = "vm";
     terminal = "kitty";

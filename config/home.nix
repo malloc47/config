@@ -93,7 +93,10 @@ with pkgs.lib;
         {
           id = "bar-0";
           position = "top";
-          fonts = ["${config.settings.fontName} ${toString config.settings.fontSize}"];
+          fonts = {
+            names = [ config.settings.fontName ];
+            size = config.settings.fontSize;
+          };
         }
       ];
       keybindings = mkOptionDefault (
