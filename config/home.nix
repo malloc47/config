@@ -365,7 +365,7 @@ with pkgs.lib;
     executable = true;
     text = ''
       #!/usr/bin/env bash
-      sudo bash -c 'echo $1 > /sys/class/backlight/mba6x_backlight/brightness'
+      sudo bash -c "echo $1 > /sys/class/backlight/mba6x_backlight/brightness"
     '';
   };
 }
