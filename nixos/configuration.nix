@@ -53,7 +53,7 @@ in
   fonts.fonts = with pkgs; [
     corefonts
     geosanslight
-    inconsolata
+    inconsolata-unstable
     libertine
     libre-baskerville
   ];

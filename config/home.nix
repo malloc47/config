@@ -205,7 +205,7 @@ with pkgs.lib;
   programs.kitty = {
     enable = true;
     font = {
-      package = pkgs.inconsolata;
+      package = pkgs.inconsolata-unstable;
       name = "${config.settings.fontName}";
     };
     settings = {
