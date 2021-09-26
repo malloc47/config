@@ -57,8 +57,8 @@ with pkgs.lib;
     target = ".emacs.d/config/fonts.el";
     text = ''
       (provide 'fonts)
-      (set-frame-font "${config.settings.fontName}-${toString config.settings.fontSize}")
-      (setq default-frame-alist '((font . "${config.settings.fontName}-${toString config.settings.fontSize}")))
+      (set-frame-font "${config.settings.fontName}-${head (splitString "." (toString config.settings.fontSize))}")
+      (setq default-frame-alist '((font . "${config.settings.fontName}-${head (splitString "." (toString config.settings.fontSize))}")))
     '';
   };
 
@@ -161,7 +161,7 @@ with pkgs.lib;
     target = ".Xresources";
     text = ''
       xterm*faceName: ${config.settings.fontName}
-      xterm*faceSize: ${toString config.settings.fontSize}
+      xterm*faceSize: ${head (splitString "." (toString config.settings.fontSize))}
     '';
   };
 
