@@ -33,11 +33,13 @@ with pkgs.lib;
     leiningen
     moreutils
     nodejs
+    nodePackages.pyright
     openjdk8
     pandoc
     protobuf
     pv
-    (python38.withPackages (ps: with ps; [virtualenv wheel]))
+    (python38.withPackages (ps: with ps; [virtualenv wheel setuptools]))
+    python-language-server
     sbt
     scrot
     unzip
