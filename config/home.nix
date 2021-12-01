@@ -159,12 +159,9 @@ with pkgs.lib;
     '';
   };
 
-  home.file.".Xresources" = {
-    target = ".Xresources";
-    text = ''
-      xterm*faceName: ${config.settings.fontName}
-      xterm*faceSize: ${head (splitString "." (toString config.settings.fontSize))}
-    '';
+  xresources.properties = {
+    "xterm*faceName" = "${config.settings.fontName}";
+    "xterm*faceSize" = "${head (splitString "." (toString config.settings.fontSize))}";
   };
 
   xsession.initExtra =

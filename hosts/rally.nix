@@ -29,7 +29,7 @@
 
   services.xserver.dpi = 277;
 
-  fonts.fontconfig.dpi = 277;
+  hardware.video.hidpi.enable = true;
 
   # HiDPI fix for alacritty
   environment.variables.WINIT_HIDPI_FACTOR = "3";
@@ -55,6 +55,11 @@
       name = "Vanilla-DMZ";
       size = 64;
     };
+
+    xresources.properties = {
+      "Xft.dpi" = 277;
+    };
+
     # Work around VMWare bug:
     # https://github.com/vmware/open-vm-tools/issues/287
     programs.ssh.matchBlocks."*".extraOptions.IPQoS="throughput";
