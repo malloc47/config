@@ -2,9 +2,10 @@
 
 (ensure-packages-installed 'markdown-mode
 			   'find-file-in-project
-			   'ido-ubiquitous
+			   'ido-completing-read+
 			   'smooth-scrolling
-			   'multiple-cursors)
+			   'multiple-cursors
+			   'amx)
 
 ;; smooth scrolling
 (require 'smooth-scrolling)
@@ -13,21 +14,16 @@
 
 ;; ido-mode
 (require 'ido)
+(require 'ido-completing-read+)
+(require 'amx)
 (setq ido-default-buffer-method 'selected-window)
 (setq ido-default-file-method 'selected-window)
 (setq ido-everywhere t)
+(setq ido-ubiquitous-mode 1)
 (setq ido-enable-flex-matching t)
 (setq ido-max-directory-size 1000000)
 (ido-mode 1)
-(global-set-key
- "\M-x"
- (lambda ()
-  (interactive)
-  (call-interactively
-   (intern
-    (ido-completing-read
-     "M-x "
-     (all-completions "" obarray 'commandp))))))
+(amx-mode 1)
 
 ;; y/n vs yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
