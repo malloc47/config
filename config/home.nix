@@ -262,7 +262,7 @@ with pkgs.lib;
     };
     shellAliases = {
       "ll" = "ls -al";
-      "ns" = "nix-shell --command zsh";
+      "ns" = "nix-shell";
     };
     plugins = [
       {
@@ -312,7 +312,7 @@ with pkgs.lib;
       "....." = "cd ../../../../";
       "......" = "cd ../../../../../";
       "ll" = "ls -al";
-      "ns" = "nix-shell --command zsh";
+      "ns" = "nix-shell";
     };
     initExtra = ''
       hg() { history | grep "$1"; }
