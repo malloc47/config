@@ -65,5 +65,18 @@
 
   powerManagement = { enable = true; cpuFreqGovernor = "ondemand"; };
 
+  environment.systemPackages = [ pkgs.i3lock ];
+
+  systemd.services.lock-screen = {
+    before = [ "sleep.target" ];
+    wantedBy = [ "sleep.target" ];
+    description = "Lock the screen";
+    serviceConfig = {
+      User = config.settings.username;
+      Environment = "DISPLAY=:0";
+      ExecStart = "${pkgs.i3lock}/bin/i3lock --nofork";
+    };
+  };
+
   home-manager.users.${config.settings.username}.settings = config.settings;
 }
