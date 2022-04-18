@@ -319,6 +319,7 @@ with pkgs.lib;
       hg() { history | grep "$1"; }
       pg() { ps aux | grep "$1"; }
       cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls; else builtin cd && ls; fi }
+      export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
     '';
     sessionVariables = {
       CDPATH = ".:~/src/" +
@@ -327,7 +328,7 @@ with pkgs.lib;
       EDITOR = "vim";
     };
     shellOptions = [
-    "autocd" "cdspell" "dirspell" "globstar" # bash >= 4
+    "autocd" "cdspell" "globstar" # bash >= 4
     "cmdhist" "nocaseglob" "histappend" "extglob"];
   };
 
