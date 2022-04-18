@@ -42,6 +42,7 @@ with pkgs.lib;
     python-language-server
     sbt
     scrot
+    term-do
     unzip
     zip
     zoom-us
@@ -285,6 +286,8 @@ with pkgs.lib;
     ''
       hg() { history | grep $1 }
       pg() { ps aux | grep $1 }
+      bindkey -s "^[x" 'term-do^M'
+      term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
 
       function chpwd() {
         emulate -L zsh
@@ -319,6 +322,10 @@ with pkgs.lib;
       hg() { history | grep "$1"; }
       pg() { ps aux | grep "$1"; }
       cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls; else builtin cd && ls; fi }
+      term-do() {
+        command term-do "$*"
+        builtin cd $(cat ~/.term-do.d/pwd)
+      }
       export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
     '';
     sessionVariables = {
