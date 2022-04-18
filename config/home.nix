@@ -178,7 +178,8 @@ with pkgs.lib;
 
   services.screen-locker = {
     enable = !config.settings.vm;
-    lockCmd = "i3lock";
+    lockCmd = "${pkgs.i3lock}/bin/i3lock -n";
+    inactiveInterval = 5; # minutes
   };
 
   programs.git = {
