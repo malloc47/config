@@ -13,8 +13,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "malloc47";
     repo = pname;
-    rev = "7048f78f1d01f1edb01fb1869c41d617c938f8b4";
-    sha256 = "1pw4583sc4yvd2x5i5f470l6pxcpyykk6a5c0di1c7kmfr5rn1wf";
+    rev = "540ba27fd48d5a952b9e7469e45f83af49eda396";
+    sha256 = "0wnny9n3vbik1b69lyxwdfy7rrxwclxngnbpv1scs6d411gzklhm";
   };
 
   nativeBuildInputs = [
