@@ -18,6 +18,7 @@ with pkgs.lib;
     anki
     autocutsel
     clojure
+    clj-kondo
     evince
     feh
     ffmpeg
@@ -355,6 +356,7 @@ with pkgs.lib;
 
   home.file.".inputrc".source = ./.inputrc;
   home.file.".lein" = { source = ./.lein; recursive = true; };
+  home.file.".clojure" = { source = ./.clojure; recursive = true; };
   home.file.".sbt" = { source = ./.sbt; recursive = true; };
   xdg.configFile."alacritty/alacritty.yml".source = ./.alacritty.yml;
   xdg.configFile."i3status/config".source = ./.i3status.conf;
