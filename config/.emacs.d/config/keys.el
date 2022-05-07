@@ -26,3 +26,5 @@
 				     "Go to middle of page."
 				     (interactive)
 				     (move-to-window-line (/ (window-height) 2)))))
+
+(define-key nxml-mode-map "\M-h" nil)
