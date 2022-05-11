@@ -18,6 +18,7 @@ with pkgs.lib;
     anki
     autocutsel
     clojure
+    cljfmt
     clj-kondo
     evince
     feh
