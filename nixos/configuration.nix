@@ -35,6 +35,11 @@ in
     options.nix.nixPath.default ++
     [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
 
+  nix.trustedUsers = [ "@wheel" ];
+  nix.extraOptions = ''
+    tarball-ttl = 604800
+  '';
+
   time.timeZone = "America/New_York";
 
   environment.systemPackages = with pkgs; [
