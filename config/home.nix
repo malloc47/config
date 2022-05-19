@@ -17,6 +17,7 @@ with pkgs.lib;
     alacritty
     anki
     autocutsel
+    carve
     clojure
     cljfmt
     clj-kondo
