@@ -27,8 +27,6 @@ stdenv.mkDerivation rec {
     boost
   ];
 
-  outputs = [ "out" ];
-
   buildPhase = ''
     make all
   '';

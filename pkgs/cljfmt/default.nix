@@ -38,7 +38,6 @@ index b881c1e..c1c6d6d 100644
   deps = stdenv.mkDerivation {
     name = "${pname}-deps";
     inherit src;
-    outputs = [ "out" ];
 
     nativeBuildInputs = [ leiningen ];
 
@@ -72,8 +71,6 @@ stdenv.mkDerivation rec {
     graalvm17-ce
     leiningen
   ];
-
-  outputs = [ "out" ];
 
   buildPhase = ''
     patch < ${patch}
