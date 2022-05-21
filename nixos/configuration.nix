@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/3e93c4e8b2b479c712b7c20a428993b459118842.tar.gz";
-    sha256 = "0wgx47fyypbzpm2sbxj8xs846wvdkw1f76a8g3lbkxpla075vrl5";
+    url = "https://github.com/nix-community/home-manager/archive/d93d56ab8c1c6aa575854a79b9d2f69d491db7d0.tar.gz";
+    sha256 = "1fi27zabvqlyc2ggg7wr01j813gs46rswg1i897h9hqkbgqsjkny";
   };
 in
 {
@@ -36,6 +36,8 @@ in
     [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
 
   nix.trustedUsers = [ "@wheel" ];
+  # UPGRADE: add this to keep using common nix commands + flakes
+  # experimental-features = nix-command flakes
   nix.extraOptions = ''
     tarball-ttl = 604800
   '';
@@ -47,7 +49,7 @@ in
     vim
     wget
     xorg.xkill
-    docker_compose
+    docker-compose
     exfat
   ];
 
@@ -109,7 +111,8 @@ in
     shell = pkgs.zsh;
   };
 
-  home-manager.users.${config.settings.username} = import ../config/home.nix ;
+  home-manager.useUserPackages = true;
+  home-manager.users.${config.settings.username}.imports =[../config/home.nix];
 
   system.stateVersion = "21.11";
 

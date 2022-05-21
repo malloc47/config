@@ -79,4 +79,8 @@
   };
 
   home-manager.users.${config.settings.username}.settings = config.settings;
+  home-manager.users.${config.settings.username}.packages = with pkgs; [
+    zoom-us
+    python-language-server
+  ];
 }

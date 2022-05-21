@@ -9,9 +9,7 @@ with pkgs.lib;
     ../modules/settings.nix
   ];
 
-  nixpkgs.config = import ./nixpkgs.nix;
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
-  nixpkgs.overlays = [(import ../pkgs/default.nix)];
 
   home.packages = with pkgs; [
     alacritty
@@ -42,13 +40,11 @@ with pkgs.lib;
     protobuf
     pv
     (python38.withPackages (ps: with ps; [virtualenv wheel setuptools]))
-    python-language-server
     sbt
     scrot
     term-do
     unzip
     zip
-    zoom-us
   ];
 
   programs.emacs.enable = true;
@@ -204,8 +200,6 @@ with pkgs.lib;
       pull.ff = "only";
     };
   };
-
-  services.dropbox.enable = true;
 
   programs.kitty = {
     enable = true;
