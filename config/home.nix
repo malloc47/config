@@ -9,6 +9,7 @@ with pkgs.lib;
     ../modules/settings.nix
   ];
 
+  nixpkgs.config = import ../config/nixpkgs.nix;
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
   home.packages = with pkgs; [
