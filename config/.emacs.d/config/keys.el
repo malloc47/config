@@ -27,4 +27,7 @@
 				     (interactive)
 				     (move-to-window-line (/ (window-height) 2)))))
 
-(define-key nxml-mode-map "\M-h" nil)
+;; https://emacs.stackexchange.com/a/53430
+(eval-after-load "nxml-mode"
+  (lambda ()
+    (define-key nxml-mode-map "\M-h" nil)))
