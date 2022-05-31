@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/d93d56ab8c1c6aa575854a79b9d2f69d491db7d0.tar.gz";
-    sha256 = "1fi27zabvqlyc2ggg7wr01j813gs46rswg1i897h9hqkbgqsjkny";
+    url = "https://github.com/nix-community/home-manager/archive/bda2c80b4c1a8d85c84c343a25ac7303fbc7999d.tar.gz";
+    sha256 = "1jhly1xkmclwdnhn59v9kjizn1b68aay2fanqbacsf0ayryz09hz";
   };
 in
 {
@@ -36,10 +36,10 @@ in
     [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
 
   nix.trustedUsers = [ "@wheel" ];
-  # UPGRADE: add this to keep using common nix commands + flakes
-  # experimental-features = nix-command flakes
+
   nix.extraOptions = ''
     tarball-ttl = 604800
+    experimental-features = nix-command flakes
   '';
 
   time.timeZone = "America/New_York";

@@ -67,7 +67,7 @@
 
   home-manager.users.${config.settings.username} = {
     settings = config.settings;
-    xsession.pointerCursor = {
+    home.pointerCursor = {
       package = pkgs.vanilla-dmz;
       name = "Vanilla-DMZ";
       size = 64;

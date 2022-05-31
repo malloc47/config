@@ -9,7 +9,9 @@
   boot.initrd.availableKernelModules = [ "ata_piix" "mptspi" "uhci_hcd" "ehci_pci" "sd_mod" "sr_mod" ];
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
-  boot.kernelParams = ["nomodeset"];
+  # UPGRADE: This was removed from vmware-guest at some point; check
+  # if it is back in the next upgrade
+  services.xserver.videoDrivers = lib.mkOverride 50 [ "vmware" ];
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/09442904-1c08-47dd-b3ad-7d1cd6e64e9b";
