@@ -24,6 +24,8 @@
 
   networking.hostName = "rally";
   networking.networkmanager.enable = true;
+  networking.firewall.enable = false;
+  networking.nameservers = ["8.8.8.8" "8.8.4.4"];
 
   services.xserver.autoRepeatDelay = 250;
 
@@ -46,7 +48,9 @@
     ];
   };
 
-  networking.firewall.enable = false;
+  services.journald.extraConfig = ''
+      SystemMaxUse=2G
+  '';
 
   home-manager.users.${config.settings.username} = {
     settings = config.settings;
