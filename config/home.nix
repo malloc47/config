@@ -35,7 +35,6 @@ with pkgs.lib;
     moreutils
     nodejs
     nodePackages.pyright
-    openjdk8
     pandoc
     protobuf
     pv
@@ -365,4 +364,6 @@ with pkgs.lib;
       sudo bash -c "echo $1 > /sys/class/backlight/mba6x_backlight/brightness"
     '';
   };
+
+  programs.java.enable = true;
 }
