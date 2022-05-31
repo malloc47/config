@@ -15,7 +15,6 @@ with pkgs.lib;
   home.packages = with pkgs; [
     alacritty
     anki
-    autocutsel
     carve
     clojure
     cljfmt
@@ -105,6 +104,7 @@ with pkgs.lib;
       keybindings = mkOptionDefault (
         {
           "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run";
+          "${mod}+o" = "exec ${pkgs.clipmenu}/bin/clipmenu";
           "${mod}+q" = "reload";
           "${mod}+Control+q" = "restart";
           "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
@@ -182,6 +182,8 @@ with pkgs.lib;
     lockCmd = "${pkgs.i3lock}/bin/i3lock -n";
     inactiveInterval = 5; # minutes
   };
+
+  services.clipmenu.enable = true;
 
   programs.git = {
     enable = true;
@@ -336,20 +338,6 @@ with pkgs.lib;
     shellOptions = [
     "autocd" "cdspell" "globstar" # bash >= 4
     "cmdhist" "nocaseglob" "histappend" "extglob"];
-  };
-
-  systemd.user.services.autocutsel = {
-    Unit.Description = "AutoCutSel";
-    Install = {
-      WantedBy = [ "default.target" ];
-    };
-    Service = {
-      Type = "forking";
-      Restart = "always";
-      RestartSec = 2;
-      ExecStartPre = "${pkgs.autocutsel}/bin/autocutsel -fork";
-      ExecStart = "${pkgs.autocutsel}/bin/autocutsel -selection PRIMARY -fork";
-    };
   };
 
   home.file.".inputrc".source = ./.inputrc;
