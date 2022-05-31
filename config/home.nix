@@ -199,6 +199,7 @@ with pkgs.lib;
       core.excludesfile = "/home/jwaggoner/.config/git/gitignore";
       core.pager = "less -F -X";
       pull.ff = "only";
+      init.defaultBranch = "main";
     };
   };
 
