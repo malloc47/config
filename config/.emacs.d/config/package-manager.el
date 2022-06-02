@@ -30,6 +30,8 @@
       (package-manager-refresh-once)
       (package-install package))))
 
+(setq package-native-compile t)
+
 (package-initialize)
 
 (setq package-enable-at-startup nil)

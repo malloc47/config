@@ -46,7 +46,10 @@ with pkgs.lib;
     zip
   ];
 
-  programs.emacs.enable = true;
+  programs.emacs = {
+    enable = true;
+    package = pkgs.emacsNativeComp;
+  };
   services.emacs.enable = true;
 
   home.file.".emacs.d" = {
