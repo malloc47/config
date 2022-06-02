@@ -22,3 +22,4 @@
 (require 'typescript)
 (require 'org-custom)
 (require 'anki)
+(require 'nix-lang)
