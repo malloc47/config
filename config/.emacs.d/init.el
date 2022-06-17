@@ -23,3 +23,4 @@
 (require 'org-custom)
 (require 'anki)
 (require 'nix-lang)
+(require 'yaml-lang)
