@@ -12,7 +12,7 @@
 (require 'lisp)
 (require 'clojure)
 (require 'elisp)
-(require 'python)
+(require 'python-lang)
 (require 'scala)
 (require 'haskell)
 (require 'email)

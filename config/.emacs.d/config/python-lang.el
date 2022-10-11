@@ -1,4 +1,4 @@
-(provide 'python)
+(provide 'python-lang)
 
 (ensure-packages-installed 'python-mode 'lsp-pyright)
 
