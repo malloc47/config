@@ -1,15 +1,9 @@
 (provide 'python-lang)
 
-(ensure-packages-installed 'python-mode 'lsp-pyright)
+(ensure-packages-installed 'python-mode 'lsp-pyright 'company)
 
 (require 'lsp-mode)
 (require 'lsp-pyright)
-
-;;; hedging my bets on switching to lsp-python-ms
-;; (require 'lsp-python-ms)
-;; (setq lsp-python-ms-auto-install-server t)
-;; (setq lsp-python-ms-executable (executable-find "python-language-server"))
-
 
 (setq lsp-completion-provider :capf)
 
@@ -45,4 +39,7 @@
           (lambda ()
 	    (python-pretty-lambda)
 	    (prettify-symbols-mode +1)
+	    (define-key python-mode-map (kbd "C-c f") 'python-shell-send-file)
+	    (setq company-minimum-prefix-length 1)
+	    ;; (setq lsp-file-watch-threshold nil)
 	    (lsp-deferred)))
