@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/bda2c80b4c1a8d85c84c343a25ac7303fbc7999d.tar.gz";
-    sha256 = "1jhly1xkmclwdnhn59v9kjizn1b68aay2fanqbacsf0ayryz09hz";
+    url = "https://github.com/nix-community/home-manager/archive/b81e128fc053ab3159d7b464d9b7dedc9d6a6891.tar.gz";
+    sha256 = "09l89q6b1q89lax9jpq2r6br8s3iln82gvgzz49hq1f3la1nhkzy";
   };
 in
 {
