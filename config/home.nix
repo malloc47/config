@@ -159,6 +159,7 @@ with pkgs.lib;
     extraConfig = ''
       focus_wrapping no
       exec_always "if [[ -e $HOME/.background-image ]]; then feh --bg-scale $HOME/.background-image ; fi"
+      exec i3-msg workspace 1
     '';
   };
 
