@@ -11,22 +11,6 @@
   boot.initrd.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 
-  # Combination of a VMWare Fusion bug + Kernel regression issue forces
-  # using a custom kernel here. See:
-  # - https://github.com/mitchellh/nixos-config/issues/22
-  # - https://communities.vmware.com/t5/Fusion-for-Apple-Silicon-Tech/Failure-to-boot-Linux-Kernel-5-15-31-works-with-5-15-26/m-p/2901884
-  # - https://communities.vmware.com/t5/Fusion-for-Apple-Silicon-Tech/Linux-5-17-EFI-stub-does-not-boot-hangs-at-loading-kernel/m-p/2900884
-  boot.kernelPackages = pkgs.linuxPackagesFor(pkgs.linux_5_15.override {
-    argsOverride = rec {
-      src = pkgs.fetchurl {
-        url = "mirror://kernel/linux/kernel/v5.x/linux-${version}.tar.xz";
-        sha256 = "0fmydc5v51iacd5ys7p1m1k2318p47prj8xv02rcngv1y8s224jq";
-      };
-      version = "5.15.26";
-      modDirVersion = "5.15.26";
-    };
-  });
-
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/28ca45a0-1c00-4cd8-a937-a185c5179fc3";
       fsType = "ext4";
