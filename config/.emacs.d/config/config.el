@@ -72,3 +72,5 @@
 ;; move customize to separate file
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file 'noerror)
+
+(defun ssh-add () (interactive) (shell-command "ssh-add"))
