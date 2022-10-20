@@ -369,5 +369,15 @@ with pkgs.lib;
     '';
   };
 
+  home.file."setup-shared" = mkIf (config.settings.vm) {
+    target = "bin/setup-shared";
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      mkdir $HOME/shared 2>/dev/null
+      vmhgfs-fuse .host:/shared /home/jwaggon9/shared -o subtype=vmhgfs-fuse
+    '';
+  };
+
   programs.java.enable = true;
 }
