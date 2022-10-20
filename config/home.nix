@@ -25,7 +25,7 @@ with pkgs.lib;
     firefox
     gimp
     gitAndTools.pre-commit
-    google-chrome
+    chromium
     home-manager
     ispell
     jq

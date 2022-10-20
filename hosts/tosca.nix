@@ -83,6 +83,7 @@
     home.packages = with pkgs; [
       zoom-us
       python-language-server
+      google-chrome
     ];
   };
 }
