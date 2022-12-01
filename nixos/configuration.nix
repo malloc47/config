@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/b81e128fc053ab3159d7b464d9b7dedc9d6a6891.tar.gz";
-    sha256 = "09l89q6b1q89lax9jpq2r6br8s3iln82gvgzz49hq1f3la1nhkzy";
+    url = "https://github.com/nix-community/home-manager/archive/e891b060e7d11bb8f7dedb86a41d804891a6f5a9.tar.gz";
+    sha256 = "0pqzyb7ni9cviiiyhr9x7ri8mi400b2jjpqk873791mj76gfh0hv";
   };
 in
 {
@@ -35,7 +35,8 @@ in
     options.nix.nixPath.default ++
     [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
 
-  nix.trustedUsers = [ "@wheel" ];
+  nix.settings.trusted-users = [ "@wheel" ];
+
 
   nix.extraOptions = ''
     tarball-ttl = 604800
@@ -112,7 +113,10 @@ in
   };
 
   home-manager.useUserPackages = true;
-  home-manager.users.${config.settings.username}.imports =[../config/home.nix];
+  home-manager.users.${config.settings.username} = {
+    imports = [../config/home.nix];
+    home.stateVersion = "21.11";
+  };
 
   system.stateVersion = "21.11";
 

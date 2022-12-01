@@ -57,7 +57,7 @@ index b881c1e..c1c6d6d 100644
     dontFixup = true;
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
-    outputHash = "184x0n4qyh4vg0qxiv9fm72mkr345s5bbqrhs6lvkqkl77vkfvih";
+    outputHash = "sha256-JRJ8vgvKwfCgkgELYYHETP/4ge0dyww6Okod3kcFKxQ=";
   };
 
 in
