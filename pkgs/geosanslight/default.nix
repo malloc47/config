@@ -4,11 +4,12 @@ fetchzip {
   name = "geosanslight";
 
   url =  https://dl.dafont.com/dl/?f=geo_sans_light;
+  extension = "zip";
+  stripRoot = false;
 
   postFetch = ''
-    unzip $downloadedFile
     mkdir -p $out/share/fonts/truetype
-    cp *.ttf $out/share/fonts/truetype
+    mv $out/*.ttf $out/share/fonts/truetype
   '';
 
   sha256 = "1amv94zalz6n0x2jcmydvixsy3a49hjz948sxpcs7knv62r7ajk7";
