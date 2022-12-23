@@ -102,6 +102,10 @@ in
 
   programs.zsh.enable = true;
 
+  services.journald.extraConfig = ''
+      SystemMaxUse=2G
+  '';
+
   users.users.${config.settings.username} = {
     isNormalUser = true;
     createHome = true;
@@ -114,7 +118,12 @@ in
 
   home-manager.useUserPackages = true;
   home-manager.users.${config.settings.username} = {
+    settings = config.settings;
     imports = [../config/home.nix];
+    home.pointerCursor = {
+      package = pkgs.vanilla-dmz;
+      name = "Vanilla-DMZ";
+    };
     home.stateVersion = "21.11";
   };
 

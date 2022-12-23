@@ -47,25 +47,14 @@
     ];
   };
 
-  services.journald.extraConfig = ''
-      SystemMaxUse=2G
-  '';
-
   home-manager.users.${config.settings.username} = {
-    settings = config.settings;
-    home.pointerCursor = {
-      package = pkgs.vanilla-dmz;
-      name = "Vanilla-DMZ";
-      size = 64;
-    };
-
-    xresources.properties = {
-      "Xft.dpi" = 277;
-    };
+    home.pointerCursor.size = 64;
+    xresources.properties."Xft.dpi" = 277;
 
     # Work around VMWare bug:
     # https://github.com/vmware/open-vm-tools/issues/287
     programs.ssh.matchBlocks."*".extraOptions.IPQoS="throughput";
     programs.ssh.matchBlocks."*".user = "jarrell.waggoner";
   };
+
 }
