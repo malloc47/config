@@ -33,6 +33,7 @@ with pkgs.lib;
     kitty
     leiningen
     moreutils
+    nixos-generators
     nodejs
     nodePackages.pyright
     pandoc

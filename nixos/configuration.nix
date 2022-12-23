@@ -83,6 +83,9 @@ in
   virtualisation.docker.enable = true;
   virtualisation.docker.enableOnBoot = false;
 
+  virtualisation.lxd.enable = true;
+  virtualisation.lxc.lxcfs.enable = true;
+
   # Required because /run/user/1000 tempfs is too small for docker
   services.logind.extraConfig = ''
     RuntimeDirectorySize=8G
@@ -111,7 +114,7 @@ in
     createHome = true;
     home = "/home/${config.settings.username}";
     description = "Jarrell Waggoner";
-    extraGroups = ["audio" "docker" "networkmanager" "wheel"];
+    extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
     uid = 1000;
     shell = pkgs.zsh;
   };
