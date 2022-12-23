@@ -375,7 +375,7 @@ with pkgs.lib;
     text = ''
       #!/usr/bin/env bash
       mkdir $HOME/shared 2>/dev/null
-      vmhgfs-fuse .host:/shared /home/jwaggon9/shared -o subtype=vmhgfs-fuse
+      vmhgfs-fuse .host:/shared $HOME/shared -o subtype=vmhgfs-fuse
     '';
   };
 
