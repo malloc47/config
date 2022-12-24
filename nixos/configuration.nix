@@ -37,7 +37,6 @@ in
 
   nix.settings.trusted-users = [ "@wheel" ];
 
-
   nix.extraOptions = ''
     tarball-ttl = 604800
     experimental-features = nix-command flakes
@@ -74,6 +73,11 @@ in
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;
+  # This is only needed for containers that want to share the
+  # pulse-native socket
+  # hardware.pulseaudio.extraClientConf = ''
+  #   enable-shm = no
+  # '';
 
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;

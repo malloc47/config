@@ -19,7 +19,7 @@
 
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
-  boot.loader.grub.useOSProber = true;
+  boot.loader.grub.useOSProber = false;
 
   networking.hostName = "salome";
   networking.networkmanager.enable = true;
@@ -35,7 +35,6 @@
   # Chrome scaling fix
   environment.variables.GDK_SCALE = "3.0";
   environment.variables.GDK_DPI_SCALE="0.25";
-
 
   # Used for file sharing between host and guest
   services.openssh.enable = true;
