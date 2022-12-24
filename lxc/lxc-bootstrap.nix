@@ -3,7 +3,7 @@
 {
   imports = [
     ../modules/settings.nix
-    "${modulesPath}/virtualisation/lxc-container.nix"
+    ../hardware/lxc.nix
   ];
 
   settings = {
@@ -13,15 +13,6 @@
     xkbFile = "vm";
     terminal = "kitty";
   };
-
-  # https://discourse.nixos.org/t/howto-setup-lxd-on-nixos-with-nixos-guest-using-unmanaged-bridge-network-interface/21591
-  boot.isContainer = true;
-  environment.noXlibs = false;
-  programs.command-not-found.enable = true;
-  documentation.enable = true;
-  environment.variables.NIX_REMOTE = lib.mkForce "";
-  systemd.services."console-getty".enable = false;
-  systemd.services."getty@".enable = false;
 
   # This bare LXC image will ultimately be bootstrapped with a real
   # config, so set the hostname in advance so there's one less change

@@ -4,7 +4,7 @@
   imports = [
     ../nixos/configuration.nix
     ../modules/settings.nix
-    "${modulesPath}/virtualisation/lxc-container.nix"
+    ../hardware/lxc.nix
   ];
 
   settings = {
@@ -14,16 +14,6 @@
     xkbFile = "vm";
     terminal = "kitty";
   };
-
-  # TODO: pull this out into hardware/lxc.nix
-  # https://discourse.nixos.org/t/howto-setup-lxd-on-nixos-with-nixos-guest-using-unmanaged-bridge-network-interface/21591
-  boot.isContainer = true;
-  environment.noXlibs = false;
-  programs.command-not-found.enable = true;
-  documentation.enable = true;
-  environment.variables.NIX_REMOTE = lib.mkForce "";
-  systemd.services."console-getty".enable = false;
-  systemd.services."getty@".enable = false;
 
   networking.hostName = "harpocrates";
   networking.firewall.enable = false;
@@ -38,12 +28,6 @@
   # Chrome scaling fix
   environment.variables.GDK_SCALE = "3.0";
   environment.variables.GDK_DPI_SCALE="0.25";
-
-  nix.settings.trusted-users = [ "@wheel" ];
-  nix.extraOptions = ''
-    tarball-ttl = 604800
-    experimental-features = nix-command flakes
-  '';
 
   # Used for file sharing between host and guest
   services.openssh.enable = true;
