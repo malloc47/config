@@ -26,7 +26,6 @@
   nixpkgs.overlays = [(import ../pkgs/aarch64.nix)];
 
   services.xserver = {
-    autoRepeatDelay = 250;
     dpi = 277;
     displayManager = {
       sessionCommands = ''

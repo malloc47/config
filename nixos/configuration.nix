@@ -92,14 +92,11 @@ in
   '';
 
   services.xserver.enable = true;
-
   services.xserver.desktopManager.xterm.enable = false;
-
   services.xserver.displayManager.defaultSession = "none+i3";
-
   services.xserver.windowManager.i3.enable = true;
-
   services.xserver.autorun = true;
+  services.xserver.autoRepeatDelay = 250;
 
   security.sudo.wheelNeedsPassword = false;
 

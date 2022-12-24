@@ -39,8 +39,6 @@
     '';
   };
 
-  services.xserver.autoRepeatDelay = 250;
-
   services.xserver.deviceSection = ''
     Option "TearFree" "true"
   '';

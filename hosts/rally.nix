@@ -27,8 +27,6 @@
   networking.firewall.enable = false;
   networking.nameservers = ["8.8.8.8" "8.8.4.4"];
 
-  services.xserver.autoRepeatDelay = 250;
-
   services.xserver.dpi = 277;
 
   hardware.video.hidpi.enable = true;
