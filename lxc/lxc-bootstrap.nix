@@ -41,18 +41,30 @@
     git
   ];
 
+  # This bootstrap environment does not have any overlays added, but
+  # the full host will. There's a circular dependency where my
+  # configuration.nix defines this file, but before creating it relies
+  # on it for the overlay refrences within the configuration.nix file
+  # to resolve.
+  environment.etc."overlays-compat" = {
+    text = ''
+      self: super:
+      with super.lib;
+      let
+        eval = import <nixpkgs/nixos/lib/eval-config.nix>;
+        paths = (eval {modules = [(import <nixos-config>)];})
+          .config.nixpkgs.overlays;
+      in
+      foldl' (flip extends) (_: super) paths self
+    '';
+    target = "nixos/overlays-compat/overlays.nix";
+  };
+
   security.sudo.wheelNeedsPassword = false;
 
   programs.zsh.enable = true;
 
-  # Used for file sharing between host and guest
   services.openssh.enable = true;
-  users.users.${config.settings.username} = {
-    openssh.authorizedKeys.keys = [
-      (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_rsa.pub"))
-    ];
-  };
-
   users.users.${config.settings.username} = {
     isNormalUser = true;
     createHome = true;
@@ -61,6 +73,10 @@
     extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
     uid = 1000;
     shell = pkgs.zsh;
+    # Used for file sharing between host and guest
+    openssh.authorizedKeys.keys = [
+      (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_rsa.pub"))
+    ];
   };
 
   system.stateVersion = "21.11";
