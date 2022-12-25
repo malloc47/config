@@ -29,5 +29,7 @@ lxc exec nixos -- ln -f -s /home/malloc47/src/config/hosts/harpocrates.nix /etc/
 lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch'
 COOKIE=$(xauth list | awk '{print $3}')
 lxc exec nixos -- su - malloc47 -c "xauth add \$HOST/unix:0 MIT-MAGIC-COOKIE-1 $COOKIE"
+# Hacky way to copy the user password hash into the container
+lxc exec nixos -- bash -c "echo \"malloc47:$(printf \"%q\" $(sudo cat /etc/shadow | grep malloc47 | awk -F: '{print $2}'))\" | chpasswd -e"
 echo "lxc exec nixos -- /run/current-system/sw/bin/bash"
-echo "lxc exec nixos -- su - malloc47"
+echo "lxc exec nixos -- machinectl shell --uid=malloc47"

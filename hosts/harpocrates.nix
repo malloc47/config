@@ -12,7 +12,6 @@
     username = "malloc47";
     fontSize = 9.0;
     xkbFile = "vm";
-    terminal = "kitty";
   };
 
   networking.hostName = "harpocrates";
