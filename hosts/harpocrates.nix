@@ -39,5 +39,10 @@
   home-manager.users.${config.settings.username} = {
     home.pointerCursor.size = 64;
     xresources.properties."Xft.dpi" = 277;
+
+    # Use the host's xsession
+    home.sessionVariables = {
+      DISPLAY = ":0";
+    };
   };
 }
