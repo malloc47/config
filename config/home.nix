@@ -307,7 +307,6 @@ with pkgs.lib;
       fi
     '';
     sessionVariables = {
-      EDITOR = "vim";
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=10";
     };
   };
@@ -338,11 +337,14 @@ with pkgs.lib;
       CDPATH = ".:~/src/" +
         optionalString (config.settings.profile != "malloc47")
         ":~/src/${config.settings.profile}";
-      EDITOR = "vim";
     };
     shellOptions = [
     "autocd" "cdspell" "globstar" # bash >= 4
     "cmdhist" "nocaseglob" "histappend" "extglob"];
+  };
+
+  home.sessionVariables = {
+    EDITOR = "vim";
   };
 
   home.file.".inputrc".source = ./.inputrc;
