@@ -19,6 +19,52 @@
   networking.nameservers = ["8.8.8.8" "8.8.4.4"];
 
   services.xserver.dpi = 277;
+  # Launch xorg on display :1 so it does not collide with host display
+  # Note: These only work with startx
+  services.xserver.display = 1;
+  services.xserver.tty = 8;
+  services.xserver.exportConfiguration = true;
+
+  # # Attempt to use lightdm but not working yet :(
+  # services.xserver.displayManager.lightdm.extraConfig = ''
+  #   minimum-display-number=1
+  #   minimum-vt=8
+  #   logind-check-graphical=true
+  # '';
+
+  # udev does not work in LXC, so input has to be specified manually
+
+  environment.systemPackages = with pkgs; [
+    xorg.xf86videovmware
+    xorg.xf86inputevdev
+  ];
+
+  services.xserver.videoDrivers = ["vmware"];
+
+  services.xserver.config = ''
+    Section "InputDevice"
+      Identifier  "Keyboard0"
+      Driver      "evdev"
+      Option      "Device" "/dev/input/event0"
+    EndSection
+
+    Section "InputDevice"
+      Identifier  "Mouse0"
+      Driver      "evdev"
+      Option      "Device" "/dev/input/event3"
+    EndSection
+  '';
+
+  services.xserver.serverLayoutSection = ''
+    InputDevice "Keyboard0" "CoreKeyboard"
+    InputDevice "Mouse0" "CoreMouse"
+  '';
+
+  services.xserver.serverFlagsSection = ''
+    Option "AutoAddDevices" "False"
+  '';
+
+  services.xserver.displayManager.startx.enable = true;
 
   hardware.video.hidpi.enable = true;
 
@@ -39,10 +85,13 @@
   home-manager.users.${config.settings.username} = {
     home.pointerCursor.size = 64;
     xresources.properties."Xft.dpi" = 277;
+    # startx does not use .xsession but all the contents are valid for
+    # an .xinitrc
+    xsession.scriptPath = ".xinitrc";
 
-    # Use the host's xsession
-    home.sessionVariables = {
-      DISPLAY = ":0";
-    };
+    # # Use the host's xsession
+    # home.sessionVariables = {
+    #   DISPLAY = ":0";
+    # };
   };
 }

@@ -3,6 +3,8 @@ config:
   environment.DISPLAY: :0
   environment.PULSE_SERVER: unix:/home/malloc47/.pulse-native
 description: X11 LXD profile
+name: x11
+used_by: []
 devices:
   PASocket1:
     bind: container
@@ -21,7 +23,10 @@ devices:
     security.gid: "1000"
     security.uid: "1000"
     type: proxy
+  X0-lock:
+    path: /tmp/.X0-lock
+    source: /tmp/.X0-lock
+    type: disk
   mygpu:
     type: gpu
-name: x11
-used_by: []
+    gid: "1000"
