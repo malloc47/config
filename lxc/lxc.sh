@@ -93,6 +93,8 @@ function container () {
     #
     # Interestingly this fairly consistently repros
     # https://github.com/NixOS/nixpkgs/issues/160289
+    lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch' || true
+    # Do it again because of the above issue
     lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch'
     COOKIE=$(xauth list | awk '{print $3}')
     lxc exec nixos -- su - malloc47 -c "xauth add \$HOST/unix:0 MIT-MAGIC-COOKIE-1 $COOKIE"
@@ -101,14 +103,14 @@ function container () {
 }
 
 function background_image () {
-    cp ~/.background-image ~/lxc-share/
+    cp ~/.background-image $HOME/lxc-share/
 }
 
 cleanup
 image
 x11_profile
-background_image
 container
+background_image
 
 echo "Various ways to get into the container:"
 echo "    lxc exec nixos -- /run/current-system/sw/bin/bash"
