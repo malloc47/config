@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-function cleanup () {
-    lxc stop nixos || true
-    lxc delete nixos || true
-    lxc image delete nixos-base || true
+function cleanup_image_build () {
     LXC_ARTIFACT=`readlink -f lxc`
     LXC_METADATA_ARTIFACT=`readlink -f lxc-metadata`
     rm -f lxc lxc-metadata
@@ -12,7 +9,18 @@ function cleanup () {
     nix store delete $LXC_ARTIFACT || true
     echo "Deleting $LXC_METADATA_ARTIFACT"
     nix store delete $LXC_METADATA_ARTIFACT || true
+}
+
+function cleanup_container () {
+    lxc stop nixos || true
+    lxc delete nixos || true
     rm -rf ~/lxc-share
+}
+
+function cleanup () {
+    cleanup_container
+    cleanup_image_build
+    lxc image delete nixos-base || true
 }
 
 function image() {
@@ -87,6 +95,8 @@ function container () {
     git clone --recurse-submodules git@github.com:malloc47/config.git ~/lxc-share/src/config
     lxc start nixos
     lxc exec nixos -- ln -f -s /home/malloc47/src/config/hosts/harpocrates.nix /etc/nixos/configuration.nix
+    # https://superuser.com/a/1598351
+    # lxc exec nixos -- loginctl enable-linger malloc47
     # Because the configuration is not active yet, we have to manually set
     # the overlays folder this first time; relies on the base image having
     # defined the compatibility overlay in this directory.
@@ -106,14 +116,55 @@ function background_image () {
     cp ~/.background-image $HOME/lxc-share/
 }
 
-cleanup
-image
-x11_profile
-container
-background_image
+function build () {
+    cleanup
+    image
+    x11_profile
+    container
+    background_image
+    cleanup_image_build
+    help
+}
 
-echo "Various ways to get into the container:"
-echo "    lxc exec nixos -- /run/current-system/sw/bin/bash"
-echo "    lxc exec nixos -- su - malloc47"
-echo "    lxc exec nixos -- machinectl shell --uid=malloc47"
-echo "    lxc exec nixos -- machinectl shell --uid=malloc47 .host /run/current-system/sw/bin/startx"
+function build_from_container () {
+    cleanup_container
+    x11_profile
+    container
+    background_image
+    help
+}
+
+function help () {
+    echo "Various ways to get into the container:"
+    echo "    lxc exec nixos -- /run/current-system/sw/bin/bash"
+    echo "    lxc exec nixos -- su - malloc47"
+    echo "    lxc exec nixos -- machinectl shell --uid=malloc47"
+    echo "    lxc exec nixos -- machinectl shell --uid=malloc47 .host /run/current-system/sw/bin/startx"
+}
+
+function parse_opts () {
+
+    if [ $# -eq 0 ]; then
+	help
+	return
+    fi
+
+    for arg in "$@"; do
+	case "$arg" in
+	    all)
+		build
+		;;
+	    *)
+		if [[ $(type -t $1) == function ]] ; then
+	            $1
+		else
+		    echo "Error: $1 is not a recognized command" 1>&2
+		    exit 1
+	        fi
+		;;
+	esac
+	shift
+    done
+}
+
+parse_opts "$@"
