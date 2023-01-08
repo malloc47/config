@@ -165,6 +165,35 @@ with pkgs.lib;
     '';
   };
 
+  programs.i3status = {
+    enable = true;
+    enableDefault = false;
+    general = {
+      colors = true;
+      interval = 5;
+    };
+    modules = {
+      "disk /" = {
+        position = 18;
+        settings = {
+          format = "/ %avail";
+        };
+      };
+      "load" = {
+        position = 19;
+        settings = {
+          format = "Load: %1min";
+        };
+      };
+      "tztime local" = {
+        position = 20;
+        settings = {
+          format = "%Y-%m-%d %I:%M %p";
+        };
+      };
+    };
+  };
+
   xresources.properties = {
     "xterm*faceName" = "${config.settings.fontName}";
     "xterm*faceSize" = "${head (splitString "." (toString config.settings.fontSize))}";
@@ -352,7 +381,7 @@ with pkgs.lib;
   home.file.".clojure" = { source = ./.clojure; recursive = true; };
   home.file.".sbt" = { source = ./.sbt; recursive = true; };
   xdg.configFile."alacritty/alacritty.yml".source = ./.alacritty.yml;
-  xdg.configFile."i3status/config".source = ./.i3status.conf;
+  # xdg.configFile."i3status/config".source = ./.i3status.conf;
   xdg.configFile.".user-dirs.dirs".source = ./.user-dirs.dirs;
 
   home.file."wifi" = mkIf (!config.settings.vm) {

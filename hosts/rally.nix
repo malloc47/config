@@ -54,5 +54,22 @@
     # https://github.com/vmware/open-vm-tools/issues/287
     programs.ssh.matchBlocks."*".extraOptions.IPQoS="throughput";
     programs.ssh.matchBlocks."*".user = "jarrell.waggoner";
+
+    programs.i3status.modules = {
+      "ethernet _first_" = {
+        position = 3;
+        settings = {
+          format_up = "E: %ip";
+          format_down = "E";
+        };
+      };
+      "battery all" = {
+        position = 4;
+        settings = {
+          format = "%status %percentage %remaining";
+	        format_down = "⚡";
+        };
+      };
+    };
   };
 }

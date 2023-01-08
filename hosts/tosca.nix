@@ -83,5 +83,36 @@
       python-language-server
       google-chrome
     ];
+    programs.i3status.modules = {
+      "volume master" = {
+        position = 1;
+        settings = {
+          format = "♪ %volume";
+          format_muted = "♪ 0%%";
+          device = "pulse:0";
+        };
+      };
+      "wireless _first_" = {
+        position = 2;
+        settings = {
+          format_up = "W: %essid %quality %ip";
+          format_down = "W: down";
+        };
+      };
+      "ethernet _first_" = {
+        position = 3;
+        settings = {
+          format_up = "E: %ip (%speed)";
+          format_down = "E";
+        };
+      };
+      "battery all" = {
+        position = 4;
+        settings = {
+          format = "%status %percentage %remaining";
+	        format_down = "⚡";
+        };
+      };
+    };
   };
 }

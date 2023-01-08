@@ -93,5 +93,15 @@
     # home.sessionVariables = {
     #   DISPLAY = ":0";
     # };
+
+    programs.i3status.modules = {
+      "ethernet _first_" = {
+        position = 3;
+        settings = {
+          format_up = "E: %ip";
+          format_down = "E";
+        };
+      };
+    };
   };
 }
