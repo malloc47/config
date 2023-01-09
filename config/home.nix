@@ -98,11 +98,15 @@ with pkgs.lib;
         {
           id = "bar-0";
           position = "top";
+          hiddenState = "hide";
           statusCommand = "${pkgs.i3status}/bin/i3status";
           fonts = {
             names = [ config.settings.fontName ];
             size = config.settings.fontSize;
           };
+          extraConfig = ''
+            modifier none
+          '';
         }
       ];
       keybindings = mkOptionDefault (
