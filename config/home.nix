@@ -94,6 +94,13 @@ with pkgs.lib;
     enable = true;
     config = {
       modifier = mod;
+      colors.focused = {
+        border = "#d33682";
+        background = "#4c7899";
+        text = "#ffffff";
+        indicator = "#d33682";
+        childBorder = "#d33682";
+      };
       bars = [
         {
           id = "bar-0";
@@ -103,6 +110,31 @@ with pkgs.lib;
           fonts = {
             names = [ config.settings.fontName ];
             size = config.settings.fontSize;
+          };
+          colors = {
+            separator = "#586e75";
+            background = "#fdf6e3";
+            statusline = "#657b83";
+            focusedWorkspace = {
+              background = "#586e75";
+              border = "#93a1a1";
+              text = "#002b36";
+            };
+            activeWorkspace = {
+              background = "#fdf6e3";
+              border = "#6c71c4";
+              text = "#fdf6e3";
+            };
+            inactiveWorkspace = {
+              background = "#eee8d5";
+              border = "#b58900";
+              text = "#657b83";
+            };
+            urgentWorkspace  = {
+              background = "#d33682";
+              border = "#d33682";
+              text = "#fdf6e3";
+            };
           };
           extraConfig = ''
             modifier none
@@ -174,6 +206,9 @@ with pkgs.lib;
     enableDefault = false;
     general = {
       colors = true;
+      color_good = "#859900";
+      color_degraded = "#B58900";
+      color_bad = "#DC322F";
       interval = 5;
     };
     modules = {
