@@ -1,0 +1,19 @@
+config: {}
+storage_pools:
+- config:
+    size: 30GiB
+  description: ""
+  name: default
+  driver: btrfs
+profiles:
+- config: 
+    raw.lxc: lxc.include=/home/jwaggoner/src/config/lxc/network-none 
+  description: ""
+  devices:
+    root:
+      path: /
+      pool: default
+      type: disk
+  name: default
+projects: []
+cluster: null

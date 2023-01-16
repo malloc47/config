@@ -1,6 +1,30 @@
 #!/usr/bin/env bash
 set -e
 
+# Only use this to completely delete/reinstall LXD
+# See https://discuss.linuxcontainers.org/t/how-to-remove-lxd-from-my-system/2336/16
+function cleanup_lxd () {
+    for container in $(lxc list -f json | jq -r .[].name); do
+	echo "Deleting container $container"
+        lxc delete $container
+    done
+    for image in $(lxc image list -f json | jq -r .[].fingerprint); do
+	echo "Deleting image $image"
+        lxc image delete $image
+    done
+    # Can do this better but am too lazy
+    echo "Deleting network lxbr0"
+    lxc network detach-profile lxdbr0 default || true
+    lxc network delete lxdbr0 || true
+    echo "Deleting profile default"
+    echo '{"config": {}}' | lxc profile edit default
+    for volume in $(lxc storage volume list default -f json | jq .[].name); do
+        echo "Deleting volume $volume"
+        lxc storage volume delete default $volume
+    done
+    lxc storage delete default
+}
+
 function cleanup_image_build () {
     LXC_ARTIFACT=`readlink -f lxc`
     LXC_METADATA_ARTIFACT=`readlink -f lxc-metadata`
@@ -33,7 +57,48 @@ function x11_profile() {
     # Adapted from
     # https://github.com/ustuehler/lxc-desktop/blob/master/usr/share/lxc/hooks/desktop-autodev
     lxc profile delete x11 || true
-    cp x11.template x11.yaml
+    CURRENT_UID=$(id -u $USER)
+    cat <<EOT > x11.yaml
+config:
+  environment.DISPLAY: :0
+  environment.PULSE_SERVER: unix:/home/${USER}/.pulse-native
+description: X11 LXD profile
+name: x11
+used_by: []
+devices:
+  PASocket1:
+    bind: container
+    connect: unix:/run/user/${CURRENT_UID}/pulse/native
+    listen: unix:/home/${USER}/.pulse-native
+    security.gid: "${CURRENT_UID}"
+    security.uid: "${CURRENT_UID}"
+    uid: "${CURRENT_UID}"
+    gid: "${CURRENT_UID}"
+    mode: "0777"
+    type: proxy
+  X0:
+    bind: container
+    connect: unix:@/tmp/.X11-unix/X0
+    listen: unix:@/tmp/.X11-unix/X0
+    security.gid: "${CURRENT_UID}"
+    security.uid: "${CURRENT_UID}"
+    type: proxy
+EOT
+
+    if [ -f /tmp/.X0-lock ] ; then
+    cat <<EOT >> x11.yaml
+  X0-lock:
+    path: /tmp/.X0-lock
+    source: /tmp/.X0-lock
+    type: disk
+EOT
+    fi
+
+    cat <<EOT >> x11.yaml
+  mygpu:
+    type: gpu
+    gid: "${CURRENT_UID}"
+EOT
     for f in /dev/vga_arbiter \
 	     /dev/fb0 \
 	     /dev/dri \
@@ -86,15 +151,17 @@ EOT
 }
 
 function container () {
-    lxc init nixos-base nixos -c security.nesting=true -c security.privileged=true --profile default --profile x11
+    lxc init nixos-base nixos -c security.nesting=true -c security.privileged=true --profile default # --profile x11hh
     mkdir -p $HOME/lxc-share
     lxc config device add nixos homedir disk source=/home/$USER/lxc-share path=/home/$USER
+    lxc config device add nixos nixdir disk source=/nix path=/nix
     # Needed for xorg to launch cleanly
     # lxc config device add mycontainer tty0 unix-char source=/dev/tty0 path=/dev/tty0
     # lxc config device add nixos nixstore disk source=/nix/store path=/nix/store
     git clone --recurse-submodules git@github.com:malloc47/config.git ~/lxc-share/src/config
+    cp ~/src/config/hosts/drw.nix ~/lxc-share/src/config/hosts/
     lxc start nixos
-    lxc exec nixos -- ln -f -s /home/malloc47/src/config/hosts/harpocrates.nix /etc/nixos/configuration.nix
+    lxc exec nixos -- ln -f -s /home/$USER/src/config/hosts/drw.nix /etc/nixos/configuration.nix
     # https://superuser.com/a/1598351
     # lxc exec nixos -- loginctl enable-linger malloc47
     # Because the configuration is not active yet, we have to manually set
@@ -106,10 +173,10 @@ function container () {
     lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch' || true
     # Do it again because of the above issue
     lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch'
-    COOKIE=$(xauth list | awk '{print $3}')
-    lxc exec nixos -- su - malloc47 -c "xauth add \$HOST/unix:0 MIT-MAGIC-COOKIE-1 $COOKIE"
+    COOKIE=$(xauth list | awk '{print $3}' | head -1)
+    lxc exec nixos -- su - $USER -c "xauth add \$HOST/unix:0 MIT-MAGIC-COOKIE-1 $COOKIE"
     # Hacky way to copy the user password hash into the container
-    lxc exec nixos -- bash -c "echo \"malloc47:$(printf \"%q\" $(sudo cat /etc/shadow | grep malloc47 | awk -F: '{print $2}'))\" | chpasswd -e"
+    lxc exec nixos -- bash -c "echo \"$USER:$(printf \"%q\" $(sudo cat /etc/shadow | grep $USER | awk -F: '{print $2}'))\" | chpasswd -e"
 }
 
 function background_image () {
@@ -128,7 +195,7 @@ function build () {
 
 function build_from_container () {
     cleanup_container
-    x11_profile
+    # x11_profile
     container
     background_image
     help
@@ -137,9 +204,9 @@ function build_from_container () {
 function help () {
     echo "Various ways to get into the container:"
     echo "    lxc exec nixos -- /run/current-system/sw/bin/bash"
-    echo "    lxc exec nixos -- su - malloc47"
-    echo "    lxc exec nixos -- machinectl shell --uid=malloc47"
-    echo "    lxc exec nixos -- machinectl shell --uid=malloc47 .host /run/current-system/sw/bin/startx"
+    echo "    lxc exec nixos -- su - $USER"
+    echo "    lxc exec nixos -- machinectl shell --uid=$USER"
+    echo "    lxc exec nixos -- machinectl shell --uid=$USER .host /run/current-system/sw/bin/startx"
 }
 
 function parse_opts () {
