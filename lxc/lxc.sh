@@ -154,13 +154,18 @@ function container () {
     lxc init nixos-base nixos -c security.nesting=true -c security.privileged=true --profile default # --profile x11hh
     mkdir -p $HOME/lxc-share
     lxc config device add nixos homedir disk source=/home/$USER/lxc-share path=/home/$USER
-    lxc config device add nixos nixdir disk source=/nix path=/nix
+    # before doing this, the /nix/store must be populated with the contents of the image or it will fail to boot
+    if [ -d "/nix/store" ] ; then
+        lxc config device add nixos nixstore disk source=/nix/store path=/nix/store
+    fi
     # Needed for xorg to launch cleanly
     # lxc config device add mycontainer tty0 unix-char source=/dev/tty0 path=/dev/tty0
-    # lxc config device add nixos nixstore disk source=/nix/store path=/nix/store
     git clone --recurse-submodules git@github.com:malloc47/config.git ~/lxc-share/src/config
     cp ~/src/config/hosts/drw.nix ~/lxc-share/src/config/hosts/
+    echo "Starting container"
     lxc start nixos
+    echo "Waiting for container"
+    sleep 5
     lxc exec nixos -- ln -f -s /home/$USER/src/config/hosts/drw.nix /etc/nixos/configuration.nix
     # https://superuser.com/a/1598351
     # lxc exec nixos -- loginctl enable-linger malloc47
