@@ -39,6 +39,18 @@
       DISPLAY = ":0";
     };
 
+    # Not using a display manager, even startx, so have to do this manually
+    systemd.user.services.xrdb = {
+      Service = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        StandardOutput = "journal";
+        Environment = "DISPLAY=:0";
+        ExecStart = "${pkgs.xorg.xrdb}/bin/xrdb -merge %h/.Xresources";
+      };
+      Install.WantedBy = ["default.target"];
+    };
+
     programs.i3status.modules = {
       "ethernet _first_" = {
         position = 3;
