@@ -158,6 +158,9 @@ function container () {
     if [ -d "/nix/store" ] ; then
         lxc config device add nixos nixstore disk source=/nix/store path=/nix/store
     fi
+    # lxc config device add nixos resolv disk source=/etc/resolv.conf path=/etc/resolv.conf
+    lxc config device add nixos certs disk source=/etc/drw-security-certs/ path=/etc/drw-security-certs/ readonly=true
+    lxc config device add nixos certs-pem disk source=/etc/drw-certs/ path=/etc/drw-certs/ readonly=true
     # Needed for xorg to launch cleanly
     # lxc config device add mycontainer tty0 unix-char source=/dev/tty0 path=/dev/tty0
     git clone --recurse-submodules git@github.com:malloc47/config.git ~/lxc-share/src/config

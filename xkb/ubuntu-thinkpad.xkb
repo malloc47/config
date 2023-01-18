@@ -1,0 +1,16 @@
+xkb_keymap {
+    xkb_keycodes  { include "evdev+aliases(qwerty)" };
+    xkb_types     { include "complete"      };
+    xkb_compat    { include "complete"      };
+    xkb_symbols {
+        include "pc+us+inet(evdev)+terminate(ctrl_alt_bksp)"
+        key <AE09> {[         9,  bracketleft  ]};
+        key <AE10> {[         0,  bracketright ]};
+        key <AD11> {[  parenleft, braceleft    ]};
+        key <AD12> {[ parenright, braceright   ]};
+        key <CAPS> {[ Control_L                ]};
+        key <CAPS>  {symbols[Group1]= [ Control_L ]};
+        modifier_map  Control { <CAPS>, <LCTL> };
+    };
+    xkb_geometry  { include "pc(pc104)"     };
+};
