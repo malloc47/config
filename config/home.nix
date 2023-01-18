@@ -226,6 +226,9 @@ with pkgs.lib;
       focus_wrapping no
       exec_always "if [[ -e $HOME/.background-image ]]; then feh --bg-scale $HOME/.background-image ; fi"
       exec i3-msg workspace 1
+      for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
+      for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom - Licensed Account"] floating disable
+      for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom Meeting"] floating disable
     '';
   };
 
