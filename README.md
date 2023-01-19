@@ -3,8 +3,8 @@
 NixOS configuration repo for an evolving ensemble of machines/VMs
 including:
 
-- VMWare Fusion-hosted VM running on an Intel `MacBookPro16,1`
-- VMWare Fusion-hosted VM running an M1 `MacBookPro18,1`
+- LXC Container running on Ubuntu 22.04 on a Thinkpad X1 Carbon Gen 9
+- VMWare Fusion-hosted VM running on an aging `MacBookPro11,3`
 - Baremetal install running on an aging `MacBookAir6,1`
 
 ## Design
