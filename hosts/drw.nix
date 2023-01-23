@@ -174,6 +174,9 @@ in
     xsession.windowManager.i3.config.keybindings."XF86AudioMicMute" = "exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status";
     xsession.windowManager.i3.config.keybindings."XF86MonBrightnessUp" = "exec brightnessctl set 5%+";
     xsession.windowManager.i3.config.keybindings."XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
+    xsession.windowManager.i3.config.keybindings."${mod}+Print" = "exec flameshot gui";
+    xsession.windowManager.i3.config.keybindings."${mod}+Shift+Print" = "exec flameshot gui";
+
 
     xsession.windowManager.i3.extraConfig = let
       xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
@@ -186,6 +189,7 @@ in
         exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c 'xrdb -merge $HOME/.Xresources'\"
         exec --no-startup-id nm-applet
         exec --no-startup-id blueman-applet
+        exec --no-startup-id pasystray
       '';
 
     programs.i3status.modules = {
