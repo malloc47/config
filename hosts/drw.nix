@@ -207,6 +207,13 @@ in
           format_down = "W: down";
         };
       };
+      "read_file power_profile" = {
+        position = 3;
+        settings = {
+          format = "%content";
+          path = "/sys/firmware/acpi/platform_profile";
+        };
+      };
       "battery all" = {
         position = 4;
         settings = {
