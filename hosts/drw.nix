@@ -3,6 +3,7 @@ let
   dpi = 96;
   mod = "Mod4";
   display = ":0";
+  lxcExec = cmd: "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c '${cmd}'\"";
 in
 {
   imports = [
@@ -159,24 +160,28 @@ in
     # applications in the guest, allowing me to retain all the
     # benefits of work/vendor application/OS stability but still keep
     # my own OS and associated tooling.
-    xsession.windowManager.i3.config.keybindings."${mod}+p" = lib.mkForce "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c 'dmenu_path | dmenu | zsh'\"";
-    xsession.windowManager.i3.config.keybindings."${mod}+Shift+P" = lib.mkForce  "exec dmenu_run";
-    xsession.windowManager.i3.config.keybindings."${mod}+o" = lib.mkForce "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c clipmenu\"";
-    xsession.windowManager.i3.config.keybindings."${mod}+Return" = lib.mkForce "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c ${config.settings.terminal}\"";
-    xsession.windowManager.i3.config.keybindings."${mod}+Shift+Return" = lib.mkForce "exec gnome-terminal";
-    xsession.windowManager.i3.config.keybindings."${mod}+Shift+e" = lib.mkForce "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c 'TERM=alacritty emacsclient -c'\"";
-    xsession.windowManager.i3.config.keybindings."${mod}+Shift+N" = lib.mkForce ''
-              exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"sudo nixos-rebuild switch; read -s -k \\?COMPLETE\\\\"\\"'"
-            '';
-    xsession.windowManager.i3.config.keybindings."${mod}+Shift+Control+L" = "exec i3lock";
-    xsession.windowManager.i3.config.keybindings."XF86AudioRaiseVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status";
-    xsession.windowManager.i3.config.keybindings."XF86AudioLowerVolume" = "exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status";
-    xsession.windowManager.i3.config.keybindings."XF86AudioMute" = "exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status";
-    xsession.windowManager.i3.config.keybindings."XF86AudioMicMute" = "exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status";
-    xsession.windowManager.i3.config.keybindings."XF86MonBrightnessUp" = "exec brightnessctl set 5%+";
-    xsession.windowManager.i3.config.keybindings."XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
-    xsession.windowManager.i3.config.keybindings."${mod}+Print" = "exec flameshot gui";
-    xsession.windowManager.i3.config.keybindings."${mod}+Shift+Print" = "exec flameshot gui";
+    xsession.windowManager.i3.config.keybindings = let
+      pactl = cmd: "exec --no-startup-id pactl ${cmd} && $refresh_i3status";
+    in {
+      "${mod}+p"               = lib.mkForce(lxcExec("dmenu_path | dmenu | zsh"));
+      "${mod}+Shift+P"         = lib.mkForce "exec dmenu_run";
+      "${mod}+o"               = lib.mkForce(lxcExec("clipmenu"));
+      "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
+      "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
+      "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
+      "${mod}+Shift+Control+L" = "exec i3lock";
+      "XF86AudioRaiseVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ +10%");
+      "XF86AudioLowerVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ -10%");
+      "XF86AudioMute"          = pactl("set-sink-mute @DEFAULT_SINK@ toggle");
+      "XF86AudioMicMute"       = pactl("set-source-mute @DEFAULT_SOURCE@ toggle");
+      "XF86MonBrightnessUp"    = "exec brightnessctl set 5%+";
+      "XF86MonBrightnessDown"  = "exec brightnessctl set 5%-";
+      "${mod}+Print"           = "exec flameshot gui";
+      "${mod}+Shift+Print"     = "exec flameshot gui";
+      "${mod}+Shift+N"         = lib.mkForce ''
+        exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"sudo nixos-rebuild switch; read -s -k \\?COMPLETE\\\\"\\"'"
+      '';
+    };
 
     # There is no ~/.xinitrc on Ubuntu and the NixOS one links to
     # binaries in /nix/store that won't work on Ubuntu. So I mirror
@@ -193,7 +198,7 @@ in
       # settings alone.
       ''
         exec_always xkbcomp ${compiledLayout} ${display}
-        exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c 'xrdb -merge $HOME/.Xresources'\"
+        ${lxcExec("xrdb -merge $HOME/.Xresources")}
         exec --no-startup-id nm-applet
         exec --no-startup-id blueman-applet
         exec --no-startup-id pasystray
