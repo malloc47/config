@@ -208,29 +208,29 @@ in
       "volume master" = {
         position = 1;
         settings = {
-          format = "♪ %volume";
-          format_muted = "♪ 0%%";
+          format = "🎵 %volume";
+          format_muted = "🔇 0%%";
         };
       };
       "wireless _first_" = {
         position = 2;
         settings = {
-          format_up = "W: %essid %quality %ip";
-          format_down = "W: down";
-        };
-      };
-      "read_file power_profile" = {
-        position = 3;
-        settings = {
-          format = "%content";
-          path = "/sys/firmware/acpi/platform_profile";
+          format_up = "📶 %ip";
+          format_down = "📶 down";
         };
       };
       "battery all" = {
         position = 4;
         settings = {
-          format = "%status %percentage %remaining";
-	        format_down = "⚡";
+          format = "🔋 %percentage %remaining";
+	        format_down = "🪫";
+        };
+      };
+      "read_file power_profile" = {
+        position = 5;
+        settings = {
+          format = "⚡ %content";
+          path = "/sys/firmware/acpi/platform_profile";
         };
       };
     };
