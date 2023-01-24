@@ -2,6 +2,7 @@
 let
   dpi = 96;
   mod = "Mod4";
+  display = ":0";
 in
 {
   imports = [
@@ -69,7 +70,7 @@ in
 
     # Use the host's xsession
     home.sessionVariables = {
-      DISPLAY = ":0";
+      DISPLAY = display;
     };
 
     # Not using a display manager, even startx, so have to do this manually
@@ -78,7 +79,7 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         StandardOutput = "journal";
-        Environment = "DISPLAY=:0";
+        Environment = "DISPLAY=${display}";
         ExecStart = "${pkgs.xorg.xrdb}/bin/xrdb -merge %h/.Xresources";
       };
       Install.WantedBy = ["default.target"];
@@ -177,15 +178,21 @@ in
     xsession.windowManager.i3.config.keybindings."${mod}+Print" = "exec flameshot gui";
     xsession.windowManager.i3.config.keybindings."${mod}+Shift+Print" = "exec flameshot gui";
 
-
+    # There is no ~/.xinitrc on Ubuntu and the NixOS one links to
+    # binaries in /nix/store that won't work on Ubuntu. So I mirror
+    # stuff I would normally put in there as i3 exec commands.
     xsession.windowManager.i3.extraConfig = let
       xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
       compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
           ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
        '';
     in
+      # Somehow ibus is getting autostarted on Ubuntu and overriding
+      # this, so I can to manually go into ibus-setup -> settings ->
+      # advanced -> use system keyboard layout so it would leave my xkb
+      # settings alone.
       ''
-        exec xkbcomp ${compiledLayout} $DISPLAY
+        exec_always xkbcomp ${compiledLayout} ${display}
         exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=jwaggoner .host /run/current-system/sw/bin/zsh -i -c 'xrdb -merge $HOME/.Xresources'\"
         exec --no-startup-id nm-applet
         exec --no-startup-id blueman-applet
