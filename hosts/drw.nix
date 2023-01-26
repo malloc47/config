@@ -170,8 +170,8 @@ in
       "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
       "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
       "${mod}+Shift+Control+L" = "exec i3lock";
-      "XF86AudioRaiseVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ +10%");
-      "XF86AudioLowerVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ -10%");
+      "XF86AudioRaiseVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ +5%");
+      "XF86AudioLowerVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ -5%");
       "XF86AudioMute"          = pactl("set-sink-mute @DEFAULT_SINK@ toggle");
       "XF86AudioMicMute"       = pactl("set-source-mute @DEFAULT_SOURCE@ toggle");
       "XF86MonBrightnessUp"    = "exec brightnessctl set 5%+";
@@ -208,28 +208,28 @@ in
       "volume master" = {
         position = 1;
         settings = {
-          format = "🎵 %volume";
-          format_muted = "🔇 0%%";
+          format = "🎵%volume";
+          format_muted = "🔇0%%";
         };
       };
       "wireless _first_" = {
         position = 2;
         settings = {
-          format_up = "📶 %ip";
-          format_down = "📶 down";
+          format_up = "📶%ip";
+          format_down = "📶down";
         };
       };
       "battery all" = {
         position = 4;
         settings = {
-          format = "🔋 %percentage %remaining";
+          format = "🔋%percentage %remaining";
 	        format_down = "🪫";
         };
       };
       "read_file power_profile" = {
         position = 5;
         settings = {
-          format = "⚡ %content";
+          format = "⚡%content";
           path = "/sys/firmware/acpi/platform_profile";
         };
       };

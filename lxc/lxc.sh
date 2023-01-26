@@ -171,7 +171,7 @@ function container () {
     sleep 5
     lxc exec nixos -- ln -f -s /home/$USER/src/config/hosts/drw.nix /etc/nixos/configuration.nix
     # https://superuser.com/a/1598351
-    # lxc exec nixos -- loginctl enable-linger malloc47
+    lxc exec nixos -- loginctl enable-linger $USER
     # Because the configuration is not active yet, we have to manually set
     # the overlays folder this first time; relies on the base image having
     # defined the compatibility overlay in this directory.
