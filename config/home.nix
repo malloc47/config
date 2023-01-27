@@ -143,8 +143,8 @@ with pkgs.lib;
       ];
       keybindings = (
         {
-          "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run";
-          "${mod}+o" = "exec ${pkgs.clipmenu}/bin/clipmenu";
+          "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run -fn '${config.settings.fontName}-${toString config.settings.fontSize}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
+          "${mod}+o" = "exec ${pkgs.clipmenu}/bin/clipmenu -fn '${config.settings.fontName}-${toString config.settings.fontSize}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
           "${mod}+q" = "reload";
           "${mod}+Control+q" = "restart";
           "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
