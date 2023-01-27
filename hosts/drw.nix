@@ -4,6 +4,10 @@ let
   mod = "Mod4";
   display = ":0";
   lxcExec = cmd: "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c '${cmd}'\"";
+  xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
+  compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
+    ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
+  '';
 in
 {
   imports = [
@@ -192,12 +196,7 @@ in
     # There is no ~/.xinitrc on Ubuntu and the NixOS one links to
     # binaries in /nix/store that won't work on Ubuntu. So I mirror
     # stuff I would normally put in there as i3 exec commands.
-    xsession.windowManager.i3.extraConfig = let
-      xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
-      compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
-          ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
-       '';
-    in
+    xsession.windowManager.i3.extraConfig =
       # Somehow ibus is getting autostarted on Ubuntu and overriding
       # this, so I can to manually go into ibus-setup -> settings ->
       # advanced -> use system keyboard layout so it would leave my xkb
@@ -253,5 +252,36 @@ in
         };
       };
     };
+
+    # For now, I only use one monitor at a time, so allow swapping between them
+    home.file."swap-display" = {
+      target = "bin/swap-display";
+      executable = true;
+      text = ''
+      #!/usr/bin/env bash
+      set -e
+
+      INTERNAL="eDP-1"
+      EXTERNAL=$(xrandr | grep " connected " | grep -v $INTERNAL | awk '{print $1}' | head -1)
+      if [ -z $EXTERNAL ] ; then
+          >&2 echo "External display not found"
+          exit 1
+      fi
+      INTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $INTERNAL && echo "--off" || echo "--auto --primary")
+      EXTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $EXTERNAL && echo "--off" || echo "--auto --primary")
+
+      if [ "$INTERNAL_TOGGLE" == "$EXTERNAL_TOGGLE" ] ; then
+          >&2 echo "Both monitors are already on or off"
+          exit 1
+      fi
+
+      xrandr --output $INTERNAL $INTERNAL_TOGGLE
+      xrandr --output $EXTERNAL $EXTERNAL_TOGGLE
+
+      [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
+      xkbcomp ${compiledLayout} ${display}
+    '';
+    };
+
   };
 }
