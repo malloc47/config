@@ -25,6 +25,7 @@ with pkgs.lib;
     firefox
     gimp
     gitAndTools.pre-commit
+    gnumake
     chromium
     home-manager
     ispell
@@ -303,7 +304,6 @@ with pkgs.lib;
       branch.autosetuprebase = "never";
       push.default = "simple";
       # TODO: bring this file under nix control
-      core.excludesfile = "/home/jwaggoner/.config/git/gitignore";
       core.pager = "less -F -X";
       pull.ff = "only";
       init.defaultBranch = "main";
