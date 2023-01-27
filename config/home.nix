@@ -174,9 +174,10 @@ with pkgs.lib;
           "${mod}+s" = "nop";
           "${mod}+Shift+>" = "move workspace to output right";
           "${mod}+Shift+<" = "move workspace to output left";
+          "${mod}+Shift+Control+f" = "sticky toggle";
           # Defaults
-          "${mod}+Shift+F" = "floating toggle";
           "${mod}+f" = "focus mode_toggle";
+          "${mod}+Shift+F" = "floating toggle";
           # "${mod}+f" = "fullscreen toggle";
           "${mod}+a" = "focus parent";
           "${mod}+1" = "workspace number 1";
