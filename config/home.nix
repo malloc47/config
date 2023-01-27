@@ -208,7 +208,7 @@ with pkgs.lib;
             "${mod}+equal" = "workspace next";
             "${mod}+minus" = "workspace prev";
             "${mod}+grave" = "workspace 1";
-            "${mod}+Shift+Control+L" = "exec i3lock";
+            "${mod}+Shift+Control+L" = "exec i3lock -c 000000";
             "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
             "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
             "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
@@ -285,7 +285,7 @@ with pkgs.lib;
 
   services.screen-locker = {
     enable = !config.settings.vm;
-    lockCmd = "${pkgs.i3lock}/bin/i3lock -n";
+    lockCmd = "${pkgs.i3lock}/bin/i3lock -n -c 000000";
     inactiveInterval = 5; # minutes
   };
 

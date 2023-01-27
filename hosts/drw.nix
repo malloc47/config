@@ -173,7 +173,7 @@ in
       "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
       "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
       "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
-      "${mod}+Shift+Control+L" = "exec i3lock";
+      "${mod}+Shift+Control+L" = "exec i3lock -c 000000";
       "XF86AudioRaiseVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ +5%");
       "XF86AudioLowerVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ -5%");
       "XF86AudioMute"          = pactl("set-sink-mute @DEFAULT_SINK@ toggle");
