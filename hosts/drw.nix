@@ -212,8 +212,16 @@ in
           format_muted = "🔇0%%";
         };
       };
-      "wireless _first_" = {
+      "path_exists VPN" = {
         position = 2;
+        settings = {
+          format = "%title";
+          format_down = "%title: down";
+          path = "/sys/class/net/cscotun0";
+        };
+      };
+      "wireless _first_" = {
+        position = 3;
         settings = {
           format_up = "📶%ip";
           format_down = "📶down";
@@ -222,14 +230,18 @@ in
       "battery all" = {
         position = 4;
         settings = {
-          format = "🔋%percentage %remaining";
-	        format_down = "🪫";
+          format = "%status%percentage %remaining";
+	        format_down = "No battery";
+          status_chr = "⚡";
+          status_bat = "🔋";
+          last_full_capacity = true;
+          integer_battery_capacity = true;
         };
       };
       "read_file power_profile" = {
         position = 5;
         settings = {
-          format = "⚡%content";
+          format = "%content";
           path = "/sys/firmware/acpi/platform_profile";
         };
       };
