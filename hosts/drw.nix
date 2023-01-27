@@ -264,6 +264,7 @@ in
       INTERNAL="eDP-1"
       EXTERNAL=$(xrandr | grep " connected " | grep -v $INTERNAL | awk '{print $1}' | head -1)
       if [ -z $EXTERNAL ] ; then
+          xrandr --output $INTERNAL --auto --primary
           >&2 echo "External display not found"
           exit 1
       fi
