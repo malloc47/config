@@ -163,9 +163,9 @@ in
     xsession.windowManager.i3.config.keybindings = let
       pactl = cmd: "exec --no-startup-id pactl ${cmd} && $refresh_i3status";
     in {
-      "${mod}+p"               = lib.mkForce(lxcExec("dmenu_path | dmenu | zsh"));
-      "${mod}+Shift+P"         = lib.mkForce "exec dmenu_run";
-      "${mod}+o"               = lib.mkForce(lxcExec("clipmenu"));
+      "${mod}+p"               = lib.mkForce(lxcExec("dmenu_path | dmenu -fn \'${config.settings.fontName}-${toString (config.settings.fontSize + 2)}\' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16 | zsh"));
+      "${mod}+Shift+P"         = lib.mkForce "exec dmenu_run -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
+      "${mod}+o"               = lib.mkForce "exec clipmenu -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
       "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
       "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
       "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
@@ -202,6 +202,7 @@ in
         exec --no-startup-id nm-applet
         exec --no-startup-id blueman-applet
         exec --no-startup-id pasystray
+        exec --no-startup-id systemctl --user start clipmenud.service
       '';
 
     programs.i3status.modules = {
