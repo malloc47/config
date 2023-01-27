@@ -176,8 +176,14 @@ in
       "XF86AudioMicMute"       = pactl("set-source-mute @DEFAULT_SOURCE@ toggle");
       "XF86MonBrightnessUp"    = "exec brightnessctl set 5%+";
       "XF86MonBrightnessDown"  = "exec brightnessctl set 5%-";
+      "XF86AudioPlay"          = "exec playerctl play-pause";
+      "XF86AudioPrev"          = "exec playerctl previous";
+      "XF86AudioNext"          = "exec playerctl next";
+      "XF86Favorites"          = "floating toggle, sticky toggle, resize set 30 ppt 40 ppt, move position 70 ppt 3 ppt"; # for zoom
+      "XF86Display"            = "exec swap-display";
       "${mod}+Print"           = "exec flameshot gui";
       "${mod}+Shift+Print"     = "exec flameshot gui";
+      "XF86Calculator"         = "exec flameshot gui"; # external keyboard
       "${mod}+Shift+N"         = lib.mkForce ''
         exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"sudo nixos-rebuild switch; read -s -k \\?COMPLETE\\\\"\\"'"
       '';
