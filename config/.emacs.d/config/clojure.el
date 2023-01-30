@@ -32,5 +32,7 @@
 
 (add-hook 'cider-repl-mode-hook 'paredit-mode)
 
+(define-key paredit-mode-map (kbd "RET") nil)
+
 (fset 'clj-align-ns
    (lambda (&optional arg) "Keyboard macro." (interactive "p") (kmacro-exec-ring-item (quote ([67108896 67108896 134217788 19 58 114 101 113 117 105 114 101 return 67108896 19 41 2 134217848 97 108 105 103 110 45 114 101 103 101 tab 58 97 115 backspace backspace return return 67108911 21 67108896 21 67108896 21 67108896] 0 "%d")) arg)))
