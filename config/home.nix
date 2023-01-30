@@ -26,6 +26,7 @@ with pkgs.lib;
     gimp
     gitAndTools.pre-commit
     gnumake
+    graphviz
     chromium
     home-manager
     ispell
