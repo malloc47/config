@@ -170,6 +170,7 @@ in
       "${mod}+p"               = lib.mkForce(lxcExec("dmenu_path | dmenu -fn \'${config.settings.fontName}-${toString (config.settings.fontSize + 2)}\' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16 | zsh"));
       "${mod}+Shift+P"         = lib.mkForce "exec dmenu_run -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
       "${mod}+o"               = lib.mkForce "exec clipmenu -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
+      "${mod}+g"               = "exec rofi -show window";
       "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
       "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
       "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
