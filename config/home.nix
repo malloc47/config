@@ -23,6 +23,7 @@ with pkgs.lib;
     feh
     ffmpeg
     firefox
+    gcc
     gimp
     gitAndTools.pre-commit
     gnumake
@@ -44,6 +45,7 @@ with pkgs.lib;
     (python38.withPackages (ps: with ps; [virtualenv wheel setuptools]))
     sbt
     scrot
+    sqlite
     term-do
     unzip
     zip
