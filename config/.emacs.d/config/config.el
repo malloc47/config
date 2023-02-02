@@ -2,10 +2,10 @@
 
 (ensure-packages-installed 'markdown-mode
 			   'find-file-in-project
-			   'ido-completing-read+
 			   'smooth-scrolling
 			   'multiple-cursors
-			   'amx)
+			   'amx
+			   'ivy)
 
 ;; smooth scrolling
 (require 'smooth-scrolling)
@@ -13,19 +13,10 @@
 (setq smooth-scroll-margin 5)
 
 ;; ido-mode
-(require 'ido)
-(require 'ido-completing-read+)
-(require 'amx)
-(setq ido-default-buffer-method 'selected-window)
-(setq ido-default-file-method 'selected-window)
-(setq ido-everywhere t)
-(setq ido-ubiquitous-mode 1)
-(setq ido-enable-flex-matching t)
-(setq ido-max-directory-size 1000000)
-(ido-mode 1)
-(amx-mode 1)
-;; TODO: replace ido with something else soon
-(fido-mode 1)
+(require 'ivy)
+(ivy-mode)
+(setq ivy-use-virtual-buffers t)
+(setq enable-recursive-minibuffers t)
 
 ;; y/n vs yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
