@@ -130,6 +130,8 @@ in
         };
         extraConfig = ''
             modifier none
+            bindsym button4 nop
+            bindsym button5 nop
           '';
       }
     ];
