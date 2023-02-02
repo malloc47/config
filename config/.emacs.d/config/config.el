@@ -24,6 +24,8 @@
 (setq ido-max-directory-size 1000000)
 (ido-mode 1)
 (amx-mode 1)
+;; TODO: replace ido with something else soon
+(fido-mode 1)
 
 ;; y/n vs yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
