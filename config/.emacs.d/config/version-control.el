@@ -1,8 +1,10 @@
 (provide 'version-control)
 
-(ensure-packages-installed 'magit 'git-timemachine)
+(ensure-packages-installed 'magit 'git-timemachine 'ido-completing-read+)
 
 (require 'magit)
+(setq magit-completing-read-function
+    'magit-ido-completing-read)
 
 (setq vc-follow-symlinks t)
 
