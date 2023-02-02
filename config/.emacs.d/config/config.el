@@ -1,31 +1,30 @@
 (provide 'config)
 
-(ensure-packages-installed 'markdown-mode
+(ensure-packages-installed 'amx
 			   'find-file-in-project
-			   'ido-completing-read+
-			   'smooth-scrolling
+			   'markdown-mode
 			   'multiple-cursors
-			   'amx)
+			   'orderless
+			   'smooth-scrolling
+			   'vertico)
 
 ;; smooth scrolling
 (require 'smooth-scrolling)
 (smooth-scrolling-mode 1)
 (setq smooth-scroll-margin 5)
 
-;; ido-mode
-(require 'ido)
-(require 'ido-completing-read+)
-(require 'amx)
-(setq ido-default-buffer-method 'selected-window)
-(setq ido-default-file-method 'selected-window)
-(setq ido-everywhere t)
-(setq ido-ubiquitous-mode 1)
-(setq ido-enable-flex-matching t)
-(setq ido-max-directory-size 1000000)
-(ido-mode 1)
-(amx-mode 1)
-;; TODO: replace ido with something else soon
-(fido-mode 1)
+;; vertico
+(require 'vertico)
+(require 'savehist)
+(require 'orderless)
+(vertico-mode 1)
+(savehist-mode 1)
+(setq vertico-sort-threshold 1000)
+(setq read-extended-command-predicate
+      #'command-completion-default-include-p)
+(setq completion-styles '(orderless basic)
+      completion-category-defaults nil
+      completion-category-overrides '((file (styles partial-completion))))
 
 ;; y/n vs yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
