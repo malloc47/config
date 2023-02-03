@@ -35,3 +35,5 @@
 (package-initialize)
 
 (setq package-enable-at-startup nil)
+
+(ensure-packages-installed 'use-package)

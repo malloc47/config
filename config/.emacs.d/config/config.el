@@ -1,54 +1,44 @@
 (provide 'config)
 
-(ensure-packages-installed 'amx
-			   'find-file-in-project
-			   'markdown-mode
-			   'multiple-cursors
-			   'orderless
-			   'smooth-scrolling
-			   'vertico)
+(use-package smooth-scrolling
+  :ensure t
+  :init
+  (setq smooth-scroll-margin 5)
+  :config
+  (smooth-scrolling-mode 1))
 
-;; smooth scrolling
-(require 'smooth-scrolling)
-(smooth-scrolling-mode 1)
-(setq smooth-scroll-margin 5)
+(use-package desktop
+  :init
+  (setq desktop-dirname             "~/.emacs.d/desktop/"
+	desktop-base-file-name      "emacs.desktop"
+	desktop-base-lock-name      "lock"
+	desktop-path                (list desktop-dirname)
+	desktop-save                t
+	desktop-files-not-to-save   "^$"
+	desktop-load-locked-desktop t)
+  :config
+  (desktop-save-mode 1))
 
-;; vertico
-(require 'vertico)
-(require 'savehist)
-(require 'orderless)
-(vertico-mode 1)
-(savehist-mode 1)
-(setq vertico-sort-threshold 1000)
-(setq read-extended-command-predicate
-      #'command-completion-default-include-p)
-(setq completion-styles '(orderless basic)
-      completion-category-defaults nil
-      completion-category-overrides '((file (styles partial-completion))))
+(use-package uniquify
+  :config
+  (setq uniquify-buffer-name-style 'reverse)
+  (setq uniquify-separator "|")
+  (setq uniquify-after-kill-buffer-p t)
+  (setq uniquify-ignore-buffers-re "^\\*"))
 
-;; y/n vs yes/no
-(fset 'yes-or-no-p 'y-or-n-p)
+(use-package find-file-in-project
+  :ensure t
+  :bind ("C-x C-S-f" . 'find-file-in-project))
 
-(setq desktop-dirname             "~/.emacs.d/desktop/"
-      desktop-base-file-name      "emacs.desktop"
-      desktop-base-lock-name      "lock"
-      desktop-path                (list desktop-dirname)
-      desktop-save                t
-      desktop-files-not-to-save   "^$"
-      desktop-load-locked-desktop t)
-(desktop-save-mode 1)
+(use-package multiple-cursors
+  :ensure t
+  :bind ("C-c m c" . 'mc/edit-lines))
 
-;; unique buffer names
-(require 'uniquify)
-(setq uniquify-buffer-name-style 'reverse)
-(setq uniquify-separator "|")
-(setq uniquify-after-kill-buffer-p t)
-(setq uniquify-ignore-buffers-re "^\\*")
+(use-package markdown-mode
+  :init
+  (setq markdown-command "pandoc --from=markdown --to=html"))
 
-;; find file in project
-(setq ffip-full-paths t)
-
-;; remove whitespace
+;; remove trailing whitespace on save
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;; dired open files with F
@@ -61,14 +51,8 @@
        (let* ((fn-list (dired-get-marked-files nil arg)))
          (mapc 'find-file fn-list)))))
 
-;; ERC settings
-
-(setq erc-hide-list '("JOIN" "PART" "QUIT" "NICK"))
-
-;; multiple-cursor keybinding
-(global-set-key (kbd "C-c m c") 'mc/edit-lines)
-
-(setq markdown-command "pandoc --from=markdown --to=html")
+;; y/n vs yes/no
+(fset 'yes-or-no-p 'y-or-n-p)
 
 ;; move customize to separate file
 (setq custom-file "~/.emacs.d/custom.el")

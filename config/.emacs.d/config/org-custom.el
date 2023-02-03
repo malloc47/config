@@ -7,7 +7,6 @@
 
 (add-hook 'org-mode-hook
 	  (lambda ()
-	    (fido-mode)
 	    ;; This gets in the way of windmove config
 	    (define-key org-mode-map (kbd "M-h") nil)
 	    ;; Mirror C-u C-SPC when popping the buffer mark

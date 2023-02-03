@@ -5,6 +5,7 @@
 (require 'package-manager)
 
 (require 'fonts)
+(require 'jw-completion)
 (require 'config)
 (require 'theme)
 (require 'backup)
