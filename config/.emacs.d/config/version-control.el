@@ -4,7 +4,8 @@
   :ensure t
   :init
   (setq magit-define-global-key-bindings t)
-  (setq vc-follow-symlinks t))
+  (setq vc-follow-symlinks t)
+  :hook (git-commit-setup . git-commit-turn-on-flyspell))
 
 (defun shell->list (cmd)
   (split-string
