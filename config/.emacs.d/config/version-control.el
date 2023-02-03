@@ -1,18 +1,10 @@
 (provide 'version-control)
 
-(ensure-packages-installed 'magit 'git-timemachine)
-
-(require 'magit)
-
-(setq vc-follow-symlinks t)
-
-(defun my-magit-hook ()
-  ;; prevent magit from stealing M-h from winmove
-  (define-key magit-mode-map (kbd "M-h") nil)
-  (define-key magit-mode-map (kbd "M-H") nil)
-  (define-key magit-mode-map (kbd "M-H") 'magit-show-only-files))
-
-(add-hook 'magit-mode-hook 'my-magit-hook)
+(use-package magit
+  :ensure t
+  :init
+  (setq magit-define-global-key-bindings t)
+  (setq vc-follow-symlinks t))
 
 (defun shell->list (cmd)
   (split-string

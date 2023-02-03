@@ -1,35 +1,34 @@
 (provide 'org-custom)
 
-(ensure-packages-installed 'org-roam 'org-roam-ui)
+(use-package org
+  :init
+  (setq org-return-follows-link t)
+  (setq org-startup-with-inline-images t)
+  :config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((dot . t)))
+  :hook (org-babel-after-execute . org-redisplay-inline-images)
+  :bind (:map org-mode-map
+	 ("C-c C-SPC" . 'org-mark-ring-goto)
+	 ("M-h" . nil))) ; This gets in the way of windmove config))
 
-(require 'org)
-(require 'org-roam)
+(use-package org-roam
+  :ensure t
+  :after org
+  :init
+  (setq org-roam-directory (file-truename "~/notes"))
+  (setq org-roam-completion-everywhere t)
+  (setq org-roam-graph-viewer "chromium")
+  :config
+  (org-roam-db-autosync-mode)
+  :bind (:map org-mode-map
+	      ("C-c b" . org-roam-buffer-toggle)
+	      ("C-c f" . org-roam-node-find)
+	      ("C-c i" . org-roam-node-insert)
+	      ("C-c c" . org-roam-capture)
+	      ("C-c n" . org-id-get-create)
+	      ("C-c g" . org-roam-graph)
+	      ("M-."   . org-open-at-point)))
 
-(add-hook 'org-mode-hook
-	  (lambda ()
-	    ;; This gets in the way of windmove config
-	    (define-key org-mode-map (kbd "M-h") nil)
-	    ;; Mirror C-u C-SPC when popping the buffer mark
-	    (define-key org-mode-map (kbd "C-c C-SPC") 'org-mark-ring-goto)
-	    (local-set-key (kbd "C-c b") 'org-roam-buffer-toggle)
-	    (local-set-key (kbd "C-c f") 'org-roam-node-find)
-	    (local-set-key (kbd "C-c i") 'org-roam-node-insert)
-	    (local-set-key (kbd "C-c c") 'org-roam-capture)
-	    (local-set-key (kbd "C-c n") 'org-id-get-create)
-	    (local-set-key (kbd "C-c g") 'org-roam-graph)
-	    (local-set-key (kbd "M-.")   'org-open-at-point)))
-
-(setq org-return-follows-link t)
-
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((dot . t)))
-
-;; Display images inline when loading file AND after evaluating babel
-(setq org-startup-with-inline-images t)
-(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
-
-(setq org-roam-directory (file-truename "~/notes"))
-(setq org-roam-completion-everywhere t)
-(setq org-roam-graph-viewer "chromium")
-(org-roam-db-autosync-mode)
+(use-package org-roam-ui :ensure t)

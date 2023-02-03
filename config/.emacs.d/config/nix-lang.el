@@ -1,3 +1,4 @@
 (provide 'nix-lang)
 
-(ensure-packages-installed 'nix-mode 'reformatter)
+(use-package nix-mode :ensure t)
+(use-package reformatter :ensure t)

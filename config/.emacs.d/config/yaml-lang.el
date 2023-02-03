@@ -1,3 +1,3 @@
 (provide 'yaml-lang)
 
-(ensure-packages-installed 'yaml-mode)
+(use-package yaml-mode :ensure t)

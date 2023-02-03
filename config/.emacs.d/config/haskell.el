@@ -1,3 +1,3 @@
 (provide 'haskell)
 
-(ensure-packages-installed 'haskell-mode)
+(use-package haskell-mode :ensure t)

@@ -1,7 +1,7 @@
 (provide 'elisp)
 
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-	    (paredit-mode +1)
-	    (prettify-symbols-mode +1)
-	    (show-paren-mode +1)))
+(use-package elisp-mode
+  :no-require t
+  :hook ((emacs-lisp-mode . paredit-mode)
+	 (emacs-lisp-mode . prettify-symbols-mode)
+	 (emacs-lisp-mode . show-paren-mode)))

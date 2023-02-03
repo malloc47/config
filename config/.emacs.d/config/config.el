@@ -59,3 +59,9 @@
 (load custom-file 'noerror)
 
 (defun ssh-add () (interactive) (shell-command "ssh-add"))
+
+;; Favor opening new windows side-by-side rather than top-to-bottom
+(use-package window
+  :init
+  (setq split-width-threshold 160)
+  (setq split-height-threshold nil))

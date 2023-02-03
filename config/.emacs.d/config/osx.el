@@ -1,8 +1,10 @@
 (provide 'osx)
 
-(ensure-packages-installed 'exec-path-from-shell)
-
-(when (eq system-type 'darwin)
+(use-package exec-path-from-shell
+  :if (eq system-type 'darwin)
+  :ensure t
+  :init
   (setq mac-option-modifier nil)
   (setq mac-command-modifier 'meta)
+  :config
   (exec-path-from-shell-initialize))

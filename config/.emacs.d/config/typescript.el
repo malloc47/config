@@ -1,14 +1,18 @@
 (provide 'typescript)
 
-(ensure-packages-installed 'tide)
+(use-package tide
+  :ensure t
+  :hook ((typescript-mode . tide-setup)
+	 (before-save . tide-format-before-save)))
 
-(add-hook 'typescript-mode-hook
-          (lambda ()
-	    (interactive)
-	    (tide-setup)
-	    (flycheck-mode +1)
-	    (setq flycheck-check-syntax-automatically '(save mode-enabled))
-	    (eldoc-mode +1)
-	    (tide-hl-identifier-mode +1)))
+(defun jw/typescript-extensions ()
+  (tide-setup)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  (eldoc-mode +1)
+  (tide-hl-identifier-mode +1))
 
-(add-hook 'before-save-hook 'tide-format-before-save)
+(use-package flycheck
+  :hook typescript-mode)
+
+(use-package typescript-mode
+  :hook (typescript-mode . jw/typescript-extensions))
