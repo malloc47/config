@@ -1,8 +1,8 @@
 (provide 'clojure)
 
 (use-package paredit
-  :ensure t
-  :hook (clojure-mode cider-repl-mode inf-clojure-mode-hook)
+  :ensure
+  :hook (clojure-mode cider-repl-mode inf-clojure-mode)
   :config
   (define-key paredit-mode-map (kbd "RET") nil))
 
@@ -21,7 +21,7 @@
 
 (use-package inf-clojure
   :ensure t
-  :hook (inf-clojure-mode-hook . enable-show-paren-mode))
+  :hook (inf-clojure-mode . enable-show-paren-mode))
 
 (use-package clojure-mode
   :ensure t
