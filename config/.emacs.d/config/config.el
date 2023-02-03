@@ -65,3 +65,8 @@
   :init
   (setq split-width-threshold 160)
   (setq split-height-threshold nil))
+
+(use-package flyspell-correct
+  :ensure t
+  :after flyspell
+  :bind (:map flyspell-mode-map ("C-:" . flyspell-correct-wrapper)))
