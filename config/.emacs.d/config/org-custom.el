@@ -32,3 +32,9 @@
 	      ("M-."   . org-open-at-point)))
 
 (use-package org-roam-ui :ensure t)
+
+(use-package org-superstar
+  :ensure t
+  :init
+  (setq  org-superstar-special-todo-items t)
+  :hook (org-mode))
