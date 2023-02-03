@@ -66,6 +66,9 @@
   (setq split-width-threshold 160)
   (setq split-height-threshold nil))
 
+(use-package flyspell
+  :hook (prog-mode . flyspell-prog-mode))
+
 (use-package flyspell-correct
   :ensure t
   :after flyspell
