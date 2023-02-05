@@ -10,6 +10,10 @@ xkb_keymap {
         key <AD12> {[ parenright, braceright   ]};
         key <CAPS> {[ Control_L                ]};
         key <CAPS>  {symbols[Group1]= [ Control_L ]};
+        key <BKSP> {
+            type= "CTRL+ALT",
+            symbols[Group1]= [       BackSpace,       BackSpace,        NoSymbol,        NoSymbol, BackSpace ]
+        };
         modifier_map  Control { <CAPS>, <LCTL> };
     };
     xkb_geometry  { include "pc(pc104)"     };
