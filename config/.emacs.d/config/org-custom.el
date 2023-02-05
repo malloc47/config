@@ -1,17 +1,24 @@
 (provide 'org-custom)
 
+(defun jw/org-extensions ()
+  (set-face-attribute 'org-level-2 nil :height 1.0)
+  (set-face-attribute 'org-level-3 nil :height 1.0)
+  (set-face-attribute 'org-level-4 nil :height 1.0))
+
 (use-package org
   :init
   (setq org-return-follows-link t)
   (setq org-startup-with-inline-images t)
+  ;; (setq org-hide-leading-stars t)
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((dot . t)))
-  :hook (org-babel-after-execute . org-redisplay-inline-images)
+  :hook ((org-babel-after-execute . org-redisplay-inline-images)
+	 (org-mode . jw/org-extensions))
   :bind (:map org-mode-map
 	 ("C-c C-SPC" . 'org-mark-ring-goto)
-	 ("M-h" . nil))) ; This gets in the way of windmove config))
+	 ("M-h" . nil))) ; This gets in the way of windmove config
 
 (use-package org-roam
   :ensure t
