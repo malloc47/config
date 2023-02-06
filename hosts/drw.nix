@@ -176,6 +176,7 @@ in
       "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
       "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
       "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
+      "${mod}+a"               = lib.mkForce "exec zoom-mute-toggle";
       "${mod}+Shift+Control+L" = "exec i3lock -c 000000";
       "XF86AudioRaiseVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ +5%");
       "XF86AudioLowerVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ -5%");
@@ -285,6 +286,22 @@ in
 
       [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
       xkbcomp ${compiledLayout} ${display}
+    '';
+    };
+
+    home.file."zoom-mute-toggle" = {
+      target = "bin/zoom-mute-toggle";
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        set -e
+        CURRENT=$(xdotool getwindowfocus)
+        xdotool search --name '^Zoom Meeting$' \
+            windowactivate --sync \
+            keyup Super \
+            keyup a \
+            key --clearmodifiers alt+a \
+            windowactivate --sync ''${CURRENT}
     '';
     };
 
