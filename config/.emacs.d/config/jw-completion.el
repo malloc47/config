@@ -35,10 +35,26 @@
   (savehist-mode))
 
 (use-package orderless
+  :ensure t
   :init
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package marginalia
+  :ensure t
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+  :init
+  (marginalia-mode))
+
+(use-package all-the-icons :ensure t)
+
+(use-package all-the-icons-completion
+  :ensure t
+  :after all-the-icons
+  :init (all-the-icons-completion-mode)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup))
 
 (setq read-extended-command-predicate
       #'command-completion-default-include-p)

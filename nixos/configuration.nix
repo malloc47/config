@@ -63,6 +63,7 @@ in
     inconsolata-unstable
     libertine
     libre-baskerville
+    emacs-all-the-icons-fonts
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
