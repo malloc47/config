@@ -9,6 +9,9 @@
   :init
   (setq org-return-follows-link t)
   (setq org-startup-with-inline-images t)
+  (setq org-directory "~/notes")
+  (setq org-default-notes-file (concat org-directory "/notes.org"))
+  (setq org-agenda-files (list org-directory))
   ;; (setq org-hide-leading-stars t)
   :config
   (org-babel-do-load-languages
@@ -24,7 +27,7 @@
   :ensure t
   :after org
   :init
-  (setq org-roam-directory (file-truename "~/notes"))
+  (setq org-roam-directory (file-truename org-directory))
   (setq org-roam-completion-everywhere t)
   (setq org-roam-graph-viewer "chromium")
   :config
