@@ -1,5 +1,7 @@
 (provide 'org-custom)
 
+(require 'subr-x)
+
 (defun jw/org-extensions ()
   (set-face-attribute 'org-level-2 nil :height 1.0)
   (set-face-attribute 'org-level-3 nil :height 1.0)
@@ -12,6 +14,8 @@
   (setq org-directory "~/notes")
   (setq org-default-notes-file (concat org-directory "/notes.org"))
   (setq org-agenda-files (list org-directory))
+  (setq org-hide-emphasis-markers t)
+  (setq org-startup-indented t)
   ;; (setq org-hide-leading-stars t)
   :config
   (org-babel-do-load-languages
@@ -30,6 +34,21 @@
   (setq org-roam-directory (file-truename org-directory))
   (setq org-roam-completion-everywhere t)
   (setq org-roam-graph-viewer "chromium")
+  (setq org-roam-capture-templates
+	`(("d" "default" plain "%?"
+	   :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+			      "#+title: ${title}\n")
+	   :unnarrowed t)
+	  ("t" "technology" entry "* ${title} \n%?"
+	   :target (file+head  "technology/${slug}.org"
+			       ,(string-join
+				 '(":PROPERTIES:"
+				   ":ID: ${slug}"
+				   ":END:"
+				   "#+TITLE: ${title}"
+				   "#+FILETAGS: :technology:")
+				 "\n"))
+	   :unnarrowed t)))
   :config
   (org-roam-db-autosync-mode)
   :bind (:map org-mode-map
