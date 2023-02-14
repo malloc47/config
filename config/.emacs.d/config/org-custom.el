@@ -53,6 +53,9 @@
 				   "#+FILETAGS: :technology:")
 				 "\n"))
 	   :unnarrowed t)))
+  (defun org-roam-custom-help ()
+    (interactive)
+    (message "[b]uffer, [f]ind, [i]nsert, [c]apture, [n]ew node, [g]raph"))
   :config
   (org-roam-db-autosync-mode)
   :bind (:map org-mode-map
@@ -62,6 +65,7 @@
 	      ("C-c c" . org-roam-capture)
 	      ("C-c n" . org-id-get-create)
 	      ("C-c g" . org-roam-graph)
+	      ("C-c h" . org-roam-custom-help)
 	      ("M-."   . org-open-at-point)))
 
 (use-package org-roam-ui :ensure t)
