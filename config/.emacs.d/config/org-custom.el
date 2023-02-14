@@ -9,20 +9,24 @@
 
 (use-package org
   :init
-  (setq org-return-follows-link t)
   (setq org-startup-with-inline-images t)
   (setq org-directory "~/notes")
   (setq org-default-notes-file (concat org-directory "/notes.org"))
   (setq org-agenda-files (list org-directory))
   (setq org-hide-emphasis-markers t)
   (setq org-startup-indented t)
+  (setq org-roam-node-display-template
+	(concat "${title:*} "
+		(propertize "${tags:50}" 'face 'org-tag)))
+  (require 'ox-md)
   ;; (setq org-hide-leading-stars t)
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((dot . t)))
   :hook ((org-babel-after-execute . org-redisplay-inline-images)
-	 (org-mode . jw/org-extensions))
+	 (org-mode . jw/org-extensions)
+	 (org-mode . turn-on-flyspell))
   :bind (:map org-mode-map
 	 ("C-c C-SPC" . 'org-mark-ring-goto)
 	 ("M-h" . nil))) ; This gets in the way of windmove config
