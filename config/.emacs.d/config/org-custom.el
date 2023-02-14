@@ -52,6 +52,16 @@
 				   "#+TITLE: ${title}"
 				   "#+FILETAGS: :technology:")
 				 "\n"))
+	   :unnarrowed t)
+	  ("e" "team" entry "* ${title} \n%?"
+	   :target (file+head  "teams/${slug}.org"
+			       ,(string-join
+				 '(":PROPERTIES:"
+				   ":ID: ${slug}"
+				   ":END:"
+				   "#+TITLE: ${title}"
+				   "#+FILETAGS: :team:")
+				 "\n"))
 	   :unnarrowed t)))
   (defun org-roam-custom-help ()
     (interactive)
