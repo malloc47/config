@@ -224,7 +224,10 @@ with pkgs.lib;
         "Escape" = "mode default";
         "Return" = "mode default";
       };
-      window.titlebar = false;
+      window = {
+        titlebar = false;
+        border = 4;
+      };
     };
     # inexplicably xserver wrapper doesn't set the background image
     extraConfig = ''
