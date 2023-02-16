@@ -15,10 +15,13 @@
   (setq org-agenda-files (list org-directory))
   (setq org-hide-emphasis-markers t)
   (setq org-startup-indented t)
+  (setq org-export-with-section-numbers nil)
+  (setq org-confirm-babel-evaluate nil)
   (setq org-roam-node-display-template
 	(concat "${title:*} "
 		(propertize "${tags:50}" 'face 'org-tag)))
   (require 'ox-md)
+  (require 'org-tempo)
   ;; (setq org-hide-leading-stars t)
   :config
   (org-babel-do-load-languages
@@ -111,6 +114,7 @@
   :bind (:map org-mode-map
 	      ("C-c b" . org-roam-buffer-toggle)
 	      ("C-c f" . org-roam-node-find)
+	      ("C-x f" . org-roam-node-find) ;; accidentally keep hitting this one
 	      ("C-c i" . org-roam-node-insert)
 	      ("C-c c" . org-roam-capture)
 	      ("C-c n" . org-id-get-create)

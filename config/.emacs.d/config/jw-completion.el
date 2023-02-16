@@ -6,6 +6,8 @@
   :config
   (setq vertico-cycle t)
   (setq vertico-preselect 'directory)
+  (setq completion-ignore-case t)
+  (setq read-buffer-completion-ignore-case t)
   :init
   (vertico-mode)
   ;; https://github.com/minad/vertico/wiki#make-vertico-and-vertico-directory-behave-more-like-ivyido
