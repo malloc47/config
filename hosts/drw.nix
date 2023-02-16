@@ -73,6 +73,10 @@ in
     # an .xinitrc
     xsession.scriptPath = ".xinitrc";
 
+    home.packages = with pkgs; [
+      google-chrome
+    ];
+
     # Use the host's xsession
     home.sessionVariables = {
       DISPLAY = display;
