@@ -20,8 +20,22 @@
   (setq org-roam-node-display-template
 	(concat "${title:*} "
 		(propertize "${tags:50}" 'face 'org-tag)))
+  (setq org-edit-src-content-indentation 0)
+  (setq org-src-preserve-indentation nil)
   (require 'ox-md)
   (require 'org-tempo)
+  (tempo-define-template
+   "org-graphviz"
+   '("#+BEGIN_SRC dot :file graph.svg :cmdline -Kdot -Tsvg" n
+     "digraph {" n
+     "  bgcolor=\"transparent\";" n
+     "  rankdir=LR;" n
+     "  splines=true;" n
+     "  " p n
+     "}" n
+     "#+END_SRC")
+   "<dot"
+   "Inline graphviz template")
   ;; (setq org-hide-leading-stars t)
   :config
   (org-babel-do-load-languages
