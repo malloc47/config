@@ -50,8 +50,6 @@
   :init
   (marginalia-mode))
 
-(use-package all-the-icons :ensure t)
-
 (use-package all-the-icons-completion
   :ensure t
   :after all-the-icons

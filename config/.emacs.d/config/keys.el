@@ -10,3 +10,5 @@
 (eval-after-load "nxml-mode"
   (lambda ()
     (define-key nxml-mode-map "\M-h" nil)))
+
+(global-set-key (kbd "C-x C-b") 'ibuffer)

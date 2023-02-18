@@ -73,3 +73,15 @@
   :ensure t
   :after flyspell
   :bind (:map flyspell-mode-map ("C-:" . flyspell-correct-wrapper)))
+
+(use-package all-the-icons :ensure t)
+
+(use-package all-the-icons-dired
+  :ensure t
+  :after all-the-icons
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+(use-package all-the-icons-ibuffer
+  :ensure t
+  :after all-the-icons
+  :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
