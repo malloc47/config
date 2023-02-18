@@ -135,6 +135,7 @@
                (slug (-reduce-from #'cl-replace (strip-nonspacing-marks title) pairs)))
           (downcase slug)))))
   (org-roam-db-autosync-mode)
+  (global-set-key (kbd "C-x C-M-f") 'org-roam-node-find)
   :bind (:map org-mode-map
 	      ("C-c b" . org-roam-buffer-toggle)
 	      ("C-c f" . org-roam-node-find)
