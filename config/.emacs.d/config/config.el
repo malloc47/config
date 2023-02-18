@@ -78,6 +78,8 @@
 
 (use-package all-the-icons-dired
   :ensure t
+  :init
+  (setq all-the-icons-dired-monochrome nil)
   :after all-the-icons
   :hook (dired-mode . all-the-icons-dired-mode))
 
