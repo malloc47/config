@@ -148,7 +148,13 @@
 	      ("C-c h" . org-roam-custom-help)
 	      ("M-."   . org-open-at-point)))
 
-(use-package org-roam-ui :ensure t)
+(use-package org-roam-ui
+  :ensure t
+  :init
+  (add-to-list 'desktop-minor-mode-table
+               '(org-roam-ui-mode nil))
+  (add-to-list 'desktop-minor-mode-table
+               '(org-roam-ui-follow-mode nil)))
 
 (use-package org-superstar
   :ensure t
