@@ -40,7 +40,8 @@
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
-   '((dot . t)))
+   '((dot . t)
+     (shell . t)))
   :hook ((org-babel-after-execute . org-redisplay-inline-images)
 	 (org-mode . jw/org-extensions)
 	 (org-mode . turn-on-flyspell))
