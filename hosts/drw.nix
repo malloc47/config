@@ -75,6 +75,7 @@ in
 
     home.packages = with pkgs; [
       google-chrome
+      gh
     ];
 
     # Use the host's xsession
