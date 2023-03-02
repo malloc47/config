@@ -13,6 +13,8 @@
   (cljr-add-keybindings-with-prefix "C-c C-v")
   ;; Move to align-cljlet :hook?
   (define-key clojure-mode-map (kbd "C-c C-a") 'align-cljlet)
+  ;; This collides with my clj-refactor binding
+  (define-key inf-clojure-minor-mode-map (kbd "C-c C-v") nil)
   (dolist (macro '(fresh conde run run* for-all for-map go go-loop
 			 for> doseq> fn> defn> defprotocol> gen-for
 			 ANY DELETE GET HEAD OPTIONS PATCH POST PUT))
@@ -32,7 +34,6 @@
   :hook clojure-mode
   :config
   (setq cider-prompt-for-symbol nil))
-
 
 (use-package clj-refactor
   :ensure t
