@@ -87,3 +87,10 @@
   :ensure t
   :after all-the-icons
   :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
+
+(defun set-region-writeable (begin end)
+  "Removes the read-only text property from the marked region."
+  ;; See https://stackoverflow.com/questions/7410125
+  (interactive "r")
+  (with-silent-modifications
+    (remove-text-properties begin end '(read-only t))))
