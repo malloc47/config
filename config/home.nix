@@ -43,6 +43,7 @@ with pkgs.lib;
     protobuf
     pv
     (python38.withPackages (ps: with ps; [virtualenv wheel setuptools]))
+    ripgrep
     sbt
     scrot
     sqlite
