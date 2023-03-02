@@ -7,12 +7,17 @@
   (set-face-attribute 'org-level-3 nil :height 1.0)
   (set-face-attribute 'org-level-4 nil :height 1.0))
 
+(setq jw/notes-directory "~/notes")
+
 (use-package org
   :init
   (setq org-startup-with-inline-images t)
-  (setq org-directory "~/notes")
-  (setq org-default-notes-file (concat org-directory "/notes.org"))
-  (setq org-agenda-files (list org-directory))
+  (when (file-directory-p jw/notes-directory)
+    (setq org-directory jw/notes-directory)
+    (setq org-default-notes-file (concat org-directory "/notes.org"))
+    (setq org-agenda-files
+	  (mapcar (lambda (folder) (concat (expand-file-name org-directory) "/" folder))
+		  (delete "directory" (directory-files org-directory nil "^[[:alnum:]]+$")))))
   (setq org-hide-emphasis-markers t)
   (setq org-startup-indented t)
   (setq org-export-with-section-numbers nil)
@@ -53,7 +58,8 @@
   :ensure t
   :after org
   :init
-  (setq org-roam-directory (file-truename org-directory))
+  (when (file-directory-p jw/notes-directory)
+    (setq org-roam-directory (file-truename org-directory)))
   (setq org-roam-completion-everywhere t)
   (setq org-roam-graph-viewer "chromium")
   (setq org-roam-capture-templates
