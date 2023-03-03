@@ -60,7 +60,13 @@
   :after org
   :init
   (when (file-directory-p jw/notes-directory)
-    (setq org-roam-directory (file-truename org-directory)))
+    (setq org-roam-directory (file-truename org-directory))
+    (setq org-roam-file-exclude-regexp
+	  ;; org-agenda ignores the /directory subfolder (so it
+	  ;; doesn't have to open too many files) and org-roam here
+	  ;; ignores the symlinks in the /people subfolder so it
+	  ;; doesn't get duplicate IDs.
+	  "^people/.+"))
   (setq org-roam-completion-everywhere t)
   (setq org-roam-graph-viewer "chromium")
   (setq org-roam-capture-templates
