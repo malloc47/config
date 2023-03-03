@@ -49,10 +49,11 @@
      (shell . t)))
   :hook ((org-babel-after-execute . org-redisplay-inline-images)
 	 (org-mode . jw/org-extensions)
-	 (org-mode . turn-on-flyspell))
+	 (org-mode . turn-on-flyspell)
+	 (org-mode . auto-fill-mode))
   :bind (:map org-mode-map
-	 ("C-c C-SPC" . 'org-mark-ring-goto)
-	 ("M-h" . nil))) ; This gets in the way of windmove config
+	      ("C-c C-SPC" . 'org-mark-ring-goto)
+	      ("M-h" . nil))) ; This gets in the way of windmove config
 
 (use-package org-roam
   :ensure t
