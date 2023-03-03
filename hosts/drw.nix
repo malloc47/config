@@ -271,10 +271,16 @@ in
       #!/usr/bin/env bash
       set -e
 
+      function setupScreen() {
+          [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
+          xkbcomp ${compiledLayout} ${display}
+      }
+
       INTERNAL="eDP-1"
       EXTERNAL=$(xrandr | grep " connected " | grep -v $INTERNAL | awk '{print $1}' | head -1)
       if [ -z $EXTERNAL ] ; then
           xrandr --output $INTERNAL --auto --primary
+          setupScreen
           >&2 echo "External display not found"
           exit 1
       fi
@@ -282,15 +288,17 @@ in
       EXTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $EXTERNAL && echo "--off" || echo "--auto --primary")
 
       if [ "$INTERNAL_TOGGLE" == "$EXTERNAL_TOGGLE" ] ; then
-          >&2 echo "Both monitors are already on or off"
-          exit 1
+          >&2 echo "Both monitors in the same state, switching to internal only"
+          xrandr --output $INTERNAL --auto --primary
+          xrandr --output $EXTERNAL --off
+          setupScreen
+          exit 0
       fi
 
       xrandr --output $INTERNAL $INTERNAL_TOGGLE
       xrandr --output $EXTERNAL $EXTERNAL_TOGGLE
 
-      [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
-      xkbcomp ${compiledLayout} ${display}
+      setupScreen
     '';
     };
 
