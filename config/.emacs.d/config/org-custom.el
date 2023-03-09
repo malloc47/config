@@ -9,6 +9,22 @@
 
 (setq jw/notes-directory "~/notes")
 
+(use-package ox-slack
+  :ensure t
+  :config
+  (require 'ox-slack)
+  ;; It's pointless to export my internal links to org files, so only
+  ;; export contents of links
+  (defun jw-org-slack-link-remove-internal (link contents info)
+    (when (equal "id" (org-element-property :type link)) contents))
+  ;; https://github.com/titaniumbones/ox-slack/pull/9/files
+  (defun jw-org-slack-link-fix-output (link-string)
+    (if (string-match (rx line-start "*" (group (+ (not "*"))) "* (" (group (+ (not ")"))) ")") link-string)
+	(format "[%s](%s)" (match-string 1 link-string) (match-string 2 link-string))
+      link-string))
+  (advice-add 'org-slack-link :before-until #'jw-org-slack-link-remove-internal)
+  (advice-add 'org-slack-link :filter-return #'jw-org-slack-link-fix-output))
+
 (use-package org
   :init
   (setq org-startup-with-inline-images t)
