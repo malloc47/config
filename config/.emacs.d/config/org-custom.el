@@ -110,6 +110,16 @@
 				   "#+FILETAGS: :team:")
 				 "\n"))
 	   :unnarrowed t)
+	  ("g" "group" entry "* ${title} \n%?"
+	   :target (file+head  "groups/${slug}.org"
+			       ,(string-join
+				 '(":PROPERTIES:"
+				   ":ID: ${slug}"
+				   ":END:"
+				   "#+TITLE: ${title}"
+				   "#+FILETAGS: :group:")
+				 "\n"))
+	   :unnarrowed t)
 	  ("p" "project" entry "* ${title} \n%?"
 	   :target (file+head  "projects/${slug}.org"
 			       ,(string-join
