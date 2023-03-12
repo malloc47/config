@@ -214,6 +214,7 @@ in
       # settings alone.
       ''
         exec_always xkbcomp ${compiledLayout} ${display}
+        exec_always xset r rate 300 25
         ${lxcExec("xrdb -merge $HOME/.Xresources")}
         exec --no-startup-id nm-applet
         exec --no-startup-id blueman-applet
@@ -275,6 +276,7 @@ in
       function setupScreen() {
           [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
           xkbcomp ${compiledLayout} ${display}
+          xset r rate 300 25
       }
 
       INTERNAL="eDP-1"
