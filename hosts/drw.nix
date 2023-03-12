@@ -76,6 +76,7 @@ in
     home.packages = with pkgs; [
       google-chrome
       gh
+      maven
     ];
 
     # Use the host's xsession

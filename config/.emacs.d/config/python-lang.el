@@ -6,6 +6,7 @@
   :ensure t
   :init
   (setq lsp-completion-provider :capf)
+  (setq lsp-keymap-prefix "C-c C-l")
   :hook (python-mode . lsp-deferred)
   ;; :config
   ;; (setq lsp-file-watch-threshold nil)

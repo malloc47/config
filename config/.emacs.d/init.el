@@ -23,3 +23,4 @@
 (require 'org-custom)
 (require 'nix-lang)
 (require 'yaml-lang)
+(require 'java-lang)
