@@ -57,6 +57,8 @@ in
   # home.nix at some point
   environment.homeBinInPath = true;
 
+  environment.wordlist.enable = true;
+
   fonts.fonts = with pkgs; [
     corefonts
     geosanslight
