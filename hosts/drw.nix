@@ -281,9 +281,15 @@ in
 
       INTERNAL="eDP-1"
       EXTERNAL=$(xrandr | grep " connected " | grep -v $INTERNAL | awk '{print $1}' | head -1)
+      POSSIBLE_EXTERNAL=$(xrandr | grep '^\(HDMI\|DP\)' | awk '{print $1}')
+      ALL_OFF_COMMANDS=""
+      for SCREEN in $POSSIBLE_EXTERNAL ; do
+          ALL_OFF_COMMANDS+="--output $SCREEN --off "
+      done
       if [ -z $EXTERNAL ] ; then
-          xrandr --output $INTERNAL --auto --primary
+          xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
           setupScreen
+          notify-send "External display not found"
           >&2 echo "External display not found"
           exit 1
       fi
@@ -291,16 +297,14 @@ in
       EXTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $EXTERNAL && echo "--off" || echo "--auto --primary")
 
       if [ "$INTERNAL_TOGGLE" == "$EXTERNAL_TOGGLE" ] ; then
-          >&2 echo "Both monitors in the same state, switching to internal only"
-          xrandr --output $INTERNAL --auto --primary
-          xrandr --output $EXTERNAL --off
+          xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
           setupScreen
+          >&2 echo "Both monitors in the same state, switching to internal only"
+          notify-send "Both monitors in the same state, switching to internal only"
           exit 0
       fi
 
-      xrandr --output $INTERNAL $INTERNAL_TOGGLE
-      xrandr --output $EXTERNAL $EXTERNAL_TOGGLE
-
+      xrandr --output $INTERNAL $INTERNAL_TOGGLE --output $EXTERNAL $EXTERNAL_TOGGLE
       setupScreen
     '';
     };
