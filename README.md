@@ -138,8 +138,8 @@ host and have the container connect to this X server to launch
 graphical applications. Like OSX, Gnome isn't sufficiently
 customizable to make it match closely enough to work as I want, but
 thankfully Ubuntu has no trouble running i3 as an alternative window
-manager. This, however, creates problem: My i3 configuration in NixOS
-is generated via home-manager which would be running inside the
+manager. This, however, creates a problem: My i3 configuration in
+NixOS is generated via home-manager which would be running inside the
 container but running i3 on the host requires this configuration be
 made available outside the container. By consistently mounting the
 container's root filesystem (I use `~/lxc-share`), this can be solved
@@ -178,7 +178,7 @@ machine, I launch terminals or applications in the container.
 
 Unlike Docker, LXC doesn't have a `Dockerfile` equivalent. To
 facilitate setting up the container, this repo includes an
-[lxc.sh](file) script that resets LXC to a clean state and
+[lxc.sh](lxc/lxc.sh) script that resets LXC to a clean state and
 (re)builds/installs the NixOS container image, setting up all the
 necessary hardware permissions needed to allow container applications
 access to the X server, audio, and network, as well as
