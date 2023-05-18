@@ -207,6 +207,7 @@ with pkgs.lib;
           "${mod}+Shift+8" = "move container to workspace number 8";
           "${mod}+Shift+9" = "move container to workspace number 9";
           "${mod}+Shift+0" = "move container to workspace number 10";
+          "${mod}+Tab" = "workspace back_and_forth";
           "${mod}+r" = "mode resize";
         }
         // optionalAttrs (!config.settings.vm)
