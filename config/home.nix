@@ -15,6 +15,8 @@ with pkgs.lib;
   home.packages = with pkgs; [
     alacritty
     anki
+    aspell
+    aspellDicts.en
     carve
     clojure
     cljfmt
@@ -30,7 +32,6 @@ with pkgs.lib;
     graphviz
     chromium
     home-manager
-    ispell
     jq
     killall
     kitty
