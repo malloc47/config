@@ -49,6 +49,7 @@ with pkgs.lib;
     scrot
     sqlite
     term-do
+    tree
     unzip
     zip
   ];
