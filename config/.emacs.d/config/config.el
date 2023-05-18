@@ -34,9 +34,23 @@
   :ensure t
   :bind ("C-c m c" . 'mc/edit-lines))
 
+(use-package visual-fill-column
+  :ensure t
+  :init
+  (setq fill-column 80)
+  (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust))
+
 (use-package markdown-mode
   :init
-  (setq markdown-command "pandoc --from=markdown --to=html"))
+  (setq markdown-command "pandoc --from=markdown --to=html")
+  (setq markdown-css-paths '("https://classless.de/classless.css"))
+  (setq markdown-xhtml-header-content
+      "<style type='text/css'>
+body { max-width: 80%; }
+</style>")
+  :hook ((markdown-mode . visual-line-mode)
+	 (markdown-mode . visual-fill-column-mode)
+	 (markdown-mode . flyspell-mode)))
 
 ;; remove trailing whitespace on save
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
@@ -67,7 +81,9 @@
   (setq split-height-threshold nil))
 
 (use-package flyspell
-  :hook (prog-mode . flyspell-prog-mode))
+  :hook (prog-mode . flyspell-prog-mode)
+  :init
+  (setq flyspell-issue-message-flag nil))
 
 (use-package flyspell-correct
   :ensure t
