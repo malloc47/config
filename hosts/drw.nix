@@ -77,6 +77,7 @@ in
       google-chrome
       gh
       maven
+      remmina
     ];
 
     # Use the host's xsession
@@ -202,6 +203,9 @@ in
       "${mod}+Shift+N"         = lib.mkForce ''
         exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"sudo nixos-rebuild switch; read -s -k \\?COMPLETE\\\\"\\"'"
       '';
+      "${mod}+equal"           = "workspace next";
+      "${mod}+minus"           = "workspace prev";
+      "${mod}+grave"           = "workspace 1";
     };
 
     # There is no ~/.xinitrc on Ubuntu and the NixOS one links to
