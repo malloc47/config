@@ -37,7 +37,7 @@
 (use-package visual-fill-column
   :ensure t
   :init
-  (setq fill-column 80)
+  (setq-default fill-column 80)
   (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust))
 
 (use-package markdown-mode
@@ -51,6 +51,13 @@ body { max-width: 80%; }
   :hook ((markdown-mode . visual-line-mode)
 	 (markdown-mode . visual-fill-column-mode)
 	 (markdown-mode . flyspell-mode)))
+
+(use-package powerthesaurus
+  :ensure t
+  :bind (:map markdown-mode-map
+	      ("C-M-:" .     powerthesaurus-lookup-synonyms-dwim)
+	      ("C-u C-M-:" . powerthesaurus-lookup-dwim)))
+
 
 ;; remove trailing whitespace on save
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
