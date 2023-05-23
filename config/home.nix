@@ -310,6 +310,7 @@ with pkgs.lib;
       gl = "log --oneline --graph";
     };
     ignores = [".#*" "*.desktop" "*.lock"];
+    lfs.enable = true;
     extraConfig = {
       branch.autosetuprebase = "never";
       push.default = "simple";
