@@ -62,7 +62,8 @@
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((dot . t)
-     (shell . t)))
+     (shell . t)
+     (mermaid . t)))
   :hook ((org-babel-after-execute . org-redisplay-inline-images)
 	 (org-mode . jw/org-extensions)
 	 (org-mode . turn-on-flyspell)

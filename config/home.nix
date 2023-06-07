@@ -39,6 +39,7 @@ with pkgs.lib;
     moreutils
     nixos-generators
     nodejs
+    nodePackages.mermaid-cli
     nodePackages.pyright
     pandoc
     protobuf

@@ -58,6 +58,7 @@ body { max-width: 80%; }
 	      ("C-M-:" .     powerthesaurus-lookup-synonyms-dwim)
 	      ("C-u C-M-:" . powerthesaurus-lookup-dwim)))
 
+(use-package mermaid-mode :ensure t)
 
 ;; remove trailing whitespace on save
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
