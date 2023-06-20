@@ -74,8 +74,9 @@ in
     xsession.scriptPath = ".xinitrc";
 
     home.packages = with pkgs; [
-      google-chrome
       gh
+      google-chrome
+      kubectl
       maven
       remmina
     ];
