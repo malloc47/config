@@ -54,6 +54,8 @@ body { max-width: 80%; }
   :bind (:map markdown-mode-map
 	      ("C-u" . universal-argument)))
 
+(use-package markdown-toc :ensure t)
+
 (use-package powerthesaurus
   :ensure t
   :bind (:map markdown-mode-map
