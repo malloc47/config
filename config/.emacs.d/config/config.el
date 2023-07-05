@@ -32,7 +32,12 @@
 
 (use-package multiple-cursors
   :ensure t
-  :bind ("C-c m c" . 'mc/edit-lines))
+  :bind (("C-c m c" . 'mc/edit-lines)
+	 ("C-c m n" . 'mc/mark-next-like-this)
+	 ("C-c m p" . 'mc/mark-previous-like-this)
+	 (:repeat-map jw/mc-repeat-map
+           ("n" . mc/mark-next-like-this)
+	   ("p" . mc/mark-previous-like-this))))
 
 (use-package visual-fill-column
   :ensure t
