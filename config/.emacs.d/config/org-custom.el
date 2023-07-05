@@ -70,7 +70,8 @@
 	 (org-mode . auto-fill-mode))
   :bind (:map org-mode-map
 	      ("C-c C-SPC" . 'org-mark-ring-goto)
-	      ("M-h" . nil))) ; This gets in the way of windmove config
+	      ("M-h" . nil)  ; This gets in the way of windmove config
+	      ("C-u" . universal-argument)))
 
 (use-package org-roam
   :ensure t

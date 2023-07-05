@@ -50,7 +50,9 @@ body { max-width: 80%; }
 </style>")
   :hook ((markdown-mode . visual-line-mode)
 	 (markdown-mode . visual-fill-column-mode)
-	 (markdown-mode . flyspell-mode)))
+	 (markdown-mode . flyspell-mode))
+  :bind (:map markdown-mode-map
+	      ("C-u" . universal-argument)))
 
 (use-package powerthesaurus
   :ensure t
