@@ -34,10 +34,15 @@
   :ensure t
   :bind (("C-c m c" . 'mc/edit-lines)
 	 ("C-c m n" . 'mc/mark-next-like-this)
-	 ("C-c m p" . 'mc/mark-previous-like-this)
+	 ("C-c m p" . 'mc/unmark-next-like-this)
+	 ("C-c m P" . 'mc/mark-previous-like-this)
+	 ("C-c m N" . 'mc/unmark-previous-like-this)
 	 (:repeat-map jw/mc-repeat-map
            ("n" . mc/mark-next-like-this)
-	   ("p" . mc/mark-previous-like-this))))
+	   ("p" . mc/unmark-next-like-this)
+	   ("P" . mc/mark-previous-like-this)
+	   ("N" . mc/unmark-previous-like-this)))
+  :hook repeat-mode)
 
 (use-package visual-fill-column
   :ensure t
