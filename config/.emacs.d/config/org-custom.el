@@ -5,7 +5,8 @@
 (defun jw/org-extensions ()
   (set-face-attribute 'org-level-2 nil :height 1.0)
   (set-face-attribute 'org-level-3 nil :height 1.0)
-  (set-face-attribute 'org-level-4 nil :height 1.0))
+  (set-face-attribute 'org-level-4 nil :height 1.0)
+  (set-face-attribute 'org-table nil :inherit 'fixed-pitch))
 
 (setq jw/notes-directory "~/notes")
 

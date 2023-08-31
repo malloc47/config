@@ -50,6 +50,9 @@
   (setq-default fill-column 80)
   (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust))
 
+(defun jw/markdown-extensions ()
+  (set-face-attribute 'markdown-link-face nil :inherit 'fixed-pitch))
+
 (use-package markdown-mode
   :init
   (setq markdown-command "pandoc --from=markdown --to=html")
@@ -60,7 +63,8 @@ body { max-width: 80%; }
 </style>")
   :hook ((markdown-mode . visual-line-mode)
 	 (markdown-mode . visual-fill-column-mode)
-	 (markdown-mode . flyspell-mode))
+	 (markdown-mode . flyspell-mode)
+	 (markdown-mode . jw/markdown-extensions))
   :bind (:map markdown-mode-map
 	      ("C-u" . universal-argument)))
 
