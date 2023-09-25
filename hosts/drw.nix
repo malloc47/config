@@ -196,7 +196,7 @@ in
       "XF86AudioPrev"          = "exec playerctl previous";
       "XF86AudioNext"          = "exec playerctl next";
       "XF86Favorites"          = "floating toggle, sticky toggle, resize set 30 ppt 40 ppt, move position 70 ppt 3 ppt"; # for zoom
-      "KP_Multiply"            = "floating toggle, sticky toggle, resize set 30 ppt 40 ppt, move position 70 ppt 3 ppt"; # for zoom
+      "KP_Multiply"            = "floating toggle, sticky toggle, resize set 22 ppt 95 ppt, move position 77 ppt 3 ppt"; # for zoom
       "XF86Display"            = "exec swap-display";
       "${mod}+Print"           = "exec flameshot gui";
       "${mod}+Shift+Print"     = "exec flameshot gui";
