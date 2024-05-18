@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/e891b060e7d11bb8f7dedb86a41d804891a6f5a9.tar.gz";
-    sha256 = "0pqzyb7ni9cviiiyhr9x7ri8mi400b2jjpqk873791mj76gfh0hv";
+    url = "https://github.com/nix-community/home-manager/archive/ab5542e9dbd13d0100f8baae2bc2d68af901f4b4.tar.gz";
+    sha256 = "1pikl3ai9if1lp2zllxpdnp2krkgqsbrry6f9b4gsxh60jnamyy0";
   };
 in
 {
@@ -59,7 +59,7 @@ in
 
   environment.wordlist.enable = true;
 
-  fonts.fonts = with pkgs; [
+  fonts.packages = with pkgs; [
     corefonts
     geosanslight
     inconsolata-unstable

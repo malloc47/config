@@ -44,7 +44,7 @@ with pkgs.lib;
     pandoc
     protobuf
     pv
-    (python38.withPackages (ps: with ps; [virtualenv wheel setuptools]))
+    (python3.withPackages (ps: with ps; [virtualenv wheel setuptools numpy pandas]))
     ripgrep
     sbt
     scrot
