@@ -79,6 +79,9 @@ in
       kubectl
       maven
       remmina
+      dbeaver
+      kubectl
+      argo
     ];
 
     # Use the host's xsession
