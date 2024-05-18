@@ -74,14 +74,15 @@ in
     xsession.scriptPath = ".xinitrc";
 
     home.packages = with pkgs; [
+      argo
+      dbeaver
       gh
       google-chrome
       kubectl
+      kubectl
       maven
       remmina
-      dbeaver
-      kubectl
-      argo
+      saml2aws
     ];
 
     # Use the host's xsession
