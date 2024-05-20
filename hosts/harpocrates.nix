@@ -66,8 +66,6 @@
 
   services.xserver.displayManager.startx.enable = true;
 
-  hardware.video.hidpi.enable = true;
-
   # HiDPI fix for alacritty
   environment.variables.WINIT_HIDPI_FACTOR = "3";
   # Chrome scaling fix

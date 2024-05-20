@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   imports = [
@@ -28,8 +28,6 @@
 
   services.xserver.dpi = 277;
 
-  hardware.video.hidpi.enable = true;
-
   # HiDPI fix for alacritty
   environment.variables.WINIT_HIDPI_FACTOR = "3";
   # Chrome scaling fix
@@ -47,6 +45,8 @@
   home-manager.users.${config.settings.username} = {
     home.pointerCursor.size = 64;
     xresources.properties."Xft.dpi" = 277;
+
+    xsession.windowManager.i3.config.window.border = lib.mkForce 2;
 
     # Work around VMWare bug:
     # https://github.com/vmware/open-vm-tools/issues/287
