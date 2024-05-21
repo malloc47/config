@@ -334,5 +334,16 @@ in
     '';
     };
 
+    xdg.configFile.autorandr-postswitch = {
+      target = "autorandr/postswitch";
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        set -e
+        sleep 2
+        notify-send "Switched monitor"
+        xkbcomp ${compiledLayout} ${display}
+      '';
+    };
   };
 }
