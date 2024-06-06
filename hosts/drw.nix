@@ -334,6 +334,17 @@ in
     '';
     };
 
+    home.file."caps-lock-toggle" = {
+      target = "bin/caps-lock-toggle";
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        set -e
+        xdotool key Caps_Lock
+      '';
+    };
+
+
     xdg.configFile.autorandr-postswitch = {
       target = "autorandr/postswitch";
       executable = true;
@@ -341,8 +352,9 @@ in
         #!/usr/bin/env bash
         set -e
         sleep 2
-        notify-send "Switched monitor"
+        notify-send -i display "Display profile" "$AUTORANDR_CURRENT_PROFILE"
         xkbcomp ${compiledLayout} ${display}
+        if [ -e $HOME/.background-image ]; then feh --bg-scale $HOME/.background-image ; fi
       '';
     };
   };
