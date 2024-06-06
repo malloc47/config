@@ -45,13 +45,19 @@ in
   time.timeZone = "America/New_York";
 
   environment.systemPackages = with pkgs; [
+    docker-compose
+    exfat
     feh
+    man-pages
+    man-pages-posix
     vim
     wget
     xorg.xkill
-    docker-compose
-    exfat
   ];
+
+  documentation.enable = true;
+  documentation.man.enable = true;
+  documentation.dev.enable = true;
 
   # I rely on this behavior, but it should probably be moved to
   # home.nix at some point
