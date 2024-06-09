@@ -2,8 +2,8 @@
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/ab5542e9dbd13d0100f8baae2bc2d68af901f4b4.tar.gz";
-    sha256 = "1pikl3ai9if1lp2zllxpdnp2krkgqsbrry6f9b4gsxh60jnamyy0";
+    url = "https://github.com/nix-community/home-manager/archive/845a5c4c073f74105022533907703441e0464bc3.tar.gz";
+    sha256 = "0l3pcd38p4iq46ipc5h3cw7wmr9h8rbn34h8a5a4v8hcl21s8r5x";
   };
 in
 {
@@ -106,10 +106,10 @@ in
 
   services.xserver.enable = true;
   services.xserver.desktopManager.xterm.enable = false;
-  services.xserver.displayManager.defaultSession = "none+i3";
   services.xserver.windowManager.i3.enable = true;
   services.xserver.autorun = true;
   services.xserver.autoRepeatDelay = 250;
+  services.displayManager.defaultSession = "none+i3";
 
   security.sudo.wheelNeedsPassword = false;
 

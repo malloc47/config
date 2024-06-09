@@ -75,7 +75,7 @@ in
 
     home.packages = with pkgs; [
       argo
-      dbeaver
+      dbeaver-bin
       gh
       google-chrome
       kubectl

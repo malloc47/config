@@ -560,7 +560,7 @@ with pkgs.lib;
 
   programs.zsh = {
     enable = true;
-    enableAutosuggestions = true;
+    autosuggestion.enable = true;
     enableCompletion = true;
     defaultKeymap = "emacs";
     dotDir = ".config/zsh";
