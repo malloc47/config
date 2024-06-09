@@ -3,12 +3,10 @@
 (use-package chatgpt-shell
   :ensure t
   :config
-  (setq chatgpt-shell-openai-key
-	(lambda ()
-	  (if (string-equal "drw" (system-name))
-	      (auth-source-pick-first-password :host "azure-openai.drwcloud.com")
-	      (auth-source-pick-first-password :host "api.openai.com"))))
-  (when (string-equal "drw" (system-name))
+
+  (cond
+   ((string-equal "drw" (system-name))
+    (auth-source-pick-first-password :host "azure-openai.drwcloud.com")
     (setq chatgpt-shell-api-url-base "https://azure-openai.drwcloud.com")
     (setq chatgpt-shell-api-url-path "/openai/deployments/gpt-4-turbo/chat/completions?api-version=2024-02-15-preview")
     (setq chatgpt-shell-auth-header
@@ -17,6 +15,9 @@
 		    (auth-source-pick-first-password
 		     :host
 		     "azure-openai.drwcloud.com")))))
+   (t
+    (auth-source-pick-first-password :host "api.openai.com")))
+
   (setq chatgpt-shell-model-versions
 	'("gpt-3.5-turbo"
 	  "gpt-3.5-turbo-0613"
