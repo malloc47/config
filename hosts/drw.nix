@@ -325,7 +325,7 @@ in
         #!/usr/bin/env bash
         set -e
         CURRENT=$(xdotool getwindowfocus)
-        xdotool search --name '^Zoom Meeting$' \
+        xdotool search --name '^Meeting$' \
             windowactivate --sync \
             keyup Super \
             keyup a \

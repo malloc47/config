@@ -241,7 +241,8 @@ with pkgs.lib;
       exec i3-msg workspace 1
       for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
       for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom - Licensed Account"] floating disable
-      for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom Meeting"] floating disable
+      for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom Workplace - Licensed account"] floating disable
+      for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Meeting"] floating disable
     '';
   };
 
