@@ -258,21 +258,21 @@ with pkgs.lib;
     };
     modules = {
       "disk /" = {
-        position = 18;
+        position = 20;
         settings = {
           format = "/ %avail";
         };
       };
       "load" = {
-        position = 19;
+        position = 30;
         settings = {
           format = "Load: %1min";
         };
       };
-      "tztime local" = {
-        position = 20;
+      "tztime local" = mkDefault {
+        position = 40;
         settings = {
-          format = "%Y-%m-%d %I:%M %p";
+          format = "🗽 %Y-%m-%d %l:%M %P";
         };
       };
     };

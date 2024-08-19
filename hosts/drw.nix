@@ -272,6 +272,35 @@ in
           path = "/sys/firmware/acpi/platform_profile";
         };
       };
+      "tztime london" = {
+        position = 37;
+        settings = {
+          format = "🇬🇧 %l:%M %P";
+          timezone = "Europe/London";
+          hide_if_equals_localtime = true;
+        };
+      };
+      "tztime chicago" = {
+        position = 38;
+        settings = {
+          format = "🌭 %l:%M %P";
+          timezone = "America/Chicago";
+          hide_if_equals_localtime = true;
+        };
+      };
+      "tztime local_time" = lib.mkForce {
+        position = 39;
+        settings = {
+          format = "🗽 %l:%M %P";
+        };
+      };
+      "tztime local" = {
+        position = 40;
+        settings = {
+          format = "%Y-%m-%d %a";
+        };
+      };
+
     };
 
     # For now, I only use one monitor at a time, so allow swapping between them
@@ -306,7 +335,7 @@ in
       EXTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $EXTERNAL && echo "--off" || echo "--auto --primary")
 
       if [ "$INTERNAL_TOGGLE" == "$EXTERNAL_TOGGLE" ] ; then
-          xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
+         xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
           setupScreen
           >&2 echo "Both monitors in the same state, switching to internal only"
           notify-send "Both monitors in the same state, switching to internal only"
