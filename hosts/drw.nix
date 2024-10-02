@@ -229,6 +229,7 @@ in
         exec --no-startup-id blueman-applet
         exec --no-startup-id pasystray
         exec --no-startup-id systemctl --user start clipmenud.service
+        exec --no-startup-id xcompmgr -c -l0 -t0 -r0 -o.00
       '';
 
     programs.i3status.modules = {
