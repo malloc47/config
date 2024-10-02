@@ -288,16 +288,17 @@ in
           hide_if_equals_localtime = true;
         };
       };
-      "tztime local_time" = lib.mkForce {
+      "tztime nyc" = lib.mkForce {
         position = 39;
         settings = {
           format = "🗽 %l:%M %P";
+          hide_if_equals_localtime = true;
         };
       };
       "tztime local" = {
         position = 40;
         settings = {
-          format = "%Y-%m-%d %a";
+          format = "%Y-%m-%d %l:%M %P";
         };
       };
 
