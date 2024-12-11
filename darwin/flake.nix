@@ -12,6 +12,10 @@
     # $ darwin-rebuild build --flake .#cesare
     darwinConfigurations."cesare" = nix-darwin.lib.darwinSystem {
       modules = [ 
+        { 
+          # Set Git commit hash for darwin-version.
+          system.configurationRevision = self.rev or self.dirtyRev or null; 
+        }
         ./configuration.nix
       ];
     };
