@@ -20,5 +20,14 @@
  
   # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
-}
 
+  system.defaults.CustomUserPreferences = {
+    NSGlobalDomain = {
+      KeyRepeat = 2;
+      InitialKeyRepeat = 25;
+      ApplePressAndHoldEnabled = false;
+   };
+  };
+
+  networking.hostName = "cesare";
+}
