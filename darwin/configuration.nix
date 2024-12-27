@@ -1,4 +1,4 @@
-{ pkgs, ... }: 
+{ username, hostname, pkgs, ... }: 
 
 {
   # List packages installed in system profile. To search by name, run:
@@ -21,13 +21,20 @@
   # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
 
-  system.defaults.CustomUserPreferences = {
-    NSGlobalDomain = {
-      KeyRepeat = 2;
-      InitialKeyRepeat = 25;
-      ApplePressAndHoldEnabled = false;
-   };
+  system.keyboard.enableKeyMapping = true;
+  system.keyboard.remapCapsLockToControl = true;
+
+  system.defaults.NSGlobalDomain = {
+    KeyRepeat = 2;
+    InitialKeyRepeat = 25;
+    ApplePressAndHoldEnabled = false;
   };
 
-  networking.hostName = "cesare";
+  networking.hostName = hostname;
+
+  users.users."${username}" = {
+    name = username;
+    home = "/Users/${username}";
+  };
+
 }
