@@ -70,11 +70,11 @@ body { max-width: 80%; }
 
 (use-package markdown-toc :ensure t)
 
-(use-package powerthesaurus
+(use-package synosaurus
   :ensure t
   :bind (:map markdown-mode-map
-	      ("C-M-:" .     powerthesaurus-lookup-synonyms-dwim)
-	      ("C-u C-M-:" . powerthesaurus-lookup-dwim)))
+	      ("C-M-:" .     synosaurus-choose-and-replace)
+	      ("C-u C-M-:" . synosaurus-lookup)))
 
 (use-package mermaid-mode :ensure t)
 

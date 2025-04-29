@@ -53,6 +53,7 @@ with pkgs.lib;
     term-do
     tree
     unzip
+    wordnet
     zip
   ];
 

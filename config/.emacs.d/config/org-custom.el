@@ -162,14 +162,8 @@
   (add-to-list 'desktop-minor-mode-table
                '(org-roam-ui-follow-mode nil)))
 
-(use-package org-superstar
-  :ensure t
-  :init
-  (setq  org-superstar-special-todo-items t)
-  :hook (org-mode))
-
-(use-package powerthesaurus
+(use-package synosaurus
   :ensure t
   :bind (:map org-mode-map
-	      ("C-M-:" .     powerthesaurus-lookup-synonyms-dwim)
-	      ("C-u C-M-:" . powerthesaurus-lookup-dwim)))
+	      ("C-M-:" .     synosaurus-choose-and-replace)
+	      ("C-u C-M-:" . synosaurus-lookup)))
