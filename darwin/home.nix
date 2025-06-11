@@ -8,6 +8,7 @@
     stateVersion = "23.05";
     packages = with pkgs; [
       clojure
+      nixos-anywhere
     ];
   };
 
