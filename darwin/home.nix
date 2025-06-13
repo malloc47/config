@@ -9,6 +9,7 @@
     packages = with pkgs; [
       clojure
       nixos-anywhere
+      autoraise
     ];
   };
 
