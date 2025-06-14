@@ -21,11 +21,11 @@
         system = "aarch64-linux";
         modules = [
           ../modules/settings.nix
+          ../modules/user.nix
           home-manager.nixosModules.home-manager
           disko.nixosModules.disko
           ./configuration.nix
           ./hardware-configuration.nix
-          ({ config, ... }:
           {
             settings = {
               vm = true;
@@ -34,15 +34,9 @@
               xkbFile = "vm";
               terminal = "kitty";
             };
-
-            users.users.${config.settings.username} = {
-              isNormalUser = true;
-              createHome = true;
-              home = "/home/${config.settings.username}";
-              description = "Jarrell Waggoner";
-              extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
-              uid = 1000;
-            };
+          }
+          ({ config, ... }:
+          {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.${config.settings.username} = ./home.nix;
