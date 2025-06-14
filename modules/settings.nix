@@ -51,6 +51,14 @@ with lib;
           must be present in the xkb directory.
         '';
       };
+      extraGroups = mkOption {
+        default = [];
+        type = with types; listOf str;
+        description = ''
+          Groups to attach to the default user.
+        '';
+      };
+
     };
   };
 }

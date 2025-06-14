@@ -33,6 +33,7 @@
               fontSize = 9.0;
               xkbFile = "vm";
               terminal = "kitty";
+              extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
             };
           }
           ({ config, ... }:

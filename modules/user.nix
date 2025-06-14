@@ -8,9 +8,9 @@
     users.users.${config.settings.username} = {
       isNormalUser = true;
       createHome = true;
-      home = "/home/${config.settings.username}";
+      home = "/" + (if stdenv.isDarwin then "User" else "home") + "/" + config.settings.username;
       description = "Jarrell Waggoner";
-      extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
+      extraGroups = config.settings.extraGroups; # ["audio" "docker" "networkmanager" "wheel" "lxd"];
       uid = 1000;
     };
   };
