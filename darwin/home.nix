@@ -10,6 +10,7 @@
       clojure
       nixos-anywhere
       autoraise
+      pkgs.nixfmt-rfc-style
     ];
   };
 
