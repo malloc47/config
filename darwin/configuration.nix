@@ -1,4 +1,4 @@
-{ username, hostname, pkgs, ... }: 
+{ pkgs, config, hostname, ... }:
 
 {
   # List packages installed in system profile. To search by name, run:
@@ -32,11 +32,5 @@
 
   networking.hostName = hostname;
 
-  system.primaryUser = username;
-
-  users.users."${username}" = {
-    name = username;
-    home = "/Users/${username}";
-  };
-
+  system.primaryUser = config.settings.username;
 }
