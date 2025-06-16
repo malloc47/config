@@ -20,13 +20,6 @@
         ./configuration.nix
         ./hardware-configuration.nix
         {networking.hostName = hostname;}
-        {
-          settings = {
-            vm = true;
-            fontSize = 9.0;
-            extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
-          };
-        }
         ({ config, ... }:
         {
           home-manager.useGlobalPkgs = true;
