@@ -13,6 +13,9 @@ in
       home = "/" + (if (stdenv.isDarwin) then "Users" else "home") + "/" + config.settings.username;
       description = "Jarrell Waggoner";
       uid = 1000;
+      openssh.authorizedKeys.keys = [
+        (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_rsa.pub"))
+      ];
     }
     // lib.optionalAttrs (!stdenv.isDarwin)
     {
@@ -20,8 +23,8 @@ in
       extraGroups = config.settings.extraGroups; # ["audio" "docker" "networkmanager" "wheel" "lxd"];
     });
 
-  settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
-  settings.terminal = lib.mkIf (config.settings.vm) (lib.mkDefault "kitty");
+    settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
+    settings.terminal = lib.mkIf (config.settings.vm) (lib.mkDefault "kitty");
 
   };
 }

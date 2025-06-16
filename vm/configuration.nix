@@ -11,7 +11,7 @@
     vm = true;
     username = "malloc47";
     fontSize = 9.0;
-    extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
+    extraGroups = ["audio" "docker" "wheel" "networkmanager"];
   };
 
   boot.loader.grub = {
@@ -19,19 +19,24 @@
     efiInstallAsRemovable = true;
   };
 
+  networking.networkmanager.enable = true;
+  networking.firewall.enable = false;
+  networking.nameservers = ["8.8.8.8" "8.8.4.4"];
+  #settings.extraGroups = ["networkmanager"];
+
   services.openssh.enable = true;
 
   virtualisation.vmware.guest.enable = true;
 
   nix.settings.experimental-features = "nix-command flakes";
 
-  environment.systemPackages = map lib.lowPrio [
-    pkgs.curl
-    pkgs.gitMinimal
+  environment.systemPackages = with pkgs; map lib.lowPrio [
+    curl
+    gitMinimal
   ];
 
   users.users.root.openssh.authorizedKeys.keys =
-  [ (builtins.readFile ../personal/ssh/malloc47/id_rsa.pub) ];
+    [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
 
   system.stateVersion = "25.05";
 }
