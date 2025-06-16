@@ -30,7 +30,5 @@
     ApplePressAndHoldEnabled = false;
   };
 
-  networking.hostName = hostname;
-
   system.primaryUser = config.settings.username;
 }

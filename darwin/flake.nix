@@ -9,20 +9,10 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }: let
-    hostname = "cesare";
-
-    specialArgs =
-      inputs
-      // {
-        inherit hostname;
-      };
-  in
-  {
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }: {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake .#cesare
-    darwinConfigurations."${hostname}" = nix-darwin.lib.darwinSystem {
-      inherit specialArgs;
+    darwinConfigurations = nixpkgs.lib.genAttrs ["cesare"] (hostname: nix-darwin.lib.darwinSystem {
       modules = [ 
         { 
           # Set Git commit hash for darwin-version.
@@ -32,6 +22,7 @@
         ../modules/settings.nix
         ../modules/user.nix
         home-manager.darwinModules.home-manager
+        {networking.hostName = hostname;}
         ({ config, ... }:
          {
            home-manager.useGlobalPkgs = true;
@@ -39,6 +30,6 @@
            home-manager.users.${config.settings.username} = import ./home.nix;
          })
       ];
-    };
+    });
   };
 }

@@ -19,5 +19,9 @@ in
       isNormalUser = true;
       extraGroups = config.settings.extraGroups; # ["audio" "docker" "networkmanager" "wheel" "lxd"];
     });
+
+  settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
+  settings.terminal = lib.mkIf (config.settings.vm) (lib.mkDefault "kitty");
+
   };
 }
