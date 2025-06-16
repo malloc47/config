@@ -9,40 +9,31 @@
       self.submodules = true;
     };
 
-  outputs = 
-    {
-      nixpkgs,
-      disko,
-      home-manager,
-      ...
-    }:
-    {
-      nixosConfigurations.salome = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          ../modules/settings.nix
-          ../modules/user.nix
-          home-manager.nixosModules.home-manager
-          disko.nixosModules.disko
-          ./configuration.nix
-          ./hardware-configuration.nix
-          {
-            settings = {
-              vm = true;
-              username = "malloc47";
-              fontSize = 9.0;
-              xkbFile = "vm";
-              terminal = "kitty";
-              extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
-            };
-          }
-          ({ config, ... }:
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.${config.settings.username} = ./home.nix;
-          })
-        ];
-      };
-    };
+  outputs = { nixpkgs, disko, home-manager, ...  }: {
+    nixosConfigurations = nixpkgs.lib.genAttrs ["salome"] (hostname: nixpkgs.lib.nixosSystem {
+      system = "aarch64-linux";
+      modules = [
+        ../modules/settings.nix
+        ../modules/user.nix
+        home-manager.nixosModules.home-manager
+        disko.nixosModules.disko
+        ./configuration.nix
+        ./hardware-configuration.nix
+        {networking.hostName = hostname;}
+        {
+          settings = {
+            vm = true;
+            fontSize = 9.0;
+            extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
+          };
+        }
+        ({ config, ... }:
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.users.${config.settings.username} = ./home.nix;
+        })
+      ];
+    });
+  };
 }

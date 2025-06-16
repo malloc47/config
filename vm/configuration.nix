@@ -1,9 +1,5 @@
 {
-  modulesPath,
-  lib,
-  pkgs,
-  ...
-} @ args:
+  modulesPath, lib, pkgs, ...  } @ args:
 {
   imports = [
     (modulesPath + "/virtualisation/vmware-guest.nix")
@@ -11,13 +7,14 @@
     ../modules/settings.nix
   ];
 
-  # settings = {
-  #   vm = true;
-  #   username = "malloc47";
-  #   fontSize = 9.0;
-  #   xkbFile = "vm";
-  #   terminal = "kitty";
-  # };
+  settings = {
+    vm = true;
+    username = "malloc47";
+    fontSize = 9.0;
+    xkbFile = "vm";
+    terminal = "kitty";
+    extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
+  };
 
   boot.loader.grub = {
     efiSupport = true;
