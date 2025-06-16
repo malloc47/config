@@ -18,9 +18,10 @@
           # Set Git commit hash for darwin-version.
           system.configurationRevision = self.rev or self.dirtyRev or null; 
         }
-        ./configuration.nix
         ../modules/settings.nix
         ../modules/user.nix
+        ./configuration.nix
+        ./darwin.nix
         home-manager.darwinModules.home-manager
         {networking.hostName = hostname;}
         ({ config, ... }:
@@ -28,6 +29,7 @@
            home-manager.useGlobalPkgs = true;
            home-manager.useUserPackages = true;
            home-manager.users.${config.settings.username} = import ./home.nix;
+           system.primaryUser = config.settings.username;
          })
       ];
     });

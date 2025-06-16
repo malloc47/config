@@ -1,4 +1,4 @@
-{ pkgs, config, hostname, ... }:
+{ pkgs, config, ... }:
 
 {
   # List packages installed in system profile. To search by name, run:
@@ -8,17 +8,10 @@
     pkgs.vim
   ];
  
-  # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
  
-  # Enable alternative shell support in nix-darwin.
-  # programs.fish.enable = true;
- 
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
   system.stateVersion = 6;
  
-  # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   system.keyboard.enableKeyMapping = true;
@@ -29,6 +22,4 @@
     InitialKeyRepeat = 25;
     ApplePressAndHoldEnabled = false;
   };
-
-  system.primaryUser = config.settings.username;
 }
