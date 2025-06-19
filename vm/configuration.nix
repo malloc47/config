@@ -1,6 +1,4 @@
-{
-  modulesPath, lib, pkgs, ...  } @ args:
-{
+{ modulesPath, lib, pkgs, config, ...  } @ args: {
   imports = [
     (modulesPath + "/virtualisation/vmware-guest.nix")
     ./disk-config.nix
@@ -33,6 +31,7 @@
   environment.systemPackages = with pkgs; map lib.lowPrio [
     curl
     gitMinimal
+    inconsolata-unstable # proves that overlays work
   ];
 
   users.users.root.openssh.authorizedKeys.keys =

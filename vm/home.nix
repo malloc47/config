@@ -5,6 +5,7 @@
     packages = with pkgs; [
       clojure
       nixos-anywhere
+      inconsolata-unstable #proves that overlays work
     ];
   };
 

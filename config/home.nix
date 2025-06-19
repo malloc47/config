@@ -12,12 +12,14 @@ with pkgs.lib;
   nixpkgs.config = import ../config/nixpkgs.nix;
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
+  home.stateVersion = "25.05";
+
   home.packages = with pkgs; [
     alacritty
     anki
     aspell
     aspellDicts.en
-    carve
+#    carve
     clojure
     cljfmt
     clj-kondo
@@ -40,7 +42,7 @@ with pkgs.lib;
     nixos-generators
     nodejs
     nodePackages.mermaid-cli
-    nodePackages.pyright
+    pyright
     pandoc
     protobuf
     pv
@@ -480,7 +482,7 @@ with pkgs.lib;
         };
       }
     ];
-    initExtra = let
+    initContent = let
       cdpath = "$HOME/src" +
         optionalString (config.settings.profile != "malloc47")
           " $HOME/src/${config.settings.profile}";
