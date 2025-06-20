@@ -28,7 +28,9 @@ in
 
     settings.extraGroups = ["wheel"];
     nix.settings.trusted-users = [ "@wheel" ];
-    security.sudo.wheelNeedsPassword = false;
 
+    security.sudo = {}
+    // lib.optionalAttrs (!stdenv.isDarwin)
+    { wheelNeedsPassword = false; };
   };
 }
