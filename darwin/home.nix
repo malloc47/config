@@ -11,6 +11,7 @@
       nixos-anywhere
       autoraise
       pkgs.nixfmt-rfc-style
+      rsync
     ];
   };
 
