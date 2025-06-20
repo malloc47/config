@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, options, ... }:
 {
   config = {
     nixpkgs.overlays = [(import ../pkgs/default.nix)];
@@ -17,8 +17,11 @@
       target = "nixos/overlays-compat/overlays.nix";
     };
 
-    nix.nixPath =
-      options.nix.nixPath.default ++
-      [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
+    nix.channel.enable = false;
+    
+
+    # nix.nixPath =
+    #   options.nix.nixPath.default ++
+    #   [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
   };
 }

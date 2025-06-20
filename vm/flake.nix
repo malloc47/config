@@ -9,7 +9,7 @@
       self.submodules = true;
     };
 
-  outputs = { nixpkgs, disko, home-manager, ...  }: {
+  outputs = inputs@{ nixpkgs, disko, home-manager, ...  }: {
     nixosConfigurations = nixpkgs.lib.genAttrs ["salome"] (hostname: nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
       modules = [
@@ -17,6 +17,15 @@
         disko.nixosModules.disko
         ../modules/settings.nix
         ../modules/user.nix
+        { 
+          nix.nixPath = [
+            "nixpkgs=${inputs.nixpkgs}" 
+            #"nixos-config=/etc/nixos/flake.nix"
+            "nixpkgs-overlays=/etc/nixos/overlays-compat/"
+          ]; 
+          nix.registry.nixpkgs.flake = inputs.nixpkgs;
+          nix.registry.self.flake = inputs.self;
+        }
         ../modules/nixpkgs.nix
         ./configuration.nix
         ./hardware-configuration.nix
@@ -29,5 +38,8 @@
         })
       ];
     });
+
+    packages.aarch64-linux.term-do = nixpkgs.legacyPackages.aarch64-linux.callPackage ../pkgs/term-do/default.nix {};
+
   };
 }
