@@ -8,4 +8,6 @@
     InitialKeyRepeat = 25;
     ApplePressAndHoldEnabled = false;
   };
+
+  # TODO: Use Option as Meta in Terminal app
 }
