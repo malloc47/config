@@ -1,4 +1,4 @@
-{ config, pkgs, lib, options, ... }:
+{ config, pkgs, lib, options, inputs, ... }:
 {
   config = {
     nixpkgs.overlays = [(import ../pkgs/default.nix)];
@@ -18,10 +18,14 @@
     };
 
     nix.channel.enable = false;
-    
 
-    # nix.nixPath =
-    #   options.nix.nixPath.default ++
-    #   [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
+    nix.nixPath = [
+      "nixpkgs=${inputs.nixpkgs}"
+      #"nixos-config=/etc/nixos/flake.nix"
+      "nixpkgs-overlays=/etc/nixos/overlays-compat/"
+    ];
+
+    nix.registry.nixpkgs.flake = inputs.nixpkgs;
+    nix.registry.self.flake = inputs.self;
   };
 }

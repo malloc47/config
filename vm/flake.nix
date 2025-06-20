@@ -12,21 +12,16 @@
   outputs = inputs@{ nixpkgs, disko, home-manager, ...  }: {
     nixosConfigurations = nixpkgs.lib.genAttrs ["salome"] (hostname: nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
+      specialArgs = { inherit inputs; };
       modules = [
         home-manager.nixosModules.home-manager
         disko.nixosModules.disko
         ../modules/settings.nix
         ../modules/user.nix
-        { 
-          nix.nixPath = [
-            "nixpkgs=${inputs.nixpkgs}" 
-            #"nixos-config=/etc/nixos/flake.nix"
-            "nixpkgs-overlays=/etc/nixos/overlays-compat/"
-          ]; 
-          nix.registry.nixpkgs.flake = inputs.nixpkgs;
-          nix.registry.self.flake = inputs.self;
-        }
         ../modules/nixpkgs.nix
+        ../modules/virtualization.nix
+        ../modules/networking.nix
+        ../modules/sound.nix
         ./configuration.nix
         ./hardware-configuration.nix
         {networking.hostName = hostname;}

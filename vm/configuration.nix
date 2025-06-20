@@ -9,7 +9,6 @@
     vm = true;
     username = "malloc47";
     fontSize = 9.0;
-    extraGroups = ["audio" "docker" "wheel" "networkmanager"];
   };
 
   boot.loader.grub = {
@@ -17,22 +16,32 @@
     efiInstallAsRemovable = true;
   };
 
-  networking.networkmanager.enable = true;
-  networking.firewall.enable = false;
-  networking.nameservers = ["8.8.8.8" "8.8.4.4"];
-  #settings.extraGroups = ["networkmanager"];
-
   services.openssh.enable = true;
+  programs.ssh.startAgent = true;
 
-  virtualisation.vmware.guest.enable = true;
+  virtualisation.vmware.guest.enable = lib.mkIf (config.settings.vm) true;
 
   nix.settings.experimental-features = "nix-command flakes";
 
   environment.systemPackages = with pkgs; map lib.lowPrio [
     curl
     gitMinimal
-    inconsolata-unstable # proves that overlays work
+    docker-compose
+    exfat
+    feh
+    man-pages
+    man-pages-posix
+    vim
+    wget
+    xorg.xkill
   ];
+
+  documentation.enable = true;
+  documentation.man.enable = true;
+  documentation.dev.enable = true;
+
+  environment.homeBinInPath = true;
+  environment.wordlist.enable = true;
 
   users.users.root.openssh.authorizedKeys.keys =
     [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
