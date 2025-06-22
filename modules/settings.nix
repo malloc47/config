@@ -33,6 +33,10 @@ with lib;
         default = 12.0;
         type = types.float;
       };
+      dpi = mkOption {
+        default = 277;
+        type = types.ints.positive;
+      };
       profile = mkOption {
         default = "malloc47";
         type = with types; uniq str;

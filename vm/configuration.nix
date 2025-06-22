@@ -8,7 +8,8 @@
   settings = {
     vm = true;
     username = "malloc47";
-    fontSize = 9.0;
+    fontSize = 8.0;
+    dpi = 224;
   };
 
   boot.loader.grub = {
@@ -16,12 +17,10 @@
     efiInstallAsRemovable = true;
   };
 
-  services.openssh.enable = true;
-  programs.ssh.startAgent = true;
-
   virtualisation.vmware.guest.enable = lib.mkIf (config.settings.vm) true;
 
   nix.settings.experimental-features = "nix-command flakes";
+  nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; map lib.lowPrio [
     curl
@@ -42,6 +41,21 @@
 
   environment.homeBinInPath = true;
   environment.wordlist.enable = true;
+
+  fonts.packages = with pkgs; [
+    corefonts
+    geosanslight
+    inconsolata-unstable
+    libertine
+    libre-baskerville
+    emacs-all-the-icons-fonts
+  ];
+
+  programs.zsh.enable = true;
+
+  services.journald.extraConfig = ''
+      SystemMaxUse=2G
+  '';
 
   users.users.root.openssh.authorizedKeys.keys =
     [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];

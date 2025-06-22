@@ -22,6 +22,7 @@
         ../modules/virtualization.nix
         ../modules/networking.nix
         ../modules/sound.nix
+        ../modules/gui.nix
         ./configuration.nix
         ./hardware-configuration.nix
         {networking.hostName = hostname;}
@@ -29,7 +30,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.users.${config.settings.username} = ../config/home.nix; # ./home;
+          home-manager.users.${config.settings.username} = ../config/home.nix;
         })
       ];
     });

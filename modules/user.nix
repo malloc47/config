@@ -16,6 +16,7 @@ in
       openssh.authorizedKeys.keys = [
         (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_rsa.pub"))
       ];
+      shell = pkgs.zsh;
     }
     // lib.optionalAttrs (!stdenv.isDarwin)
     {

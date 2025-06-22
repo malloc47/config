@@ -9,7 +9,6 @@ with pkgs.lib;
     ../modules/settings.nix
   ];
 
-  nixpkgs.config = import ../config/nixpkgs.nix;
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
   home.stateVersion = "25.05";
@@ -23,6 +22,7 @@ with pkgs.lib;
     clojure
     cljfmt
     clj-kondo
+    dmenu
     evince
     feh
     ffmpeg
@@ -280,6 +280,12 @@ with pkgs.lib;
     };
   };
 
+  
+  home.pointerCursor = {
+    package = pkgs.vanilla-dmz;
+    name = "Vanilla-DMZ";
+  };
+
   xresources.properties = {
     "xterm*faceName" = "${config.settings.fontName}";
     "xterm*faceSize" = "${head (splitString "." (toString config.settings.fontSize))}";
@@ -448,7 +454,7 @@ with pkgs.lib;
         style = "Block";
         unfocused_hollow = true;
       };
-      live_config_reload = true;
+      general.live_config_reload = true;
     };
   };
 
