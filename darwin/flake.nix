@@ -30,6 +30,8 @@
            home-manager.useGlobalPkgs = true;
            home-manager.useUserPackages = true;
            home-manager.users.${config.settings.username} = import ./home.nix;
+           # Doing this to handle existing vmware files
+           home-manager.backupFileExtension = "backup";
            system.primaryUser = config.settings.username;
          })
       ];

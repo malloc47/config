@@ -41,6 +41,12 @@
     defaultEditor = true;
   };
 
+
+  home.file."vmware-preferences" = {
+    source = ../config/vmware-preferences;
+    target = "Library/Preferences/VMware\ Fusion/preferences";
+  };
+
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 }
