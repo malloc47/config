@@ -25,7 +25,6 @@ in
     });
 
     settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
-    settings.terminal = lib.mkIf (config.settings.vm) (lib.mkDefault "kitty");
 
     settings.extraGroups = ["wheel"];
     nix.settings.trusted-users = [ "@wheel" ];

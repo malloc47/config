@@ -8,7 +8,7 @@
   settings = {
     vm = true;
     username = "malloc47";
-    fontSize = 8.0;
+    fontSize = 10.0;
     dpi = 224;
   };
 
@@ -16,6 +16,8 @@
     efiSupport = true;
     efiInstallAsRemovable = true;
   };
+
+  time.timeZone = "America/New_York";
 
   virtualisation.vmware.guest.enable = lib.mkIf (config.settings.vm) true;
 

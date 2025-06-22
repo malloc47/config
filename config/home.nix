@@ -235,7 +235,7 @@ with pkgs.lib;
       };
       window = {
         titlebar = false;
-        border = 4;
+        border = 2;
       };
     };
     # inexplicably xserver wrapper doesn't set the background image
@@ -282,11 +282,6 @@ with pkgs.lib;
     };
   };
 
-
-  home.pointerCursor = {
-    package = pkgs.vanilla-dmz;
-    name = "Vanilla-DMZ";
-  };
 
   xresources.properties = {
     "xterm*faceName" = "${config.settings.fontName}";
@@ -455,6 +450,7 @@ with pkgs.lib;
       cursor = {
         style = "Block";
         unfocused_hollow = true;
+        thickness = 1.0;
       };
       general.live_config_reload = true;
     };

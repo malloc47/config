@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 {
   imports = [ ./settings.nix ];
 
@@ -17,7 +17,11 @@
 
     home-manager.users.${config.settings.username} = {
       xresources.properties."Xft.dpi" = config.settings.dpi;
-      home.pointerCursor.size = 64;
+      home.pointerCursor = {
+        size = 64;
+        package = pkgs.vanilla-dmz;
+        name = "Vanilla-DMZ";
+      };
     };
   };
 }
