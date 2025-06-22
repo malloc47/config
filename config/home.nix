@@ -280,7 +280,7 @@ with pkgs.lib;
     };
   };
 
-  
+
   home.pointerCursor = {
     package = pkgs.vanilla-dmz;
     name = "Vanilla-DMZ";
