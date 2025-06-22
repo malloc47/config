@@ -30,7 +30,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.users.${config.settings.username} = ../config/home.nix;
+          home-manager.users.${config.settings.username}.imports = [ ../config/home.nix ];
         })
       ];
     });

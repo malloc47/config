@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, osConfig, pkgs, ... }:
 
 let
   mod = "Mod4";
@@ -8,6 +8,8 @@ with pkgs.lib;
   imports = [
     ../modules/settings.nix
   ];
+
+  settings = osConfig.settings;
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
