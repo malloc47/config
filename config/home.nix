@@ -59,6 +59,10 @@ with pkgs.lib;
     zip
   ];
 
+  home.sessionPath = [
+    "$HOME//bin"
+  ];
+
   programs.emacs = {
     enable = true;
     package = pkgs.emacsNativeComp;

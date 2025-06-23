@@ -13,6 +13,9 @@
       pkgs.nixfmt-rfc-style
       rsync
     ];
+    sessionPath = [
+      "$HOME//bin"
+    ];
   };
 
   programs.git = {
@@ -46,6 +49,14 @@
     source = ../config/vmware-preferences;
     target = "Library/Preferences/VMware\ Fusion/preferences";
   };
+
+  home.file."bin/vmrun".source =
+    config.lib.file.mkOutOfStoreSymlink
+    "/Applications/VMware\ Fusion.app/Contents/Library/vmrun" ;
+
+  home.file."bin/vmcli".source =
+    config.lib.file.mkOutOfStoreSymlink
+    "/Applications/VMware\ Fusion.app/Contents/Library/vmcli" ;
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

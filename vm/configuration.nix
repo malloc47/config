@@ -41,7 +41,6 @@
   documentation.man.enable = true;
   documentation.dev.enable = true;
 
-  environment.homeBinInPath = true;
   environment.wordlist.enable = true;
 
   fonts.packages = with pkgs; [
