@@ -65,4 +65,8 @@ with lib;
 
     };
   };
+
+  config = {
+    settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
+  };
 }

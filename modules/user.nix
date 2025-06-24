@@ -24,8 +24,6 @@ in
       extraGroups = config.settings.extraGroups;
     });
 
-    settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
-
     settings.extraGroups = ["wheel"];
     nix.settings.trusted-users = [ "@wheel" ];
 
