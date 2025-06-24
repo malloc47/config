@@ -22,6 +22,7 @@
         package = pkgs.vanilla-dmz;
         name = "Vanilla-DMZ";
       };
+      xsession.enable = true;
     };
   };
 }

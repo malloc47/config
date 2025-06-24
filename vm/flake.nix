@@ -21,6 +21,7 @@
         ../modules/nixpkgs.nix
         ../modules/virtualization.nix
         ../modules/networking.nix
+        ../modules/ssh.nix
         ../modules/sound.nix
         ../modules/gui.nix
         ./configuration.nix

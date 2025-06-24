@@ -2,6 +2,8 @@
 {
   imports = [
     ../modules/settings.nix
+    ../config/terminal.nix
+    ../config/emacs.nix
   ];
 
   home = {
@@ -14,7 +16,7 @@
       rsync
     ];
     sessionPath = [
-      "$HOME//bin"
+      "$HOME/bin"
     ];
   };
 
@@ -37,13 +39,10 @@
     };
   };
 
-  programs.zsh.enable = true;
-
   programs.vim = {
     enable = true;
     defaultEditor = true;
   };
-
 
   home.file."vmware-preferences" = {
     source = ../config/vmware-preferences;
@@ -61,4 +60,3 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 }
-

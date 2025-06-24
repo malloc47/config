@@ -14,13 +14,14 @@
     # Build darwin flake using:
     # $ darwin-rebuild build --flake .#cesare
     darwinConfigurations = nixpkgs.lib.genAttrs ["cesare"] (hostname: nix-darwin.lib.darwinSystem {
-      modules = [ 
-        { 
+      modules = [
+        {
           # Set Git commit hash for darwin-version.
-          system.configurationRevision = self.rev or self.dirtyRev or null; 
+          system.configurationRevision = self.rev or self.dirtyRev or null;
         }
         ../modules/settings.nix
         ../modules/user.nix
+        ../modules/ssh.nix
         ./configuration.nix
         ./darwin.nix
         home-manager.darwinModules.home-manager
