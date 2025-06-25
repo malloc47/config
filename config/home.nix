@@ -7,7 +7,7 @@ with pkgs.lib;
 {
   imports = [
     ../modules/settings.nix
-    ./terminal.nix
+    ./shell.nix
     ./emacs.nix
   ];
 

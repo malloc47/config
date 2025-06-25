@@ -2,7 +2,7 @@
 {
   imports = [
     ../modules/settings.nix
-    ../config/terminal.nix
+    ../config/shell.nix
     ../config/emacs.nix
   ];
 
