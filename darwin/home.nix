@@ -8,7 +8,6 @@
   ];
 
   home = {
-    stateVersion = "23.05";
     packages = with pkgs; [
       autoraise
       clojure
@@ -40,4 +39,6 @@
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
+
+  home.stateVersion = "25.05";
 }

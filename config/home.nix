@@ -17,10 +17,7 @@ with pkgs.lib;
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
-  home.stateVersion = "25.05";
-
   home.packages = with pkgs; [
-    alacritty
     anki
     aspell
     aspellDicts.en
@@ -41,7 +38,6 @@ with pkgs.lib;
     home-manager
     jq
     killall
-    kitty
     leiningen
     moreutils
     nixfmt-rfc-style
@@ -310,4 +306,6 @@ with pkgs.lib;
   };
 
   programs.java.enable = true;
+
+  home.stateVersion = "25.05";
 }
