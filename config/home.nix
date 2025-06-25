@@ -22,10 +22,10 @@ with pkgs.lib;
     anki
     aspell
     aspellDicts.en
-#    carve
-    clojure
-    cljfmt
+    chromium
     clj-kondo
+    cljfmt
+    clojure
     dmenu
     evince
     feh
@@ -36,7 +36,6 @@ with pkgs.lib;
     gitAndTools.pre-commit
     gnumake
     graphviz
-    chromium
     home-manager
     jq
     killall
@@ -44,12 +43,12 @@ with pkgs.lib;
     leiningen
     moreutils
     nixos-generators
-    nodejs
     nodePackages.mermaid-cli
-    pyright
+    nodejs
     pandoc
     protobuf
     pv
+    pyright
     (python3.withPackages (ps: with ps; [virtualenv wheel setuptools numpy pandas]))
     ripgrep
     sbt
@@ -61,9 +60,7 @@ with pkgs.lib;
     zip
   ];
 
-  home.sessionPath = [
-    "$HOME/bin"
-  ];
+  home.sessionPath = ["$HOME/bin"];
 
   programs.tmux = {
     enable = true;

@@ -1,16 +1,21 @@
 { pkgs, config, ... }:
 
 {
-  # List packages installed in system profile. To search by name, run:
-  # $ nix-env -qaP | grep wget
-  environment.systemPackages =
-  [ 
-    pkgs.vim
+  environment.systemPackages = with pkgs; [
+    curl
+    gitMinimal
+    docker-compose
+    exfat
+    feh
+    man-pages
+    man-pages-posix
+    vim
+    wget
   ];
- 
+
   nix.settings.experimental-features = "nix-command flakes";
- 
+
   system.stateVersion = 6;
- 
+
   nixpkgs.hostPlatform = "aarch64-darwin";
 }

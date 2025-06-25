@@ -9,15 +9,14 @@
   home = {
     stateVersion = "23.05";
     packages = with pkgs; [
+      autoraise
       clojure
       nixos-anywhere
-      autoraise
-      pkgs.nixfmt-rfc-style
+      nixfmt-rfc-style
       rsync
     ];
-    sessionPath = [
-      "$HOME/bin"
-    ];
+
+    sessionPath = ["$HOME/bin"];
   };
 
   programs.git = {
