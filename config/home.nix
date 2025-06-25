@@ -9,6 +9,7 @@ with pkgs.lib;
     ../modules/settings.nix
     ./shell.nix
     ./emacs.nix
+    ./git.nix
   ];
 
   settings = osConfig.settings;
@@ -42,6 +43,7 @@ with pkgs.lib;
     kitty
     leiningen
     moreutils
+    nixfmt-rfc-style
     nixos-generators
     nodePackages.mermaid-cli
     nodejs
@@ -273,26 +275,6 @@ with pkgs.lib;
   };
 
   services.clipmenu.enable = true;
-
-  programs.git = {
-    enable = true;
-    userName = config.settings.name;
-    userEmail = config.settings.email;
-    aliases = {
-      s = "status -s -uno";
-      gl = "log --oneline --graph";
-    };
-    ignores = [".#*" "*.desktop" "*.lock"];
-    lfs.enable = true;
-    extraConfig = {
-      branch.autosetuprebase = "never";
-      push.default = "simple";
-      # TODO: bring this file under nix control
-      core.pager = "less -F -X";
-      pull.ff = "only";
-      init.defaultBranch = "main";
-    };
-  };
 
   programs.kitty = {
     enable = true;
