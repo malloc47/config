@@ -3,13 +3,14 @@
 {
   environment.systemPackages = with pkgs; [
     curl
-    gitMinimal
     docker-compose
     exfat
     feh
+    gitMinimal
     man-pages
     man-pages-posix
     vim
+    watch
     wget
   ];
 
