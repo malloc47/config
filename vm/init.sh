@@ -13,4 +13,13 @@ ssh -t root@$IP "passwd $USER"
 rsync -av --mkpath --stats $(git rev-parse --show-toplevel)/ ${USER}@${IP}:src/config/
 ssh root@$IP "ln -s /home/$USER/src/config/vm/flake.nix /etc/nixos/flake.nix" 
 ssh $USER@$IP "sudo nixos-rebuild switch" 
+VMX_FILE=$(vmrun list | tail -n +2 | head -1)
+vmrun stop $VMX_FILE
+# Make VM full screen
+vmcli ConfigParams SetEntry gui.lastPoweredViewMode "fullscreen" $VMX_FILE
+vmcli ConfigParams SetEntry gui.viewModeAtPowerOn  "fullscreen" $VMX_FILE
+# Remove iso
+vmcli Disk SetPresent sata0:1 0 $VMX_FILE
+vmcli Sata SetPresent sata0 0 $VMX_FILE
+vmrun start $VMX_FILE
 echo "★★★★ VM build complete ★★★★★★★"
