@@ -27,5 +27,10 @@
 
     nix.registry.nixpkgs.flake = inputs.nixpkgs;
     nix.registry.self.flake = inputs.self;
+
+    nix.registry.sys = {
+      from = { type = "indirect"; id = "sys"; };
+      flake = inputs.nixpkgs;
+    };
   };
 }

@@ -79,7 +79,6 @@ in
       gh
       google-chrome
       kubectl
-      kubectl
       maven
       remmina
       saml2aws
