@@ -8,6 +8,7 @@ with pkgs.lib;
     ./shell.nix
     ./terminal.nix
     ./wm.nix
+    ./repos.nix
   ];
 
   settings = osConfig.settings;
