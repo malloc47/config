@@ -59,8 +59,8 @@ with pkgs.lib;
       ];
       keybindings = (
         {
-          "${mod}+p" = "exec ${pkgs.dmenu}/bin/dmenu_run -fn '${config.settings.fontName}-${toString config.settings.fontSize}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
-          "${mod}+o" = "exec ${pkgs.clipmenu}/bin/clipmenu -fn '${config.settings.fontName}-${toString config.settings.fontSize}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
+          "${mod}+p" = "exec ${pkgs.rofi}/bin/rofi -show run";
+          "${mod}+o" = "exec ${pkgs.clipcat}/bin/clipcat-menu";
           "${mod}+q" = "reload";
           "${mod}+Control+q" = "restart";
           "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
@@ -68,6 +68,7 @@ with pkgs.lib;
           "${mod}+Return" = "exec ${config.settings.terminal}";
           "${mod}+Shift+Return" = "exec ${config.settings.terminal} -e tmux";
           "${mod}+Shift+e" = "exec emacsclient -c";
+          "${mod}+g" = "exec ${pkgs.rofi}/bin/rofi -show window";
           "${mod}+j" = "focus down";
           "${mod}+k" = "focus up";
           "${mod}+l" = "focus right";
@@ -204,6 +205,16 @@ with pkgs.lib;
     else
       "";
 
+  programs.rofi = {
+    enable = true;
+    font = config.settings.fontName + " " +
+           (head (splitString "." (toString config.settings.fontSize)));
+    terminal = "${pkgs.alacritty}/bin/alacritty";
+    extraConfig = {
+      # Makes rofi default to using the monitor DPI
+      dpi = 0;
+    };
+  };
 
   # TODO: customize this based on DPI?
   programs.chromium.commandLineArgs = [
@@ -217,5 +228,5 @@ with pkgs.lib;
     inactiveInterval = 5; # minutes
   };
 
-  services.clipmenu.enable = true;
+  services.clipcat.enable = true;
 }

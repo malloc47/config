@@ -22,7 +22,6 @@ with pkgs.lib;
     clj-kondo
     cljfmt
     clojure
-    dmenu
     evince
     feh
     ffmpeg
