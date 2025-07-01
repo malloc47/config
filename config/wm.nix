@@ -182,6 +182,7 @@ with pkgs.lib;
         position = 40;
         settings = {
           format = "🗽 %Y-%m-%d %l:%M %P";
+          min_width = "WWWWWWWWWWWWWWWWWWWWWWWW";
         };
       };
     };
