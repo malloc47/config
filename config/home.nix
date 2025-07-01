@@ -19,7 +19,6 @@ with pkgs.lib;
     anki
     aspell
     aspellDicts.en
-    chromium
     clj-kondo
     cljfmt
     clojure
@@ -57,6 +56,9 @@ with pkgs.lib;
     wordnet
     zip
   ];
+
+  programs.java.enable = true;
+  programs.chromium.enable = true;
 
   home.sessionPath = ["$HOME/bin"];
 
@@ -97,8 +99,6 @@ with pkgs.lib;
       vmhgfs-fuse .host:/shared $HOME/shared -o subtype=vmhgfs-fuse
     '';
   };
-
-  programs.java.enable = true;
 
   home.stateVersion = "25.05";
 }

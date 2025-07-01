@@ -204,6 +204,13 @@ with pkgs.lib;
     else
       "";
 
+
+  # TODO: customize this based on DPI?
+  programs.chromium.commandLineArgs = [
+    "--high-dpi-support=1"
+    "--force-device-scale-factor=2"
+  ];
+
   services.screen-locker = {
     enable = !config.settings.vm;
     lockCmd = "${pkgs.i3lock}/bin/i3lock -n -c 000000";
