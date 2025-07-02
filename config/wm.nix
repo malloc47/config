@@ -6,6 +6,8 @@ with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
+  home.packages = with pkgs; [xclip];
+
   xsession.windowManager.i3 = {
     enable = true;
     config = {
