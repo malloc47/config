@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+set -e
 
 #ISO_URL=https://channels.nixos.org/nixos-25.05/latest-nixos-minimal-aarch64-linux.iso
 ISO_URL=https://releases.nixos.org/nixos/25.05/nixos-25.05.804936.a676066377a2/nixos-minimal-25.05.804936.a676066377a2-aarch64-linux.iso
 ISO_NAME=nixos-minimal-aarch64-linux.iso
 
 if [ ! -f ~/vm/$ISO_NAME ]; then
-  wget $ISO_URL -O ~/vm/$ISO_NAME	
+  wget $ISO_URL -O ~/vm/$ISO_NAME
 fi
 
 ISO=~/vm/$ISO_NAME
@@ -13,7 +14,7 @@ ISO=~/vm/$ISO_NAME
 NAME=NixOS
 OUTPUT=~/vm/$NAME.vmx
 
-vmcli VM Create -d $(dirname $OUTPUT) -g arm-other6xlinux-64 -n $NAME 
+vmcli VM Create -d $(dirname $OUTPUT) -g arm-other6xlinux-64 -n $NAME
 vmcli ConfigParams SetEntry displayName "$NAME" $OUTPUT
 vmcli Chipset SetMemSize 8192 $OUTPUT
 vmcli Chipset SetVCpuCount 4 $OUTPUT
@@ -52,4 +53,4 @@ vmcli ConfigParams SetEntry sound.autoDetect "TRUE" $OUTPUT
 vmcli ConfigParams SetEntry sound.present "TRUE" $OUTPUT
 vmcli ConfigParams SetEntry sound.virtualDev "hdaudio" $OUTPUT
 
-vmrun start ~/vm/NixOS.vmx
+vmrun start $OUTPUT
