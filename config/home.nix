@@ -30,6 +30,7 @@ with pkgs.lib;
     gimp
     gitAndTools.pre-commit
     gnumake
+    go-task
     graphviz
     home-manager
     jq

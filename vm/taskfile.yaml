@@ -1,0 +1,128 @@
+version: '3'
+
+vars:
+  NAME: NixOS
+  VM_ROOT: ~/vm
+  DISK_SIZE: "100GB"
+  ISO_NAME: nixos-minimal-aarch64-linux.iso
+  ISO_FILE: "{{.VM_ROOT}}/{{.ISO_NAME}}"
+  VMX_FILE: "{{.VM_ROOT}}/{{.NAME}}.vmx"
+
+tasks:
+  vm-root:
+    cmds:
+      - mkdir {{.VM_ROOT}}
+    status:
+      - test -d {{.VM_ROOT}}
+
+  iso:
+    deps: [vm-root]
+    vars:
+      ISO_URL: "https://releases.nixos.org/nixos/25.05/nixos-25.05.804936.a676066377a2/nixos-minimal-25.05.804936.a676066377a2-aarch64-linux.iso"
+    requires:
+      vars: [ISO_FILE]
+    cmds:
+      - wget {{.ISO_URL}} -O {{.ISO_FILE}}
+    status:
+      - test -f {{.ISO_FILE}}
+
+  vmx:
+    deps: [vm-root, iso]
+    requires:
+      vars: [VMX_FILE, VM_ROOT, ISO_FILE, NAME]
+    cmds:
+      - vmcli VM Create -d {{.VM_ROOT}} -g arm-other6xlinux-64 -n {{.NAME}}
+      - vmcli ConfigParams SetEntry displayName "{{.NAME}}" {{.VMX_FILE}}
+      - vmcli Chipset SetMemSize 8192 {{.VMX_FILE}}
+      - vmcli Chipset SetVCpuCount 4 {{.VMX_FILE}}
+      - vmcli Chipset SetCoresPerSocket 1 {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry firmware "efi" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry tools.syncTime "TRUE" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry ehci.present "TRUE" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry usb.present "TRUE" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry usb_xhci.present "TRUE" {{.VMX_FILE}}
+      # Hardcoded to match predefined profile
+      - vmcli ConfigParams SetEntry keyboardAndMouseProfile "5262affe-9b57-1399-580b-68ddea78bfb9" {{.VMX_FILE}}
+      - rm {{.VM_ROOT}}/{{.NAME}}.vmdk # This is autocreated for some reason
+      - vmcli Disk Create -f {{.VM_ROOT}}/{{.NAME}}.vmdk -a ide -s {{.DISK_SIZE}} -t 1 {{.VMX_FILE}}
+      - vmcli Nvme SetPresent nvme0 1 {{.VMX_FILE}}
+      - vmcli Disk SetBackingInfo nvme0:0 disk {{.NAME}}.vmdk 1 {{.VMX_FILE}}
+      - vmcli Disk SetPresent nvme0:0 1 {{.VMX_FILE}}
+      - vmcli Sata SetPresent sata0 1 {{.VMX_FILE}}
+      - vmcli Disk SetBackingInfo sata0:1 cdrom_image {{.ISO_FILE}} 1 {{.VMX_FILE}}
+      - vmcli Disk SetPresent sata0:1 1 {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry bios.bootOrder "HDD" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry bios.hddOrder "nvme0:0" {{.VMX_FILE}}
+      - vmcli Ethernet SetVirtualDevice ethernet0 e1000e {{.VMX_FILE}}
+      - vmcli Ethernet SetConnectionType ethernet0 nat {{.VMX_FILE}}
+      - vmcli Ethernet SetAddressType ethernet0 generated "" {{.VMX_FILE}}
+      - vmcli Ethernet SetLinkStatePropagation ethernet0 true {{.VMX_FILE}}
+      - vmcli Ethernet SetPresent ethernet0 1 {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry gui.fitGuestUsingNativeDisplayResolution "TRUE" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry sound.autoDetect "TRUE" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry sound.present "TRUE" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry sound.virtualDev "hdaudio" {{.VMX_FILE}}
+
+    status:
+      - test -f {{.VMX_FILE}}
+
+  start-vm:
+    requires:
+      vars: [VMX_FILE]
+    cmds:
+      - vmrun start {{.VMX_FILE}}
+
+  stop-vm:
+    requires:
+      vars: [VMX_FILE]
+    cmds:
+      - vmrun stop {{.VMX_FILE}}
+
+  install:
+    deps: [start-vm]
+    requires:
+      vars: [IP]
+    cmds:
+      - nix run github:nix-community/nixos-anywhere -- --flake .#salome --build-on remote --target-host nixos@{{.IP}}
+      # Remove old keys from ~/.ssh/known_hosts so further ssh commands work
+      - ssh-keygen -R {{.IP}}
+
+  bootstrap:
+    deps: [start-vm]
+    requires:
+      vars: [IP, VMX_FILE]
+    vars:
+      USER: malloc47
+        # sh: ssh -oStrictHostKeyChecking=accept-new root@{{.IP}} id -nu 1000
+    cmds:
+      - echo "Set password for {{.USER}}"
+      - ssh -t root@{{.IP}} "passwd {{.USER}}"
+      - rsync -av --mkpath --stats $(git rev-parse --show-toplevel)/ {{.USER}}@${{.IP}}:src/config/
+      - ssh root@{{.IP}} "ln -s /home/{{.USER}}/src/config/vm/flake.nix /etc/nixos/flake.nix"
+      - ssh {{.USER}}@{{.IP}} "sudo nixos-rebuild switch"
+      - task: stop-vm
+
+  postprocess:
+    deps: [stop-vm]
+    cmds:
+      # Make VM full screen
+      - vmcli ConfigParams SetEntry gui.lastPoweredViewMode "fullscreen" {{.VMX_FILE}}
+      - vmcli ConfigParams SetEntry gui.viewModeAtPowerOn  "fullscreen" {{.VMX_FILE}}
+      # Remove iso
+      - vmcli Disk SetPresent sata0:1 0 {{.VMX_FILE}}
+      - vmcli Sata SetPresent sata0 0 {{.VMX_FILE}}
+      - task: start-vm
+
+  wait:
+    prompt: Login to the machine, get IP address and run passwd... continue?
+    cmds:
+      - echo "Continuing"
+
+  default:
+    cmds:
+      - task: vmx
+      - task: wait
+      - task: install
+      - sleep 10
+      - task: bootstrap
+      - task: postprocess
