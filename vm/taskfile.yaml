@@ -62,7 +62,6 @@ tasks:
       - vmcli ConfigParams SetEntry sound.autoDetect "TRUE" {{.VMX_FILE}}
       - vmcli ConfigParams SetEntry sound.present "TRUE" {{.VMX_FILE}}
       - vmcli ConfigParams SetEntry sound.virtualDev "hdaudio" {{.VMX_FILE}}
-
     status:
       - test -f {{.VMX_FILE}}
 
@@ -71,12 +70,16 @@ tasks:
       vars: [VMX_FILE]
     cmds:
       - vmrun start {{.VMX_FILE}}
+    status:
+      - vmrun list | grep {{.VMX_FILE}}
 
   stop-vm:
     requires:
       vars: [VMX_FILE]
     cmds:
       - vmrun stop {{.VMX_FILE}}
+    status:
+      - "! vmrun list | grep {{.VMX_FILE}}"
 
   install:
     deps: [start-vm]
@@ -92,12 +95,12 @@ tasks:
     requires:
       vars: [IP, VMX_FILE]
     vars:
-      USER: malloc47
-        # sh: ssh -oStrictHostKeyChecking=accept-new root@{{.IP}} id -nu 1000
+      USER: #malloc47
+        sh: ssh -oStrictHostKeyChecking=accept-new root@{{.IP}} id -nu 1000
     cmds:
       - echo "Set password for {{.USER}}"
       - ssh -t root@{{.IP}} "passwd {{.USER}}"
-      - rsync -av --mkpath --stats $(git rev-parse --show-toplevel)/ {{.USER}}@${{.IP}}:src/config/
+      - rsync -av --mkpath --stats $(git rev-parse --show-toplevel)/ {{.USER}}@{{.IP}}:src/config/
       - ssh root@{{.IP}} "ln -s /home/{{.USER}}/src/config/vm/flake.nix /etc/nixos/flake.nix"
       - ssh {{.USER}}@{{.IP}} "sudo nixos-rebuild switch"
       - task: stop-vm
@@ -114,15 +117,41 @@ tasks:
       - task: start-vm
 
   wait:
-    prompt: Login to the machine, get IP address and run passwd... continue?
+    prompt: Ready to continue?
+
+  prereqs:
     cmds:
-      - echo "Continuing"
+      - |
+        echo "Before continuing:"
+        echo "- Set a password for the nixos user with passwd"
+        echo "- Turn on vmtoolsd in open-vm-tools"
+        echo "  - nix shell --extra-experimental-features \"nix-command flakes\" nixpkgs#open-vm-tools -c vmtoolsd"
+        echo "  - Alternatively, get the IP address from the VM and start this process over with IP=<guest-ip>"
+
+  build-vm:
+    cmds:
+      - task: vmx
+      - task: start-vm
+
+  build-os:
+    vars:
+      IP:
+        sh: vmrun getGuestIPAddress {{.VMX_FILE}}
+    cmds:
+      - task: install
+        vars:
+          IP:
+            ref: .IP
+      - sleep 10
+      - task: bootstrap
+        vars:
+          IP:
+            ref: .IP
+      - task: postprocess
 
   default:
     cmds:
-      - task: vmx
+      - task: build-vm
+      - task: prereqs
       - task: wait
-      - task: install
-      - sleep 10
-      - task: bootstrap
-      - task: postprocess
+      - task: build-os
