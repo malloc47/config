@@ -11,6 +11,7 @@
     packages = with pkgs; [
       autoraise
       clojure
+      go-task
       nixos-anywhere
       nixfmt-rfc-style
       rsync
