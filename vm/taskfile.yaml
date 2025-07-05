@@ -149,6 +149,19 @@ tasks:
   wait:
     prompt: Ready to continue?
 
+  ssh:
+    interactive: true
+    deps: [start-vm]
+    requires:
+      vars: [VMX_FILE]
+    vars:
+      IP:
+        sh: vmrun getGuestIPAddress {{.VMX_FILE}}
+      USER:
+        sh: ssh -oStrictHostKeyChecking=accept-new root@{{.IP}} id -nu 1000
+    cmds:
+      - ssh -t {{.USER}}@{{.IP}}
+
   clean:
     prompt: This will hard-delete the entire VM and disk image--are you sure you want to continue?
     deps: [stop-vm]
