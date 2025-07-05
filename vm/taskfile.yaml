@@ -116,18 +116,6 @@ tasks:
       - vmcli Sata SetPresent sata0 0 {{.VMX_FILE}}
       - task: start-vm
 
-  wait:
-    prompt: Ready to continue?
-
-  prereqs:
-    cmds:
-      - |
-        echo "Before continuing:"
-        echo "- Set a password for the nixos user with passwd"
-        echo "- Turn on vmtoolsd in open-vm-tools"
-        echo "  - nix shell --extra-experimental-features \"nix-command flakes\" nixpkgs#open-vm-tools -c vmtoolsd"
-        echo "  - Alternatively, get the IP address from the VM and start this process over with IP=<guest-ip>"
-
   build-vm:
     cmds:
       - task: vmx
@@ -148,6 +136,26 @@ tasks:
           IP:
             ref: .IP
       - task: postprocess
+
+  prereqs:
+    cmds:
+      - |
+        echo "Before continuing:"
+        echo "- Set a password for the nixos user with passwd"
+        echo "- Turn on vmtoolsd in open-vm-tools"
+        echo "  - nix shell --extra-experimental-features \"nix-command flakes\" nixpkgs#open-vm-tools -c vmtoolsd"
+        echo "  - Alternatively, get the IP address from the VM and start this process over with IP=<guest-ip>"
+
+  wait:
+    prompt: Ready to continue?
+
+  clean:
+    prompt: This will hard-delete the entire VM and disk image--are you sure you want to continue?
+    deps: [stop-vm]
+    requires:
+      vars: [VMX_FILE]
+    cmds:
+      - vmrun deleteVM {{.VMX_FILE}}
 
   default:
     cmds:
