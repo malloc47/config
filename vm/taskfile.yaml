@@ -117,7 +117,7 @@ tasks:
       - vmcli Sata SetPresent sata0 0 {{.VMX_FILE}}
       - task: start-vm
 
-  build-vm:
+  build-image:
     cmds:
       - task: vmx
       - task: start-vm
@@ -142,7 +142,7 @@ tasks:
     cmds:
       - |
         echo "Before continuing:"
-        echo "- Set a password for the nixos user with passwd"
+        echo "- Set a password for {{.ISO_USER}} user with passwd"
         echo "- Turn on vmtoolsd in open-vm-tools"
         echo "  - nix shell --extra-experimental-features \"nix-command flakes\" nixpkgs#open-vm-tools -c vmtoolsd"
         echo "  - Alternatively, get the IP address from the VM and start this process over with IP=<guest-ip>"
@@ -173,7 +173,7 @@ tasks:
 
   default:
     cmds:
-      - task: build-vm
+      - task: build-image
       - task: prereqs
       - task: wait
       - task: build-os
