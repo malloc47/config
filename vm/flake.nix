@@ -37,14 +37,20 @@
         ];
       };
 
+      # nix build .#nixosConfigurations.vm-iso.config.system.build.isoImage
       vm-iso = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
           ({ pkgs, modulesPath, ... }: {
             imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
-            environment.systemPackages = [ pkgs.neovim ];
           })
-          {virtualisation.vmware.guest.enable = true;}
+          ../modules/settings.nix
+          ({config, ...}: {
+            # Enable  guest tools so that we can extract the IP address from the guest
+            virtualisation.vmware.guest.enable = true;
+            users.users.root.openssh.authorizedKeys.keys =
+              [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
+          })
         ];
       };
     };
