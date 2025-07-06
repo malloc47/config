@@ -5,6 +5,7 @@ vars:
   VM_ROOT: ~/vm
   DISK_SIZE: "100GB"
   ISO_NAME: nixos-minimal-aarch64-linux.iso
+  ISO_USER: nixos
   ISO_FILE: "{{.VM_ROOT}}/{{.ISO_NAME}}"
   VMX_FILE: "{{.VM_ROOT}}/{{.NAME}}.vmx"
 
@@ -86,7 +87,7 @@ tasks:
     requires:
       vars: [IP]
     cmds:
-      - nix run github:nix-community/nixos-anywhere -- --flake .#salome --build-on remote --target-host nixos@{{.IP}}
+      - nix run github:nix-community/nixos-anywhere -- --flake .#salome --build-on remote --target-host {{.ISO_USER}}@{{.IP}}
       # Remove old keys from ~/.ssh/known_hosts so further ssh commands work
       - ssh-keygen -R {{.IP}}
 

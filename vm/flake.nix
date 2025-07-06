@@ -46,7 +46,7 @@
           })
           ../modules/settings.nix
           ({config, ...}: {
-            # Enable  guest tools so that we can extract the IP address from the guest
+            # Enable guest tools so that we can extract the IP address from the guest
             virtualisation.vmware.guest.enable = true;
             users.users.root.openssh.authorizedKeys.keys =
               [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
