@@ -21,7 +21,7 @@
       self.submodules = true;
     };
 
-  outputs = inputs@{ nixpkgs, nix-darwin, disko, home-manager, ...  }: {
+  outputs = inputs@{ self, nixpkgs, nix-darwin, disko, home-manager, ...  }: {
     nixosConfigurations = {
       salome = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
