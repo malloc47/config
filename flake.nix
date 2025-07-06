@@ -17,22 +17,26 @@
         modules = [
           home-manager.nixosModules.home-manager
           disko.nixosModules.disko
-          ../modules/settings.nix
-          ../modules/user.nix
-          ../modules/nixpkgs.nix
-          ../modules/virtualization.nix
-          ../modules/networking.nix
-          ../modules/ssh.nix
-          ../modules/sound.nix
-          ../modules/gui.nix
-          ./configuration.nix
-          ./hardware-configuration.nix
-          {networking.hostName = "salome";}
+          modules/settings.nix
+          modules/user.nix
+          modules/nixpkgs.nix
+          modules/virtualization.nix
+          modules/networking.nix
+          modules/ssh.nix
+          modules/sound.nix
+          modules/gui.nix
+          hosts/salome.nix
+          hardware/vmware-fusion-arm.nix
+          disk/vmware-fusion.nix
+          {
+            networking.hostName = "salome";
+            system.stateVersion = "25.05";
+          }
           ({ config, ... }:
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.users.${config.settings.username}.imports = [ ../config/home.nix ];
+              home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
             })
         ];
       };
@@ -44,12 +48,12 @@
           ({ pkgs, modulesPath, ... }: {
             imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
           })
-          ../modules/settings.nix
+          modules/settings.nix
           ({config, ...}: {
             # Enable guest tools so that we can extract the IP address from the guest
             virtualisation.vmware.guest.enable = true;
             users.users.root.openssh.authorizedKeys.keys =
-              [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
+              [ (builtins.readFile personal/ssh/${config.settings.profile}/id_rsa.pub) ];
           })
         ];
       };

@@ -1,21 +1,7 @@
-{ modulesPath, lib, pkgs, config, ...  } @ args: {
+{ lib, pkgs, config, ... }: {
   imports = [
-    (modulesPath + "/virtualisation/vmware-guest.nix")
-    ./disk-config.nix
     ../modules/settings.nix
   ];
-
-  settings = {
-    vm = true;
-    username = "malloc47";
-    fontSize = 10.0;
-    dpi = 224;
-  };
-
-  boot.loader.grub = {
-    efiSupport = true;
-    efiInstallAsRemovable = true;
-  };
 
   time.timeZone = "America/New_York";
 
@@ -61,5 +47,4 @@
   users.users.root.openssh.authorizedKeys.keys =
     [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
 
-  system.stateVersion = "25.05";
 }

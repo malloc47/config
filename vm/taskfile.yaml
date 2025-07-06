@@ -102,7 +102,7 @@ tasks:
       - echo "Set password for {{.USER}}"
       - ssh -t root@{{.IP}} "passwd {{.USER}}"
       - rsync -av --mkpath --stats $(git rev-parse --show-toplevel)/ {{.USER}}@{{.IP}}:src/config/
-      - ssh root@{{.IP}} "ln -s /home/{{.USER}}/src/config/vm/flake.nix /etc/nixos/flake.nix"
+      - ssh root@{{.IP}} "ln -s /home/{{.USER}}/src/config/flake.nix /etc/nixos/flake.nix"
       - ssh {{.USER}}@{{.IP}} "sudo nixos-rebuild switch"
       - task: stop-vm
 
