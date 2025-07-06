@@ -2,14 +2,26 @@
   inputs =
     {
       nixpkgs.url = "github:NixOS/nixpkgs/25.05";
-      disko.url = "github:nix-community/disko";
-      disko.inputs.nixpkgs.follows = "nixpkgs";
-      home-manager.url = "github:nix-community/home-manager/release-25.05";
-      home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+      nix-darwin = {
+        url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
+      disko = {
+        url = "github:nix-community/disko";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
+      home-manager = {
+        url = "github:nix-community/home-manager/release-25.05";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
       self.submodules = true;
     };
 
-  outputs = inputs@{ nixpkgs, disko, home-manager, ...  }: {
+  outputs = inputs@{ nixpkgs, nix-darwin, disko, home-manager, ...  }: {
     nixosConfigurations = {
       salome = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
@@ -55,6 +67,31 @@
             users.users.root.openssh.authorizedKeys.keys =
               [ (builtins.readFile personal/ssh/${config.settings.profile}/id_rsa.pub) ];
           })
+        ];
+      };
+    };
+
+    darwinConfigurations = {
+      cesare = nix-darwin.lib.darwinSystem {
+        modules = [
+          # Set Git commit hash for darwin-version.
+          {system.configurationRevision = self.rev or self.dirtyRev or null;}
+          modules/settings.nix
+          modules/user.nix
+          modules/ssh.nix
+          darwin/configuration.nix
+          darwin/darwin.nix
+          home-manager.darwinModules.home-manager
+          {networking.hostName = "cesare";}
+          ({ config, ... }:
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.${config.settings.username} = import ./darwin/home.nix;
+              # Doing this to handle existing vmware files
+              home-manager.backupFileExtension = "backup";
+              system.primaryUser = config.settings.username;
+            })
         ];
       };
     };
