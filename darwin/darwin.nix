@@ -21,6 +21,8 @@
         # Run ./keyboard-to-nix.sh to snapshot current keyboard settings
         "com.apple.symbolichotkeys" = (import ./keyboard.nix);
       };
+
+      dock.mru-spaces = false;
     }; 
 
     activationScripts.extraActivation.text = let
