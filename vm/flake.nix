@@ -10,31 +10,44 @@
     };
 
   outputs = inputs@{ nixpkgs, disko, home-manager, ...  }: {
-    nixosConfigurations = nixpkgs.lib.genAttrs ["salome"] (hostname: nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      specialArgs = { inherit inputs; };
-      modules = [
-        home-manager.nixosModules.home-manager
-        disko.nixosModules.disko
-        ../modules/settings.nix
-        ../modules/user.nix
-        ../modules/nixpkgs.nix
-        ../modules/virtualization.nix
-        ../modules/networking.nix
-        ../modules/ssh.nix
-        ../modules/sound.nix
-        ../modules/gui.nix
-        ./configuration.nix
-        ./hardware-configuration.nix
-        {networking.hostName = hostname;}
-        ({ config, ... }:
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.${config.settings.username}.imports = [ ../config/home.nix ];
-        })
-      ];
-    });
+    nixosConfigurations = {
+      salome = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          home-manager.nixosModules.home-manager
+          disko.nixosModules.disko
+          ../modules/settings.nix
+          ../modules/user.nix
+          ../modules/nixpkgs.nix
+          ../modules/virtualization.nix
+          ../modules/networking.nix
+          ../modules/ssh.nix
+          ../modules/sound.nix
+          ../modules/gui.nix
+          ./configuration.nix
+          ./hardware-configuration.nix
+          {networking.hostName = "salome";}
+          ({ config, ... }:
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.${config.settings.username}.imports = [ ../config/home.nix ];
+            })
+        ];
+      };
+
+      vm-iso = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          ({ pkgs, modulesPath, ... }: {
+            imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
+            environment.systemPackages = [ pkgs.neovim ];
+          })
+          {virtualisation.vmware.guest.enable = true;}
+        ];
+      };
+    };
 
     packages.aarch64-linux.term-do = nixpkgs.legacyPackages.aarch64-linux.callPackage ../pkgs/term-do/default.nix {};
 
