@@ -1,8 +1,24 @@
-{ pkgs, config,  ... }:
+{ pkgs, config, ... }:
+
 {
   imports = [
     ../modules/settings.nix
   ];
+
+  environment.systemPackages = with pkgs; [
+    curl
+    docker-compose
+    exfat
+    feh
+    gitMinimal
+    man-pages
+    man-pages-posix
+    vim
+    watch
+    wget
+  ];
+
+  nix.settings.experimental-features = "nix-command flakes";
 
   system = {
     keyboard = {
@@ -23,7 +39,7 @@
       };
 
       dock.mru-spaces = false;
-    }; 
+    };
 
     activationScripts.extraActivation.text = let
       user = config.settings.username;
@@ -34,7 +50,6 @@
       sudo -u ${user} -- plutil -replace 'Window Settings'.Basic.useOptionAsMetaKey -bool YES /Users/${user}/Library/Preferences/com.apple.Terminal.plist
       sudo -u ${user} -- defaults write com.apple.Terminal "Default Window Settings" -string "Basic"
     '';
-
   };
 
   security.pam.services.sudo_local.touchIdAuth = true;
