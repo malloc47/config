@@ -1,0 +1,28 @@
+version: '3'
+
+vars:
+  ROOT:
+    sh: git rev-parse --show-toplevel
+
+tasks:
+  nix:
+    cmds:
+      - curl -fsSL https://install.determinate.systems/nix | sh -s -- install --no-confirm
+    status:
+      - type nix
+
+  bootstrap:
+    cmds:
+      - sudo nix run nix-darwin/nix-darwin-25.05#darwin-rebuild -- switch --flake .#cesare
+      - sudo mkdir /etc/nix-darwin/
+      - sudo ln -s {{.ROOT}}/flake.nix /etc/nix-darwin/flake.nix
+    status:
+      - darwin-version
+
+  update-keyboard:
+    cmds:
+      - ./{{.ROOT}}/darwin/keyboard-to-nix.sh > darwin/keyboard.nix
+
+  default:
+    cmds:
+      - sudo darwin-rebuild switch
