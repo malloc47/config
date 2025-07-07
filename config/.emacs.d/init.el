@@ -1,9 +1,9 @@
 (add-to-list 'load-path (concat user-emacs-directory
 				(convert-standard-filename "config/")))
 
-(let ((default-directory (concat user-emacs-directory
-				 (convert-standard-filename "packages/"))))
-  (normal-top-level-add-subdirs-to-load-path))
+;; (let ((default-directory (concat user-emacs-directory
+;; 				 (convert-standard-filename "packages/"))))
+;;   (normal-top-level-add-subdirs-to-load-path))
 
 ;; Load package-related utilities for other libraries
 (require 'package-manager)

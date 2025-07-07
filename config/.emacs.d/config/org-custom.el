@@ -26,6 +26,8 @@
   (advice-add 'org-slack-link :before-until #'jw-org-slack-link-remove-internal)
   (advice-add 'org-slack-link :filter-return #'jw-org-slack-link-fix-output))
 
+(use-package ob-mermaid :ensure t)
+
 (use-package org
   :init
   (setq org-startup-with-inline-images t)
