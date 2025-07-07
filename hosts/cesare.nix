@@ -35,7 +35,7 @@
 
       CustomUserPreferences = {
         # Run ./keyboard-to-nix.sh to snapshot current keyboard settings
-        "com.apple.symbolichotkeys" = (import ./keyboard.nix);
+        "com.apple.symbolichotkeys" = (import ../darwin/keyboard.nix);
       };
 
       dock.mru-spaces = false;
