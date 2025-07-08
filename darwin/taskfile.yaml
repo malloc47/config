@@ -23,6 +23,12 @@ tasks:
     cmds:
       - ./{{.ROOT}}/darwin/keyboard-to-nix.sh > darwin/keyboard.nix
 
+  install:
+    cmds:
+      - task: nix
+      - task: bootstrap
+      - task: default
+
   default:
     cmds:
       - sudo darwin-rebuild switch

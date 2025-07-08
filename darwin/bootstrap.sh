@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Choose "no" to install vanilla nix
-curl -fsSL https://install.determinate.systems/nix | sh -s -- install
-sudo nix run nix-darwin/nix-darwin-25.05#darwin-rebuild -- switch --flake .#cesare
-sudo mkdir /etc/nix-darwin/
-sudo ln -s $(git rev-parse --show-toplevel)/flake.nix /etc/nix-darwin/flake.nix
+# Fetch go-task binary to run other workflows
+mkdir -p ~/bin
+curl -s -L https://github.com/go-task/task/releases/download/v3.43.3/task_darwin_arm64.tar.gz | tar xzvf - -C ~/bin/ task
+~/bin/task darwin:install
