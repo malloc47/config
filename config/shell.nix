@@ -13,7 +13,7 @@ in
     dotDir = ".config/zsh";
     history = {
       expireDuplicatesFirst = true;
-      path = ".config/zsh/.zsh_history";
+      path = "${config.xdg.dataHome}/zsh/zsh_history";
     };
     oh-my-zsh = {
       enable = true;
