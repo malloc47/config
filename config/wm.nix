@@ -86,7 +86,7 @@ with pkgs.lib;
           "${mod}+z" = "split h";
           "${mod}+space" = "layout toggle splitv splith tabbed";
           "${mod}+y" = "bar mode toggle";
-          "${mod}+Shift+N" = "exec \"xterm -e 'sudo nixos-rebuild switch; read -s -k \\?COMPLETE'\"";
+          "${mod}+Shift+N" = "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo; read -s -k \\?COMPLETE'\"";
           "${mod}+Shift+r" = "nop";
           "${mod}+v" = "nop";
           "${mod}+e" = "nop";
