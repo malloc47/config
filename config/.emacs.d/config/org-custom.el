@@ -167,5 +167,5 @@
 (use-package synosaurus
   :ensure t
   :bind (:map org-mode-map
-	      ("C-M-:" .     synosaurus-choose-and-replace)
-	      ("C-u C-M-:" . synosaurus-lookup)))
+	      ("C-M-;" . synosaurus-choose-and-replace)
+	      ("C-M-:" . synosaurus-lookup)))

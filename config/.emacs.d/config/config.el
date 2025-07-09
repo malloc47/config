@@ -73,8 +73,8 @@ body { max-width: 80%; }
 (use-package synosaurus
   :ensure t
   :bind (:map markdown-mode-map
-	      ("C-M-:" .     synosaurus-choose-and-replace)
-	      ("C-u C-M-:" . synosaurus-lookup)))
+	      ("C-M-;" . synosaurus-choose-and-replace)
+	      ("C-M-:" . synosaurus-lookup)))
 
 (use-package mermaid-mode :ensure t)
 
