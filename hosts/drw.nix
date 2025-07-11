@@ -13,6 +13,7 @@ in
   imports = [
     ../nixos/configuration.nix
     ../modules/settings.nix
+    ../modules/ssh.nix
     ../hardware/lxc.nix
   ];
 
@@ -42,7 +43,7 @@ in
   # Hardcoding public DNS first so that it doesn't matter whether the
   # host is on the VPN or not.
   networking.nameservers = ["192.168.1.1" "10.64.16.15" "10.64.16.16"];
-  services.openssh.enable = false;
+  services.openssh.enable = lib.mkForce false;
 
   # These are bind-mounted from the host. These are not checked in to
   # this repo for safety reasons, so these are only references to
@@ -183,7 +184,6 @@ in
       "${mod}+p"               = lib.mkForce(lxcExec("dmenu_path | dmenu -fn \'${config.settings.fontName}-${toString (config.settings.fontSize + 2)}\' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16 | zsh"));
       "${mod}+Shift+P"         = lib.mkForce "exec dmenu_run -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
       "${mod}+o"               = lib.mkForce "exec clipmenu -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
-      "${mod}+g"               = "exec rofi -show window";
       "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
       "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
       "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));

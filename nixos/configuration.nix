@@ -1,9 +1,9 @@
-{ config, pkgs, options, ... }:
+{ config, pkgs, lib, options, ... }:
 
 let
   hm-src = {
-    url = "https://github.com/nix-community/home-manager/archive/845a5c4c073f74105022533907703441e0464bc3.tar.gz";
-    sha256 = "0l3pcd38p4iq46ipc5h3cw7wmr9h8rbn34h8a5a4v8hcl21s8r5x";
+    url = "https://github.com/nix-community/home-manager/archive/d0bbd221482c2713cccb80220f3c9d16a6e20a33.tar.gz";
+    sha256 = "1iqfq5lz3102cp3ryqqqs2hr2bdmwn0mdajprh1ls5h5nsfkigs1";
   };
 in
 {
@@ -80,8 +80,8 @@ in
   # programs.gnupg.agent = { enable = true; enableSSHSupport = true; };
 
   # Enable sound.
-  sound.enable = true;
-  hardware.pulseaudio.enable = true;
+  services.pulseaudio.enable = true;
+  services.pipewire.enable = false;
   # This is only needed for containers that want to share the
   # pulse-native socket
   # hardware.pulseaudio.extraClientConf = ''
@@ -96,8 +96,9 @@ in
   virtualisation.docker.enable = true;
   virtualisation.docker.enableOnBoot = false;
 
-  virtualisation.lxd.enable = true;
-  virtualisation.lxc.lxcfs.enable = true;
+  # 25.05 bug: https://github.com/nixos/nixpkgs/issues/422385
+  virtualisation.lxd.enable = ! config.settings.vm;
+  virtualisation.lxc.lxcfs.enable = ! config.settings.vm;
 
   # Required because /run/user/1000 tempfs is too small for docker
   services.logind.extraConfig = ''
@@ -131,13 +132,12 @@ in
 
   home-manager.useUserPackages = true;
   home-manager.users.${config.settings.username} = {
-    settings = config.settings;
     imports = [../config/home.nix];
     home.pointerCursor = {
       package = pkgs.vanilla-dmz;
       name = "Vanilla-DMZ";
     };
-    home.stateVersion = "21.11";
+    home.stateVersion = lib.mkForce "21.11";
   };
 
   system.stateVersion = "21.11";
