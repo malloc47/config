@@ -36,6 +36,9 @@
     libertine
     libre-baskerville
     emacs-all-the-icons-fonts
+    roboto-mono
+    nerd-fonts.fira-code
+    roboto-slab
   ];
 
   programs.zsh.enable = true;

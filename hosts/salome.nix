@@ -8,7 +8,8 @@
   settings = {
     vm = true;
     username = "malloc47";
-    fontSize = 10.0;
+    fontName = "Roboto Mono";
+    fontSize = 9.0;
     dpi = 224;
   };
 }

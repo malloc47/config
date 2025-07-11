@@ -1,3 +1,6 @@
 [submodule "personal"]
 	path = personal
 	url = git@github.com:malloc47/personal.git
+[submodule "config/.emacs.d/packages/nano-emacs"]
+	path = config/.emacs.d/packages/nano-emacs
+	url = https://github.com/rougier/nano-emacs.git

@@ -10,7 +10,6 @@
 
 (require 'fonts)
 (require 'jw-completion)
-(require 'modeline)
 (require 'config)
 (require 'theme)
 (require 'backup)
