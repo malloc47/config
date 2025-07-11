@@ -106,4 +106,6 @@
       font-size = builtins.floor config.settings.fontSize;
     };
   };
+
+  programs.dircolors.enable = true;
 }
