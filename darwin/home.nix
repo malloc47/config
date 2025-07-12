@@ -15,6 +15,7 @@
       nixos-anywhere
       nixfmt-rfc-style
       rsync
+      choose-gui
     ];
 
     sessionPath = ["$HOME/bin"];
