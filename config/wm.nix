@@ -6,7 +6,7 @@ with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
-  home.packages = with pkgs; [xclip];
+  home.packages = with pkgs; [xclip rofimoji];
 
   xsession.windowManager.i3 = {
     enable = true;
@@ -89,7 +89,7 @@ with pkgs.lib;
           "${mod}+Shift+N" = "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo; read -s -k \\?COMPLETE'\"";
           "${mod}+Shift+r" = "nop";
           "${mod}+v" = "nop";
-          "${mod}+e" = "nop";
+          "${mod}+e" = "exec ${pkgs.rofimoji}/bin/rofimoji --skin-tone neutral";
           "${mod}+s" = "nop";
           "${mod}+Shift+>" = "move workspace to output right";
           "${mod}+Shift+<" = "move workspace to output left";
