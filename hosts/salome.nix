@@ -2,7 +2,6 @@
   imports = [
     (modulesPath + "/virtualisation/vmware-guest.nix")
     ../modules/settings.nix
-    ../nixos/configuration-flake.nix
   ];
 
   settings = {

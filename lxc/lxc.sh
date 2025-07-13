@@ -169,7 +169,7 @@ function container () {
     lxc start nixos
     echo "Waiting for container"
     sleep 5
-    lxc exec nixos -- ln -f -s /home/$USER/src/config/hosts/drw.nix /etc/nixos/configuration.nix
+    lxc exec nixos -- ln -f -s /home/$USER/src/config/flake.nix /etc/nixos/flake.nix
     # https://superuser.com/a/1598351
     lxc exec nixos -- loginctl enable-linger $USER
     # Because the configuration is not active yet, we have to manually set
@@ -178,9 +178,9 @@ function container () {
     #
     # Interestingly this fairly consistently repros
     # https://github.com/NixOS/nixpkgs/issues/160289
-    lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch' || true
+    lxc exec nixos -- su - -c 'nixos-rebuild switch' || true
     # Do it again because of the above issue
-    lxc exec nixos -- su - -c 'NIX_PATH="$NIX_PATH:nixpkgs-overlays=/etc/nixos/overlays-compat" nixos-rebuild switch'
+    lxc exec nixos -- su - -c 'nixos-rebuild switch'
     COOKIE=$(xauth list | awk '{print $3}' | head -1)
     lxc exec nixos -- su - $USER -c "xauth add \$HOST/unix:0 MIT-MAGIC-COOKIE-1 $COOKIE"
     # Hacky way to copy the user password hash into the container

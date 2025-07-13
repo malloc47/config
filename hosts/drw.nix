@@ -1,6 +1,5 @@
 { config, lib, pkgs, modulesPath, ... }:
 let
-  dpi = 96;
   mod = "Mod4";
   display = ":0";
   lxcExec = cmd: "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c '${cmd}'\"";
@@ -11,10 +10,7 @@ let
 in
 {
   imports = [
-    ../nixos/configuration.nix
     ../modules/settings.nix
-    ../modules/ssh.nix
-    ../hardware/lxc.nix
   ];
 
   settings = {
@@ -24,6 +20,7 @@ in
     fontSize = 14.0;
     profile = "drw";
     xkbFile = "ubuntu-thinkpad";
+    dpi = 96;
   };
 
   # For VPN reasons, this container shares the host network namespace
@@ -65,11 +62,8 @@ in
 
   users.users.${config.settings.username}.uid = lib.mkForce 34098;
 
-  services.xserver.dpi = dpi;
-
   home-manager.users.${config.settings.username} = {
     home.pointerCursor.size = 64;
-    xresources.properties."Xft.dpi" = dpi;
     # startx does not use .xsession but all the contents are valid for
     # an .xinitrc
     xsession.scriptPath = ".xinitrc";
@@ -205,7 +199,7 @@ in
       "${mod}+Shift+Print"     = "exec flameshot gui";
       "XF86Calculator"         = "exec flameshot gui"; # external keyboard
       "${mod}+Shift+N"         = lib.mkForce ''
-        exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"sudo nixos-rebuild switch; read -s -k \\?COMPLETE\\\\"\\"'"
+        exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"nixos-rebuild switch --use-remote-sudo --impure ; read -s -k \\?COMPLETE\\\\"\\"'"
       '';
       "${mod}+equal"           = "workspace next";
       "${mod}+minus"           = "workspace prev";

@@ -38,10 +38,40 @@
           modules/sound.nix
           modules/gui.nix
           hosts/salome.nix
+          nixos/configuration-flake.nix
           hardware/vmware-fusion-arm.nix
           disk/vmware-fusion.nix
           {
             networking.hostName = "salome";
+            system.stateVersion = "25.05";
+          }
+          ({ config, ... }:
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+            })
+        ];
+      };
+
+      drw = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        system = "x86_64-linux";
+        modules = [
+          home-manager.nixosModules.home-manager
+          modules/settings.nix
+          modules/user.nix
+          modules/nixpkgs.nix
+          modules/virtualization.nix
+          modules/networking.nix
+          modules/ssh.nix
+          modules/sound.nix
+          modules/gui.nix
+          hosts/drw.nix
+          nixos/configuration-flake.nix
+          hardware/lxc.nix
+          {
+            networking.hostName = "drw";
             system.stateVersion = "25.05";
           }
           ({ config, ... }:

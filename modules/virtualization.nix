@@ -1,17 +1,17 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   imports = [ ./settings.nix ];
 
   config = {
-    virtualisation.docker.enable = true;
+    virtualisation.docker.enable = ! config.settings.vm;
     virtualisation.docker.enableOnBoot = false;
 
     services.logind.extraConfig = ''
       RuntimeDirectorySize=8G
     '';
 
-    virtualisation.lxd.enable = true;
-    virtualisation.lxc.lxcfs.enable = true;
+    virtualisation.lxd.enable = ! config.settings.vm;
+    virtualisation.lxc.lxcfs.enable = ! config.settings.vm;
 
     settings.extraGroups = ["docker"];
   };
