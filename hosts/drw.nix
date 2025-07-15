@@ -142,6 +142,8 @@ in
       }
     ];
 
+    xsession.windowManager.i3.config.window.border = lib.mkForce 4;
+
     # This is where my setup descends into madness.
     #
     # This LXC container is hosted on an Ubuntu laptop since Ubuntu is
