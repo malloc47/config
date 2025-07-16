@@ -11,6 +11,7 @@ in
 {
   imports = [
     ../modules/settings.nix
+    ../personal/drw.nix
   ];
 
   settings = {
@@ -41,24 +42,6 @@ in
   # host is on the VPN or not.
   networking.nameservers = ["192.168.1.1" "10.64.16.15" "10.64.16.16"];
   services.openssh.enable = lib.mkForce false;
-
-  # These are bind-mounted from the host. These are not checked in to
-  # this repo for safety reasons, so these are only references to
-  # files that are natively shipped on the laptop.
-  security.pki.certificateFiles = [
-    /etc/drw-security-certs/firewall-ca.crt
-    /etc/drw-security-certs/inspect-ca.crt
-    /etc/drw-security-certs/security-root-ca.crt
-    /etc/drw-certs/drw-root-062525B6.pem
-    /etc/drw-certs/drw-root-062C627A.pem
-    /etc/drw-certs/drw-sub-ca-000000F1.pem
-    /etc/drw-certs/drw-sub-ca-0000020C.pem
-    /etc/drw-certs/drw-sub-ca-00000223.pem
-    /etc/drw-certs/iss-ca.pem
-    /etc/drw-certs/iss-root-ca.pem
-    /etc/drw-certs/ssdns-ca.pem
-    /etc/drw-certs/stem-ca.pem
-  ];
 
   users.users.${config.settings.username}.uid = lib.mkForce 34098;
 
