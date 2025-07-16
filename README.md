@@ -1,11 +1,17 @@
 # malloc47/config
 
-NixOS configuration repo for an evolving ensemble of machines/VMs
-including:
+Nix/NixOS/nix-darwin configuration repo for an evolving ensemble of
+machines/VMs including:
 
 - LXC Container running on Ubuntu 22.04 on a Thinkpad X1 Carbon Gen 9
-- VMWare Fusion-hosted VM running on an aging `MacBookPro11,3`
+- nix-darwin on a recent Macbook Pro Mac16,6
+- VMWare Fusion-hosted VM running on this ^ same Macbook Pro Mac16,6
 - Baremetal install running on an aging `MacBookAir6,1`
+- VMWare Fusion-hosted VM running on an aging `MacBookPro11,3`
+
+> [!NOTE]
+> This config is undergoing an overhaul and has only partially adopted
+> flakes.
 
 ## Design
 

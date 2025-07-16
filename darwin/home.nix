@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, osConfig, pkgs, ... }:
 {
   imports = [
     ../modules/settings.nix
@@ -6,6 +6,8 @@
     ../config/emacs.nix
     ../config/git.nix
   ];
+
+  settings = osConfig.settings;
 
   home = {
     packages = with pkgs; [

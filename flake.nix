@@ -107,11 +107,38 @@
           modules/settings.nix
           modules/user.nix
           modules/ssh.nix
+          darwin/configuration.nix
           hosts/cesare.nix
           home-manager.darwinModules.home-manager
           ({ config, ... }: {
             networking.hostName = "cesare";
 
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.${config.settings.username} = import ./darwin/home.nix;
+            # Doing this to handle existing vmware files
+            home-manager.backupFileExtension = "backup";
+
+            # Set Git commit hash for darwin-version.
+            system.configurationRevision = self.rev or self.dirtyRev or null;
+            system.primaryUser = config.settings.username;
+
+            nixpkgs.hostPlatform = "aarch64-darwin";
+
+            system.stateVersion = 6;
+          })
+        ];
+      };
+
+      nylmd-jwaggon1 = nix-darwin.lib.darwinSystem {
+        modules = [
+          modules/settings.nix
+          modules/user.nix
+          modules/ssh.nix
+          darwin/configuration.nix
+          hosts/nylmd-jwaggon1.nix
+          home-manager.darwinModules.home-manager
+          ({ config, ... }: {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.${config.settings.username} = import ./darwin/home.nix;

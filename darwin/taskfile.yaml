@@ -13,7 +13,7 @@ tasks:
 
   bootstrap:
     cmds:
-      - sudo nix run nix-darwin/nix-darwin-25.05#darwin-rebuild -- switch --flake .#cesare
+      - sudo nix run nix-darwin/nix-darwin-25.05#darwin-rebuild -- switch --flake .#$(hostname)
       - sudo mkdir /etc/nix-darwin/
       - sudo ln -s {{.ROOT}}/flake.nix /etc/nix-darwin/flake.nix
     status:
@@ -23,6 +23,7 @@ tasks:
     cmds:
       - ./{{.ROOT}}/darwin/keyboard-to-nix.sh > darwin/keyboard.nix
 
+  # TODO: find a way to reset the context between these steps so binaries get onto the path
   install:
     cmds:
       - task: nix
