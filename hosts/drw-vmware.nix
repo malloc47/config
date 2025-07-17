@@ -3,7 +3,6 @@
   imports = [
     (modulesPath + "/virtualisation/vmware-guest.nix")
     ../modules/settings.nix
-#    ../personal/drw.nix
   ];
 
   settings = {
@@ -25,6 +24,8 @@
   # host is on the VPN or not.
   networking.nameservers = ["172.16.204.2" "10.64.16.15" "10.64.16.16"];
 
+  security.pki.certificateFiles = [/etc/ssl/ca-bundle.pem];
+
   home-manager.users.${config.settings.username} = {
     home.packages = with pkgs; [
       argo
@@ -35,5 +36,8 @@
       remmina
       saml2aws
     ];
+
+    xsession.windowManager.i3.config.keybindings."Mod4+Shift+N" = lib.mkForce
+      "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo --impure; read -s -k \\?COMPLETE'\"";
   };
 }
