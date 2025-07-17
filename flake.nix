@@ -67,11 +67,42 @@
           modules/ssh.nix
           modules/sound.nix
           modules/gui.nix
-          hosts/drw.nix
+          hosts/drw-lxc.nix
           nixos/configuration-flake.nix
           hardware/lxc.nix
           {
             networking.hostName = "drw";
+            system.stateVersion = "25.05";
+          }
+          ({ config, ... }:
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+            })
+        ];
+      };
+
+      drw-vmware = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          home-manager.nixosModules.home-manager
+          disko.nixosModules.disko
+          modules/settings.nix
+          modules/user.nix
+          modules/nixpkgs.nix
+          modules/virtualization.nix
+          modules/networking.nix
+          modules/ssh.nix
+          modules/sound.nix
+          modules/gui.nix
+          hosts/drw-vmware.nix
+          nixos/configuration-flake.nix
+          hardware/vmware-fusion-arm.nix
+          disk/vmware-fusion.nix
+          {
+            networking.hostName = "drw-vmware";
             system.stateVersion = "25.05";
           }
           ({ config, ... }:
