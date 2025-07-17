@@ -93,6 +93,15 @@ tasks:
       # Remove old keys from ~/.ssh/known_hosts so further ssh commands work
       - ssh-keygen -R {{.IP}}
 
+  certs:
+    deps: [start-vm]
+    requires:
+      vars: [IP]
+    cmds:
+      - security find-certificate -a -p /System/Library/Keychains/SystemRootCertificates.keychain > {{.VM_ROOT}}/ca-bundle.pem
+      - security find-certificate -a -p /Library/Keychains/System.keychain >> {{.VM_ROOT}}/ca-bundle.pem
+      - scp {{.VM_ROOT}}/ca-bundle.pem root@{{.IP}}:/etc/ssl/ca-bundle.pem
+
   bootstrap:
     deps: [start-vm]
     requires:
@@ -105,6 +114,7 @@ tasks:
       - ssh -t root@{{.IP}} "passwd {{.USER}}"
       - rsync -av --mkpath --stats $(git rev-parse --show-toplevel)/ {{.USER}}@{{.IP}}:src/config/
       - ssh root@{{.IP}} "ln -s /home/{{.USER}}/src/config/flake.nix /etc/nixos/flake.nix"
+      - task: certs
       - ssh {{.USER}}@{{.IP}} "sudo nixos-rebuild switch"
       - task: stop-vm
 
