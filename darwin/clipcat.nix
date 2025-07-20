@@ -6,11 +6,11 @@
 
   xdg.configFile."clipcat/clipcatd.toml".text = ''
     daemonize = true
-    pid_file = "/run/user/1000/clipcatd.pid"
+    pid_file = "/var/folders/1d/b35bm1q51pxb6hmpnyxfcr9w0000gp/T/clipcatd.pid"
     primary_threshold_ms = 5000
-    max_history = 50
+    max_history = 500
     synchronize_selection_with_clipboard = true
-    history_file_path = "/home/jwaggoner/.cache/clipcat/clipcatd-history"
+    history_file_path = "/Users/jwaggoner/Library/Caches/clipcat/clipcatd-history"
     snippets = []
 
     [log]
@@ -35,7 +35,7 @@
     enable_local_socket = true
     host = "127.0.0.1"
     port = 45045
-    local_socket = "/run/user/1000/clipcat/grpc.sock"
+    local_socket = "/var/folders/1d/b35bm1q51pxb6hmpnyxfcr9w0000gp/T/clipcat/grpc.sock"
 
     [dbus]
     enable = true
@@ -50,10 +50,11 @@
     icon = "accessories-clipboard"
     timeout_ms = 2000
     long_plaintext_length = 2000
+
   '';
 
   xdg.configFile."clipcat/clipcatctl.toml".text = ''
-    server_endpoint = "/run/user/1000/clipcat/grpc.sock"
+    server_endpoint = "/var/folders/1d/b35bm1q51pxb6hmpnyxfcr9w0000gp/T/clipcat/grpc.sock"
     preview_length = 100
 
     [log]
@@ -64,27 +65,15 @@
   '';
 
   xdg.configFile."clipcat/clipcat-menu.toml".text = ''
-    server_endpoint = "/run/user/1000/clipcat/grpc.sock"
-    finder = "rofi"
+    server_endpoint = "/var/folders/1d/b35bm1q51pxb6hmpnyxfcr9w0000gp/T/clipcat/grpc.sock"
+    finder = "choose"
     preview_length = 80
 
-    [rofi]
-    line_length = 100
-    menu_length = 30
-    menu_prompt = "Clipboard"
-    extra_arguments = []
-
-    [dmenu]
-    line_length = 100
-    menu_length = 30
-    menu_prompt = "Clipboard"
-    extra_arguments = []
-
     [choose]
-    line_length = 100
-    menu_length = 30
+    line_length = 120
+    menu_length = 15
     menu_prompt = "Clipboard"
-    extra_arguments = []
+    extra_arguments = ["-s", "20"]
 
     [custom_finder]
     program = "fzf"
@@ -96,4 +85,16 @@
     emit_stderr = false
     level = "INFO"
   '';
+
+  launchd.agents.clipcatd = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${pkgs.clipcat}/bin/clipcatd" ];
+      ProcessType = "Interactive";
+      KeepAlive = true;
+      RunAtLoad = true;
+    };
+  };
+
+
 }
