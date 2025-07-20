@@ -5,6 +5,7 @@
     ../config/shell.nix
     ../config/emacs.nix
     ../config/git.nix
+    ./clipcat.nix
   ];
 
   settings = osConfig.settings;
@@ -17,7 +18,6 @@
       nixos-anywhere
       nixfmt-rfc-style
       rsync
-      choose-gui
     ];
 
     sessionPath = ["$HOME/bin"];
