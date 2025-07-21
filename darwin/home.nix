@@ -28,6 +28,17 @@
     defaultEditor = true;
   };
 
+  targets.darwin.keybindings = {
+    "\UF729" = "moveToBeginningOfLine:";
+    "\UF72B" = "moveToEndOfLine:";
+    "$\UF729" = "moveToBeginningOfLineAndModifySelection:";
+    "$\UF72B" = "moveToEndOfLineAndModifySelection:";
+    "^\UF729" = "moveToBeginningOfDocument:";
+    "^\UF72B" = "moveToEndOfDocument:";
+    "^$\UF729" = "moveToBeginningOfDocumentAndModifySelection:";
+    "^$\UF72B" = "moveToEndOfDocumentAndModifySelection:";
+  };
+
   home.file."vmware-preferences" = {
     source = ../config/vmware-preferences;
     target = "Library/Preferences/VMware\ Fusion/preferences";
