@@ -39,6 +39,17 @@
     "^$\UF72B" = "moveToEndOfDocumentAndModifySelection:";
   };
 
+  services.skhd = {
+    enable = true;
+    config = ''
+      alt + o : ${pkgs.clipcat}/bin/clipcat-menu
+
+      .blacklist [
+        "vmware-vmx"
+      ]
+    '';
+  };
+
   home.file."vmware-preferences" = {
     source = ../config/vmware-preferences;
     target = "Library/Preferences/VMware\ Fusion/preferences";
