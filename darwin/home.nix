@@ -42,10 +42,10 @@
   services.skhd = {
     enable = true;
     config = ''
-      alt + o : ${pkgs.clipcat}/bin/clipcat-menu
+      alt - o : ${pkgs.clipcat}/bin/clipcat-menu
 
       .blacklist [
-        "vmware-vmx"
+        "vmware fusion"
       ]
     '';
   };
