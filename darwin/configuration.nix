@@ -31,14 +31,29 @@
         KeyRepeat = 2;
         InitialKeyRepeat = 25;
         ApplePressAndHoldEnabled = false;
+        NSWindowShouldDragOnGesture = true;
+        NSAutomaticWindowAnimationsEnabled = false;
       };
 
       CustomUserPreferences = {
         # Run ./keyboard-to-nix.sh to snapshot current keyboard settings
         "com.apple.symbolichotkeys" = (import ../darwin/keyboard.nix);
+        "org.nixos.xquartz.X11" = {
+          enable_render_extension = 1;
+          no_auth = true;
+          nolisten_tcp = false;
+        };
+        "org.xquartz.X11" = {
+          enable_render_extension = 1;
+          no_auth = true;
+          nolisten_tcp = false;
+        };
       };
 
-      dock.mru-spaces = false;
+      dock = {
+        mru-spaces = false;
+        expose-group-apps = true;
+      };
     };
 
     activationScripts.extraActivation.text = let

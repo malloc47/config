@@ -84,6 +84,12 @@ tasks:
     status:
       - "! vmrun list | grep {{.VMX_FILE}}"
 
+  ip:
+    requires:
+      vars: [VMX_FILE]
+    cmds:
+      - vmrun getGuestIPAddress {{.VMX_FILE}}
+
   install:
     deps: [start-vm]
     requires:
