@@ -183,9 +183,14 @@
     executable = true;
     text = ''
       #!/usr/bin/env bash
-      focused=$(${pkgs.aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
-      if [[ "$focused" == "com.vmware.fusion" ]]; then
-          ${pkgs.aerospace}/bin/aerospace mode vm
+      focused () {
+        echo $(${pkgs.aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
+      }
+      if [[ "$(focused)" == "com.vmware.fusion" ]]; then
+          sleep 0.5
+          if [[ "$(focused)" == "com.vmware.fusion" ]]; then
+              ${pkgs.aerospace}/bin/aerospace mode vm
+          fi
       else
           ${pkgs.aerospace}/bin/aerospace mode main
       fi
