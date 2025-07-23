@@ -2,7 +2,10 @@
 {
   imports = [ ../modules/settings.nix ];
   config = {
-    services.openssh.enable = lib.mkIf (config.settings.vm) true;
+
+    services.openssh = {
+      enable = lib.mkIf (config.settings.vm) true;
+      settings.X11Forwarding = true;    };
 
     home-manager.users.${config.settings.username} = {
       programs.ssh = {
