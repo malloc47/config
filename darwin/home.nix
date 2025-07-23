@@ -5,6 +5,7 @@
     ../config/shell.nix
     ../config/emacs.nix
     ../config/git.nix
+    ../config/terminal.nix
     ./clipcat.nix
   ];
 
@@ -71,12 +72,11 @@
       automatically-unhide-macos-hidden-apps = true;
 
       mode.main.binding = {
-        alt-enter = ''
-          exec-and-forget osascript -e '
-            tell application "Terminal"
-                do script
-                activate
-            end tell'
+        alt-enter = "exec-and-forget ${pkgs.alacritty}/bin/alacritty";
+        alt-shift-n = ''exec-and-forget osascript -e '
+          tell app "Terminal"
+            do script "sudo darwin-rebuild switch; exit"
+          end tell'
         '';
         alt-o = "exec-and-forget PATH=$PATH:${pkgs.choose-gui}/bin ${pkgs.clipcat}/bin/clipcat-menu";
         alt-h = "focus left";
@@ -169,6 +169,15 @@
     };
   };
 
+  services.jankyborders = {
+    enable = true;
+  };
+
+  ## This is not yet available in 25.05
+  #programs.sketchybar = {
+  #  enable = true;
+  #};
+
   home.file."bin/aerospace-focus" = {
     target = "bin/aerospace-focus";
     executable = true;
@@ -194,6 +203,8 @@
       StandardErrorPath = "/tmp/aerospace.err.log";
     };
   };
+
+  home.file.".hushlogin".text = "";
 
   home.file."vmware-preferences" = {
     source = ../config/vmware-preferences;

@@ -1,4 +1,7 @@
 { config, pkgs, ... }:
+let
+  inherit (pkgs) stdenv;
+in
 {
   imports = [ ../modules/settings.nix ];
 
@@ -16,9 +19,8 @@
           x = 2;
           y = 2;
         };
-        decorations = "full";
+        decorations = if (stdenv.isDarwin) then "Buttonless" else "Full";
         dynamic_title = true;
-        opacity = 1.0;
       };
       scrolling = {
         history = 10000;
@@ -94,7 +96,7 @@
   };
 
   programs.ghostty = {
-    enable = true;
+    enable = false;
     settings = {
       theme = "Builtin Solarized Light";
       cursor-style = "block";
