@@ -39,14 +39,14 @@
   };
 
   targets.darwin.keybindings = {
-    "&#xF729" = "moveToBeginningOfLine:";
-    "&#xF72B" = "moveToEndOfLine:";
-    "$&#xF729" = "moveToBeginningOfLineAndModifySelection:";
-    "$&#xF72B" = "moveToEndOfLineAndModifySelection:";
-    "^&#xF729" = "moveToBeginningOfDocument:";
-    "^&#xF72B" = "moveToEndOfDocument:";
-    "^$&#xF729" = "moveToBeginningOfDocumentAndModifySelection:";
-    "^$&#xF72B" = "moveToEndOfDocumentAndModifySelection:";
+    "&#xF729;" = "moveToBeginningOfLine:";
+    "&#xF72B;" = "moveToEndOfLine:";
+    "$&#xF729;" = "moveToBeginningOfLineAndModifySelection:";
+    "$&#xF72B;" = "moveToEndOfLineAndModifySelection:";
+    "^&#xF729;" = "moveToBeginningOfDocument:";
+    "^&#xF72B;" = "moveToEndOfDocument:";
+    "^$&#xF729;" = "moveToBeginningOfDocumentAndModifySelection:";
+    "^$&#xF72B;" = "moveToEndOfDocumentAndModifySelection:";
   };
 
   services.skhd = {
