@@ -171,6 +171,11 @@
 
   services.jankyborders = {
     enable = true;
+    settings = {
+      hidpi = true;
+      active_color = "0xffd33682"; # match I3 color
+      width = 10.0;
+    };
   };
 
   ## This is not yet available in 25.05
