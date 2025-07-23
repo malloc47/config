@@ -39,5 +39,8 @@
 
     xsession.windowManager.i3.config.keybindings."Mod4+Shift+N" = lib.mkForce
       "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo --impure; read -s -k \\?COMPLETE'\"";
+
+    xsession.windowManager.i3.config.keybindings."Mod4+v" = lib.mkForce
+      "exec xrandr --output Virtual-1 --auto";
   };
 }
