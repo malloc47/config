@@ -21,6 +21,7 @@ in
         };
         decorations = if (stdenv.isDarwin) then "Buttonless" else "Full";
         dynamic_title = true;
+        option_as_alt = "Both";
       };
       scrolling = {
         history = 10000;
