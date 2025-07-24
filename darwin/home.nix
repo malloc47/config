@@ -90,6 +90,10 @@
         alt-shift-j = "move down";
         alt-shift-k = "move up";
         alt-shift-l = "move right";
+        alt-shift-ctrl-h = "join-with left";
+        alt-shift-ctrl-j = "join-with down";
+        alt-shift-ctrl-k = "join-with up";
+        alt-shift-ctrl-l = "join-with right";
         alt-space = "layout tiles accordion";
         alt-shift-space = "layout vertical horizontal";
         alt-f = "layout floating tiling";
