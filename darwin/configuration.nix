@@ -20,6 +20,9 @@
 
   nix.settings.experimental-features = "nix-command flakes";
 
+  nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [(import ../pkgs/default.nix)];
+
   system = {
     keyboard = {
       enableKeyMapping = true;

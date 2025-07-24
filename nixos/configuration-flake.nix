@@ -8,7 +8,9 @@
   virtualisation.vmware.guest.enable = lib.mkIf (config.settings.vm) true;
 
   nix.settings.experimental-features = "nix-command flakes";
+
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [(import ../pkgs/default.nix)];
 
   environment.systemPackages = with pkgs; map lib.lowPrio [
     curl

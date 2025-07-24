@@ -11,6 +11,8 @@
 
   settings = osConfig.settings;
 
+  xdg.configFile."nixpkgs/config.nix".source = ../config/nixpkgs.nix;
+
   home = {
     packages = with pkgs; [
       autoraise
@@ -19,6 +21,7 @@
       nixos-anywhere
       nixfmt-rfc-style
       rsync
+      raycast
     ];
 
     sessionPath = ["$HOME/bin"];
