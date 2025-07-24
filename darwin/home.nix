@@ -30,7 +30,11 @@
   launchd.agents.autoraise = {
     enable = true;
     config = {
-      ProgramArguments = [ "${pkgs.autoraise}/bin/autoraise" ];
+      ProgramArguments = [
+        "${pkgs.autoraise}/bin/autoraise"
+        "-delay" "0"
+        "-focusDelay" "1"
+      ];
       ProcessType = "Interactive";
       KeepAlive = {SuccessfulExit = true;};
       RunAtLoad = true;
