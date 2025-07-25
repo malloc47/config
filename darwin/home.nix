@@ -7,6 +7,7 @@
     ../config/git.nix
     ../config/terminal.nix
     ./clipcat.nix
+    ./wm.nix
   ];
 
   settings = osConfig.settings;
@@ -15,31 +16,14 @@
 
   home = {
     packages = with pkgs; [
-      autoraise
       clojure
       go-task
       nixos-anywhere
       nixfmt-rfc-style
       rsync
-      raycast
     ];
 
     sessionPath = ["$HOME/bin"];
-  };
-
-  launchd.agents.autoraise = {
-    enable = true;
-    config = {
-      ProgramArguments = [
-        "${pkgs.autoraise}/bin/autoraise"
-        "-delay" "0"
-        "-focusDelay" "1"
-        "-mouseDelta" "0.5"
-      ];
-      ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
-      RunAtLoad = true;
-    };
   };
 
   programs.vim = {
@@ -56,164 +40,6 @@
     "^&#xF72B;" = "moveToEndOfDocument:";
     "^$&#xF729;" = "moveToBeginningOfDocumentAndModifySelection:";
     "^$&#xF72B;" = "moveToEndOfDocumentAndModifySelection:";
-  };
-
-  programs.aerospace = {
-    enable = true;
-    userSettings = {
-
-      enable-normalization-flatten-containers = true;
-      enable-normalization-opposite-orientation-for-nested-containers = true;
-      default-root-container-layout = "tiles";
-      default-root-container-orientation = "auto";
-      automatically-unhide-macos-hidden-apps = true;
-
-      mode.main.binding = {
-        alt-enter = "exec-and-forget ${pkgs.alacritty}/bin/alacritty";
-        alt-shift-n = ''exec-and-forget osascript -e '
-          tell app "Terminal"
-            activate
-            do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
-          end tell'
-        '';
-        alt-o = "exec-and-forget PATH=$PATH:${pkgs.choose-gui}/bin ${pkgs.clipcat}/bin/clipcat-menu";
-        alt-h = "focus left";
-        alt-j = "focus down";
-        alt-k = "focus up";
-        alt-l = "focus right";
-        alt-shift-h = "move left";
-        alt-shift-j = "move down";
-        alt-shift-k = "move up";
-        alt-shift-l = "move right";
-        alt-shift-ctrl-h = "join-with left";
-        alt-shift-ctrl-j = "join-with down";
-        alt-shift-ctrl-k = "join-with up";
-        alt-shift-ctrl-l = "join-with right";
-        alt-space = "layout tiles accordion";
-        alt-shift-space = "layout vertical horizontal";
-        alt-f = "layout floating tiling";
-        alt-shift-f = "fullscreen";
-        alt-backtick = "workspace 1";
-        alt-1 = "workspace 1";
-        alt-2 = "workspace 2";
-        alt-3 = "workspace 3";
-        alt-4 = "workspace 4";
-        alt-5 = "workspace 5";
-        alt-6 = "workspace 6";
-        alt-7 = "workspace 7";
-        alt-8 = "workspace 8";
-        alt-9 = "workspace 9";
-        alt-shift-1 = "move-node-to-workspace 1";
-        alt-shift-2 = "move-node-to-workspace 2";
-        alt-shift-3 = "move-node-to-workspace 3";
-        alt-shift-4 = "move-node-to-workspace 4";
-        alt-shift-5 = "move-node-to-workspace 5";
-        alt-shift-6 = "move-node-to-workspace 6";
-        alt-shift-7 = "move-node-to-workspace 7";
-        alt-shift-8 = "move-node-to-workspace 8";
-        alt-shift-9 = "move-node-to-workspace 9";
-        alt-tab = "workspace-back-and-forth";
-        alt-shift-equal = "balance-sizes";
-        alt-minus = "workspace prev";
-        alt-equal = "workspace next";
-        alt-r = "mode resize";
-        alt-esc = "mode vm";
-
-      };
-      mode.resize.binding = {
-        h = "resize width -200";
-        j = "resize height +200";
-        k = "resize height -200";
-        l = "resize width +200";
-        enter = "mode main";
-        esc = "mode main";
-      };
-      on-focus-changed = [
-        "exec-and-forget ${config.home.homeDirectory}/bin/aerospace-focus"
-      ];
-      # Free all the keybindings for the vm
-      mode.vm.binding = {
-        alt-backtick = "workspace 1";
-        alt-minus = "workspace prev";
-        alt-equal = "workspace next";
-        alt-esc = "mode main";
-        alt-shift-ctrl-h = "focus left";
-        alt-shift-ctrl-j = "focus down";
-        alt-shift-ctrl-k = "focus up";
-        alt-shift-ctrl-l = "focus right";
-      };
-      on-window-detected = [{
-          "if".app-id = "com.vmware.fusion";
-          check-further-callbacks = false;
-          run = ["move-node-to-workspace 2"];
-        }
-      ];
-
-      gaps = {
-        inner.horizontal = 20;
-        inner.vertical =   20;
-        outer.left =       10;
-        outer.bottom =     10;
-        outer.top =        10;
-        outer.right =      10;
-      };
-      workspace-to-monitor-force-assignment = {
-        "1" = "main";
-        "2" = "main";
-        "3" = "main";
-        "4" = "main";
-        "5" = "main";
-        "6" = "main";
-        "7" = "main";
-        "8" = "main";
-        "9" = "main";
-      };
-    };
-  };
-
-  services.jankyborders = {
-    enable = true;
-    settings = {
-      hidpi = true;
-      active_color = "0xffd33682"; # match I3 color
-      width = 10.0;
-    };
-  };
-
-  ## This is not yet available in 25.05
-  #programs.sketchybar = {
-  #  enable = true;
-  #};
-
-  home.file."bin/aerospace-focus" = {
-    target = "bin/aerospace-focus";
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      focused () {
-        echo $(${pkgs.aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
-      }
-      if [[ "$(focused)" == "com.vmware.fusion" ]]; then
-          sleep 0.5
-          if [[ "$(focused)" == "com.vmware.fusion" ]]; then
-              ${pkgs.aerospace}/bin/aerospace mode vm
-          fi
-      else
-          ${pkgs.aerospace}/bin/aerospace mode main
-      fi
-    '';
-  };
-
-  launchd.agents.aerospace = {
-    enable = true;
-    config = {
-      ProgramArguments = [ "${pkgs.aerospace}/Applications/Aerospace.app/Contents/MacOS/AeroSpace" ];
-      ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
-      RunAtLoad = true;
-      StandardOutPath = "/tmp/aerospace.log";
-      StandardErrorPath = "/tmp/aerospace.err.log";
-    };
   };
 
   home.file.".hushlogin".text = "";
