@@ -34,6 +34,7 @@
         "${pkgs.autoraise}/bin/autoraise"
         "-delay" "0"
         "-focusDelay" "1"
+        "-mouseDelta" "0.5"
       ];
       ProcessType = "Interactive";
       KeepAlive = {SuccessfulExit = true;};
@@ -71,7 +72,8 @@
         alt-enter = "exec-and-forget ${pkgs.alacritty}/bin/alacritty";
         alt-shift-n = ''exec-and-forget osascript -e '
           tell app "Terminal"
-            do script "sudo darwin-rebuild switch; exit"
+            activate
+            do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
           end tell'
         '';
         alt-o = "exec-and-forget PATH=$PATH:${pkgs.choose-gui}/bin ${pkgs.clipcat}/bin/clipcat-menu";
@@ -148,12 +150,12 @@
       ];
 
       gaps = {
-        inner.horizontal = 4;
-        inner.vertical =   4;
-        outer.left =       4;
-        outer.bottom =     4;
-        outer.top =        4;
-        outer.right =      4;
+        inner.horizontal = 20;
+        inner.vertical =   20;
+        outer.left =       10;
+        outer.bottom =     10;
+        outer.top =        10;
+        outer.right =      10;
       };
       workspace-to-monitor-force-assignment = {
         "1" = "main";
