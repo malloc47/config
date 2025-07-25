@@ -57,17 +57,6 @@
     "^$&#xF72B;" = "moveToEndOfDocumentAndModifySelection:";
   };
 
-  services.skhd = {
-    enable = false;
-    config = ''
-      alt - o : ${pkgs.clipcat}/bin/clipcat-menu
-
-      .blacklist [
-        "vmware fusion"
-      ]
-    '';
-  };
-
   programs.aerospace = {
     enable = true;
     userSettings = {
