@@ -6,7 +6,7 @@ with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
-  home.packages = with pkgs; [ autoraise raycast ];
+  home.packages = with pkgs; [ autoraise ];
 
   launchd.agents.autoraise = {
     enable = true;

@@ -3,25 +3,38 @@
     {
       nixpkgs.url = "github:NixOS/nixpkgs/25.05";
 
-      nix-darwin = {
-        url = "github:LnL7/nix-darwin/nix-darwin-25.05";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
-      disko = {
-        url = "github:nix-community/disko";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
       home-manager = {
         url = "github:nix-community/home-manager/release-25.05";
         inputs.nixpkgs.follows = "nixpkgs";
       };
 
+      # For VM
+      disko = {
+        url = "github:nix-community/disko";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
+      # For MacOS
+      nix-darwin = {
+        url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
+      nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+      homebrew-core = {
+        url = "github:homebrew/homebrew-core";
+        flake = false;
+      };
+      homebrew-cask = {
+        url = "github:homebrew/homebrew-cask";
+        flake = false;
+      };
+
       self.submodules = true;
     };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, disko, home-manager, ...  }: {
+  outputs = inputs@{ self, nixpkgs, home-manager, disko, nix-darwin, nix-homebrew, homebrew-core, homebrew-cask, ...  }: {
     nixosConfigurations = {
       salome = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
@@ -134,10 +147,13 @@
 
     darwinConfigurations = {
       cesare = nix-darwin.lib.darwinSystem {
+        specialArgs = { inherit inputs; };
         modules = [
           modules/settings.nix
           modules/user.nix
           modules/ssh.nix
+          nix-homebrew.darwinModules.nix-homebrew
+          darwin/homebrew.nix
           darwin/configuration.nix
           hosts/cesare.nix
           home-manager.darwinModules.home-manager
@@ -162,10 +178,13 @@
       };
 
       nylmd-jwaggon1 = nix-darwin.lib.darwinSystem {
+        specialArgs = { inherit inputs; };
         modules = [
           modules/settings.nix
           modules/user.nix
           modules/ssh.nix
+          nix-homebrew.darwinModules.nix-homebrew
+          darwin/homebrew.nix
           darwin/configuration.nix
           hosts/nylmd-jwaggon1.nix
           home-manager.darwinModules.home-manager
