@@ -40,6 +40,29 @@
     xsession.windowManager.i3.config.keybindings."Mod4+Shift+N" = lib.mkForce
       "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo --impure; read -s -k \\?COMPLETE'\"";
 
+    # Hack around https://github.com/NixOS/nixpkgs/issues/396378
+    systemd.user.services."xrandr-preferred" = {
+      Service = {
+        ExecStart = "${pkgs.writeShellScript "xrandr-preferred.sh" ''
+          set -xeuf -o pipefail
+          if ! ${pkgs.xorg.xrandr}/bin/xrandr | grep -q '*+'; then
+            ${pkgs.xorg.xrandr}/bin/xrandr --output Virtual-1 --preferred
+          fi
+          ''}";
+        Type = "oneshot";
+      };
+    };
+
+    systemd.user.timers."xrandr-poll-for-changes" = {
+      Install.WantedBy = [ "timers.target" ];
+      Timer = {
+        Unit = "xrandr-preferred.service";
+        AccuracySec = "1s";
+        OnActiveSec = "30s";
+        OnUnitActiveSec = "1s";
+      };
+    };
+
     xsession.windowManager.i3.config.keybindings."Mod4+v" = lib.mkForce
       "exec xrandr --output Virtual-1 --auto";
   };
