@@ -81,7 +81,7 @@ with pkgs.lib;
         "${mod}-minus" = "workspace prev";
         "${mod}-equal" = "workspace next";
         "${mod}-r" = "mode resize";
-        "${mod}-esc" = "mode vm";
+        "${mod}-esc" = [ "mode vm" "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode default'" ];
 
       };
       mode.resize.binding = {
@@ -102,21 +102,9 @@ with pkgs.lib;
         "${mod}-backtick" = "workspace 1";
         "${mod}-minus" = "workspace prev";
         "${mod}-equal" = "workspace next";
-        "${mod}-esc" = "mode main";
-        "${mod}-h" = "focus left";
-        "${mod}-j" = "focus down";
-        "${mod}-k" = "focus up";
-        "${mod}-l" = "focus right";
-        "${mod}-shift-1" = "move-node-to-workspace 1";
-        "${mod}-shift-2" = "move-node-to-workspace 2";
-        "${mod}-shift-3" = "move-node-to-workspace 3";
-        "${mod}-shift-4" = "move-node-to-workspace 4";
-        "${mod}-shift-5" = "move-node-to-workspace 5";
-        "${mod}-shift-6" = "move-node-to-workspace 6";
-        "${mod}-shift-7" = "move-node-to-workspace 7";
-        "${mod}-shift-8" = "move-node-to-workspace 8";
-        "${mod}-shift-9" = "move-node-to-workspace 9";
+        "${mod}-esc" = ["mode main" "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode window'" ] ;
       };
+
       # on-window-detected = [{
       #     "if".app-id = "com.vmware.fusion";
       #     check-further-callbacks = false;
