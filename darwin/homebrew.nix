@@ -9,6 +9,7 @@
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
+      "socsieng/homebrew-tap" = inputs.sendkeys-tap;
     };
     mutableTaps = false;
   };
@@ -16,5 +17,8 @@
   homebrew = {
     enable = true;
     casks = [ "gauntlet" ];
+    brews = [
+      "sendkeys"
+    ];
   };
 }

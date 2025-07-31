@@ -30,11 +30,15 @@
         url = "github:homebrew/homebrew-cask";
         flake = false;
       };
+      sendkeys-tap = {
+        url = "github:socsieng/homebrew-tap";
+        flake = false;
+      };
 
       self.submodules = true;
     };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, disko, nix-darwin, nix-homebrew, homebrew-core, homebrew-cask, ...  }: {
+  outputs = inputs@{ self, nixpkgs, home-manager, disko, nix-darwin, nix-homebrew, ...  }: {
     nixosConfigurations = {
       salome = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";

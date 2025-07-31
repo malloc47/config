@@ -153,7 +153,24 @@
         "homebrew-core": "homebrew-core",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "sendkeys-tap": "sendkeys-tap"
+      }
+    },
+    "sendkeys-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1734138327,
+        "narHash": "sha256-zUI8A5zgoNDvZkmnJ7f6XcvmZ1+lolMu06dJgxjCM3U=",
+        "owner": "socsieng",
+        "repo": "homebrew-tap",
+        "rev": "80d4c568ec21e09ec94363cd857f18babd2eba43",
+        "type": "github"
+      },
+      "original": {
+        "owner": "socsieng",
+        "repo": "homebrew-tap",
+        "type": "github"
       }
     }
   },

@@ -92,26 +92,37 @@ with pkgs.lib;
         enter = "mode main";
         esc = "mode main";
       };
-      on-focus-changed = [
-        "exec-and-forget ${config.home.homeDirectory}/bin/aerospace-focus"
-      ];
+
+      # on-focus-changed = [
+      #   "exec-and-forget ${config.home.homeDirectory}/bin/aerospace-focus"
+      # ];
+
       # Free all the keybindings for the vm
       mode.vm.binding = {
         "${mod}-backtick" = "workspace 1";
         "${mod}-minus" = "workspace prev";
         "${mod}-equal" = "workspace next";
         "${mod}-esc" = "mode main";
-        "${mod}-shift-ctrl-h" = "focus left";
-        "${mod}-shift-ctrl-j" = "focus down";
-        "${mod}-shift-ctrl-k" = "focus up";
-        "${mod}-shift-ctrl-l" = "focus right";
+        "${mod}-h" = "focus left";
+        "${mod}-j" = "focus down";
+        "${mod}-k" = "focus up";
+        "${mod}-l" = "focus right";
+        "${mod}-shift-1" = "move-node-to-workspace 1";
+        "${mod}-shift-2" = "move-node-to-workspace 2";
+        "${mod}-shift-3" = "move-node-to-workspace 3";
+        "${mod}-shift-4" = "move-node-to-workspace 4";
+        "${mod}-shift-5" = "move-node-to-workspace 5";
+        "${mod}-shift-6" = "move-node-to-workspace 6";
+        "${mod}-shift-7" = "move-node-to-workspace 7";
+        "${mod}-shift-8" = "move-node-to-workspace 8";
+        "${mod}-shift-9" = "move-node-to-workspace 9";
       };
-      on-window-detected = [{
-          "if".app-id = "com.vmware.fusion";
-          check-further-callbacks = false;
-          run = ["move-node-to-workspace 2"];
-        }
-      ];
+      # on-window-detected = [{
+      #     "if".app-id = "com.vmware.fusion";
+      #     check-further-callbacks = false;
+      #     run = ["move-node-to-workspace 2"];
+      #   }
+      # ];
 
       gaps = {
         inner.horizontal = 20;
@@ -131,6 +142,7 @@ with pkgs.lib;
         "7" = "main";
         "8" = "main";
         "9" = "main";
+        "0" = "main";
       };
     };
   };
@@ -144,12 +156,9 @@ with pkgs.lib;
         echo $(${pkgs.aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
       }
       if [[ "$(focused)" == "com.vmware.fusion" ]]; then
-          sleep 0.5
-          if [[ "$(focused)" == "com.vmware.fusion" ]]; then
-              ${pkgs.aerospace}/bin/aerospace mode vm
-          fi
-      else
-          ${pkgs.aerospace}/bin/aerospace mode main
+        sendkeys --targeted --no-activate --initial-delay 0 --application-name "VMWare Fusion" -c '<c:g:command>'
+      #else
+      #    ${pkgs.aerospace}/bin/aerospace mode main
       fi
     '';
   };
