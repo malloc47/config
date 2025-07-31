@@ -12,3 +12,5 @@
     (define-key nxml-mode-map "\M-h" nil)))
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
+
+(global-unset-key (kbd "M-g M-g"))
