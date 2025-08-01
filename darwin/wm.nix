@@ -6,7 +6,7 @@ with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
-  home.packages = with pkgs; [ autoraise ];
+  home.packages = with pkgs; [ autoraise swipe-aerospace albert ];
 
   launchd.agents.autoraise = {
     enable = true;
@@ -40,7 +40,9 @@ with pkgs.lib;
             do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
           end tell'
         '';
-        "${mod}-o" = "exec-and-forget PATH=$PATH:${pkgs.choose-gui}/bin ${pkgs.clipcat}/bin/clipcat-menu";
+        #"${mod}-o" = "exec-and-forget PATH=$PATH:${pkgs.choose-gui}/bin ${pkgs.clipcat}/bin/clipcat-menu";
+        "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
+        "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
         "${mod}-h" = "focus left";
         "${mod}-j" = "focus down";
         "${mod}-k" = "focus up";
@@ -171,6 +173,35 @@ with pkgs.lib;
       width = 10.0;
     };
   };
+
+  launchd.agents.swipe-aerospace = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${pkgs.swipe-aerospace}/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace" ];
+      ProcessType = "Interactive";
+      KeepAlive = {SuccessfulExit = true;};
+      RunAtLoad = true;
+    };
+  };
+
+  targets.darwin.defaults = {
+    "club.mediosz.SwipeAeroSpace" = {
+      "skip-empty" = 1;
+      fingers = "Three";
+      threshold = 0.3;
+    };
+  };
+
+  launchd.agents.albert = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${pkgs.albert}/Applications/Albert.app/Contents/MacOS/Albert" ];
+      ProcessType = "Interactive";
+      KeepAlive = {SuccessfulExit = true;};
+      RunAtLoad = true;
+    };
+  };
+
 
   ## This is not yet available in 25.05
   #programs.sketchybar = {

@@ -10,15 +10,18 @@
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
       "socsieng/homebrew-tap" = inputs.sendkeys-tap;
+      "albertlauncher/homebrew-albert" = inputs.albert-tap;
     };
     mutableTaps = false;
   };
 
   homebrew = {
     enable = true;
-    casks = [ "gauntlet" ];
+    casks = [
+    ];
     brews = [
       "sendkeys"
     ];
+   # onActivation.cleanup = "uninstall";
   };
 }
