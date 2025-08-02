@@ -40,7 +40,6 @@ with pkgs.lib;
             do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
           end tell'
         '';
-        #"${mod}-o" = "exec-and-forget PATH=$PATH:${pkgs.choose-gui}/bin ${pkgs.clipcat}/bin/clipcat-menu";
         "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
         "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
         "${mod}-h" = "focus left";

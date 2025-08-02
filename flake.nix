@@ -34,10 +34,6 @@
         url = "github:socsieng/homebrew-tap";
         flake = false;
       };
-      albert-tap = {
-        url = "github:albertlauncher/homebrew-albert";
-        flake = false;
-      };
 
       self.submodules = true;
     };

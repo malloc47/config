@@ -6,7 +6,6 @@
     ../config/emacs.nix
     ../config/git.nix
     ../config/terminal.nix
-    ./clipcat.nix
     ./wm.nix
   ];
 

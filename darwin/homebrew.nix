@@ -10,7 +10,6 @@
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
       "socsieng/homebrew-tap" = inputs.sendkeys-tap;
-      "albertlauncher/homebrew-albert" = inputs.albert-tap;
     };
     mutableTaps = false;
   };
