@@ -4,7 +4,9 @@ let
 in
 with pkgs.lib;
 {
-  imports = [ ../modules/settings.nix ];
+  imports = [
+    ../modules/settings.nix
+  ];
 
   home.packages = with pkgs; [ autoraise swipe-aerospace albert ];
 
@@ -81,6 +83,7 @@ with pkgs.lib;
         "${mod}-shift-equal" = "balance-sizes";
         "${mod}-minus" = "workspace prev";
         "${mod}-equal" = "workspace next";
+        "${mod}-shift-c" = "close";
         "${mod}-r" = "mode resize";
         "${mod}-esc" = [ "mode vm" "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode default'" ];
 
