@@ -91,10 +91,10 @@ with pkgs.lib;
 
       };
       mode.resize.binding = {
-        h = "resize width -200";
-        j = "resize height +200";
-        k = "resize height -200";
-        l = "resize width +200";
+        h = "resize width -150";
+        j = "resize height +150";
+        k = "resize height -150";
+        l = "resize width +150";
         enter = "mode main";
         esc = "mode main";
       };
