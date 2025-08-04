@@ -102,15 +102,20 @@
           ''}";
         Type = "oneshot";
       };
+      Unit = {
+        StartLimitIntervalSec = "50ms";
+        StartLimitBurst = 1;
+      };
     };
 
     systemd.user.timers."xrandr-poll-for-changes" = {
       Install.WantedBy = [ "timers.target" ];
       Timer = {
         Unit = "xrandr-preferred.service";
-        AccuracySec = "1s";
+
+        AccuracySec = "100ms";
         OnActiveSec = "30s";
-        OnUnitActiveSec = "1s";
+        OnUnitActiveSec = "200ms";
       };
     };
 
