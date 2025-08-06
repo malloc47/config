@@ -1,5 +1,6 @@
 (
   final: prev: {
+    aerospace = prev.callPackage aerospace/default.nix {};
     albert = prev.callPackage albert/default.nix {};
     autoraise = prev.callPackage autoraise/default.nix {};
     geosanslight = prev.callPackage geosanslight/default.nix {};
