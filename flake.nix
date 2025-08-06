@@ -2,6 +2,7 @@
   inputs =
     {
       nixpkgs.url = "github:NixOS/nixpkgs/25.05";
+      nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
       home-manager = {
         url = "github:nix-community/home-manager/release-25.05";
@@ -38,11 +39,16 @@
       self.submodules = true;
     };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, disko, nix-darwin, nix-homebrew, ...  }: {
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, disko, nix-darwin, nix-homebrew, ...  }: {
     nixosConfigurations = {
-      salome = nixpkgs.lib.nixosSystem {
+      salome = nixpkgs.lib.nixosSystem rec {
         system = "aarch64-linux";
-        specialArgs = { inherit inputs; };
+        specialArgs = {
+          inherit inputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            inherit system;
+          };
+        };
         modules = [
           home-manager.nixosModules.home-manager
           disko.nixosModules.disko
@@ -71,9 +77,14 @@
         ];
       };
 
-      drw = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
+      drw = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
+         specialArgs = {
+           inherit inputs;
+           pkgs-unstable = import nixpkgs-unstable {
+             inherit system;
+          };
+        };
         modules = [
           home-manager.nixosModules.home-manager
           modules/settings.nix
@@ -100,9 +111,14 @@
         ];
       };
 
-      drw-vmware = nixpkgs.lib.nixosSystem {
+      drw-vmware = nixpkgs.lib.nixosSystem rec {
         system = "aarch64-linux";
-        specialArgs = { inherit inputs; };
+        specialArgs = {
+          inherit inputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            inherit system;
+          };
+        };
         modules = [
           home-manager.nixosModules.home-manager
           disko.nixosModules.disko
@@ -150,8 +166,13 @@
     };
 
     darwinConfigurations = {
-      cesare = nix-darwin.lib.darwinSystem {
-        specialArgs = { inherit inputs; };
+      cesare = nix-darwin.lib.darwinSystem rec {
+        specialArgs = {
+          inherit inputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-darwin";
+          };
+        };
         modules = [
           modules/settings.nix
           modules/user.nix
@@ -164,6 +185,8 @@
           ({ config, ... }: {
             networking.hostName = "cesare";
 
+            # TODO: need these on linux hosts too?
+            home-manager.extraSpecialArgs = specialArgs;
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.${config.settings.username} = import ./darwin/home.nix;
@@ -181,8 +204,13 @@
         ];
       };
 
-      nylmd-jwaggon1 = nix-darwin.lib.darwinSystem {
-        specialArgs = { inherit inputs; };
+      nylmd-jwaggon1 = nix-darwin.lib.darwinSystem rec {
+        specialArgs = {
+          inherit inputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-darwin";
+          };
+        };
         modules = [
           modules/settings.nix
           modules/user.nix
@@ -193,6 +221,7 @@
           hosts/nylmd-jwaggon1.nix
           home-manager.darwinModules.home-manager
           ({ config, ... }: {
+            home-manager.extraSpecialArgs = specialArgs;
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.${config.settings.username} = import ./darwin/home.nix;

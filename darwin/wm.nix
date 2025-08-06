@@ -1,6 +1,7 @@
-{ config, pkgs, ... }:
+{ config, pkgs, pkgs-unstable, ... }:
 let
   mod = "alt";
+  pkgs-aerospace = pkgs-unstable.aerospace;
 in
 with pkgs.lib;
 {
@@ -27,6 +28,7 @@ with pkgs.lib;
 
   programs.aerospace = {
     enable = true;
+    package = pkgs-aerospace;
     userSettings = {
       enable-normalization-flatten-containers = true;
       enable-normalization-opposite-orientation-for-nested-containers = true;
@@ -147,12 +149,12 @@ with pkgs.lib;
     text = ''
       #!/usr/bin/env bash
       focused () {
-        echo $(${pkgs.aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
+        echo $(${pkgs-aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
       }
       if [[ "$(focused)" == "com.vmware.fusion" ]]; then
         sendkeys --targeted --no-activate --initial-delay 0 --application-name "VMWare Fusion" -c '<c:g:command>'
       #else
-      #    ${pkgs.aerospace}/bin/aerospace mode main
+      #    ${pkgs-aerospace}/bin/aerospace mode main
       fi
     '';
   };
@@ -160,7 +162,7 @@ with pkgs.lib;
   launchd.agents.aerospace = {
     enable = true;
     config = {
-      ProgramArguments = [ "${pkgs.aerospace}/Applications/Aerospace.app/Contents/MacOS/AeroSpace" ];
+      ProgramArguments = [ "${pkgs-aerospace}/Applications/Aerospace.app/Contents/MacOS/AeroSpace" ];
       ProcessType = "Interactive";
       KeepAlive = {SuccessfulExit = true;};
       RunAtLoad = true;
