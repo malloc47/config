@@ -130,7 +130,7 @@
         Unit = "xrandr-preferred.service";
 
         AccuracySec = "100ms";
-        OnActiveSec = "30s";
+        OnActiveSec = "1s";
         OnUnitActiveSec = "200ms";
       };
     };
