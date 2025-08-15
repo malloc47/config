@@ -25,6 +25,7 @@
       nixos-anywhere
       nixfmt-rfc-style
       rsync
+      python3
     ];
 
     sessionPath = [ "$HOME/bin" ];
