@@ -4,6 +4,8 @@
       nixpkgs.url = "github:NixOS/nixpkgs/25.05";
       nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
+      pre-commit-hooks.url = "github:cachix/git-hooks.nix";
+
       home-manager = {
         url = "github:nix-community/home-manager/release-25.05";
         inputs.nixpkgs.follows = "nixpkgs";
@@ -39,7 +41,12 @@
       self.submodules = true;
     };
 
-  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, disko, nix-darwin, nix-homebrew, ...  }: {
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, disko, nix-darwin, nix-homebrew, ...  }:
+  let
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+  in
+  {
     nixosConfigurations = {
       salome = nixpkgs.lib.nixosSystem rec {
         system = "aarch64-linux";
@@ -242,5 +249,23 @@
 
     packages.aarch64-linux.term-do = nixpkgs.legacyPackages.aarch64-linux.callPackage ../pkgs/term-do/default.nix {};
 
-  };
+    checks = forAllSystems (system: {
+        pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            nixpkgs-fmt.enable = true;
+          };
+        };
+      }
+    );
+
+    devShells = forAllSystems (system: {
+      default = nixpkgs.legacyPackages.${system}.mkShell {
+        inherit (self.checks.${system}.pre-commit-check) shellHook;
+        buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
+      };
+    });
+
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
+    };
 }
