@@ -47,6 +47,17 @@ in
       term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
       ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
 
+      materialize() {
+        if [ -f "$1.link" ] ; then
+          rm $1
+          mv $1.link $1
+        else
+          mv $1 $1.link
+          cp $1.link $1
+          chmod +w $1
+        fi
+      }
+
       function chpwd() {
         emulate -L zsh
         ls
@@ -83,6 +94,18 @@ in
         builtin cd $(cat ~/.term-do.d/pwd)
       }
       ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
+
+      materialize() {
+        if [ -f "$1.link" ] ; then
+          rm $1
+          mv $1.link $1
+        else
+          mv $1 $1.link
+          cp $1.link $1
+          chmod +w $1
+        fi
+      }
+
       export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
     '';
     sessionVariables = {
