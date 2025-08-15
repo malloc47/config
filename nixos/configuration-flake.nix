@@ -1,4 +1,10 @@
-{ lib, pkgs, config, ... }: {
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
+{
   imports = [
     ../modules/settings.nix
   ];
@@ -10,20 +16,22 @@
   nix.settings.experimental-features = "nix-command flakes";
 
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = [(import ../pkgs/default.nix)];
+  nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
 
-  environment.systemPackages = with pkgs; map lib.lowPrio [
-    curl
-    gitMinimal
-    docker-compose
-    exfat
-    feh
-    man-pages
-    man-pages-posix
-    vim
-    wget
-    xorg.xkill
-  ];
+  environment.systemPackages =
+    with pkgs;
+    map lib.lowPrio [
+      curl
+      gitMinimal
+      docker-compose
+      exfat
+      feh
+      man-pages
+      man-pages-posix
+      vim
+      wget
+      xorg.xkill
+    ];
 
   documentation.enable = true;
   documentation.man.enable = true;
@@ -46,10 +54,11 @@
   programs.zsh.enable = true;
 
   services.journald.extraConfig = ''
-      SystemMaxUse=2G
+    SystemMaxUse=2G
   '';
 
-  users.users.root.openssh.authorizedKeys.keys =
-    [ (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub) ];
+  users.users.root.openssh.authorizedKeys.keys = [
+    (builtins.readFile ../personal/ssh/${config.settings.profile}/id_rsa.pub)
+  ];
 
 }

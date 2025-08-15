@@ -2,7 +2,10 @@
 {
   imports = [ ../modules/settings.nix ];
 
-  home.packages = [pkgs.choose-gui pkgs.clipcat];
+  home.packages = [
+    pkgs.choose-gui
+    pkgs.clipcat
+  ];
 
   xdg.configFile."clipcat/clipcatd.toml".text = ''
     daemonize = true
@@ -95,6 +98,5 @@
       RunAtLoad = true;
     };
   };
-
 
 }

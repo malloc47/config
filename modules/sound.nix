@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   imports = [ ./settings.nix ];
 
@@ -6,6 +11,6 @@
     # hardware.pulseaudio.enable = true;
     # hardware.pulseaudio.support32Bit = true;
 
-    settings.extraGroups = ["audio"];
+    settings.extraGroups = [ "audio" ];
   };
 }

@@ -1,9 +1,9 @@
-{lib, fetchzip}:
+{ lib, fetchzip }:
 
 fetchzip {
   name = "geosanslight";
 
-  url =  https://dl.dafont.com/dl/?f=geo_sans_light;
+  url = "https://dl.dafont.com/dl/?f=geo_sans_light";
   extension = "zip";
   stripRoot = false;
 
@@ -16,7 +16,7 @@ fetchzip {
 
   meta = {
     description = "Geo Sans Light font";
-    homepage = https://www.dafont.com/geo-sans-light.font;
+    homepage = "https://www.dafont.com/geo-sans-light.font";
     platforms = lib.platforms.unix;
   };
 }

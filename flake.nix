@@ -1,270 +1,286 @@
 {
-  inputs =
-    {
-      nixpkgs.url = "github:NixOS/nixpkgs/25.05";
-      nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/25.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
-      pre-commit-hooks.url = "github:cachix/git-hooks.nix";
-
-      home-manager = {
-        url = "github:nix-community/home-manager/release-25.05";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
-      # For VM
-      disko = {
-        url = "github:nix-community/disko";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
-      # For MacOS
-      nix-darwin = {
-        url = "github:LnL7/nix-darwin/nix-darwin-25.05";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
-      nix-homebrew.url = "github:zhaofengli/nix-homebrew";
-
-      homebrew-core = {
-        url = "github:homebrew/homebrew-core";
-        flake = false;
-      };
-      homebrew-cask = {
-        url = "github:homebrew/homebrew-cask";
-        flake = false;
-      };
-      sendkeys-tap = {
-        url = "github:socsieng/homebrew-tap";
-        flake = false;
-      };
-
-      self.submodules = true;
+    home-manager = {
+      url = "github:nix-community/home-manager/release-25.05";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
-  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, disko, nix-darwin, nix-homebrew, ...  }:
-  let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    # For VM
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # For MacOS
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+    sendkeys-tap = {
+      url = "github:socsieng/homebrew-tap";
+      flake = false;
+    };
+
+    self.submodules = true;
+  };
+
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      disko,
+      nix-darwin,
+      nix-homebrew,
+      ...
+    }:
+    let
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-  in
-  {
-    nixosConfigurations = {
-      salome = nixpkgs.lib.nixosSystem rec {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit inputs;
-          pkgs-unstable = import nixpkgs-unstable {
-            inherit system;
+    in
+    {
+      nixosConfigurations = {
+        salome = nixpkgs.lib.nixosSystem rec {
+          system = "aarch64-linux";
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+            };
           };
-        };
-        modules = [
-          home-manager.nixosModules.home-manager
-          disko.nixosModules.disko
-          modules/settings.nix
-          modules/user.nix
-          modules/nixpkgs.nix
-          modules/virtualization.nix
-          modules/networking.nix
-          modules/ssh.nix
-          modules/sound.nix
-          modules/gui.nix
-          hosts/salome.nix
-          nixos/configuration-flake.nix
-          hardware/vmware-fusion-arm.nix
-          disk/vmware-fusion.nix
-          {
-            networking.hostName = "salome";
-            system.stateVersion = "25.05";
-          }
-          ({ config, ... }:
+          modules = [
+            home-manager.nixosModules.home-manager
+            disko.nixosModules.disko
+            modules/settings.nix
+            modules/user.nix
+            modules/nixpkgs.nix
+            modules/virtualization.nix
+            modules/networking.nix
+            modules/ssh.nix
+            modules/sound.nix
+            modules/gui.nix
+            hosts/salome.nix
+            nixos/configuration-flake.nix
+            hardware/vmware-fusion-arm.nix
+            disk/vmware-fusion.nix
             {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
-            })
-        ];
-      };
-
-      drw = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-         specialArgs = {
-           inherit inputs;
-           pkgs-unstable = import nixpkgs-unstable {
-             inherit system;
-          };
+              networking.hostName = "salome";
+              system.stateVersion = "25.05";
+            }
+            (
+              { config, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+              }
+            )
+          ];
         };
-        modules = [
-          home-manager.nixosModules.home-manager
-          modules/settings.nix
-          modules/user.nix
-          modules/nixpkgs.nix
-          modules/virtualization.nix
-          modules/networking.nix
-          modules/ssh.nix
-          modules/sound.nix
-          modules/gui.nix
-          hosts/drw-lxc.nix
-          nixos/configuration-flake.nix
-          hardware/lxc.nix
-          {
-            networking.hostName = "drw";
-            system.stateVersion = "25.05";
-          }
-          ({ config, ... }:
+
+        drw = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+            };
+          };
+          modules = [
+            home-manager.nixosModules.home-manager
+            modules/settings.nix
+            modules/user.nix
+            modules/nixpkgs.nix
+            modules/virtualization.nix
+            modules/networking.nix
+            modules/ssh.nix
+            modules/sound.nix
+            modules/gui.nix
+            hosts/drw-lxc.nix
+            nixos/configuration-flake.nix
+            hardware/lxc.nix
             {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
-            })
-        ];
-      };
-
-      drw-vmware = nixpkgs.lib.nixosSystem rec {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit inputs;
-          pkgs-unstable = import nixpkgs-unstable {
-            inherit system;
-          };
+              networking.hostName = "drw";
+              system.stateVersion = "25.05";
+            }
+            (
+              { config, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+              }
+            )
+          ];
         };
-        modules = [
-          home-manager.nixosModules.home-manager
-          disko.nixosModules.disko
-          modules/settings.nix
-          modules/user.nix
-          modules/nixpkgs.nix
-          modules/virtualization.nix
-          modules/networking.nix
-          modules/ssh.nix
-          modules/sound.nix
-          modules/gui.nix
-          hosts/drw-vmware.nix
-          nixos/configuration-flake.nix
-          hardware/vmware-fusion-arm.nix
-          disk/vmware-fusion.nix
-          {
-            networking.hostName = "drw-vmware";
-            system.stateVersion = "25.05";
-          }
-          ({ config, ... }:
+
+        drw-vmware = nixpkgs.lib.nixosSystem rec {
+          system = "aarch64-linux";
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+            };
+          };
+          modules = [
+            home-manager.nixosModules.home-manager
+            disko.nixosModules.disko
+            modules/settings.nix
+            modules/user.nix
+            modules/nixpkgs.nix
+            modules/virtualization.nix
+            modules/networking.nix
+            modules/ssh.nix
+            modules/sound.nix
+            modules/gui.nix
+            hosts/drw-vmware.nix
+            nixos/configuration-flake.nix
+            hardware/vmware-fusion-arm.nix
+            disk/vmware-fusion.nix
             {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
-            })
-        ];
-      };
-
-      # nix build .#nixosConfigurations.vm-iso.config.system.build.isoImage
-      vm-iso = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          ({ pkgs, modulesPath, ... }: {
-            imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
-          })
-          modules/settings.nix
-          ({config, ...}: {
-            # Enable guest tools so that we can extract the IP address from the guest
-            virtualisation.vmware.guest.enable = true;
-            users.users.root.openssh.authorizedKeys.keys =
-              [ (builtins.readFile personal/ssh/${config.settings.profile}/id_rsa.pub) ];
-          })
-        ];
-      };
-    };
-
-    darwinConfigurations = {
-      cesare = nix-darwin.lib.darwinSystem rec {
-        specialArgs = {
-          inherit inputs;
-          pkgs-unstable = import nixpkgs-unstable {
-            system = "aarch64-darwin";
-          };
+              networking.hostName = "drw-vmware";
+              system.stateVersion = "25.05";
+            }
+            (
+              { config, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+              }
+            )
+          ];
         };
-        modules = [
-          modules/settings.nix
-          modules/user.nix
-          modules/ssh.nix
-          nix-homebrew.darwinModules.nix-homebrew
-          darwin/homebrew.nix
-          darwin/configuration.nix
-          hosts/cesare.nix
-          home-manager.darwinModules.home-manager
-          ({ config, ... }: {
-            networking.hostName = "cesare";
 
-            # TODO: need these on linux hosts too?
-            home-manager.extraSpecialArgs = specialArgs;
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.${config.settings.username} = import ./darwin/home.nix;
-            # Doing this to handle existing vmware files
-            home-manager.backupFileExtension = "backup";
-
-            # Set Git commit hash for darwin-version.
-            system.configurationRevision = self.rev or self.dirtyRev or null;
-            system.primaryUser = config.settings.username;
-
-            nixpkgs.hostPlatform = "aarch64-darwin";
-
-            system.stateVersion = 6;
-          })
-        ];
-      };
-
-      nylmd-jwaggon1 = nix-darwin.lib.darwinSystem rec {
-        specialArgs = {
-          inherit inputs;
-          pkgs-unstable = import nixpkgs-unstable {
-            system = "aarch64-darwin";
-          };
+        # nix build .#nixosConfigurations.vm-iso.config.system.build.isoImage
+        vm-iso = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            (
+              { pkgs, modulesPath, ... }:
+              {
+                imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
+              }
+            )
+            modules/settings.nix
+            (
+              { config, ... }:
+              {
+                # Enable guest tools so that we can extract the IP address from the guest
+                virtualisation.vmware.guest.enable = true;
+                users.users.root.openssh.authorizedKeys.keys = [
+                  (builtins.readFile personal/ssh/${config.settings.profile}/id_rsa.pub)
+                ];
+              }
+            )
+          ];
         };
-        modules = [
-          modules/settings.nix
-          modules/user.nix
-          modules/ssh.nix
-          nix-homebrew.darwinModules.nix-homebrew
-          darwin/homebrew.nix
-          darwin/configuration.nix
-          hosts/nylmd-jwaggon1.nix
-          home-manager.darwinModules.home-manager
-          ({ config, ... }: {
-            home-manager.extraSpecialArgs = specialArgs;
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.${config.settings.username} = import ./darwin/home.nix;
-            # Doing this to handle existing vmware files
-            home-manager.backupFileExtension = "backup";
-
-            # Set Git commit hash for darwin-version.
-            system.configurationRevision = self.rev or self.dirtyRev or null;
-            system.primaryUser = config.settings.username;
-
-            nixpkgs.hostPlatform = "aarch64-darwin";
-
-            system.stateVersion = 6;
-          })
-        ];
       };
-    };
 
-    packages.aarch64-linux.term-do = nixpkgs.legacyPackages.aarch64-linux.callPackage ../pkgs/term-do/default.nix {};
-
-    checks = forAllSystems (system: {
-        pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
-          src = ./.;
-          hooks = {
-            nixpkgs-fmt.enable = true;
+      darwinConfigurations = {
+        cesare = nix-darwin.lib.darwinSystem rec {
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              system = "aarch64-darwin";
+            };
           };
-        };
-      }
-    );
+          modules = [
+            modules/settings.nix
+            modules/user.nix
+            modules/ssh.nix
+            nix-homebrew.darwinModules.nix-homebrew
+            darwin/homebrew.nix
+            darwin/configuration.nix
+            hosts/cesare.nix
+            home-manager.darwinModules.home-manager
+            (
+              { config, ... }:
+              {
+                networking.hostName = "cesare";
 
-    devShells = forAllSystems (system: {
-      default = nixpkgs.legacyPackages.${system}.mkShell {
-        inherit (self.checks.${system}.pre-commit-check) shellHook;
-        buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
+                # TODO: need these on linux hosts too?
+                home-manager.extraSpecialArgs = specialArgs;
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username} = import ./darwin/home.nix;
+                # Doing this to handle existing vmware files
+                home-manager.backupFileExtension = "backup";
+
+                # Set Git commit hash for darwin-version.
+                system.configurationRevision = self.rev or self.dirtyRev or null;
+                system.primaryUser = config.settings.username;
+
+                nixpkgs.hostPlatform = "aarch64-darwin";
+
+                system.stateVersion = 6;
+              }
+            )
+          ];
+        };
+
+        nylmd-jwaggon1 = nix-darwin.lib.darwinSystem rec {
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              system = "aarch64-darwin";
+            };
+          };
+          modules = [
+            modules/settings.nix
+            modules/user.nix
+            modules/ssh.nix
+            nix-homebrew.darwinModules.nix-homebrew
+            darwin/homebrew.nix
+            darwin/configuration.nix
+            hosts/nylmd-jwaggon1.nix
+            home-manager.darwinModules.home-manager
+            (
+              { config, ... }:
+              {
+                home-manager.extraSpecialArgs = specialArgs;
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username} = import ./darwin/home.nix;
+                # Doing this to handle existing vmware files
+                home-manager.backupFileExtension = "backup";
+
+                # Set Git commit hash for darwin-version.
+                system.configurationRevision = self.rev or self.dirtyRev or null;
+                system.primaryUser = config.settings.username;
+
+                nixpkgs.hostPlatform = "aarch64-darwin";
+
+                system.stateVersion = 6;
+              }
+            )
+          ];
+        };
       };
-    });
+
+      packages.aarch64-linux.term-do =
+        nixpkgs.legacyPackages.aarch64-linux.callPackage ../pkgs/term-do/default.nix
+          { };
 
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
     };

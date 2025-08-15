@@ -1,4 +1,9 @@
-{ config, osConfig, pkgs, ... }:
+{
+  config,
+  osConfig,
+  pkgs,
+  ...
+}:
 with pkgs.lib;
 {
   imports = [
@@ -46,7 +51,15 @@ with pkgs.lib;
     protobuf
     pv
     pyright
-    (python3.withPackages (ps: with ps; [virtualenv wheel setuptools numpy pandas]))
+    (python3.withPackages (
+      ps: with ps; [
+        virtualenv
+        wheel
+        setuptools
+        numpy
+        pandas
+      ]
+    ))
     ripgrep
     sbt
     scrot
@@ -61,16 +74,25 @@ with pkgs.lib;
   programs.java.enable = true;
   programs.chromium.enable = true;
 
-  home.sessionPath = ["$HOME/bin"];
+  home.sessionPath = [ "$HOME/bin" ];
 
   home.sessionVariables = {
     EDITOR = "vim";
   };
 
   home.file.".inputrc".source = ./.inputrc;
-  home.file.".lein" = { source = ./.lein; recursive = true; };
-  home.file.".clojure" = { source = ./.clojure; recursive = true; };
-  home.file.".sbt" = { source = ./.sbt; recursive = true; };
+  home.file.".lein" = {
+    source = ./.lein;
+    recursive = true;
+  };
+  home.file.".clojure" = {
+    source = ./.clojure;
+    recursive = true;
+  };
+  home.file.".sbt" = {
+    source = ./.sbt;
+    recursive = true;
+  };
   xdg.configFile.".user-dirs.dirs".source = ./.user-dirs.dirs;
 
   home.file."wifi" = mkIf (!config.settings.vm) {

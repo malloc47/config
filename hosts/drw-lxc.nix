@@ -1,10 +1,18 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 let
   mod = "Mod4";
   display = ":0";
-  lxcExec = cmd: "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c '${cmd}'\"";
+  lxcExec =
+    cmd:
+    "exec lxc exec nixos -- /run/current-system/sw/bin/zsh -c \"tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c '${cmd}'\"";
   xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
-  compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
+  compiledLayout = pkgs.runCommand "keyboard-layout" { } ''
     ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
   '';
 in
@@ -36,11 +44,19 @@ in
   # at all.
   networking.hostName = "drw";
   networking.domain = "us.drwholdings.com";
-  networking.search = ["us.drwholdings.com" "drwholdings.com" "lan"];
+  networking.search = [
+    "us.drwholdings.com"
+    "drwholdings.com"
+    "lan"
+  ];
   networking.firewall.enable = false;
   # Hardcoding public DNS first so that it doesn't matter whether the
   # host is on the VPN or not.
-  networking.nameservers = ["192.168.1.1" "10.64.16.15" "10.64.16.16"];
+  networking.nameservers = [
+    "192.168.1.1"
+    "10.64.16.15"
+    "10.64.16.16"
+  ];
   services.openssh.enable = lib.mkForce false;
 
   users.users.${config.settings.username}.uid = lib.mkForce 34098;
@@ -76,8 +92,8 @@ in
         Environment = "DISPLAY=${display}";
         ExecStart = "${pkgs.xorg.xrdb}/bin/xrdb -merge %h/.Xresources";
       };
-      Install.WantedBy = ["default.target"];
-      Install.RequiredBy = ["emacs.service"];
+      Install.WantedBy = [ "default.target" ];
+      Install.RequiredBy = [ "emacs.service" ];
     };
 
     xsession.windowManager.i3.config.bars = lib.mkForce [
@@ -111,17 +127,17 @@ in
             border = "#b58900";
             text = "#657b83";
           };
-          urgentWorkspace  = {
+          urgentWorkspace = {
             background = "#d33682";
             border = "#d33682";
             text = "#fdf6e3";
           };
         };
         extraConfig = ''
-            modifier none
-            bindsym button4 nop
-            bindsym button5 nop
-          '';
+          modifier none
+          bindsym button4 nop
+          bindsym button5 nop
+        '';
       }
     ];
 
@@ -157,39 +173,53 @@ in
     # applications in the guest, allowing me to retain all the
     # benefits of work/vendor application/OS stability but still keep
     # my own OS and associated tooling.
-    xsession.windowManager.i3.config.keybindings = let
-      pactl = cmd: "exec --no-startup-id pactl ${cmd} && $refresh_i3status";
-    in {
-      "${mod}+p"               = lib.mkForce(lxcExec("dmenu_path | dmenu -fn \'${config.settings.fontName}-${toString (config.settings.fontSize + 2)}\' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16 | zsh"));
-      "${mod}+Shift+P"         = lib.mkForce "exec dmenu_run -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
-      "${mod}+o"               = lib.mkForce "exec clipmenu -fn '${config.settings.fontName}-${toString (config.settings.fontSize + 2)}' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
-      "${mod}+Return"          = lib.mkForce(lxcExec(config.settings.terminal));
-      "${mod}+Shift+Return"    = lib.mkForce "exec gnome-terminal";
-      "${mod}+Shift+e"         = lib.mkForce(lxcExec("TERM=alacritty emacsclient -c"));
-      "${mod}+a"               = lib.mkForce "exec zoom-mute-toggle";
-      "${mod}+Shift+Control+L" = "exec i3lock";
-      "XF86AudioRaiseVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ +5%");
-      "XF86AudioLowerVolume"   = pactl("set-sink-volume @DEFAULT_SINK@ -5%");
-      "XF86AudioMute"          = pactl("set-sink-mute @DEFAULT_SINK@ toggle");
-      "XF86AudioMicMute"       = pactl("set-source-mute @DEFAULT_SOURCE@ toggle");
-      "XF86MonBrightnessUp"    = "exec brightnessctl set 5%+";
-      "XF86MonBrightnessDown"  = "exec brightnessctl set 5%-";
-      "XF86AudioPlay"          = "exec playerctl play-pause";
-      "XF86AudioPrev"          = "exec playerctl previous";
-      "XF86AudioNext"          = "exec playerctl next";
-      "XF86Favorites"          = "floating toggle, sticky toggle, resize set 30 ppt 40 ppt, move position 70 ppt 3 ppt"; # for zoom
-      "KP_Multiply"            = "floating toggle, sticky toggle, resize set 22 ppt 95 ppt, move position 77 ppt 3 ppt"; # for zoom
-      "XF86Display"            = "exec swap-display";
-      "${mod}+Print"           = "exec flameshot gui";
-      "${mod}+Shift+Print"     = "exec flameshot gui";
-      "XF86Calculator"         = "exec flameshot gui"; # external keyboard
-      "${mod}+Shift+N"         = lib.mkForce ''
-        exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"nixos-rebuild switch --use-remote-sudo --impure ; read -s -k \\?COMPLETE\\\\"\\"'"
-      '';
-      "${mod}+equal"           = "workspace next";
-      "${mod}+minus"           = "workspace prev";
-      "${mod}+grave"           = "workspace 1";
-    };
+    xsession.windowManager.i3.config.keybindings =
+      let
+        pactl = cmd: "exec --no-startup-id pactl ${cmd} && $refresh_i3status";
+      in
+      {
+        "${mod}+p" = lib.mkForce (
+          lxcExec (
+            "dmenu_path | dmenu -fn \'${config.settings.fontName}-${
+              toString (config.settings.fontSize + 2)
+            }\' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16 | zsh"
+          )
+        );
+        "${mod}+Shift+P" = lib.mkForce "exec dmenu_run -fn '${config.settings.fontName}-${
+          toString (config.settings.fontSize + 2)
+        }' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
+        "${mod}+o" = lib.mkForce "exec clipmenu -fn '${config.settings.fontName}-${
+          toString (config.settings.fontSize + 2)
+        }' -nb \\#fdf6e3 -nf \\#657b83 -sb \\#eee8d5 -sf \\#cb4b16";
+        "${mod}+Return" = lib.mkForce (lxcExec (config.settings.terminal));
+        "${mod}+Shift+Return" = lib.mkForce "exec gnome-terminal";
+        "${mod}+Shift+e" = lib.mkForce (lxcExec ("TERM=alacritty emacsclient -c"));
+        "${mod}+a" = lib.mkForce "exec zoom-mute-toggle";
+        "${mod}+Shift+Control+L" = "exec i3lock";
+        "XF86AudioRaiseVolume" = pactl ("set-sink-volume @DEFAULT_SINK@ +5%");
+        "XF86AudioLowerVolume" = pactl ("set-sink-volume @DEFAULT_SINK@ -5%");
+        "XF86AudioMute" = pactl ("set-sink-mute @DEFAULT_SINK@ toggle");
+        "XF86AudioMicMute" = pactl ("set-source-mute @DEFAULT_SOURCE@ toggle");
+        "XF86MonBrightnessUp" = "exec brightnessctl set 5%+";
+        "XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
+        "XF86AudioPlay" = "exec playerctl play-pause";
+        "XF86AudioPrev" = "exec playerctl previous";
+        "XF86AudioNext" = "exec playerctl next";
+        "XF86Favorites" =
+          "floating toggle, sticky toggle, resize set 30 ppt 40 ppt, move position 70 ppt 3 ppt"; # for zoom
+        "KP_Multiply" =
+          "floating toggle, sticky toggle, resize set 22 ppt 95 ppt, move position 77 ppt 3 ppt"; # for zoom
+        "XF86Display" = "exec swap-display";
+        "${mod}+Print" = "exec flameshot gui";
+        "${mod}+Shift+Print" = "exec flameshot gui";
+        "XF86Calculator" = "exec flameshot gui"; # external keyboard
+        "${mod}+Shift+N" = lib.mkForce ''
+          exec "lxc exec nixos -- /run/current-system/sw/bin/zsh -c 'tail -f /dev/null | machinectl shell --uid=${config.settings.username} .host /run/current-system/sw/bin/zsh -i -c \\"xterm -e \\\\"nixos-rebuild switch --use-remote-sudo --impure ; read -s -k \\?COMPLETE\\\\"\\"'"
+        '';
+        "${mod}+equal" = "workspace next";
+        "${mod}+minus" = "workspace prev";
+        "${mod}+grave" = "workspace 1";
+      };
 
     # There is no ~/.xinitrc on Ubuntu and the NixOS one links to
     # binaries in /nix/store that won't work on Ubuntu. So I mirror
@@ -202,7 +232,7 @@ in
       ''
         exec_always xkbcomp ${compiledLayout} ${display}
         exec_always xset r rate 300 25
-        ${lxcExec("xrdb -merge $HOME/.Xresources")}
+        ${lxcExec ("xrdb -merge $HOME/.Xresources")}
         exec --no-startup-id nm-applet
         exec --no-startup-id blueman-applet
         exec --no-startup-id pasystray
@@ -237,7 +267,7 @@ in
         position = 4;
         settings = {
           format = "%status%percentage %remaining";
-	        format_down = "No battery";
+          format_down = "No battery";
           status_chr = "⚡";
           status_bat = "🔋";
           last_full_capacity = true;
@@ -288,43 +318,43 @@ in
       target = "bin/swap-display";
       executable = true;
       text = ''
-      #!/usr/bin/env bash
-      set -e
+        #!/usr/bin/env bash
+        set -e
 
-      function setupScreen() {
-          [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
-          xkbcomp ${compiledLayout} ${display}
-          xset r rate 300 25
-      }
+        function setupScreen() {
+            [ -e $HOME/.background-image ] && feh --bg-scale $HOME/.background-image
+            xkbcomp ${compiledLayout} ${display}
+            xset r rate 300 25
+        }
 
-      INTERNAL="eDP-1"
-      EXTERNAL=$(xrandr | grep " connected " | grep -v $INTERNAL | awk '{print $1}' | head -1)
-      POSSIBLE_EXTERNAL=$(xrandr | grep '^\(HDMI\|DP\)' | awk '{print $1}')
-      ALL_OFF_COMMANDS=""
-      for SCREEN in $POSSIBLE_EXTERNAL ; do
-          ALL_OFF_COMMANDS+="--output $SCREEN --off "
-      done
-      if [ -z $EXTERNAL ] ; then
-          xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
-          setupScreen
-          notify-send "External display not found"
-          >&2 echo "External display not found"
-          exit 1
-      fi
-      INTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $INTERNAL && echo "--off" || echo "--auto --primary")
-      EXTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $EXTERNAL && echo "--off" || echo "--auto --primary")
+        INTERNAL="eDP-1"
+        EXTERNAL=$(xrandr | grep " connected " | grep -v $INTERNAL | awk '{print $1}' | head -1)
+        POSSIBLE_EXTERNAL=$(xrandr | grep '^\(HDMI\|DP\)' | awk '{print $1}')
+        ALL_OFF_COMMANDS=""
+        for SCREEN in $POSSIBLE_EXTERNAL ; do
+            ALL_OFF_COMMANDS+="--output $SCREEN --off "
+        done
+        if [ -z $EXTERNAL ] ; then
+            xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
+            setupScreen
+            notify-send "External display not found"
+            >&2 echo "External display not found"
+            exit 1
+        fi
+        INTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $INTERNAL && echo "--off" || echo "--auto --primary")
+        EXTERNAL_TOGGLE=$(xrandr --listactivemonitors | grep -q $EXTERNAL && echo "--off" || echo "--auto --primary")
 
-      if [ "$INTERNAL_TOGGLE" == "$EXTERNAL_TOGGLE" ] ; then
-         xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
-          setupScreen
-          >&2 echo "Both monitors in the same state, switching to internal only"
-          notify-send "Both monitors in the same state, switching to internal only"
-          exit 0
-      fi
+        if [ "$INTERNAL_TOGGLE" == "$EXTERNAL_TOGGLE" ] ; then
+           xrandr --output $INTERNAL --auto --primary $ALL_OFF_COMMANDS
+            setupScreen
+            >&2 echo "Both monitors in the same state, switching to internal only"
+            notify-send "Both monitors in the same state, switching to internal only"
+            exit 0
+        fi
 
-      xrandr --output $INTERNAL $INTERNAL_TOGGLE --output $EXTERNAL $EXTERNAL_TOGGLE
-      setupScreen
-    '';
+        xrandr --output $INTERNAL $INTERNAL_TOGGLE --output $EXTERNAL $EXTERNAL_TOGGLE
+        setupScreen
+      '';
     };
 
     home.file."zoom-mute-toggle" = {
@@ -340,7 +370,7 @@ in
             keyup a \
             key --clearmodifiers alt+a \
             windowactivate --sync ''${CURRENT}
-    '';
+      '';
     };
 
     home.file."caps-lock-toggle" = {
@@ -352,7 +382,6 @@ in
         xdotool key Caps_Lock
       '';
     };
-
 
     xdg.configFile.autorandr-postswitch = {
       target = "autorandr/postswitch";

@@ -17,7 +17,10 @@ in
     };
     oh-my-zsh = {
       enable = true;
-      plugins = ["lein" "sudo"];
+      plugins = [
+        "lein"
+        "sudo"
+      ];
       theme = "lambda";
     };
     shellAliases = {
@@ -35,42 +38,45 @@ in
         };
       }
     ];
-    initContent = let
-      cdpath = "$HOME/src" +
-        pkgs.lib.optionalString (config.settings.profile != "malloc47")
-          " $HOME/src/${config.settings.profile}";
-    in
-    ''
-      hg() { history | grep $1 }
-      pg() { ps aux | grep $1 }
-      bindkey -s "^[x" 'term-do^M'
-      term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
-      ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
+    initContent =
+      let
+        cdpath =
+          "$HOME/src"
+          + pkgs.lib.optionalString (
+            config.settings.profile != "malloc47"
+          ) " $HOME/src/${config.settings.profile}";
+      in
+      ''
+        hg() { history | grep $1 }
+        pg() { ps aux | grep $1 }
+        bindkey -s "^[x" 'term-do^M'
+        term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
+        ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
 
-      materialize() {
-        if [ -f "$1.link" ] ; then
-          rm $1
-          mv $1.link $1
-        else
-          mv $1 $1.link
-          cp $1.link $1
-          chmod +w $1
+        materialize() {
+          if [ -f "$1.link" ] ; then
+            rm $1
+            mv $1.link $1
+          else
+            mv $1 $1.link
+            cp $1.link $1
+            chmod +w $1
+          fi
+        }
+
+        function chpwd() {
+          emulate -L zsh
+          ls
+        }
+
+        cdpath=(${cdpath})
+
+        if [[ -n "$IN_NIX_SHELL" ]]; then
+          export PS1="${"\${PS1}%F{red}ns%f"} "
         fi
-      }
-
-      function chpwd() {
-        emulate -L zsh
-        ls
-      }
-
-      cdpath=(${cdpath})
-
-      if [[ -n "$IN_NIX_SHELL" ]]; then
-        export PS1="${"\${PS1}%F{red}ns%f"} "
-      fi
-    '';
+      '';
     sessionVariables = {
-      ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=10";
+      ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
     };
   };
 
@@ -109,13 +115,20 @@ in
       export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
     '';
     sessionVariables = {
-      CDPATH = ".:~/src/" +
-        pkgs.lib.optionalString (config.settings.profile != "malloc47")
-        ":~/src/${config.settings.profile}";
+      CDPATH =
+        ".:~/src/"
+        + pkgs.lib.optionalString (
+          config.settings.profile != "malloc47"
+        ) ":~/src/${config.settings.profile}";
     };
     shellOptions = [
-      "autocd" "cdspell" "globstar" # bash >= 4
-      "cmdhist" "nocaseglob" "histappend" "extglob"
+      "autocd"
+      "cdspell"
+      "globstar" # bash >= 4
+      "cmdhist"
+      "nocaseglob"
+      "histappend"
+      "extglob"
     ];
   };
 }

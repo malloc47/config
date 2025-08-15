@@ -1,4 +1,9 @@
-{ config, osConfig, pkgs, ... }:
+{
+  config,
+  osConfig,
+  pkgs,
+  ...
+}:
 {
   imports = [
     ../modules/settings.nix
@@ -22,7 +27,7 @@
       rsync
     ];
 
-    sessionPath = ["$HOME/bin"];
+    sessionPath = [ "$HOME/bin" ];
   };
 
   programs.vim = {
@@ -49,16 +54,13 @@
   };
 
   home.file."bin/vmrun".source =
-    config.lib.file.mkOutOfStoreSymlink
-    "/Applications/VMware\ Fusion.app/Contents/Library/vmrun" ;
+    config.lib.file.mkOutOfStoreSymlink "/Applications/VMware\ Fusion.app/Contents/Library/vmrun";
 
   home.file."bin/vmcli".source =
-    config.lib.file.mkOutOfStoreSymlink
-    "/Applications/VMware\ Fusion.app/Contents/Library/vmcli" ;
+    config.lib.file.mkOutOfStoreSymlink "/Applications/VMware\ Fusion.app/Contents/Library/vmcli";
 
   home.file."bin/vmnet-cli".source =
-    config.lib.file.mkOutOfStoreSymlink
-    "/Applications/VMware\ Fusion.app/Contents/Library/vmnet-cli" ;
+    config.lib.file.mkOutOfStoreSymlink "/Applications/VMware\ Fusion.app/Contents/Library/vmnet-cli";
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

@@ -25,7 +25,11 @@
     twoFingerScroll = true;
     tapButtons = false;
     accelFactor = "0.001";
-    buttonsMap = [ 1 3 2 ];
+    buttonsMap = [
+      1
+      3
+      2
+    ];
     palmDetect = true;
     minSpeed = "0.70";
     maxSpeed = "1.20";
@@ -50,10 +54,26 @@
   services.actkbd = {
     enable = true;
     bindings = [
-      { keys = [ 225 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -s sysfs/backlight/mba6x_backlight -A 10"; }
-      { keys = [ 224 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -s sysfs/backlight/mba6x_backlight -U 10"; }
-      { keys = [ 230 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -s sysfs/leds/smc::kbd_backlight -A 10"; }
-      { keys = [ 229 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -s sysfs/leds/smc::kbd_backlight -U 10"; }
+      {
+        keys = [ 225 ];
+        events = [ "key" ];
+        command = "/run/current-system/sw/bin/light -s sysfs/backlight/mba6x_backlight -A 10";
+      }
+      {
+        keys = [ 224 ];
+        events = [ "key" ];
+        command = "/run/current-system/sw/bin/light -s sysfs/backlight/mba6x_backlight -U 10";
+      }
+      {
+        keys = [ 230 ];
+        events = [ "key" ];
+        command = "/run/current-system/sw/bin/light -s sysfs/leds/smc::kbd_backlight -A 10";
+      }
+      {
+        keys = [ 229 ];
+        events = [ "key" ];
+        command = "/run/current-system/sw/bin/light -s sysfs/leds/smc::kbd_backlight -U 10";
+      }
     ];
   };
 
@@ -61,7 +81,10 @@
 
   services.logind.extraConfig = "HandlePowerKey=suspend";
 
-  powerManagement = { enable = true; cpuFreqGovernor = "ondemand"; };
+  powerManagement = {
+    enable = true;
+    cpuFreqGovernor = "ondemand";
+  };
 
   environment.systemPackages = [ pkgs.i3lock ];
 
@@ -110,7 +133,7 @@
         position = 4;
         settings = {
           format = "%status %percentage %remaining";
-	        format_down = "⚡";
+          format_down = "⚡";
         };
       };
     };

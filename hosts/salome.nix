@@ -1,4 +1,11 @@
-{ modulesPath, lib, pkgs, config, ...  } @ args: {
+{
+  modulesPath,
+  lib,
+  pkgs,
+  config,
+  ...
+}@args:
+{
   imports = [
     (modulesPath + "/virtualisation/vmware-guest.nix")
     ../modules/settings.nix

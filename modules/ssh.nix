@@ -1,14 +1,21 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   imports = [ ../modules/settings.nix ];
   config = {
 
-    services = {} // lib.optionalAttrs config.settings.vm {
-      openssh = lib.mkIf (config.settings.vm)  {
-        enable = true;
-        settings.X11Forwarding = true;
+    services =
+      { }
+      // lib.optionalAttrs config.settings.vm {
+        openssh = lib.mkIf (config.settings.vm) {
+          enable = true;
+          settings.X11Forwarding = true;
+        };
       };
-    };
 
     home-manager.users.${config.settings.username} = {
       programs.ssh = {

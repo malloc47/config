@@ -1,9 +1,11 @@
-{ lib
-, stdenv
-, fetchzip
-, autoPatchelfHook
-, zlib
-, gcc-unwrapped}:
+{
+  lib,
+  stdenv,
+  fetchzip,
+  autoPatchelfHook,
+  zlib,
+  gcc-unwrapped,
+}:
 
 stdenv.mkDerivation rec {
   pname = "carve";

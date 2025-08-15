@@ -10,7 +10,11 @@
       s = "status -s -uno";
       gl = "log --oneline --graph";
     };
-    ignores = [".#*" "*.desktop" "*.lock"];
+    ignores = [
+      ".#*"
+      "*.desktop"
+      "*.lock"
+    ];
     lfs.enable = true;
     extraConfig = {
       branch.autosetuprebase = "never";

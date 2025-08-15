@@ -1,4 +1,9 @@
-{ config, lib, modulesPath, ... }:
+{
+  config,
+  lib,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -12,6 +17,5 @@
   environment.variables.NIX_REMOTE = lib.mkForce "";
   systemd.services."console-getty".enable = false;
   systemd.services."getty@".enable = false;
-
 
 }

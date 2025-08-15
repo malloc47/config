@@ -1,4 +1,10 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -16,7 +22,10 @@
 
   networking.hostName = "harpocrates";
   networking.firewall.enable = false;
-  networking.nameservers = ["8.8.8.8" "8.8.4.4"];
+  networking.nameservers = [
+    "8.8.8.8"
+    "8.8.4.4"
+  ];
 
   services.xserver.dpi = 277;
   # Launch xorg on display :1 so it does not collide with host display
@@ -39,7 +48,7 @@
     xorg.xf86inputevdev
   ];
 
-  services.xserver.videoDrivers = ["vmware"];
+  services.xserver.videoDrivers = [ "vmware" ];
 
   services.xserver.config = ''
     Section "InputDevice"
@@ -70,7 +79,7 @@
   environment.variables.WINIT_HIDPI_FACTOR = "3";
   # Chrome scaling fix
   environment.variables.GDK_SCALE = "3.0";
-  environment.variables.GDK_DPI_SCALE="0.25";
+  environment.variables.GDK_DPI_SCALE = "0.25";
 
   # Used for file sharing between host and guest
   services.openssh.enable = true;

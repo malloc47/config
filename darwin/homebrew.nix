@@ -1,4 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   imports = [ ../modules/settings.nix ];
 
@@ -21,6 +26,6 @@
     brews = [
       "sendkeys"
     ];
-   # onActivation.cleanup = "uninstall";
+    # onActivation.cleanup = "uninstall";
   };
 }

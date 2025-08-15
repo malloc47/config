@@ -1,4 +1,9 @@
-{config, pkgs, lib, ...}:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 with lib;
 
@@ -56,7 +61,7 @@ with lib;
         '';
       };
       extraGroups = mkOption {
-        default = [];
+        default = [ ];
         type = with types; listOf str;
         description = ''
           Groups to attach to the default user.
@@ -64,19 +69,27 @@ with lib;
       };
       repositories = mkOption {
         default = [
-          {url = "git@github.com:malloc47/cv.git"; target = "~/src/cv";}
-          {url = "git@github.com:malloc47/malloc47.github.com.git"; target = "~/src/www";}
+          {
+            url = "git@github.com:malloc47/cv.git";
+            target = "~/src/cv";
+          }
+          {
+            url = "git@github.com:malloc47/malloc47.github.com.git";
+            target = "~/src/www";
+          }
         ];
-        type = with types; listOf (submodule {
-          options = {
-            url = mkOption {
-              type = types.strMatching "^git@.*";
+        type =
+          with types;
+          listOf (submodule {
+            options = {
+              url = mkOption {
+                type = types.strMatching "^git@.*";
+              };
+              target = mkOption {
+                type = str;
+              };
             };
-            target = mkOption {
-              type = str;
-            };
-          };
-        });
+          });
         description = ''
           List of repositories to clone on home-manager activation.
 

@@ -1,4 +1,9 @@
-{ config, pkgs, pkgs-unstable, ... }:
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  ...
+}:
 let
   mod = "alt";
   pkgs-aerospace = pkgs-unstable.aerospace;
@@ -9,19 +14,29 @@ with pkgs.lib;
     ../modules/settings.nix
   ];
 
-  home.packages = with pkgs; [ autoraise swipe-aerospace albert flameshot ];
+  home.packages = with pkgs; [
+    autoraise
+    swipe-aerospace
+    albert
+    flameshot
+  ];
 
   launchd.agents.autoraise = {
     enable = true;
     config = {
       ProgramArguments = [
         "${pkgs.autoraise}/bin/autoraise"
-        "-delay" "0"
-        "-focusDelay" "1"
-        "-mouseDelta" "0.5"
+        "-delay"
+        "0"
+        "-focusDelay"
+        "1"
+        "-mouseDelta"
+        "0.5"
       ];
       ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
+      KeepAlive = {
+        SuccessfulExit = true;
+      };
       RunAtLoad = true;
     };
   };
@@ -38,11 +53,12 @@ with pkgs.lib;
 
       mode.main.binding = {
         "${mod}-enter" = "exec-and-forget ${pkgs.alacritty}/bin/alacritty";
-        "${mod}-shift-n" = ''exec-and-forget osascript -e '
-          tell app "Terminal"
-            activate
-            do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
-          end tell'
+        "${mod}-shift-n" = ''
+          exec-and-forget osascript -e '
+                    tell app "Terminal"
+                      activate
+                      do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
+                    end tell'
         '';
         "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
         "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
@@ -89,7 +105,10 @@ with pkgs.lib;
         "${mod}-equal" = "workspace next";
         "${mod}-shift-c" = "close";
         "${mod}-r" = "mode resize";
-        "${mod}-esc" = [ "mode vm" "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode default'" ];
+        "${mod}-esc" = [
+          "mode vm"
+          "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode default'"
+        ];
         "${mod}-shift-x" = "exec-and-forget ${pkgs.flameshot}/bin/flameshot gui";
       };
 
@@ -111,7 +130,10 @@ with pkgs.lib;
         "${mod}-backtick" = "workspace 1";
         "${mod}-minus" = "workspace prev";
         "${mod}-equal" = "workspace next";
-        "${mod}-esc" = ["mode main" "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode window'" ] ;
+        "${mod}-esc" = [
+          "mode main"
+          "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode window'"
+        ];
       };
 
       # on-window-detected = [{
@@ -121,19 +143,20 @@ with pkgs.lib;
       #   }
       # ];
 
-      on-window-detected = [{
+      on-window-detected = [
+        {
           "if".app-id = "org.flameshot";
-          run = ["layout floating"];
+          run = [ "layout floating" ];
         }
       ];
 
       gaps = {
         inner.horizontal = 20;
-        inner.vertical =   20;
-        outer.left =       10;
-        outer.bottom =     10;
-        outer.top =        10;
-        outer.right =      10;
+        inner.vertical = 20;
+        outer.left = 10;
+        outer.bottom = 10;
+        outer.top = 10;
+        outer.right = 10;
       };
       workspace-to-monitor-force-assignment = {
         "1" = "main";
@@ -171,7 +194,9 @@ with pkgs.lib;
     config = {
       ProgramArguments = [ "${pkgs-aerospace}/Applications/Aerospace.app/Contents/MacOS/AeroSpace" ];
       ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
+      KeepAlive = {
+        SuccessfulExit = true;
+      };
       RunAtLoad = true;
       StandardOutPath = "/tmp/aerospace.log";
       StandardErrorPath = "/tmp/aerospace.err.log";
@@ -190,9 +215,13 @@ with pkgs.lib;
   launchd.agents.swipe-aerospace = {
     enable = true;
     config = {
-      ProgramArguments = [ "${pkgs.swipe-aerospace}/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace" ];
+      ProgramArguments = [
+        "${pkgs.swipe-aerospace}/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace"
+      ];
       ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
+      KeepAlive = {
+        SuccessfulExit = true;
+      };
       RunAtLoad = true;
     };
   };
@@ -210,7 +239,9 @@ with pkgs.lib;
     config = {
       ProgramArguments = [ "${pkgs.albert}/Applications/Albert.app/Contents/MacOS/Albert" ];
       ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
+      KeepAlive = {
+        SuccessfulExit = true;
+      };
       RunAtLoad = true;
     };
   };
@@ -220,7 +251,9 @@ with pkgs.lib;
     config = {
       ProgramArguments = [ "${pkgs.flameshot}/bin/flameshot" ];
       ProcessType = "Interactive";
-      KeepAlive = {SuccessfulExit = true;};
+      KeepAlive = {
+        SuccessfulExit = true;
+      };
       RunAtLoad = true;
     };
   };
@@ -240,6 +273,5 @@ with pkgs.lib;
   #programs.sketchybar = {
   #  enable = true;
   #};
-
 
 }

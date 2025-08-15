@@ -1,7 +1,14 @@
-{ config, pkgs, lib, options, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  options,
+  inputs,
+  ...
+}:
 {
   config = {
-    nixpkgs.overlays = [(import ../pkgs/default.nix)];
+    nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
 
     environment.etc."overlays-compat" = {
       text = ''
@@ -29,7 +36,10 @@
     nix.registry.self.flake = inputs.self;
 
     nix.registry.sys = {
-      from = { type = "indirect"; id = "sys"; };
+      from = {
+        type = "indirect";
+        id = "sys";
+      };
       flake = inputs.nixpkgs;
     };
   };

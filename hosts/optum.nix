@@ -12,18 +12,17 @@
     vm = true;
     username = "jwaggon9";
     fontSize = 9.0;
-    profile = "rally";          # Keeping same SSH key
+    profile = "rally"; # Keeping same SSH key
     xkbFile = "vm";
     terminal = "kitty";
   };
-
 
   # Needed to make VMWare Fusion + M1 work
   networking.interfaces.ens160.useDHCP = true;
   disabledModules = [ "virtualisation/vmware-guest.nix" ];
   virtualisation.vmware.guest.enable = true;
   nixpkgs.config.allowUnsupportedSystem = true;
-  nixpkgs.overlays = [(import ../pkgs/aarch64.nix)];
+  nixpkgs.overlays = [ (import ../pkgs/aarch64.nix) ];
 
   services.xserver = {
     dpi = 277;
@@ -46,7 +45,7 @@
   environment.variables.WINIT_HIDPI_FACTOR = "3";
   # Chrome scaling fix
   environment.variables.GDK_SCALE = "3.0";
-  environment.variables.GDK_DPI_SCALE="0.25";
+  environment.variables.GDK_DPI_SCALE = "0.25";
 
   environment.systemPackages = with pkgs; [
     gtkmm3
@@ -68,7 +67,7 @@
 
     # Work around VMWare bug:
     # https://github.com/vmware/open-vm-tools/issues/287
-    programs.ssh.matchBlocks."*".extraOptions.IPQoS="throughput";
+    programs.ssh.matchBlocks."*".extraOptions.IPQoS = "throughput";
     programs.ssh.matchBlocks."*".user = "jarrell.waggoner";
 
     programs.i3status.modules = {
@@ -83,7 +82,7 @@
         position = 4;
         settings = {
           format = "%status %percentage %remaining";
-	        format_down = "⚡";
+          format_down = "⚡";
         };
       };
     };

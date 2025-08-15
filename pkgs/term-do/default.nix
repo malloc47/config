@@ -1,10 +1,12 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, makeWrapper
-, gnumake
-, gcc
-, boost}:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  makeWrapper,
+  gnumake,
+  gcc,
+  boost,
+}:
 
 stdenv.mkDerivation rec {
   pname = "term-do";

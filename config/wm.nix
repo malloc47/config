@@ -6,7 +6,10 @@ with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
-  home.packages = with pkgs; [xclip rofimoji];
+  home.packages = with pkgs; [
+    xclip
+    rofimoji
+  ];
 
   xsession.windowManager.i3 = {
     enable = true;
@@ -48,7 +51,7 @@ with pkgs.lib;
               border = "#b58900";
               text = "#657b83";
             };
-            urgentWorkspace  = {
+            urgentWorkspace = {
               background = "#d33682";
               border = "#d33682";
               text = "#fdf6e3";
@@ -86,7 +89,8 @@ with pkgs.lib;
           "${mod}+z" = "split h";
           "${mod}+space" = "layout toggle splitv splith tabbed";
           "${mod}+y" = "bar mode toggle";
-          "${mod}+Shift+N" = "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo; read -s -k \\?COMPLETE'\"";
+          "${mod}+Shift+N" =
+            "exec \"xterm -e 'nixos-rebuild switch --use-remote-sudo; read -s -k \\?COMPLETE'\"";
           "${mod}+Shift+r" = "nop";
           "${mod}+v" = "nop";
           "${mod}+e" = "exec ${pkgs.rofimoji}/bin/rofimoji --skin-tone neutral";
@@ -122,16 +126,16 @@ with pkgs.lib;
           "${mod}+Tab" = "workspace back_and_forth";
           "${mod}+r" = "mode resize";
         }
-        // optionalAttrs (!config.settings.vm)
-          {
-            "${mod}+equal" = "workspace next";
-            "${mod}+minus" = "workspace prev";
-            "${mod}+grave" = "workspace 1";
-            "${mod}+Shift+Control+L" = "exec i3lock -c 000000";
-            "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
-            "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
-            "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
-          });
+        // optionalAttrs (!config.settings.vm) {
+          "${mod}+equal" = "workspace next";
+          "${mod}+minus" = "workspace prev";
+          "${mod}+grave" = "workspace 1";
+          "${mod}+Shift+Control+L" = "exec i3lock -c 000000";
+          "XF86AudioRaiseVolume" = "exec --no-startup-id amixer sset Master 5%+ unmute";
+          "XF86AudioLowerVolume" = "exec --no-startup-id amixer sset Master 5%- unmute";
+          "XF86AudioMute" = "exec --no-startup-id amixer sset Master toggle";
+        }
+      );
       modes.resize = {
         "h" = "resize shrink width 10 px or 10 ppt";
         "j" = "resize grow height 10 px or 10 ppt";
@@ -190,28 +194,27 @@ with pkgs.lib;
     };
   };
 
-
   xresources.properties = {
     "xterm*faceName" = "${config.settings.fontName}";
     "xterm*faceSize" = "${head (splitString "." (toString config.settings.fontSize))}";
   };
 
   xsession.initExtra =
-    if (config.settings.xkbFile != "none" ) then
+    if (config.settings.xkbFile != "none") then
       let
         xkbFile = ../xkb + "/${config.settings.xkbFile}.xkb";
-        compiledLayout = pkgs.runCommand "keyboard-layout" {} ''
+        compiledLayout = pkgs.runCommand "keyboard-layout" { } ''
           ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
-       '';
+        '';
       in
-        "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
+      "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
     else
       "";
 
   programs.rofi = {
     enable = true;
-    font = config.settings.fontName + " " +
-           (head (splitString "." (toString config.settings.fontSize)));
+    font =
+      config.settings.fontName + " " + (head (splitString "." (toString config.settings.fontSize)));
     terminal = "${pkgs.alacritty}/bin/alacritty";
     extraConfig = {
       # Makes rofi default to using the monitor DPI

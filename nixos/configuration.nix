@@ -1,4 +1,10 @@
-{ config, pkgs, lib, options, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  options,
+  ...
+}:
 
 let
   hm-src = {
@@ -13,7 +19,7 @@ in
   ];
 
   nixpkgs.config = import ../config/nixpkgs.nix;
-  nixpkgs.overlays = [(import ../pkgs/default.nix)];
+  nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
 
   # Using https://nixos.wiki/wiki/Overlays to let the local nix tools
   # get the same overlays as we define in this file
@@ -31,9 +37,7 @@ in
     target = "nixos/overlays-compat/overlays.nix";
   };
 
-  nix.nixPath =
-    options.nix.nixPath.default ++
-    [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
+  nix.nixPath = options.nix.nixPath.default ++ [ "nixpkgs-overlays=/etc/nixos/overlays-compat/" ];
 
   nix.settings.trusted-users = [ "@wheel" ];
 
@@ -97,8 +101,8 @@ in
   virtualisation.docker.enableOnBoot = false;
 
   # 25.05 bug: https://github.com/nixos/nixpkgs/issues/422385
-  virtualisation.lxd.enable = ! config.settings.vm;
-  virtualisation.lxc.lxcfs.enable = ! config.settings.vm;
+  virtualisation.lxd.enable = !config.settings.vm;
+  virtualisation.lxc.lxcfs.enable = !config.settings.vm;
 
   # Required because /run/user/1000 tempfs is too small for docker
   services.logind.extraConfig = ''
@@ -117,7 +121,7 @@ in
   programs.zsh.enable = true;
 
   services.journald.extraConfig = ''
-      SystemMaxUse=2G
+    SystemMaxUse=2G
   '';
 
   users.users.${config.settings.username} = {
@@ -125,14 +129,20 @@ in
     createHome = true;
     home = "/home/${config.settings.username}";
     description = "Jarrell Waggoner";
-    extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
+    extraGroups = [
+      "audio"
+      "docker"
+      "networkmanager"
+      "wheel"
+      "lxd"
+    ];
     uid = 1000;
     shell = pkgs.zsh;
   };
 
   home-manager.useUserPackages = true;
   home-manager.users.${config.settings.username} = {
-    imports = [../config/home.nix];
+    imports = [ ../config/home.nix ];
     home.pointerCursor = {
       package = pkgs.vanilla-dmz;
       name = "Vanilla-DMZ";

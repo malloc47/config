@@ -80,7 +80,10 @@ in
       mouse = {
         hide_when_typing = false;
         bindings = [
-          {mouse = "Middle"; action = "PasteSelection";}
+          {
+            mouse = "Middle";
+            action = "PasteSelection";
+          }
         ];
       };
       selection = {

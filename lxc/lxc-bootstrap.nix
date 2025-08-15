@@ -1,4 +1,10 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -18,7 +24,10 @@
   # config, so set the hostname in advance so there's one less change
   networking.hostName = "harpocrates";
   networking.firewall.enable = false;
-  networking.nameservers = ["8.8.8.8" "8.8.4.4"];
+  networking.nameservers = [
+    "8.8.8.8"
+    "8.8.4.4"
+  ];
 
   nix.settings.trusted-users = [ "@wheel" ];
   nix.extraOptions = ''
@@ -61,7 +70,13 @@
     createHome = true;
     home = "/home/${config.settings.username}";
     description = "Jarrell Waggoner";
-    extraGroups = ["audio" "docker" "networkmanager" "wheel" "lxd"];
+    extraGroups = [
+      "audio"
+      "docker"
+      "networkmanager"
+      "wheel"
+      "lxd"
+    ];
     uid = 1000;
     shell = pkgs.zsh;
     # Used for file sharing between host and guest
