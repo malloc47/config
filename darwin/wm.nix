@@ -9,7 +9,7 @@ with pkgs.lib;
     ../modules/settings.nix
   ];
 
-  home.packages = with pkgs; [ autoraise swipe-aerospace albert ];
+  home.packages = with pkgs; [ autoraise swipe-aerospace albert flameshot ];
 
   launchd.agents.autoraise = {
     enable = true;
@@ -90,8 +90,9 @@ with pkgs.lib;
         "${mod}-shift-c" = "close";
         "${mod}-r" = "mode resize";
         "${mod}-esc" = [ "mode vm" "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode default'" ];
-
+        "${mod}-shift-x" = "exec-and-forget ${pkgs.flameshot}/bin/flameshot gui";
       };
+
       mode.resize.binding = {
         h = "resize width -150";
         j = "resize height +150";
@@ -119,6 +120,12 @@ with pkgs.lib;
       #     run = ["move-node-to-workspace 2"];
       #   }
       # ];
+
+      on-window-detected = [{
+          "if".app-id = "org.flameshot";
+          run = ["layout floating"];
+        }
+      ];
 
       gaps = {
         inner.horizontal = 20;
@@ -208,6 +215,26 @@ with pkgs.lib;
     };
   };
 
+  launchd.agents.flameshot = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${pkgs.flameshot}/bin/flameshot" ];
+      ProcessType = "Interactive";
+      KeepAlive = {SuccessfulExit = true;};
+      RunAtLoad = true;
+    };
+  };
+
+  xdg.configFile."flameshot/flameshot.ini".text = ''
+    [General]
+    disabledTrayIcon=true
+    useJpgForClipboard=true
+    savePath=${config.home.homeDirectory}/Downloads
+
+    [Shortcuts]
+    SCREENSHOT_HISTORY=
+    TAKE_SCREENSHOT=
+  '';
 
   ## This is not yet available in 25.05
   #programs.sketchybar = {
