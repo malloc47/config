@@ -60,6 +60,7 @@ with pkgs.lib;
                       do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
                     end tell'
         '';
+        "${mod}-n" = "exec-and-forget open -na \"Google Chrome\" --args --new-window";
         "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
         "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
         "${mod}-h" = "focus left";
@@ -76,7 +77,20 @@ with pkgs.lib;
         "${mod}-shift-ctrl-l" = "join-with right";
         "${mod}-space" = "layout tiles accordion";
         "${mod}-shift-space" = "layout vertical horizontal";
-        "${mod}-f" = "layout floating tiling";
+        "${mod}-f" = ["layout floating tiling"
+          ''
+          exec-and-forget osascript -e '
+            set windowTitle to ""
+            tell application "System Events" to tell (first process whose frontmost is true) to set windowTitle to name of window 1
+            if (windowTitle is not equal to "Zoom Meeting") then
+              error number -128
+            end if
+            tell application "System Events"
+              tell process "zoom.us"
+                click menu item "Keep on top" of menu 1 of menu bar item "Meeting" of menu bar 1
+              end tell
+            end tell'
+          '' ];
         "${mod}-shift-f" = "fullscreen";
         "${mod}-backtick" = "workspace 1";
         "${mod}-1" = "workspace 1";
