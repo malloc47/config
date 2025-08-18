@@ -1,0 +1,23 @@
+<!--SPDX License Identifier: CC0-1.0-->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key></key>
+	<string>moveToBeginningOfParagraph:</string>
+	<key>$</key>
+	<string>moveToBeginningOfParagraphAndModifySelection:</string>
+	<key>^</key>
+	<string>moveToBeginningOfDocument:</string>
+	<key>^$</key>
+	<string>moveToBeginningOfDocumentAndModifySelection:</string>
+	<key></key>
+	<string>moveToEndOfParagraph:</string>
+	<key>$</key>
+	<string>moveToEndOfParagraphAndModifySelection:</string>
+	<key>^</key>
+	<string>moveToEndOfDocument:</string>
+	<key>^$</key>
+	<string>moveToEndOfDocumentAndModifySelection:</string>
+</dict>
+</plist>

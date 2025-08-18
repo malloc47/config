@@ -36,15 +36,9 @@
     defaultEditor = true;
   };
 
-  targets.darwin.keybindings = {
-    "&#xF729;" = "moveToBeginningOfLine:";
-    "&#xF72B;" = "moveToEndOfLine:";
-    "$&#xF729;" = "moveToBeginningOfLineAndModifySelection:";
-    "$&#xF72B;" = "moveToEndOfLineAndModifySelection:";
-    "^&#xF729;" = "moveToBeginningOfDocument:";
-    "^&#xF72B;" = "moveToEndOfDocument:";
-    "^$&#xF729;" = "moveToBeginningOfDocumentAndModifySelection:";
-    "^$&#xF72B;" = "moveToEndOfDocumentAndModifySelection:";
+  home.file."DefaultKeyBinding.dict" = {
+    source = ./DefaultKeyBinding.dict;
+    target = "Library/KeyBindings/DefaultKeyBinding.dict";
   };
 
   home.file.".hushlogin".text = "";
