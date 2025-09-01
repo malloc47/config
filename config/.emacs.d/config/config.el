@@ -136,3 +136,6 @@ body { max-width: 80%; }
   (interactive "r")
   (with-silent-modifications
     (remove-text-properties begin end '(read-only t))))
+
+(when (string-equal system-type "darwin")
+  (setq ring-bell-function #'ignore))

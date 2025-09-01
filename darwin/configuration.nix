@@ -18,6 +18,18 @@
     wget
   ];
 
+  fonts.packages = with pkgs; [
+    corefonts
+    geosanslight
+    inconsolata-unstable
+    libertine
+    libre-baskerville
+    emacs-all-the-icons-fonts
+    roboto-mono
+    nerd-fonts.fira-code
+    roboto-slab
+  ];
+
   nix.settings.experimental-features = "nix-command flakes";
 
   nixpkgs.config.allowUnfree = true;

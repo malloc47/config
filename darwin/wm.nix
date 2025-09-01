@@ -61,6 +61,7 @@ with pkgs.lib;
                     end tell'
         '';
         "${mod}-n" = "exec-and-forget open -na \"Google Chrome\" --args --new-window";
+        "${mod}-shift-e" = "exec-and-forget ${pkgs.emacsNativeComp}/bin/emacsclient -c";
         "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
         "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
         "${mod}-h" = "focus left";
@@ -169,7 +170,7 @@ with pkgs.lib;
         inner.vertical = 20;
         outer.left = 10;
         outer.bottom = 10;
-        outer.top = 10;
+        outer.top = 5;
         outer.right = 10;
       };
       workspace-to-monitor-force-assignment = {
