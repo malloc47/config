@@ -98,7 +98,11 @@ body { max-width: 80%; }
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file 'noerror)
 
-(defun ssh-add () (interactive) (shell-command "ssh-add"))
+(defun ssh-add ()
+  (interactive)
+  (if (string-equal system-type "darwin")
+      (shell-command "ssh-add --apple-use-keychain")
+      (shell-command "ssh-add")))
 
 ;; Favor opening new windows side-by-side rather than top-to-bottom
 (use-package window
