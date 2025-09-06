@@ -22,10 +22,10 @@
     packages = with pkgs; [
       clojure
       go-task
-      nixos-anywhere
       nixfmt-rfc-style
-      rsync
+      nixos-anywhere
       python3
+      rsync
     ];
 
     sessionPath = [ "$HOME/bin" ];
