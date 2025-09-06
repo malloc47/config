@@ -1,3 +1,4 @@
+# TODO: This retains some implict homebrew links that need to be stamped out
 {
   lib,
   fetchurl,

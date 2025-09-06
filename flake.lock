@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "albert-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1755371646,
+        "narHash": "sha256-zgkENe76vp352i2jsZ7IO2bB7RPkUfx4Y2dFMGPjLJM=",
+        "owner": "albertlauncher",
+        "repo": "homebrew-albert",
+        "rev": "7f71c286c165db923e7446c8ba7d1a0f39a31099",
+        "type": "github"
+      },
+      "original": {
+        "owner": "albertlauncher",
+        "repo": "homebrew-albert",
+        "type": "github"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -163,6 +179,7 @@
     },
     "root": {
       "inputs": {
+        "albert-tap": "albert-tap",
         "disko": "disko",
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",

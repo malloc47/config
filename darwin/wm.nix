@@ -17,7 +17,7 @@ with pkgs.lib;
   home.packages = with pkgs; [
     autoraise
     swipe-aerospace
-    albert
+    # albert
     flameshot
   ];
 
@@ -62,8 +62,11 @@ with pkgs.lib;
         '';
         "${mod}-n" = "exec-and-forget open -na \"Google Chrome\" --args --new-window";
         "${mod}-shift-e" = "exec-and-forget ${pkgs.emacsNativeComp}/bin/emacsclient -c";
-        "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
-        "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
+        # Switch to the homebrew Albert for now
+        "${mod}-o" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"clipboard \"";
+        "${mod}-p" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"apps \"";
+        # "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
+        # "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
         "${mod}-h" = "focus left";
         "${mod}-j" = "focus down";
         "${mod}-k" = "focus up";
@@ -252,7 +255,10 @@ with pkgs.lib;
   launchd.agents.albert = {
     enable = true;
     config = {
-      ProgramArguments = [ "${pkgs.albert}/Applications/Albert.app/Contents/MacOS/Albert" ];
+      ProgramArguments = [
+        # "${pkgs.albert}/Applications/Albert.app/Contents/MacOS/Albert"
+        "/Applications/Albert.app/Contents/MacOS/Albert"
+      ];
       ProcessType = "Interactive";
       KeepAlive = {
         SuccessfulExit = true;
