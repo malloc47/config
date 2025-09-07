@@ -3,6 +3,8 @@ with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
+  home.packages = with pkgs; [ ispell ];
+
   programs.emacs = {
     enable = true;
     package = pkgs.emacsNativeComp;
