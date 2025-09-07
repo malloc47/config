@@ -1,4 +1,10 @@
-{ config, pkgs, ... }:
+{ config, pkgs, pkgs-unstable, ... }:
+let
+  # Using unstable due to https://github.com/NixOS/nixpkgs/issues/395169
+  emacs-custom = pkgs-unstable.emacs30.override {
+    withNativeCompilation = true;
+  };
+in
 with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
@@ -7,7 +13,7 @@ with pkgs.lib;
 
   programs.emacs = {
     enable = true;
-    package = pkgs.emacsNativeComp;
+    package = pkgs.emacsNativeComp; # emacs-custom;
   };
   services.emacs.enable = true;
 
