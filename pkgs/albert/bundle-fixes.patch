@@ -1,0 +1,44 @@
+diff --git a/cmake/bundle-macos.cmake.in b/cmake/bundle-macos.cmake.in
+index ad7fafbe..93ab6eee 100644
+--- a/cmake/bundle-macos.cmake.in
++++ b/cmake/bundle-macos.cmake.in
+@@ -53,19 +53,6 @@ file(REMOVE_RECURSE "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}")
+ 
+ 
+ 
+-# ADD RPATHS TO EXECUTABLE
+-
+-execute_process(
+-    COMMAND install_name_tool
+-        -add_rpath "@executable_path/../Frameworks/"  # in bundle
+-        -add_rpath "/opt/local/lib/"                  # RPATH macports
+-        -add_rpath "/opt/homebrew/lib/"               # RPATH homebrew arm
+-        -add_rpath "/usr/local/lib/"                  # RPATH homebrew intel
+-        "${BUNDLE_PATH}/Contents/MacOS/${PROJECT_NAME}"
+-    COMMAND_ECHO STDOUT
+-    COMMAND_ERROR_IS_FATAL ANY
+-)
+-
+ 
+ 
+ # DEPLOY (APPROACH #1, use qt_deploy_runtime_dependencies)
+@@ -124,19 +111,6 @@ execute_process(
+ 
+ 
+ 
+-# CODE SIGN
+-
+-# execute_process(
+-#     COMMAND xattr -d com.apple.quarantine "${BUNDLE_PATH}"
+-#     COMMAND_ECHO STDOUT
+-#     COMMAND_ERROR_IS_FATAL ANY
+-# )
+-execute_process(
+-    COMMAND codesign --force --deep --sign - "${BUNDLE_PATH}"
+-    COMMAND_ECHO STDOUT
+-    COMMAND_ERROR_IS_FATAL ANY
+-)
+-
+ 
+ 
+ ## CLEANUP
