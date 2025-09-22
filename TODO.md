@@ -12,6 +12,7 @@ Capture ideas and pain points to work on when I have bandwidth:
   - Chrome could be a challenge--I doubt it's commonly-compiled with X support against aarch64-darwin
   - This would be a continued disinvestment in Wayland
   - A lot of my darwin setup has prioritized cross-platform software, regardless
+  - https://cmacr.ae/blog/seamless-x11-on-osx/
 - Idea: Make xquartz-wm expose modern Accessibility API hooks so X programs can be managed by MacOS
   window managers (like Aerospace)
   - https://apple.stackexchange.com/questions/354676/how-can-i-disable-xquartz-entirely-and-use-xorg-with-my-own-desktop-environment
@@ -20,3 +21,4 @@ Capture ideas and pain points to work on when I have bandwidth:
 - nix-ify my ukelele keyboard setup
   - Bug: fix the "switching back to US" that happens when opening certain Settings windows or
     TextEdit
+- Keyboard: Ctrl+Shift+Return as paste
