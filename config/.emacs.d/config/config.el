@@ -94,6 +94,9 @@ body { max-width: 80%; }
 ;; y/n vs yes/no
 (fset 'yes-or-no-p 'y-or-n-p)
 
+;; https://apple.stackexchange.com/a/467217
+(select-frame-set-input-focus (selected-frame))
+
 ;; move customize to separate file
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file 'noerror)
