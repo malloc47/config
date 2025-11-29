@@ -12,6 +12,7 @@
     ../config/git.nix
     ../config/terminal.nix
     ./wm.nix
+    ./audio.nix
   ];
 
   settings = osConfig.settings;
