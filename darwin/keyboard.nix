@@ -223,5 +223,8 @@
         type = "standard";
       };
     };
+    # Disable spotlight
+    "64".enabled = false;
+    "65".enabled = false;
   };
 }
