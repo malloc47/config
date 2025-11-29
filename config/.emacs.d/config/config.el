@@ -61,9 +61,7 @@
       "<style type='text/css'>
 body { max-width: 80%; }
 </style>")
-  :hook ((markdown-mode . visual-line-mode)
-	 (markdown-mode . visual-fill-column-mode)
-	 (markdown-mode . flyspell-mode)
+  :hook ((markdown-mode . flyspell-mode)
 	 (markdown-mode . jw/markdown-extensions))
   :bind (:map markdown-mode-map
 	      ("C-u" . universal-argument)))
