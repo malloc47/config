@@ -25,6 +25,7 @@
     casks = [
       "albert"
       "xquartz"
+      "android-platform-tools"
     ];
     brews = [
       "sendkeys"
