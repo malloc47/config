@@ -22,3 +22,5 @@ Capture ideas and pain points to work on when I have bandwidth:
   - Bug: fix the "switching back to US" that happens when opening certain Settings windows or
     TextEdit
 - Keyboard: Ctrl+Shift+Return as paste
+- Darwin: Remove LogiOptions+ in favor of Karabiner
+  - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard

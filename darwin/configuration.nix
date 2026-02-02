@@ -35,6 +35,8 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
 
+  # services.karabiner-elements.enable = true;
+
   system = {
     keyboard = {
       enableKeyMapping = true;

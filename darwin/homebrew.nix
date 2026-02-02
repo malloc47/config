@@ -26,6 +26,7 @@
       "albert"
       "xquartz"
       "android-platform-tools"
+      "karabiner-elements"
     ];
     brews = [
       "sendkeys"
