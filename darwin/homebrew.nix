@@ -24,6 +24,7 @@
     enable = true;
     casks = [
       "albert"
+      "xquartz"
     ];
     brews = [
       "sendkeys"
