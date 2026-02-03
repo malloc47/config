@@ -44,6 +44,7 @@ with pkgs.lib;
   programs.aerospace = {
     enable = true;
     package = pkgs-aerospace;
+    launchd.enable = true;
     userSettings = {
       enable-normalization-flatten-containers = true;
       enable-normalization-opposite-orientation-for-nested-containers = true;
@@ -61,7 +62,7 @@ with pkgs.lib;
                     end tell'
         '';
         "${mod}-n" = "exec-and-forget open -na \"Google Chrome\" --args --new-window";
-        "${mod}-shift-e" = "exec-and-forget ${pkgs.emacsNativeComp}/bin/emacsclient -c";
+        "${mod}-shift-e" = "exec-and-forget ${pkgs.emacs}/bin/emacsclient -c";
         # Switch to the homebrew Albert for now
         "${mod}-o" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"clipboard \"";
         "${mod}-p" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"apps \"";
@@ -206,20 +207,6 @@ with pkgs.lib;
       #    ${pkgs-aerospace}/bin/aerospace mode main
       fi
     '';
-  };
-
-  launchd.agents.aerospace = {
-    enable = true;
-    config = {
-      ProgramArguments = [ "${pkgs-aerospace}/Applications/Aerospace.app/Contents/MacOS/AeroSpace" ];
-      ProcessType = "Interactive";
-      KeepAlive = {
-        SuccessfulExit = true;
-      };
-      RunAtLoad = true;
-      StandardOutPath = "/tmp/aerospace.log";
-      StandardErrorPath = "/tmp/aerospace.err.log";
-    };
   };
 
   services.jankyborders = {

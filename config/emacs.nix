@@ -1,20 +1,10 @@
 { config, pkgs, pkgs-unstable, ... }:
-let
-  # Using unstable due to https://github.com/NixOS/nixpkgs/issues/395169
-  emacs-custom = pkgs-unstable.emacs30.override {
-    withNativeCompilation = true;
-  };
-in
-with pkgs.lib;
 {
   imports = [ ../modules/settings.nix ];
 
   home.packages = with pkgs; [ ispell ];
 
-  programs.emacs = {
-    enable = true;
-    package = pkgs.emacsNativeComp; # emacs-custom;
-  };
+  programs.emacs.enable = true;
   services.emacs.enable = true;
 
   home.file.".emacs.d" = {
@@ -22,7 +12,7 @@ with pkgs.lib;
     recursive = true;
   };
 
-  home.file."fonts.el" = {
+  home.file."fonts.el" = with pkgs.lib; {
     target = ".emacs.d/config/fonts.el";
     text = ''
       (provide 'fonts)

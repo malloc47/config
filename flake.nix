@@ -1,10 +1,10 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/25.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -16,7 +16,7 @@
 
     # For MacOS
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+      url = "github:LnL7/nix-darwin/nix-darwin-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -89,7 +89,7 @@
             disk/vmware-fusion.nix
             {
               networking.hostName = "salome";
-              system.stateVersion = "25.05";
+              system.stateVersion = "25.11";
             }
             (
               { config, ... }:
@@ -125,7 +125,7 @@
             hardware/lxc.nix
             {
               networking.hostName = "drw";
-              system.stateVersion = "25.05";
+              system.stateVersion = "25.11";
             }
             (
               { config, ... }:
@@ -163,7 +163,7 @@
             disk/vmware-fusion.nix
             {
               networking.hostName = "drw-vmware";
-              system.stateVersion = "25.05";
+              system.stateVersion = "25.11";
             }
             (
               { config, ... }:
