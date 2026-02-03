@@ -24,6 +24,7 @@
     enable = true;
     casks = [
       "albert"
+      "claude-code"
       "xquartz"
       "android-platform-tools"
       "karabiner-elements"
