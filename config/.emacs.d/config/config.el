@@ -95,6 +95,15 @@ body { max-width: 80%; }
 ;; https://apple.stackexchange.com/a/467217
 (select-frame-set-input-focus (selected-frame))
 
+;; https://github.com/bbatsov/prelude/blob/e0ca7c700389e70df457177ea75b0936dbe254e0/core/prelude-ui.el#L66-L71
+(setq frame-title-format
+      '(""
+	(:eval (if (buffer-file-name)
+		   (abbreviate-file-name (buffer-file-name))
+		 "%b"))
+	" - "
+	invocation-name))
+
 ;; move customize to separate file
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file 'noerror)

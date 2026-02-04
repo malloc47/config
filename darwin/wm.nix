@@ -62,7 +62,7 @@ with pkgs.lib;
                     end tell'
         '';
         "${mod}-n" = "exec-and-forget open -na \"Google Chrome\" --args --new-window";
-        "${mod}-shift-e" = "exec-and-forget ${pkgs.emacs}/bin/emacsclient -c";
+        "${mod}-shift-e" = "exec-and-forget ${pkgs.emacs}/bin/emacsclient -c -e \"(x-focus-frame nil)\"";
         # Switch to the homebrew Albert for now
         "${mod}-o" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"clipboard \"";
         "${mod}-p" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"apps \"";
