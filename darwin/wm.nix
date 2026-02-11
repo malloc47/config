@@ -15,10 +15,10 @@ with pkgs.lib;
   ];
 
   home.packages = with pkgs; [
-    autoraise
-    swipe-aerospace
     # albert
+    autoraise
     flameshot
+    swipe-aerospace
   ];
 
   launchd.agents.autoraise = {
@@ -277,6 +277,8 @@ with pkgs.lib;
     SCREENSHOT_HISTORY=
     TAKE_SCREENSHOT=
   '';
+
+  xdg.configFile."karabiner/karabiner.json".source = ./karabiner.json;
 
   ## This is not yet available in 25.05
   #programs.sketchybar = {

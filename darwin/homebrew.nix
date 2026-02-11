@@ -24,10 +24,10 @@
     enable = true;
     casks = [
       "albert"
-      "claude-code"
-      "xquartz"
       "android-platform-tools"
+      "claude-code"
       "karabiner-elements"
+      "xquartz"
     ];
     brews = [
       "sendkeys"

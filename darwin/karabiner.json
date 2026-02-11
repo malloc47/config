@@ -1,0 +1,140 @@
+{
+    "global": { "show_additional_menu_items": true },
+    "profiles": [
+        {
+            "complex_modifications": {
+                "parameters": { "mouse_motion_to_scroll.speed": 50 },
+                "rules": [
+                    {
+                        "description": "Home / End -> Cmd + arrow",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "product_id": 50504 }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "key_code": "home" },
+                                "to": [
+                                    {
+                                        "key_code": "left_arrow",
+                                        "modifiers": ["left_command"]
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "product_id": 50504 }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "key_code": "end" },
+                                "to": [
+                                    {
+                                        "key_code": "right_arrow",
+                                        "modifiers": ["left_command"]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "NumLock Screenshot",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "product_id": 50504 }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "key_code": "keypad_num_lock" },
+                                "to": [
+                                    {
+                                        "key_code": "4",
+                                        "modifiers": ["left_command", "left_shift", "left_control"],
+                                        "repeat": false
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "ADB Play/Pause",
+                        "enabled": false,
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "product_id": 28705 }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "consumer_key_code": "play_or_pause" },
+                                "to": [{ "shell_command": "/opt/homebrew/bin/adb shell input keyevent 85" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Zoom Mute",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "product_id": 28705 }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "consumer_key_code": "mute" },
+                                "to": [
+                                    {
+                                        "key_code": "a",
+                                        "modifiers": ["left_option"],
+                                        "repeat": false
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "devices": [
+                {
+                    "identifiers": {
+                        "is_pointing_device": true,
+                        "product_id": 50504,
+                        "vendor_id": 1133
+                    },
+                    "ignore": false,
+                    "mouse_flip_horizontal_wheel": true,
+                    "mouse_flip_vertical_wheel": true,
+                    "pointing_motion_wheels_multiplier": 0.8
+                },
+                {
+                    "identifiers": {
+                        "is_consumer": true,
+                        "product_id": 28705,
+                        "vendor_id": 1256
+                    },
+                    "ignore": false
+                }
+            ],
+            "name": "Default profile",
+            "selected": true,
+            "simple_modifications": [
+                {
+                    "from": { "key_code": "caps_lock" },
+                    "to": [{ "key_code": "left_control" }]
+                }
+            ],
+            "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" }
+        }
+    ]
+}
