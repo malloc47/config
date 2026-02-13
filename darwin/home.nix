@@ -24,6 +24,7 @@
     packages = with pkgs; [
       clojure
       go-task
+      gnupg
       nixfmt-rfc-style
       nixos-anywhere
       python3
