@@ -35,7 +35,7 @@
       flake = false;
     };
     albert-tap = {
-      url = "github:albertlauncher/homebrew-albert";
+      url = "github:malloc47/homebrew-albert";
       flake = false;
     };
 
@@ -272,6 +272,8 @@
                 # Set Git commit hash for darwin-version.
                 system.configurationRevision = self.rev or self.dirtyRev or null;
                 system.primaryUser = config.settings.username;
+
+                system.defaults.universalaccess.reduceMotion = true;
 
                 nixpkgs.hostPlatform = "aarch64-darwin";
 

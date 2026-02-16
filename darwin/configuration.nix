@@ -99,8 +99,6 @@
         mineffect = "scale";
       };
 
-      universalaccess.reduceMotion = true;
-
     };
 
     activationScripts.extraActivation.text =
@@ -112,6 +110,7 @@
         # sudo -u ${user} -- plutil -insert 'Window Settings' -json '{}' /Users/${user}/Library/Preferences/com.apple.Terminal.plist > /dev/null 2>&1 || true
         # sudo -u ${user} -- plutil -insert 'Window Settings'.Basic -json '{}' /Users/${user}/Library/Preferences/com.apple.Terminal.plist > /dev/null 2>&1 || true
         sudo -u ${user} -- plutil -replace 'Window Settings'.Basic.useOptionAsMetaKey -bool YES /Users/${user}/Library/Preferences/com.apple.Terminal.plist
+        sudo -u ${user} -- plutil -replace 'Window Settings'.Basic.shellExitAction -integer 1 /Users/${user}/Library/Preferences/com.apple.Terminal.plist
         sudo -u ${user} -- defaults write com.apple.Terminal "Default Window Settings" -string "Basic"
       '';
   };
