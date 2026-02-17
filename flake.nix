@@ -38,6 +38,10 @@
       url = "github:malloc47/homebrew-albert";
       flake = false;
     };
+    wox-tap = {
+      url = "github:wox-launcher/homebrew-wox";
+      flake = false;
+    };
 
     self.submodules = true;
   };

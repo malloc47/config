@@ -188,7 +188,8 @@
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "sendkeys-tap": "sendkeys-tap"
+        "sendkeys-tap": "sendkeys-tap",
+        "wox-tap": "wox-tap"
       }
     },
     "sendkeys-tap": {
@@ -204,6 +205,22 @@
       "original": {
         "owner": "socsieng",
         "repo": "homebrew-tap",
+        "type": "github"
+      }
+    },
+    "wox-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770688245,
+        "narHash": "sha256-00IoglCl0atF+CE80LyrvRDWZvwk/RS9NQv28CyuTRw=",
+        "owner": "wox-launcher",
+        "repo": "homebrew-wox",
+        "rev": "514e8b079928ce2abd86f00c0aa6c8171b81f72c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "wox-launcher",
+        "repo": "homebrew-wox",
         "type": "github"
       }
     }
