@@ -16,7 +16,6 @@
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
       "socsieng/homebrew-tap" = inputs.sendkeys-tap;
       "albertlauncher/homebrew-albert" = inputs.albert-tap;
-      "wox-launcher/homebrew-wox" = inputs.wox-tap;
     };
     mutableTaps = false;
   };
@@ -28,7 +27,6 @@
       "android-platform-tools"
       "claude-code"
       "karabiner-elements"
-      "wox"
       "xquartz"
     ];
     brews = [
