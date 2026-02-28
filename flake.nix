@@ -38,6 +38,10 @@
       url = "github:malloc47/homebrew-albert";
       flake = false;
     };
+    wox-tap = {
+      url = "github:wox-launcher/homebrew-wox";
+      flake = false;
+    };
 
     self.submodules = true;
   };
@@ -195,6 +199,38 @@
                 users.users.root.openssh.authorizedKeys.keys = [
                   (builtins.readFile personal/ssh/${config.settings.profile}/id_rsa.pub)
                 ];
+              }
+            )
+          ];
+        };
+
+        aida = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+            };
+          };
+          modules = [
+            home-manager.nixosModules.home-manager
+            modules/settings.nix
+            modules/user.nix
+            modules/nixpkgs.nix
+            modules/networking.nix
+            modules/ssh.nix
+            hosts/aida.nix
+            nixos/configuration-flake.nix
+            {
+              networking.hostName = "aida";
+              system.stateVersion = "25.11";
+            }
+            (
+              { config, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
               }
             )
           ];
