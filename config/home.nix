@@ -34,7 +34,7 @@ with pkgs.lib;
     firefox
     gcc
     gimp
-    gitAndTools.pre-commit
+    pre-commit
     gnumake
     go-task
     graphviz

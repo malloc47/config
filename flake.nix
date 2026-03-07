@@ -38,10 +38,6 @@
       url = "github:malloc47/homebrew-albert";
       flake = false;
     };
-    wox-tap = {
-      url = "github:wox-launcher/homebrew-wox";
-      flake = false;
-    };
 
     self.submodules = true;
   };
@@ -214,6 +210,8 @@
           };
           modules = [
             home-manager.nixosModules.home-manager
+            disko.nixosModules.disko
+            hardware/gmktec-g10.nix
             modules/settings.nix
             modules/user.nix
             modules/nixpkgs.nix
@@ -221,6 +219,7 @@
             modules/ssh.nix
             hosts/aida.nix
             nixos/configuration-flake.nix
+            disk/gmktec-g10.nix
             {
               networking.hostName = "aida";
               system.stateVersion = "25.11";
