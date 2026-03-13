@@ -1,42 +1,85 @@
 
 config interface 'loopback'
-	option device 'lo'
-	option proto 'static'
-	option ipaddr '127.0.0.1'
-	option netmask '255.0.0.0'
+	option device	'lo'
+	option proto	'static'
+	option ipaddr	'127.0.0.1'
+	option netmask	'255.0.0.0'
 
 config globals 'globals'
 	option ula_prefix 'fd05:aa2d:adfc::/48'
 
 config device
-	option name 'br-lan'
-	option type 'bridge'
-	list ports 'lan1'
-	list ports 'lan2'
-	list ports 'lan3'
-	list ports 'lan4'
-	option ipv6 '0'
+	option name	'br-lan'
+	option type	'bridge'
+	list ports	'lan1'
+	list ports	'lan2'
+	list ports	'lan3'
+	list ports	'lan4'
+	option ipv6	'0'
 
 config interface 'lan'
-	option device 'br-lan'
-	option proto 'static'
-	option ipaddr '192.168.1.1'
-	option netmask '255.255.255.0'
-	list dns '8.8.8.8'
-	list dns '8.8.4.4'
-	list dns '1.1.1.1'
-	list dns '1.0.0.1'
-	option delegate '0'
+	option device	'br-lan'
+	option proto	'static'
+	option ipaddr	'192.168.1.1'
+	option netmask	'255.255.255.0'
+	# DNS handled by dnsmasq locally; upstream servers configured in /etc/config/dhcp
+	option delegate	'0'
 
 config device
-	option name 'wan'
-	option macaddr '62:38:e0:12:b5:39'
+	option name	'wan'
+	option macaddr	'62:38:e0:12:b5:39'
 
 config interface 'wan'
-	option device 'wan'
-	option proto 'dhcp'
+	option device	'wan'
+	option proto	'dhcp'
 
 config interface 'wan6'
-	option device 'wan'
-	option proto 'dhcpv6'
+	option device	'wan'
+	option proto	'dhcpv6'
 
+# ---------------------------------------------------------------------------
+# WireGuard VPN
+#
+# Key setup (run on the router, do NOT commit private keys to this repo):
+#
+#   wg genkey | tee /etc/wireguard/server_private | wg pubkey \
+#     > /etc/wireguard/server_public
+#
+#   # For each client:
+#   wg genkey | tee /etc/wireguard/client_<name>_private | wg pubkey \
+#     > /etc/wireguard/client_<name>_public
+#
+#   # Optional but recommended preshared key per peer:
+#   wg genpsk > /etc/wireguard/psk_<name>
+#
+# Then fill in the placeholder values below and reload:
+#   uci commit network && /etc/init.d/network restart
+# ---------------------------------------------------------------------------
+
+config interface 'wg0'
+	option proto		'wireguard'
+	# Replace with contents of /etc/wireguard/server_private
+	option private_key	'REPLACE_WITH_SERVER_PRIVATE_KEY'
+	option listen_port	'51820'
+	list addresses		'10.10.0.1/24'
+	# Reduce MTU to avoid fragmentation (WireGuard adds ~80 bytes of overhead)
+	option mtu		'1420'
+
+# --- Peers (one block per client device) ---
+
+config wireguard_wg0
+	option description	'laptop'
+	# Replace with contents of /etc/wireguard/client_laptop_public
+	option public_key	'REPLACE_WITH_LAPTOP_PUBLIC_KEY'
+	# Replace with contents of /etc/wireguard/psk_laptop (optional but recommended)
+	option preshared_key	'REPLACE_WITH_LAPTOP_PSK'
+	list allowed_ips	'10.10.0.2/32'
+	option persistent_keepalive '25'
+
+config wireguard_wg0
+	option description	'phone'
+	# Replace with contents of /etc/wireguard/client_phone_public
+	option public_key	'REPLACE_WITH_PHONE_PUBLIC_KEY'
+	option preshared_key	'REPLACE_WITH_PHONE_PSK'
+	list allowed_ips	'10.10.0.3/32'
+	option persistent_keepalive '25'

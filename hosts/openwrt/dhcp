@@ -1,47 +1,62 @@
 
 config dnsmasq
-	option domainneeded '1'
-	option boguspriv '1'
-	option filterwin2k '0'
-	option localise_queries '1'
-	option rebind_protection '1'
-	option rebind_localhost '1'
-	option local '/lan/'
-	option domain 'lan'
-	option expandhosts '1'
-	option nonegcache '0'
-	option authoritative '1'
-	option readethers '1'
-	option leasefile '/tmp/dhcp.leases'
-	option resolvfile '/tmp/resolv.conf.d/resolv.conf.auto'
-	option nonwildcard '1'
-	option localservice '1'
-	option ednspacket_max '1232'
+	option domainneeded	'1'
+	option boguspriv	'1'
+	option filterwin2k	'0'
+	option localise_queries	'1'
+	# Must be '0' so dnsmasq can return RFC1918 addresses for internal service
+	# subdomains (*.yourdomain.com -> 192.168.1.10) without the rebind guard
+	# blocking them. These entries are set via 'list address' below, not from
+	# an upstream resolver, but the guard can interfere regardless.
+	option rebind_protection '0'
+	option rebind_localhost	'1'
+	option local		'/lan/'
+	option domain		'lan'
+	option expandhosts	'1'
+	option nonegcache	'0'
+	option authoritative	'1'
+	option readethers	'1'
+	option leasefile	'/tmp/dhcp.leases'
+	option resolvfile	'/tmp/resolv.conf.d/resolv.conf.auto'
+	option nonwildcard	'1'
+	option localservice	'1'
+	option ednspacket_max	'1232'
+	# Split DNS: resolve *.yourdomain.com to aida (the reverse proxy) for all
+	# clients on LAN and VPN. Replace yourdomain.com with your actual domain.
+	# The leading dot matches all subdomains but not the apex record itself.
+	list address		'/.yourdomain.com/192.168.1.10'
 
 config dhcp 'lan'
-	option interface 'lan'
-	option start '100'
-	option limit '150'
-	option leasetime '12h'
-	option dhcpv4 'server'
-	option dhcpv6 'server'
-	option ra 'server'
-	list ra_flags 'managed-config'
-	list ra_flags 'other-config'
+	option interface	'lan'
+	option start		'100'
+	option limit		'150'
+	option leasetime	'12h'
+	option dhcpv4		'server'
+	option dhcpv6		'server'
+	option ra		'server'
+	list ra_flags		'managed-config'
+	list ra_flags		'other-config'
 
 config dhcp 'wan'
-	option interface 'wan'
-	option ignore '1'
+	option interface	'wan'
+	option ignore		'1'
 
 config odhcpd 'odhcpd'
-	option maindhcp '0'
-	option leasefile '/tmp/hosts/odhcpd'
-	option leasetrigger '/usr/sbin/odhcpd-update'
-	option loglevel '4'
+	option maindhcp		'0'
+	option leasefile	'/tmp/hosts/odhcpd'
+	option leasetrigger	'/usr/sbin/odhcpd-update'
+	option loglevel		'4'
 
+# Existing static bindings
 config host
-	option ip '192.168.1.167'
-	list mac 'AE:D2:6F:C0:B4:32'
-	option name 'cesare'
-	option leasetime 'infinite'
+	option ip		'192.168.1.167'
+	list mac		'AE:D2:6F:C0:B4:32'
+	option name		'cesare'
+	option leasetime	'infinite'
 
+# aida (GMKtec G10) — replace with actual MAC from `ip link show` on the box
+config host
+	option ip		'192.168.1.10'
+	list mac		'REPLACE_WITH_AIDA_MAC'
+	option name		'aida'
+	option leasetime	'infinite'
