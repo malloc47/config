@@ -98,7 +98,7 @@ with pkgs.lib;
           '' ];
         "${mod}-shift-f" = "fullscreen";
         "${mod}-shift-ctrl-cmd-l" = "exec-and-forget pmset displaysleepnow";
-        "${mod}-backtick" = "workspace 1";
+        # "${mod}-backtick" = "workspace 1";
         "${mod}-1" = "workspace 1";
         "${mod}-2" = "workspace 2";
         "${mod}-3" = "workspace 3";

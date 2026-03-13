@@ -26,6 +26,7 @@
       "albert"
       "android-platform-tools"
       "claude-code"
+      "handy"
       "karabiner-elements"
       "xquartz"
     ];
