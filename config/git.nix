@@ -5,7 +5,7 @@
   programs.git = {
     enable = true;
     settings = {
-      aliases = {
+      alias = {
         s = "status -s -uno";
         gl = "log --oneline --graph";
       };
