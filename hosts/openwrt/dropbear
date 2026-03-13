@@ -1,5 +1,8 @@
+
 config dropbear
-	option PasswordAuth 'on'
-	option RootPasswordAuth 'on'
-	option Port         '22'
-#	option BannerFile   '/etc/banner'
+	# Bind only to the LAN bridge — never accept SSH from WAN
+	option Interface	'br-lan'
+	option Port		22
+	# Key-only authentication — passwords disabled entirely
+	option PasswordAuth	'off'
+	option RootPasswordAuth	'off'

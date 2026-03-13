@@ -1,10 +1,10 @@
+
 config defaults
+	# DROP (no response) is preferable to REJECT on WAN — avoids port-scan responses
 	option syn_flood	1
-	option input		ACCEPT
+	option input		DROP
 	option output		ACCEPT
 	option forward		REJECT
-# Uncomment this line to disable ipv6 rules
-#	option disable_ipv6	1
 
 config zone
 	option name		lan
@@ -17,18 +17,36 @@ config zone
 	option name		wan
 	list   network		'wan'
 	list   network		'wan6'
-	option input		REJECT
+	option input		DROP
 	option output		ACCEPT
 	option forward		REJECT
 	option masq		1
 	option mtu_fix		1
 
+# WireGuard tunnel — VPN clients land here
+config zone
+	option name		vpn
+	list   network		'wg0'
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		ACCEPT
+
 config forwarding
 	option src		lan
 	option dest		wan
 
-# We need to accept udp packets on port 68,
-# see https://dev.openwrt.org/ticket/4108
+# VPN <-> LAN bidirectional access
+config forwarding
+	option src		vpn
+	option dest		lan
+
+config forwarding
+	option src		lan
+	option dest		vpn
+
+# --- Inbound WAN rules (minimal — only what is strictly required) ---
+
+# DHCP renewal from WAN (required for ISP address)
 config rule
 	option name		Allow-DHCP-Renew
 	option src		wan
@@ -37,24 +55,7 @@ config rule
 	option target		ACCEPT
 	option family		ipv4
 
-# Allow IPv4 ping
-config rule
-	option name		Allow-Ping
-	option src		wan
-	option proto		icmp
-	option icmp_type	echo-request
-	option family		ipv4
-	option target		ACCEPT
-
-config rule
-	option name		Allow-IGMP
-	option src		wan
-	option proto		igmp
-	option family		ipv4
-	option target		ACCEPT
-
-# Allow DHCPv6 replies
-# see https://github.com/openwrt/openwrt/issues/5066
+# DHCPv6 replies from ISP
 config rule
 	option name		Allow-DHCPv6
 	option src		wan
@@ -63,6 +64,7 @@ config rule
 	option family		ipv6
 	option target		ACCEPT
 
+# MLD (required for IPv6 multicast)
 config rule
 	option name		Allow-MLD
 	option src		wan
@@ -75,12 +77,11 @@ config rule
 	option family		ipv6
 	option target		ACCEPT
 
-# Allow essential incoming IPv6 ICMP traffic
+# Essential inbound IPv6 ICMP (NDP, etc.) — rate-limited
 config rule
 	option name		Allow-ICMPv6-Input
 	option src		wan
-	option proto	icmp
-	list icmp_type		echo-request
+	option proto		icmp
 	list icmp_type		echo-reply
 	list icmp_type		destination-unreachable
 	list icmp_type		packet-too-big
@@ -95,13 +96,12 @@ config rule
 	option family		ipv6
 	option target		ACCEPT
 
-# Allow essential forwarded IPv6 ICMP traffic
+# Essential forwarded IPv6 ICMP
 config rule
 	option name		Allow-ICMPv6-Forward
 	option src		wan
 	option dest		*
 	option proto		icmp
-	list icmp_type		echo-request
 	list icmp_type		echo-reply
 	list icmp_type		destination-unreachable
 	list icmp_type		packet-too-big
@@ -112,78 +112,10 @@ config rule
 	option family		ipv6
 	option target		ACCEPT
 
+# The only deliberate inbound WAN hole: WireGuard UDP
 config rule
-	option name		Allow-IPSec-ESP
+	option name		Allow-WireGuard
 	option src		wan
-	option dest		lan
-	option proto		esp
-	option target		ACCEPT
-
-config rule
-	option name		Allow-ISAKMP
-	option src		wan
-	option dest		lan
-	option dest_port	500
 	option proto		udp
+	option dest_port	51820
 	option target		ACCEPT
-
-
-### EXAMPLE CONFIG SECTIONS
-# do not allow a specific ip to access wan
-#config rule
-#	option src		lan
-#	option src_ip	192.168.45.2
-#	option dest		wan
-#	option proto	tcp
-#	option target	REJECT
-
-# block a specific mac on wan
-#config rule
-#	option dest		wan
-#	option src_mac	00:11:22:33:44:66
-#	option target	REJECT
-
-# block incoming ICMP traffic on a zone
-#config rule
-#	option src		lan
-#	option proto	ICMP
-#	option target	DROP
-
-# port redirect port coming in on wan to lan
-#config redirect
-#	option src			wan
-#	option src_dport	80
-#	option dest			lan
-#	option dest_ip		192.168.16.235
-#	option dest_port	80
-#	option proto		tcp
-
-# port redirect of remapped ssh port (22001) on wan
-#config redirect
-#	option src		wan
-#	option src_dport	22001
-#	option dest		lan
-#	option dest_port	22
-#	option proto		tcp
-
-### FULL CONFIG SECTIONS
-#config rule
-#	option src		lan
-#	option src_ip	192.168.45.2
-#	option src_mac	00:11:22:33:44:55
-#	option src_port	80
-#	option dest		wan
-#	option dest_ip	194.25.2.129
-#	option dest_port	120
-#	option proto	tcp
-#	option target	REJECT
-
-#config redirect
-#	option src		lan
-#	option src_ip	192.168.45.2
-#	option src_mac	00:11:22:33:44:55
-#	option src_port		1024
-#	option src_dport	80
-#	option dest_ip	194.25.2.129
-#	option dest_port	120
-#	option proto	tcp
