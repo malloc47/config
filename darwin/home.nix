@@ -27,6 +27,7 @@
       gnupg
       nixfmt-rfc-style
       nixos-anywhere
+      nixos-rebuild
       python3
       rsync
     ];

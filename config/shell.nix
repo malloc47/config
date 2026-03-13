@@ -74,6 +74,10 @@ in
         if [[ -n "$IN_NIX_SHELL" ]]; then
           export PS1="${"\${PS1}%F{red}ns%f"} "
         fi
+
+        nixos-deploy() {
+          nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
+        }
       '';
     sessionVariables = {
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
@@ -113,6 +117,10 @@ in
       }
 
       export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
+
+      nixos-deploy() {
+        nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
+      }
     '';
     sessionVariables = {
       CDPATH =
