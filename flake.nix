@@ -14,6 +14,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # For MacOS
     nix-darwin = {
       url = "github:LnL7/nix-darwin/nix-darwin-25.11";
@@ -49,6 +54,7 @@
       nixpkgs-unstable,
       home-manager,
       disko,
+      sops-nix,
       nix-darwin,
       nix-homebrew,
       ...
@@ -211,6 +217,7 @@
           modules = [
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
+            sops-nix.nixosModules.sops
             hardware/gmktec-g10.nix
             modules/settings.nix
             modules/user.nix
