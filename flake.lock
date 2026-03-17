@@ -188,7 +188,8 @@
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "sendkeys-tap": "sendkeys-tap"
+        "sendkeys-tap": "sendkeys-tap",
+        "sops-nix": "sops-nix"
       }
     },
     "sendkeys-tap": {
@@ -204,6 +205,26 @@
       "original": {
         "owner": "socsieng",
         "repo": "homebrew-tap",
+        "type": "github"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773698643,
+        "narHash": "sha256-VCiDjE8kNs8uCAK73Ezk1r3fFuc4JepvW07YFqaN968=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "8237de83e8200d16fe0c4467b02a1c608ff28044",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
         "type": "github"
       }
     }
