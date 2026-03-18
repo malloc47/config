@@ -3,8 +3,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/25.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
+    agenix = {
+      url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -56,7 +56,7 @@
       disko,
       nix-darwin,
       nix-homebrew,
-      sops-nix,
+      agenix,
       ...
     }:
     let
@@ -199,7 +199,7 @@
                 # Enable guest tools so that we can extract the IP address from the guest
                 virtualisation.vmware.guest.enable = true;
                 users.users.root.openssh.authorizedKeys.keys = [
-                  (builtins.readFile personal/ssh/${config.settings.profile}/id_rsa.pub)
+                  (builtins.readFile personal/ssh/${config.settings.profile}/id_ed25519.pub)
                 ];
               }
             )
@@ -217,7 +217,7 @@
           modules = [
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
-            sops-nix.nixosModules.sops
+            agenix.nixosModules.default
             hardware/gmktec-g10.nix
             modules/settings.nix
             modules/user.nix
@@ -278,6 +278,8 @@
                 system.primaryUser = config.settings.username;
 
                 nixpkgs.hostPlatform = "aarch64-darwin";
+
+                environment.systemPackages = [ agenix.packages.aarch64-darwin.default ];
 
                 system.stateVersion = 6;
               }

@@ -7,6 +7,20 @@
 
   services.openssh.enable = true;
 
-  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
-  sops.defaultSopsFile = ../secrets/aida.yaml;
+  age.secrets.caddy-basicauth = {
+    file = ../secrets/caddy-basicauth.age;
+    owner = "caddy";
+  };
+
+  services.caddy = {
+    enable = true;
+    virtualHosts."http://localhost" = {
+      extraConfig = ''
+        basicauth {
+          import ${config.age.secrets.caddy-basicauth.path}
+        }
+        respond "Hello, world!"
+      '';
+    };
+  };
 }

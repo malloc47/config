@@ -55,7 +55,7 @@
   services.openssh.enable = true;
   users.users.${config.settings.username} = {
     openssh.authorizedKeys.keys = [
-      (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_rsa.pub"))
+      (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_ed25519.pub"))
     ];
   };
 

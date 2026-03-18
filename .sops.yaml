@@ -1,8 +1,0 @@
-keys:
-  - &aida age1fr6tq9pscfwyjcd2rxufuu9dgevv53ujm8m8d2gwze7qwq5eg35shpavd3
-
-creation_rules:
-  - path_regex: secrets/aida\.yaml$
-    key_groups:
-      - age:
-          - *aida

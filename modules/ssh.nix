@@ -35,13 +35,13 @@
           controlPersist = "no";
         };
       };
-      home.file."id_rsa" = {
-        source = ./. + "/../personal/ssh/${config.settings.profile}/id_rsa";
-        target = ".ssh/id_rsa";
+      home.file."id_ed25519" = {
+        source = ./. + "/../personal/ssh/${config.settings.profile}/id_ed25519";
+        target = ".ssh/id_ed25519";
       };
-      home.file."id_rsa.pub" = {
-        source = ./. + "/../personal/ssh/${config.settings.profile}/id_rsa.pub";
-        target = ".ssh/id_rsa.pub";
+      home.file."id_ed25519.pub" = {
+        source = ./. + "/../personal/ssh/${config.settings.profile}/id_ed25519.pub";
+        target = ".ssh/id_ed25519.pub";
       };
     };
   };
