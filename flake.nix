@@ -222,7 +222,6 @@
             modules/settings.nix
             modules/user.nix
             modules/nixpkgs.nix
-            modules/networking.nix
             modules/ssh.nix
             hosts/aida.nix
             nixos/configuration-flake.nix
