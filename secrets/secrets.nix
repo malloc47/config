@@ -7,4 +7,8 @@ in
     aida
     malloc47
   ];
+  "cloudflare-acme.age".publicKeys = [
+    aida
+    malloc47
+  ];
 }
