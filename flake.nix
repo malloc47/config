@@ -280,6 +280,8 @@
 
                 environment.systemPackages = [ agenix.packages.aarch64-darwin.default ];
 
+                homebrew.casks = ["claude"];
+
                 system.stateVersion = 6;
               }
             )
