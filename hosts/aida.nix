@@ -9,7 +9,8 @@
 
   networking.networkmanager.enable = false;
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 53 80 443 ];
+  networking.firewall.allowedUDPPorts = [ 53 ];
   networking.useDHCP = false;
 
   networking.interfaces.eno1.ipv4.addresses = [
@@ -27,14 +28,36 @@
     owner = "caddy";
   };
 
+  services.adguardhome = {
+    enable = true;
+    settings = {
+      http.address = "127.0.0.1:3000";
+      dns = {
+        bind_hosts = [ "0.0.0.0" ];
+        port = 53;
+        upstream_dns = [
+          "https://cloudflare-dns.com/dns-query"
+          "https://dns.google/dns-query"
+        ];
+        bootstrap_dns = [
+          "1.1.1.1"
+          "8.8.8.8"
+        ];
+        rewrites = [
+          {
+            domain = "*.home.malloc47.com";
+            answer = "192.168.1.10";
+          }
+        ];
+      };
+    };
+  };
+
   services.caddy = {
     enable = true;
-    virtualHosts."http://localhost" = {
+    virtualHosts."http://adguard.home.malloc47.com" = {
       extraConfig = ''
-        basicauth {
-          import ${config.age.secrets.caddy-basicauth.path}
-        }
-        respond "Hello, world!"
+        reverse_proxy http://127.0.0.1:3000
       '';
     };
   };
