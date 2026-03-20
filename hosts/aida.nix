@@ -24,6 +24,23 @@
   networking.nameservers = [ "192.168.1.1" ];
 
   age.secrets = {
+    authelia-jwt-secret = {
+      file = ../secrets/authelia-jwt-secret.age;
+      owner = "authelia-main";
+    };
+    authelia-storage-key = {
+      file = ../secrets/authelia-storage-key.age;
+      owner = "authelia-main";
+    };
+    authelia-session-secret = {
+      file = ../secrets/authelia-session-secret.age;
+      owner = "authelia-main";
+    };
+    authelia-users = {
+      file = ../secrets/authelia-users.age;
+      owner = "authelia-main";
+    };
+
     caddy-basicauth = {
       file = ../secrets/caddy-basicauth.age;
       owner = "caddy";
@@ -39,6 +56,29 @@
       dnsProvider = "cloudflare";
       dnsResolver = "1.1.1.1:53";
       environmentFile = config.age.secrets.cloudflare-acme.path;
+    };
+  };
+
+
+  services.authelia.instances.main = {
+    enable = true;
+    settings = {
+      server.address = "tcp://127.0.0.1:9091";
+      session.cookies = [
+        {
+          domain = "home.malloc47.com";
+          authelia_url = "https://auth.home.malloc47.com";
+        }
+      ];
+      storage.local.path = "/var/lib/authelia-main/db.sqlite3";
+      authentication_backend.file.path = config.age.secrets.authelia-users.path;
+      access_control.default_policy = "one_factor";
+      notifier.filesystem.filename = "/var/lib/authelia-main/notifications.txt";
+    };
+    secrets = {
+      jwtSecretFile = config.age.secrets.authelia-jwt-secret.path;
+      storageEncryptionKeyFile = config.age.secrets.authelia-storage-key.path;
+      sessionSecretFile = config.age.secrets.authelia-session-secret.path;
     };
   };
 
@@ -74,11 +114,24 @@
 
   services.caddy = {
     enable = true;
+
+    virtualHosts."auth.home.malloc47.com" = {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        reverse_proxy http://127.0.0.1:9091
+      '';
+    };
+
     virtualHosts."adguard.home.malloc47.com" = {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
+        forward_auth http://127.0.0.1:9091 {
+          uri /api/authz/forward-auth
+          copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+        }
         reverse_proxy http://127.0.0.1:3000
       '';
     };
+
   };
 }

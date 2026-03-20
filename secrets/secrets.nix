@@ -11,4 +11,8 @@ in
     aida
     malloc47
   ];
+  "authelia-jwt-secret.age".publicKeys = [ aida malloc47 ];
+  "authelia-storage-key.age".publicKeys = [ aida malloc47 ];
+  "authelia-session-secret.age".publicKeys = [ aida malloc47 ];
+  "authelia-users.age".publicKeys = [ aida malloc47 ];
 }
