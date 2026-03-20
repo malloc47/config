@@ -112,6 +112,16 @@
     };
   };
 
+  services.ntfy-sh = {
+    enable = true;
+    settings = {
+      base-url = "https://ntfy.home.malloc47.com";
+      listen-http = "127.0.0.1:2586";
+      behind-proxy = true;
+      auth-default-access = "deny-all";
+    };
+  };
+
   services.caddy = {
     enable = true;
 
@@ -119,6 +129,13 @@
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
         reverse_proxy http://127.0.0.1:9091
+      '';
+    };
+
+    virtualHosts."ntfy.home.malloc47.com" = {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        reverse_proxy http://127.0.0.1:2586
       '';
     };
 
