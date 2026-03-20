@@ -23,13 +23,12 @@
   networking.defaultGateway = "192.168.1.1";
   networking.nameservers = [ "192.168.1.1" ];
 
-  age.secrets.caddy-basicauth = {
-    file = ../secrets/caddy-basicauth.age;
-    owner = "caddy";
-  };
-
-  age.secrets.cloudflare-acme = {
-    file = ../secrets/cloudflare-acme.age;
+  age.secrets = {
+    caddy-basicauth = {
+      file = ../secrets/caddy-basicauth.age;
+      owner = "caddy";
+    };
+    cloudflare-acme.file = ../secrets/cloudflare-acme.age;
   };
 
   security.acme = {
@@ -53,6 +52,8 @@
         upstream_dns = [
           "https://cloudflare-dns.com/dns-query"
           "https://dns.google/dns-query"
+          "[/lan/]192.168.1.1"
+          "[//]192.168.1.1"
         ];
         bootstrap_dns = [
           "1.1.1.1"
@@ -64,7 +65,10 @@
             answer = "192.168.1.10";
           }
         ];
+        hostsfile_enabled = false;
       };
+      # https://www.reddit.com/r/NixOS/comments/1kvpoje/remove_default_hosts_mapping_for_hostname/
+      clients.runtime_sources.hosts = false;
     };
   };
 
