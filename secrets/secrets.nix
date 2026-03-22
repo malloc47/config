@@ -15,4 +15,5 @@ in
   "authelia-storage-key.age".publicKeys = [ aida malloc47 ];
   "authelia-session-secret.age".publicKeys = [ aida malloc47 ];
   "authelia-users.age".publicKeys = [ aida malloc47 ];
+  "cloudflared-credentials.age".publicKeys = [ aida malloc47 ];
 }

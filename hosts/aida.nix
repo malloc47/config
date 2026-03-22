@@ -46,6 +46,8 @@
       owner = "caddy";
     };
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
+
+    cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
   };
 
   security.acme = {
@@ -119,6 +121,17 @@
       listen-http = "127.0.0.1:2586";
       behind-proxy = true;
       auth-default-access = "deny-all";
+    };
+  };
+
+  services.cloudflared = {
+    enable = true;
+    tunnels."eaf269c8-e39f-4a4d-8a06-a3124655e590" = {
+      credentialsFile = config.age.secrets.cloudflared-credentials.path;
+      ingress = {
+        "ntfy-ext.malloc47.com" = "http://localhost:2586";
+      };
+      default = "http_status:404";
     };
   };
 
