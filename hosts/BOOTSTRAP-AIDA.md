@@ -53,6 +53,7 @@ Each secret must contain the following. If starting fresh, generate new values.
 | `authelia-session-secret.age` | Random 64+ char string | `openssl rand -hex 64` |
 | `authelia-users.age` | Authelia users YAML (see below) | Manual |
 | `cloudflared-credentials.age` | Tunnel credentials JSON (see step 6) | `cloudflared tunnel create` |
+| `homepage-env.age` | Environment variables for Homepage dashboard (see below) | Manual |
 
 To create or edit a secret:
 
@@ -79,6 +80,19 @@ users:
     groups:
       - admins
 ```
+
+### Homepage environment file format
+
+The secret file should contain environment variables for Homepage widget integrations:
+
+```bash
+HOMEPAGE_VAR_ADGUARD_USER=admin
+HOMEPAGE_VAR_ADGUARD_PASS=<your AdGuard Home admin password>
+HOMEPAGE_VAR_CF_ACCOUNT_ID=<your Cloudflare account ID>
+HOMEPAGE_VAR_CF_API_TOKEN=<Cloudflare API token with Account.Cloudflare Tunnel:Read>
+```
+
+The Cloudflare account ID is visible at the top of any zone's overview page. Create an API token at Cloudflare dashboard → My Profile → API Tokens with the `Cloudflare Tunnel:Read` permission under Account.
 
 ## 4. First deploy
 
@@ -194,4 +208,7 @@ curl -H "Authorization: Bearer tk_..." \
 curl -H "Authorization: Bearer tk_..." \
   -d "Tunnel test" \
   https://ntfy-ext.malloc47.com/unimatrix-alerts
+
+# Homepage dashboard
+curl -I https://dash.home.malloc47.com
 ```

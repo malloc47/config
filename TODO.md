@@ -24,3 +24,4 @@ Capture ideas and pain points to work on when I have bandwidth:
 - Keyboard: Ctrl+Shift+Return as paste
 - Darwin: Remove LogiOptions+ in favor of Karabiner
   - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
+- Ghostty / Kitty for better [Claude Code integration](https://code.claude.com/docs/en/terminal-config)
