@@ -3,6 +3,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/25.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -56,6 +58,7 @@
       disko,
       nix-darwin,
       nix-homebrew,
+      nixos-hardware,
       agenix,
       ...
     }:
@@ -228,6 +231,42 @@
             disk/gmktec-g10.nix
             {
               networking.hostName = "aida";
+              system.stateVersion = "25.11";
+            }
+            (
+              { config, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+              }
+            )
+          ];
+        };
+
+        attila = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+            };
+          };
+          modules = [
+            home-manager.nixosModules.home-manager
+            disko.nixosModules.disko
+            agenix.nixosModules.default
+            nixos-hardware.nixosModules.dell-xps-13-9315
+            hardware/dell-xps-9315.nix
+            modules/settings.nix
+            modules/user.nix
+            modules/nixpkgs.nix
+            modules/ssh.nix
+            hosts/attila.nix
+            nixos/configuration-flake.nix
+            disk/dell-xps-9315.nix
+            {
+              networking.hostName = "attila";
               system.stateVersion = "25.11";
             }
             (

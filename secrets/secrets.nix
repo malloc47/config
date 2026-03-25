@@ -1,5 +1,6 @@
 let
   aida = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHIJ8w4XJ5Q2T+E0Mr5kvH39LS4INn5MfxaN2eRdskTi root@aida";
+  attila = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOPlUC4rL847EA33C4cxd9xJl2BFbh5CMgb72ZLRKpF5 root@attila";
   malloc47 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE6Ql5G8d09APA4ABhzMk0gQtr8CGxeynRGlhOB+1pjk malloc47-2026-03";
 in
 {
@@ -17,4 +18,5 @@ in
   "authelia-users.age".publicKeys = [ aida malloc47 ];
   "cloudflared-credentials.age".publicKeys = [ aida malloc47 ];
   "homepage-env.age".publicKeys = [ aida malloc47 ];
+  "wifi-unimatrix47.age".publicKeys = [ malloc47 attila ];
 }
