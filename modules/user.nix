@@ -20,7 +20,7 @@ in
         description = "Jarrell Waggoner";
         uid = 1000;
         openssh.authorizedKeys.keys = [
-          (builtins.readFile (../personal/ssh + "/${config.settings.profile}/id_ed25519.pub"))
+          (builtins.readFile (../personal/ssh + "/${config.settings.profile}/${config.settings.sshKeyName}.pub"))
         ];
         shell = pkgs.zsh;
       }

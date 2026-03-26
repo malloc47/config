@@ -67,6 +67,14 @@ with lib;
           Groups to attach to the default user.
         '';
       };
+      sshKeyName = mkOption {
+        type = with types; uniq str;
+        description = ''
+          Base name of the SSH key file (without extension) in
+          personal/ssh/<profile>/. Auto-detected from id_ed25519
+          with fallback to id_rsa.
+        '';
+      };
       repositories = mkOption {
         default = [
           {
@@ -102,5 +110,12 @@ with lib;
 
   config = {
     settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
+    settings.sshKeyName =
+      let
+        profileDir = ../personal/ssh + "/${config.settings.profile}";
+      in
+      lib.mkDefault (
+        if builtins.pathExists (profileDir + "/id_ed25519") then "id_ed25519" else "id_rsa"
+      );
   };
 }

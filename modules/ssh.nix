@@ -35,13 +35,13 @@
           controlPersist = "1h";
         };
       };
-      home.file."id_ed25519" = {
-        source = ./. + "/../personal/ssh/${config.settings.profile}/id_ed25519";
-        target = ".ssh/id_ed25519";
+      home.file."ssh-key" = {
+        source = ./. + "/../personal/ssh/${config.settings.profile}/${config.settings.sshKeyName}";
+        target = ".ssh/${config.settings.sshKeyName}";
       };
-      home.file."id_ed25519.pub" = {
-        source = ./. + "/../personal/ssh/${config.settings.profile}/id_ed25519.pub";
-        target = ".ssh/id_ed25519.pub";
+      home.file."ssh-key-pub" = {
+        source = ./. + "/../personal/ssh/${config.settings.profile}/${config.settings.sshKeyName}.pub";
+        target = ".ssh/${config.settings.sshKeyName}.pub";
       };
     };
   };

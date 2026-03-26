@@ -42,7 +42,7 @@
 
   home-manager.users.${config.settings.username} = {
     home.packages = with pkgs; [
-      argo
+      argo-workflows
       dbeaver-bin
       gh
       kubectl
