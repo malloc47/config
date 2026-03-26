@@ -68,7 +68,7 @@ in
     xsession.scriptPath = ".xinitrc";
 
     home.packages = with pkgs; [
-      argo
+      argo-workflows
       dbeaver-bin
       gh
       google-chrome
