@@ -105,7 +105,12 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+                home-manager.users.${config.settings.username}.imports = [
+                  config/home.nix
+                  config/home-dev.nix
+                  config/home-gui.nix
+                  config/home-vm.nix
+                ];
               }
             )
           ];
@@ -141,7 +146,12 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+                home-manager.users.${config.settings.username}.imports = [
+                  config/home.nix
+                  config/home-dev.nix
+                  config/home-gui.nix
+                  config/home-vm.nix
+                ];
               }
             )
           ];
@@ -179,7 +189,12 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+                home-manager.users.${config.settings.username}.imports = [
+                  config/home.nix
+                  config/home-dev.nix
+                  config/home-gui.nix
+                  config/home-vm.nix
+                ];
               }
             )
           ];
@@ -274,7 +289,10 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+                home-manager.users.${config.settings.username}.imports = [
+                  config/home.nix
+                  config/home-dev.nix
+                ];
               }
             )
           ];
@@ -319,7 +337,7 @@
 
                 environment.systemPackages = [ agenix.packages.aarch64-darwin.default ];
 
-                homebrew.casks = ["claude"];
+                homebrew.casks = [ "claude" ];
 
                 system.stateVersion = 6;
               }
