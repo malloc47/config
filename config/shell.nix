@@ -78,6 +78,10 @@ in
         nixos-deploy() {
           nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
         }
+
+        if [[ $TERM == "dumb" ]]; then
+            export PS1="$ "
+        fi
       '';
     sessionVariables = {
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
@@ -116,7 +120,11 @@ in
         fi
       }
 
-      export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
+      if [[ $TERM == "dumb" ]]; then
+          export PS1="$ "
+      else
+         export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
+      fi
 
       nixos-deploy() {
         nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
