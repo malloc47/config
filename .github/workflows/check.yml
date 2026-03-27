@@ -16,7 +16,7 @@ jobs:
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
           git -C "$stub" init -b main
           git -C "$stub" add .
-          git -C "$stub" commit -m "stub" --author="CI <ci@localhost>"
+          git -C "$stub" -c user.name=CI -c user.email=ci@localhost commit -m "stub"
           git config --file .gitmodules submodule.personal.url "$stub"
           git submodule sync personal
           git submodule update --init --remote personal
@@ -40,7 +40,7 @@ jobs:
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
           git -C "$stub" init -b main
           git -C "$stub" add .
-          git -C "$stub" commit -m "stub" --author="CI <ci@localhost>"
+          git -C "$stub" -c user.name=CI -c user.email=ci@localhost commit -m "stub"
           git config --file .gitmodules submodule.personal.url "$stub"
           git submodule sync personal
           git submodule update --init --remote personal
@@ -67,7 +67,7 @@ jobs:
           ssh-keygen -t ed25519 -f "$stub/ssh/drw/id_ed25519" -N "" -q
           git -C "$stub" init -b main
           git -C "$stub" add .
-          git -C "$stub" commit -m "stub" --author="CI <ci@localhost>"
+          git -C "$stub" -c user.name=CI -c user.email=ci@localhost commit -m "stub"
           git config --file .gitmodules submodule.personal.url "$stub"
           git submodule sync personal
           git submodule update --init --remote personal
