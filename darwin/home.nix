@@ -1,39 +1,28 @@
 {
   config,
-  osConfig,
   pkgs,
   ...
 }:
 {
   imports = [
-    ../modules/settings.nix
-    ../config/shell.nix
+    ../config/home.nix
     ../config/emacs.nix
-    ../config/git.nix
     ../config/terminal.nix
     ./wm.nix
     ./xwm.nix
     ./audio.nix
   ];
 
-  settings = osConfig.settings;
-
-  xdg.configFile."nixpkgs/config.nix".source = ../config/nixpkgs.nix;
-
-  home = {
-    packages = with pkgs; [
-      clojure
-      go-task
-      gnupg
-      nixfmt-rfc-style
-      nixos-anywhere
-      nixos-rebuild
-      python3
-      rsync
-    ];
-
-    sessionPath = [ "$HOME/bin" ];
-  };
+  home.packages = with pkgs; [
+    clojure
+    go-task
+    gnupg
+    nixfmt-rfc-style
+    nixos-anywhere
+    nixos-rebuild
+    python3
+    rsync
+  ];
 
   programs.vim = {
     enable = true;
@@ -65,26 +54,23 @@
     target = "bin/android-forward-key";
     executable = true;
     text = ''
-        #!/usr/bin/env bash
-        set -e
+      #!/usr/bin/env bash
+      set -e
 
-        KEY_NAME="$1"
-        declare -A KEYS=( ["play_or_pause"]="85" ["scan_next_track"]="87" ["scan_prev_track"]="88")
+      KEY_NAME="$1"
+      declare -A KEYS=( ["play_or_pause"]="85" ["scan_next_track"]="87" ["scan_prev_track"]="88")
 
-        [ ! -v KEYS["$KEY_NAME"] ] && echo "Key name not found!" && exit
+      [ ! -v KEYS["$KEY_NAME"] ] && echo "Key name not found!" && exit
 
-        if /opt/homebrew/bin/adb get-state &> /dev/null ; then
-          adb shell input keyevent ''${KEYS["$KEY_NAME"]}
-          osascript -e "display notification \"Sent $KEY_NAME to Android\" with title \"Keyboard\""
-        else
-          echo "Device not found!"
-        fi
-      '';
+      if /opt/homebrew/bin/adb get-state &> /dev/null ; then
+        adb shell input keyevent ''${KEYS["$KEY_NAME"]}
+        osascript -e "display notification \"Sent $KEY_NAME to Android\" with title \"Keyboard\""
+      else
+        echo "Device not found!"
+      fi
+    '';
   };
-
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
-
-  home.stateVersion = "25.05";
 }
