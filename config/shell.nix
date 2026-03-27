@@ -51,9 +51,7 @@ in
         pg() { ps aux | grep $1 }
         bindkey -s "^[x" 'term-do^M'
         term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
-        ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
-
-
+        ns() {nix shell $(print ''${*/#/nixpkgs\#})}
 
         materialize() {
           if [ -f "$1.link" ] ; then
