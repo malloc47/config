@@ -12,11 +12,32 @@ in
     aida
     malloc47
   ];
-  "authelia-jwt-secret.age".publicKeys = [ aida malloc47 ];
-  "authelia-storage-key.age".publicKeys = [ aida malloc47 ];
-  "authelia-session-secret.age".publicKeys = [ aida malloc47 ];
-  "authelia-users.age".publicKeys = [ aida malloc47 ];
-  "cloudflared-credentials.age".publicKeys = [ aida malloc47 ];
-  "homepage-env.age".publicKeys = [ aida malloc47 ];
-  "wifi-unimatrix47.age".publicKeys = [ malloc47 attila ];
+  "authelia-jwt-secret.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "authelia-storage-key.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "authelia-session-secret.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "authelia-users.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "cloudflared-credentials.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "homepage-env.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "wifi-unimatrix47.age".publicKeys = [
+    malloc47
+    attila
+  ];
 }

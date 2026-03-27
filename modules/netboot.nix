@@ -1,20 +1,28 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 let
   installerSystem = inputs.nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
     modules = [
-      ({ modulesPath, ... }: {
-        imports = [ (modulesPath + "/installer/netboot/netboot-minimal.nix") ];
-        services.openssh = {
-          enable = true;
-          openFirewall = true;
-          settings.PasswordAuthentication = false;
-        };
-        users.users.root.openssh.authorizedKeys.keys = [
-          (builtins.readFile ../personal/ssh/malloc47/id_ed25519.pub)
-        ];
-      })
+      (
+        { modulesPath, ... }:
+        {
+          imports = [ (modulesPath + "/installer/netboot/netboot-minimal.nix") ];
+          services.openssh = {
+            enable = true;
+            openFirewall = true;
+            settings.PasswordAuthentication = false;
+          };
+          users.users.root.openssh.authorizedKeys.keys = [
+            (builtins.readFile ../personal/ssh/malloc47/id_ed25519.pub)
+          ];
+        }
+      )
     ];
   };
   netboot = installerSystem.config.system.build;

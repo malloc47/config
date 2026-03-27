@@ -114,8 +114,6 @@ with lib;
       let
         profileDir = ../personal/ssh + "/${config.settings.profile}";
       in
-      lib.mkDefault (
-        if builtins.pathExists (profileDir + "/id_ed25519") then "id_ed25519" else "id_rsa"
-      );
+      lib.mkDefault (if builtins.pathExists (profileDir + "/id_ed25519") then "id_ed25519" else "id_rsa");
   };
 }

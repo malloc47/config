@@ -11,7 +11,11 @@
 
   networking.networkmanager.enable = false;
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 53 80 443 ];
+  networking.firewall.allowedTCPPorts = [
+    53
+    80
+    443
+  ];
   networking.firewall.allowedUDPPorts = [ 53 ];
   networking.useDHCP = false;
 
@@ -64,7 +68,6 @@
       environmentFile = config.age.secrets.cloudflare-acme.path;
     };
   };
-
 
   services.authelia.instances.main = {
     enable = true;
@@ -145,8 +148,14 @@
       title = "Unimatrix";
       headerStyle = "clean";
       layout = {
-        Services = { style = "row"; columns = 3; };
-        Network = { style = "row"; columns = 2; };
+        Services = {
+          style = "row";
+          columns = 3;
+        };
+        Network = {
+          style = "row";
+          columns = 2;
+        };
       };
     };
 

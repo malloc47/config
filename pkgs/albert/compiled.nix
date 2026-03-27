@@ -44,7 +44,6 @@ stdenv.mkDerivation (finalAttrs: {
     "-DCMAKE_INSTALL_LIBDIR=lib"
   ];
 
-
   buildInputs = [
     libqalculate
     libarchive
