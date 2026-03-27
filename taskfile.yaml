@@ -13,9 +13,9 @@ tasks:
       - nix flake check
   eval:
     cmds:
-      - nix eval .#nixosConfigurations.salome.config.system.build.toplevel.drvPath
-      - nix eval .#nixosConfigurations.aida.config.system.build.toplevel.drvPath
-      - nix eval .#nixosConfigurations.attila.config.system.build.toplevel.drvPath
-      - nix eval .#nixosConfigurations.vm-iso.config.system.build.toplevel.drvPath
-      - nix eval .#darwinConfigurations.cesare.system
-      - nix eval .#darwinConfigurations.nylmd-jwaggon1.system
+      - nix eval --offline --read-only .#nixosConfigurations.salome.config.system.build.toplevel.drvPath
+      - nix eval --offline --read-only .#nixosConfigurations.aida.config.system.build.toplevel.drvPath
+      - nix eval --offline --read-only .#nixosConfigurations.attila.config.system.build.toplevel.drvPath
+      - nix eval --offline --read-only .#nixosConfigurations.vm-iso.config.system.build.toplevel.drvPath
+      - nix eval --offline --read-only .#darwinConfigurations.cesare.system
+      - nix eval --offline --read-only .#darwinConfigurations.nylmd-jwaggon1.system

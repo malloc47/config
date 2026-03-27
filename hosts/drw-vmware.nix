@@ -38,7 +38,7 @@
     "10.64.16.16"
   ];
 
-  security.pki.certificateFiles = [ /etc/ssl/ca-bundle.pem ];
+  security.pki.certificateFiles = [ "/etc/ssl/ca-bundle.pem" ];
 
   home-manager.users.${config.settings.username} = {
     home.packages = with pkgs; [

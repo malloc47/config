@@ -190,6 +190,24 @@ necessary hardware permissions needed to allow container applications
 access to the X server, audio, and network, as well as
 container-specific settings such as the storage mounts.
 
+## Development
+
+Enter the dev shell to install git pre-commit hooks (nixfmt formatting):
+
+    nix develop
+
+Format all nix files:
+
+    task fmt
+
+Evaluate all host configurations to check for errors:
+
+    task eval
+
+Run the full flake check (includes formatting validation):
+
+    task check
+
 ## History
 
 The public portion of this repository started in 2010 after separating
