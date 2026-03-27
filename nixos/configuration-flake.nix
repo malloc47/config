@@ -15,7 +15,11 @@
 
   nix.settings.experimental-features = "nix-command flakes";
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    allowBroken = false;
+    allowUnsupportedSystem = true;
+  };
   nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
 
   environment.systemPackages =
