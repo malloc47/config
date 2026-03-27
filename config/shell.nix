@@ -21,7 +21,7 @@ in
         "lein"
         "sudo"
       ];
-      theme = "lambda";
+      theme = "";
     };
     shellAliases = {
       "ll" = "ls -al";
@@ -53,6 +53,8 @@ in
         term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
         ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
 
+
+
         materialize() {
           if [ -f "$1.link" ] ; then
             rm $1
@@ -71,16 +73,56 @@ in
 
         cdpath=(${cdpath})
 
-        if [[ -n "$IN_NIX_SHELL" ]]; then
-          export PS1="${"\${PS1}%F{red}ns%f"} "
-        fi
+        # Prompt: λ [host:]path [· (branch[✘])] [· nix]
+        # Inside a git repo, path is shown relative to repo parent (e.g. config/modules)
+        # Outside a git repo, path is shown relative to ~ (e.g. ~/Documents)
+        autoload -Uz vcs_info
+        zstyle ':vcs_info:git:*' check-for-changes true
+        zstyle ':vcs_info:git:*' unstagedstr '%F{red}✘%f'
+        zstyle ':vcs_info:git:*' formats '(%F{yellow}%b%f%u)'
+        zstyle ':vcs_info:git:*' actionformats '(%F{yellow}%b%f%u %a)'
+        zstyle ':vcs_info:*' enable git
+
+        _prompt_pwd() {
+          local git_root
+          git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+          if [[ -n "$git_root" ]]; then
+            local repo_name="''${git_root:t}"
+            local rel="''${PWD#$git_root}"
+            echo "''${repo_name}''${rel}"
+          else
+            print -P '%~'
+          fi
+        }
+
+        precmd() {
+          local last_exit=$?
+          vcs_info
+          local lambda_color=""
+          if [[ $last_exit -ne 0 ]]; then
+            lambda_color="%F{red}"
+          fi
+          local host_part=""
+          if [[ -n "$SSH_CONNECTION" ]]; then
+            host_part="%F{cyan}%m%f:"
+          fi
+          local git_part=""
+          if [[ -n "$vcs_info_msg_0_" ]]; then
+            git_part=" $vcs_info_msg_0_"
+          fi
+          local nix_part=""
+          if [[ -n "$IN_NIX_SHELL" || "$PATH" == */nix/store/* ]]; then
+            nix_part=" %F{242}·%f %F{red}nix%f"
+          fi
+          PROMPT="''${lambda_color}λ''${lambda_color:+%f} ''${host_part}$(_prompt_pwd)''${git_part}''${nix_part} "
+        }
 
         nixos-deploy() {
           nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
         }
 
         if [[ $TERM == "dumb" ]]; then
-            export PS1="$ "
+            export PROMPT="$ "
         fi
       '';
     sessionVariables = {
@@ -123,7 +165,11 @@ in
       if [[ $TERM == "dumb" ]]; then
           export PS1="$ "
       else
-         export PS1="λ \w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
+          HOST_PART=""
+          if [[ -n "$SSH_CONNECTION" ]]; then
+            HOST_PART="\[\e[36m\]\h\[\e[0m\]:"
+          fi
+          export PS1="λ ''${HOST_PART}\w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
       fi
 
       nixos-deploy() {
