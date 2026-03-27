@@ -9,8 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Stub private submodule
+      - name: Initialize submodules
         run: |
+          # Public submodules: check out normally
+          git submodule update --init config/.emacs.d/packages/nano-emacs
+
+          # Private submodule: redirect to a local stub repo
           stub=$(mktemp -d)
           mkdir -p "$stub/ssh/malloc47"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
@@ -33,8 +37,10 @@ jobs:
         host: [salome, aida, attila, vm-iso]
     steps:
       - uses: actions/checkout@v4
-      - name: Stub private submodule
+      - name: Initialize submodules
         run: |
+          git submodule update --init config/.emacs.d/packages/nano-emacs
+
           stub=$(mktemp -d)
           mkdir -p "$stub/ssh/malloc47"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
@@ -59,8 +65,10 @@ jobs:
         host: [cesare, nylmd-jwaggon1]
     steps:
       - uses: actions/checkout@v4
-      - name: Stub private submodule
+      - name: Initialize submodules
         run: |
+          git submodule update --init config/.emacs.d/packages/nano-emacs
+
           stub=$(mktemp -d)
           mkdir -p "$stub/ssh/malloc47" "$stub/ssh/drw"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
