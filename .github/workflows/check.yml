@@ -9,6 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stub private submodule
+        run: |
+          stub=$(mktemp -d)
+          mkdir -p "$stub/ssh/malloc47"
+          ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
+          git -C "$stub" init -b main
+          git -C "$stub" add .
+          git -C "$stub" commit -m "stub"
+          git config --file .gitmodules submodule.personal.url "$stub"
+          git submodule sync personal
+          git submodule update --init --remote personal
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
@@ -22,10 +33,17 @@ jobs:
         host: [salome, aida, attila, vm-iso]
     steps:
       - uses: actions/checkout@v4
-      - name: Create stub SSH keys for eval
+      - name: Stub private submodule
         run: |
-          mkdir -p personal/ssh/malloc47
-          ssh-keygen -t ed25519 -f personal/ssh/malloc47/id_ed25519 -N "" -q
+          stub=$(mktemp -d)
+          mkdir -p "$stub/ssh/malloc47"
+          ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
+          git -C "$stub" init -b main
+          git -C "$stub" add .
+          git -C "$stub" commit -m "stub"
+          git config --file .gitmodules submodule.personal.url "$stub"
+          git submodule sync personal
+          git submodule update --init --remote personal
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
@@ -41,11 +59,18 @@ jobs:
         host: [cesare, nylmd-jwaggon1]
     steps:
       - uses: actions/checkout@v4
-      - name: Create stub SSH keys for eval
+      - name: Stub private submodule
         run: |
-          mkdir -p personal/ssh/malloc47 personal/ssh/drw
-          ssh-keygen -t ed25519 -f personal/ssh/malloc47/id_ed25519 -N "" -q
-          ssh-keygen -t ed25519 -f personal/ssh/drw/id_ed25519 -N "" -q
+          stub=$(mktemp -d)
+          mkdir -p "$stub/ssh/malloc47" "$stub/ssh/drw"
+          ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
+          ssh-keygen -t ed25519 -f "$stub/ssh/drw/id_ed25519" -N "" -q
+          git -C "$stub" init -b main
+          git -C "$stub" add .
+          git -C "$stub" commit -m "stub"
+          git config --file .gitmodules submodule.personal.url "$stub"
+          git submodule sync personal
+          git submodule update --init --remote personal
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
