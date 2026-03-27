@@ -8,7 +8,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Initialize submodules
         run: |
           # Public submodules: check out normally
@@ -36,7 +36,7 @@ jobs:
       matrix:
         host: [salome, aida, attila, vm-iso]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Initialize submodules
         run: |
           git submodule update --init config/.emacs.d/packages/nano-emacs
@@ -64,7 +64,7 @@ jobs:
       matrix:
         host: [cesare, nylmd-jwaggon1]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Initialize submodules
         run: |
           git submodule update --init config/.emacs.d/packages/nano-emacs
