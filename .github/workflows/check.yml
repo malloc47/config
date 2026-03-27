@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.31.2/install
       - run: nix fmt -- --ci
 
   eval-nixos:
@@ -26,6 +28,7 @@ jobs:
           ssh-keygen -t ed25519 -f personal/ssh/malloc47/id_ed25519 -N "" -q
       - uses: cachix/install-nix-action@v30
         with:
+          install_url: https://releases.nixos.org/nix/nix-2.31.2/install
           extra_nix_config: |
             extra-platforms = aarch64-linux
       - run: nix eval .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
@@ -44,4 +47,6 @@ jobs:
           ssh-keygen -t ed25519 -f personal/ssh/malloc47/id_ed25519 -N "" -q
           ssh-keygen -t ed25519 -f personal/ssh/drw/id_ed25519 -N "" -q
       - uses: cachix/install-nix-action@v30
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.31.2/install
       - run: nix eval .#darwinConfigurations.${{ matrix.host }}.system
