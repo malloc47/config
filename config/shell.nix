@@ -51,7 +51,7 @@ in
         pg() { ps aux | grep $1 }
         bindkey -s "^[x" 'term-do^M'
         term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
-        ns() {nix shell $(print ''${*/#/nixpkgs\#})}
+        ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
 
         materialize() {
           if [ -f "$1.link" ] ; then
@@ -109,8 +109,24 @@ in
             git_part=" $vcs_info_msg_0_"
           fi
           local nix_part=""
-          if [[ -n "$IN_NIX_SHELL" || "$PATH" == */nix/store/* ]]; then
+          if [[ -n "$NIX_SHELL_PACKAGES" ]]; then
+            nix_part=" %F{242}·%f %F{red}[+''${NIX_SHELL_PACKAGES// / +}]%f"
+          elif [[ -n "$IN_NIX_SHELL" ]]; then
             nix_part=" %F{242}·%f %F{red}nix%f"
+          elif [[ "$PATH" == */nix/store/* ]]; then
+            local -aU _nix_pkgs=()
+            local _p
+            for _p in ''${(s.:.)PATH}; do
+              if [[ "$_p" == /nix/store/*/bin ]]; then
+                local _name=''${''${_p%/bin}:t}
+                _name=''${_name#*-}
+                _name=''${_name%%-[0-9]*}
+                _nix_pkgs+=("+$_name")
+              fi
+            done
+            if (( ''${#_nix_pkgs} )); then
+              nix_part=" %F{242}·%f %F{red}[''${(j. .)_nix_pkgs}]%f"
+            fi
           fi
           PROMPT="''${lambda_color}λ''${lambda_color:+%f} ''${host_part}$(_prompt_pwd)''${git_part}''${nix_part} "
         }
