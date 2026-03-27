@@ -3,3 +3,19 @@ version: '3'
 includes:
   vm: ./vm
   darwin: ./darwin
+
+tasks:
+  fmt:
+    cmds:
+      - nix fmt
+  check:
+    cmds:
+      - nix flake check
+  eval:
+    cmds:
+      - nix eval .#nixosConfigurations.salome.config.system.build.toplevel.drvPath
+      - nix eval .#nixosConfigurations.aida.config.system.build.toplevel.drvPath
+      - nix eval .#nixosConfigurations.attila.config.system.build.toplevel.drvPath
+      - nix eval .#nixosConfigurations.vm-iso.config.system.build.toplevel.drvPath
+      - nix eval .#darwinConfigurations.cesare.system
+      - nix eval .#darwinConfigurations.nylmd-jwaggon1.system
