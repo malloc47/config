@@ -71,12 +71,12 @@ in
 
         cdpath=(${cdpath})
 
-        # Prompt: λ [host:]path [· (branch[✘])] [· nix]
+        # Prompt: λ [host:]path [· (branch ✘)] [· nix]
         # Inside a git repo, path is shown relative to repo parent (e.g. config/modules)
         # Outside a git repo, path is shown relative to ~ (e.g. ~/Documents)
         autoload -Uz vcs_info
         zstyle ':vcs_info:git:*' check-for-changes true
-        zstyle ':vcs_info:git:*' unstagedstr '%F{red}✘%f'
+        zstyle ':vcs_info:git:*' unstagedstr '%F{red} ✘%f'
         zstyle ':vcs_info:git:*' formats '(%F{yellow}%b%f%u)'
         zstyle ':vcs_info:git:*' actionformats '(%F{yellow}%b%f%u %a)'
         zstyle ':vcs_info:*' enable git
