@@ -317,6 +317,7 @@
             modules/settings.nix
             modules/user.nix
             modules/ssh.nix
+            agenix.darwinModules.default
             nix-homebrew.darwinModules.nix-homebrew
             darwin/homebrew.nix
             darwin/configuration.nix
