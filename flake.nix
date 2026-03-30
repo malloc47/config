@@ -265,6 +265,40 @@
           ];
         };
 
+        aroldo = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+            };
+          };
+          modules = [
+            home-manager.nixosModules.home-manager
+            disko.nixosModules.disko
+            agenix.nixosModules.default
+            modules/settings.nix
+            modules/user.nix
+            modules/nixpkgs.nix
+            modules/ssh.nix
+            hosts/aroldo.nix
+            nixos/configuration-flake.nix
+            disk/racknerd-vps.nix
+            {
+              networking.hostName = "aroldo";
+              system.stateVersion = "25.11";
+            }
+            (
+              { config, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+              }
+            )
+          ];
+        };
+
         attila = nixpkgs.lib.nixosSystem rec {
           system = "x86_64-linux";
           specialArgs = {

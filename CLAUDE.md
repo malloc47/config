@@ -34,6 +34,7 @@ nix flake update
 - `drw` — x86_64-linux, LXC container on Ubuntu 22.04 (work machine)
 - `drw-vmware` — aarch64-linux, VMware Fusion guest for work machine
 - `aida` — x86_64-linux, baremetal on gmktec-g10 mini PC
+- `aroldo` — x86_64-linux, RackNerd VPS (Headscale + DERP relay)
 - `attila` — x86_64-linux, headless Dell XPS 13 9315 laptop
 - `vm-iso` — aarch64-linux, installer ISO image
 
