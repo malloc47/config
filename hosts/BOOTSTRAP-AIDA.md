@@ -189,12 +189,20 @@ On LAN, you can alternatively use `https://ntfy.home.malloc47.com` directly.
 
 aida acts as a Tailscale subnet router, advertising `192.168.1.0/24` to the Headscale network on aroldo. This step requires aroldo to be deployed and running first — see `BOOTSTRAP-AROLDO.md`.
 
-1. Get a pre-auth key from aroldo: `ssh malloc47@192.3.76.171 'sudo cat /run/headscale/authkey'`
-2. Store as agenix secret: `agenix -e secrets/headscale-preauthkey.age`
-3. Deploy: `nixos-rebuild switch --flake .#aida`
+1. Deploy aida: `nixos-rebuild switch --flake .#aida`
+2. Get a pre-auth key from aroldo: `ssh aroldo 'sudo cat /run/headscale/authkey'`
+3. On aida, register manually:
+   ```bash
+   sudo tailscale up \
+     --login-server https://hs.malloc47.com \
+     --advertise-routes=192.168.1.0/24 \
+     --advertise-exit-node \
+     --reset \
+     --authkey <paste key here>
+   ```
 4. Verify: `tailscale status` should show connected to `hs.malloc47.com`
 
-The pre-auth key expires after 24h but is only needed for initial registration. The `headscale-bootstrap` oneshot on aroldo regenerates one on each boot. Once enrolled, aida stays connected across reboots.
+The pre-auth key expires after 24h but is only needed for this one-time registration. Once registered, aida reconnects automatically using its persistent node key in `/var/lib/tailscale/`.
 
 ## Verification checklist
 

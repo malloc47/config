@@ -57,7 +57,6 @@
 
     homepage-env.file = ../secrets/homepage-env.age;
 
-    headscale-preauthkey.file = ../secrets/headscale-preauthkey.age;
   };
 
   security.acme = {
@@ -243,7 +242,7 @@
     enable = true;
     openFirewall = true;
     useRoutingFeatures = "server";
-    authKeyFile = config.age.secrets.headscale-preauthkey.path;
+    # Initial registration: manually run tailscale up --authkey <key> with these same flags
     extraUpFlags = [
       "--login-server"
       "https://hs.malloc47.com"

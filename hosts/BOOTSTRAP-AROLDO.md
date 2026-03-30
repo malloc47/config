@@ -116,26 +116,32 @@ ssh aroldo 'journalctl -fu acme-hs.malloc47.com'
 
 Wait for it to complete — Caddy needs the cert before it can serve HTTPS.
 
-## 6. Generate and distribute pre-auth key to aida
+## 6. Register aida as a Tailscale subnet router
 
-After Headscale is running, the `headscale-bootstrap` oneshot creates a pre-auth key at `/run/headscale/authkey`. Retrieve it:
+First deploy aida (if not already) so that `tailscaled` is running:
+
+```bash
+nixos-rebuild switch --flake .#aida
+```
+
+Get a pre-auth key from aroldo (the `headscale-bootstrap` oneshot writes one to `/run/headscale/authkey`):
 
 ```bash
 ssh aroldo 'sudo cat /run/headscale/authkey'
 ```
 
-Store it as an agenix secret for aida:
+On aida, manually register with the pre-auth key:
 
 ```bash
-agenix -e secrets/headscale-preauthkey.age
-# Paste the pre-auth key
+sudo tailscale up \
+  --login-server https://hs.malloc47.com \
+  --advertise-routes=192.168.1.0/24 \
+  --advertise-exit-node \
+  --reset \
+  --authkey <paste key here>
 ```
 
-Deploy aida to connect it as a Tailscale subnet router:
-
-```bash
-nixos-rebuild switch --flake .#aida
-```
+The pre-auth key expires after 24h but is only needed for this one-time registration. Once registered, aida reconnects automatically using its persistent node key in `/var/lib/tailscale/`.
 
 ## 7. Enroll mobile/laptop clients
 
@@ -144,13 +150,24 @@ nixos-rebuild switch --flake .#aida
 1. Install Tailscale from Play Store
 2. Three-dot menu > Use another server > `https://hs.malloc47.com`
 3. Login > Headscale shows a registration URL with a node key
-4. On aroldo: `ssh aroldo 'sudo headscale nodes register --user default --key nodekey:<key>'`
+4. On aroldo, register and rename for identification:
+   ```bash
+   ssh aroldo 'sudo headscale nodes register --user 1 --key nodekey:<key>'
+   ssh aroldo 'sudo headscale nodes list'  # note the node ID
+   ssh aroldo 'sudo headscale node rename <name> -u <node-id>'
+   ```
 
 ### macOS laptop
 
 ```bash
 tailscale up --login-server https://hs.malloc47.com
-# On aroldo: ssh aroldo 'sudo headscale nodes register --user default --key nodekey:<key>'
+```
+
+On aroldo, register and rename:
+```bash
+ssh aroldo 'sudo headscale nodes register --user 1 --key nodekey:<key>'
+ssh aroldo 'sudo headscale nodes list'  # note the node ID
+ssh aroldo 'sudo headscale node rename <name> -u <node-id>'
 ```
 
 ## Verification checklist

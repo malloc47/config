@@ -43,10 +43,6 @@ in
     aida
     malloc47
   ];
-  "headscale-preauthkey.age".publicKeys = [
-    aida
-    malloc47
-  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila
