@@ -126,7 +126,8 @@
         headscale users create default
       fi
 
-      KEY=$(headscale preauthkeys create --user default --reusable --expiration 24h -o json | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
+      USER_ID=$(headscale users list -o json-line | grep '"name":"default"' | sed -n 's/.*"id":\([0-9]*\).*/\1/p')
+      KEY=$(headscale preauthkeys create --user "$USER_ID" --reusable --expiration 24h -o json-line | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
       echo -n "$KEY" > /run/headscale/authkey
       chmod 600 /run/headscale/authkey
     '';

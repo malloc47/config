@@ -53,15 +53,27 @@ nixos-anywhere will:
 After reboot, SSH access uses your ed25519 key (configured via `modules/user.nix`):
 
 ```bash
-ssh malloc47@192.3.76.171
+ssh aroldo
 ```
 
-## 2. Enroll host key in agenix
+## 2. Register hostname on OpenWRT
+
+Add a DNS host entry so `ssh aroldo` resolves without using the raw IP.
+
+In the OpenWRT LuCI web UI:
+1. Go to **Network → DNS**
+2. Find the **Host entries** section
+3. Add an entry: hostname `aroldo`, IP `192.3.76.171`
+4. **Save & Apply**
+
+If the VPS IP changes on rebuild, update this entry.
+
+## 3. Enroll host key in agenix
 
 The NixOS install generates a new SSH host key. Grab it:
 
 ```bash
-ssh malloc47@192.3.76.171 'cat /etc/ssh/ssh_host_ed25519_key.pub'
+ssh aroldo 'cat /etc/ssh/ssh_host_ed25519_key.pub'
 ```
 
 Update `secrets/secrets.nix`:
@@ -80,10 +92,10 @@ agenix -r -i /path/to/your/personal/id_ed25519
 Deploy again so aroldo can decrypt its secrets:
 
 ```bash
-nixos-rebuild switch --flake .#aroldo --target-host malloc47@192.3.76.171
+nixos-rebuild switch --flake .#aroldo --target-host malloc47@aroldo
 ```
 
-## 3. Cloudflare DNS
+## 4. Cloudflare DNS
 
 Add an A record for the Headscale control plane:
 
@@ -93,23 +105,23 @@ Add an A record for the Headscale control plane:
 
 **The proxy MUST be disabled** (DNS-only / gray cloud). Cloudflare's HTTP proxy strips WebSocket Upgrade headers, which breaks the Tailscale ts2021 noise protocol. See https://headscale.net/0.23.0/ref/integration/reverse-proxy/#cloudflare
 
-## 4. Trigger ACME certificate issuance
+## 5. Trigger ACME certificate issuance
 
 The ACME timer may not fire immediately. Start it manually:
 
 ```bash
-ssh malloc47@192.3.76.171 'sudo systemctl start acme-hs.malloc47.com.service'
-ssh malloc47@192.3.76.171 'journalctl -fu acme-hs.malloc47.com'
+ssh aroldo 'sudo systemctl start acme-hs.malloc47.com.service'
+ssh aroldo 'journalctl -fu acme-hs.malloc47.com'
 ```
 
 Wait for it to complete — Caddy needs the cert before it can serve HTTPS.
 
-## 5. Generate and distribute pre-auth key to aida
+## 6. Generate and distribute pre-auth key to aida
 
 After Headscale is running, the `headscale-bootstrap` oneshot creates a pre-auth key at `/run/headscale/authkey`. Retrieve it:
 
 ```bash
-ssh malloc47@192.3.76.171 'sudo cat /run/headscale/authkey'
+ssh aroldo 'sudo cat /run/headscale/authkey'
 ```
 
 Store it as an agenix secret for aida:
@@ -125,20 +137,20 @@ Deploy aida to connect it as a Tailscale subnet router:
 nixos-rebuild switch --flake .#aida
 ```
 
-## 6. Enroll mobile/laptop clients
+## 7. Enroll mobile/laptop clients
 
 ### Android phone
 
 1. Install Tailscale from Play Store
 2. Three-dot menu > Use another server > `https://hs.malloc47.com`
 3. Login > Headscale shows a registration URL with a node key
-4. On aroldo: `sudo headscale nodes register --user default --key nodekey:<key>`
+4. On aroldo: `ssh aroldo 'sudo headscale nodes register --user default --key nodekey:<key>'`
 
 ### macOS laptop
 
 ```bash
 tailscale up --login-server https://hs.malloc47.com
-# On aroldo: sudo headscale nodes register --user default --key nodekey:<key>
+# On aroldo: ssh aroldo 'sudo headscale nodes register --user default --key nodekey:<key>'
 ```
 
 ## Verification checklist
@@ -157,7 +169,7 @@ tailscale status
 ping 192.168.1.10
 
 # fail2ban
-ssh malloc47@192.3.76.171 'sudo fail2ban-client status sshd'
+ssh aroldo 'sudo fail2ban-client status sshd'
 ```
 
 ## Rebuilding after a RackNerd incident
@@ -166,9 +178,10 @@ If the VPS is destroyed and reprovisioned:
 
 1. **Update network details** in `hosts/aroldo.nix` if the IP, gateway, or interface changed
 2. **Re-run nixos-anywhere** (step 1 above) against the new VPS
-3. **Re-enroll the new host key** (step 2) — the old key is gone with the old VPS
-4. **Update Cloudflare DNS** if the IP changed
-5. **Re-register Tailscale nodes** — existing nodes' keys are still valid in Headscale's database (which is gone), so all clients need to re-register:
+3. **Register hostname** (step 2) — update IP in OpenWRT if changed
+4. **Re-enroll the new host key** (step 3) — the old key is gone with the old VPS
+5. **Update Cloudflare DNS** if the IP changed
+6. **Re-register Tailscale nodes** — existing nodes' keys are still valid in Headscale's database (which is gone), so all clients need to re-register:
    - aida: restart `tailscaled-autoconnect` or `tailscale up --reset`
    - phone/laptop: re-login in Tailscale app
-6. The `headscale-bootstrap` oneshot will automatically recreate the user and pre-auth key on first boot
+7. The `headscale-bootstrap` oneshot will automatically recreate the user and pre-auth key on first boot
