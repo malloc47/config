@@ -27,6 +27,7 @@
   networking.networkmanager.enable = false;
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [
+    22
     80
     443
   ];
