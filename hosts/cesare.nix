@@ -14,4 +14,19 @@
   nix.extraOptions = ''
     !include ${config.age.secrets.nix-access-tokens.path}
   '';
+
+  nix.buildMachines = [
+    {
+      hostName = "192.168.1.10";
+      systems = [ "x86_64-linux" ];
+      sshUser = "malloc47";
+      sshKey = "/Users/malloc47/.ssh/id_ed25519";
+      maxJobs = 4;
+      supportedFeatures = [
+        "nixos-test"
+        "big-parallel"
+      ];
+    }
+  ];
+  nix.distributedBuilds = true;
 }
