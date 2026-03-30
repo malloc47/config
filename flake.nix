@@ -277,6 +277,7 @@
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
             agenix.nixosModules.default
+            hardware/racknerd-vps.nix
             modules/settings.nix
             modules/user.nix
             modules/nixpkgs.nix

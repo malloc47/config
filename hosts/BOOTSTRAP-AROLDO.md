@@ -25,23 +25,29 @@ If any of these change on rebuild, update `hosts/aroldo.nix` accordingly (static
 
 ## 1. Install NixOS via nixos-anywhere
 
-From your local machine (2.5GB VPS RAM is sufficient for kexec):
+From an x86_64-linux machine (e.g. aida — the VPS only has 2.5GB RAM which is insufficient for building the closure remotely):
 
 ```bash
 # Stage new files first
-git add hosts/aroldo.nix disk/racknerd-vps.nix
+git add hosts/aroldo.nix disk/racknerd-vps.nix hardware/racknerd-vps.nix
 
 nix run github:nix-community/nixos-anywhere -- \
   --flake .#aroldo \
+  --generate-hardware-config nixos-generate-config hardware/racknerd-vps.nix \
   root@192.3.76.171
 ```
+
+The `--generate-hardware-config` flag runs `nixos-generate-config` on the VPS and writes the result to `hardware/racknerd-vps.nix`. This file provides the virtio kernel modules (`virtio_pci`, `virtio_blk`) needed to boot on KVM — without it, the initrd cannot see `/dev/vda` and boot will hang at `waiting for device`.
+
+The generated hardware file must be committed and included in the aroldo flake entry (`hardware/racknerd-vps.nix` in the modules list). If rebuilding a new VPS, re-run with `--generate-hardware-config` to regenerate it.
 
 nixos-anywhere will:
 1. SSH into the Ubuntu VPS
 2. kexec into a NixOS installer in RAM
-3. Partition the disk via disko
-4. Install the NixOS configuration
-5. Reboot into NixOS
+3. Run `nixos-generate-config` and save hardware config locally
+4. Partition the disk via disko
+5. Install the NixOS configuration
+6. Reboot into NixOS
 
 After reboot, SSH access uses your ed25519 key (configured via `modules/user.nix`):
 
