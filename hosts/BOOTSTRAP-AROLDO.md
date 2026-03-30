@@ -34,6 +34,7 @@ git add hosts/aroldo.nix disk/racknerd-vps.nix hardware/racknerd-vps.nix
 nix run github:nix-community/nixos-anywhere -- \
   --flake .#aroldo \
   --generate-hardware-config nixos-generate-config hardware/racknerd-vps.nix \
+  --build-on local
   root@192.3.76.171
 ```
 
@@ -73,9 +74,7 @@ Add `aroldo` to the `publicKeys` list for secrets this host needs (at minimum `c
 
 ```bash
 cd secrets
-for f in *.age; do
-  agenix -r -i /path/to/your/personal/id_ed25519 "$f"
-done
+agenix -r -i /path/to/your/personal/id_ed25519
 ```
 
 Deploy again so aroldo can decrypt its secrets:

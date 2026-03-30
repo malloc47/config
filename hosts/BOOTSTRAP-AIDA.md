@@ -33,9 +33,7 @@ From your local machine (where your personal SSH key is available):
 cd secrets
 
 # Re-encrypt every .age file for the updated keys
-for f in *.age; do
-  agenix -r -i /path/to/your/personal/id_ed25519 "$f"
-done
+agenix -r -i /path/to/your/personal/id_ed25519
 ```
 
 This decrypts each secret with your personal key and re-encrypts for both the new host key and your personal key.
