@@ -56,6 +56,8 @@
     cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
 
     homepage-env.file = ../secrets/homepage-env.age;
+
+    headscale-preauthkey.file = ../secrets/headscale-preauthkey.age;
   };
 
   security.acme = {
@@ -234,6 +236,20 @@
           }
         ];
       }
+    ];
+  };
+
+  services.tailscale = {
+    enable = true;
+    openFirewall = true;
+    useRoutingFeatures = "server";
+    authKeyFile = config.age.secrets.headscale-preauthkey.path;
+    extraUpFlags = [
+      "--login-server"
+      "https://hs.malloc47.com"
+      "--advertise-routes=192.168.1.0/24"
+      "--advertise-exit-node"
+      "--reset"
     ];
   };
 

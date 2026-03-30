@@ -16,6 +16,7 @@ in
   ];
   "cloudflare-acme.age".publicKeys = [
     aida
+    aroldo
     malloc47
   ];
   "authelia-jwt-secret.age".publicKeys = [
@@ -39,6 +40,10 @@ in
     malloc47
   ];
   "homepage-env.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "headscale-preauthkey.age".publicKeys = [
     aida
     malloc47
   ];
