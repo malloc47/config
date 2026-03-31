@@ -46,6 +46,8 @@
       flake = false;
     };
 
+    headplane.url = "github:tale/headplane";
+
     git-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -277,6 +279,7 @@
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
             agenix.nixosModules.default
+            inputs.headplane.nixosModules.headplane
             hardware/racknerd-vps.nix
             modules/settings.nix
             modules/user.nix
@@ -288,6 +291,9 @@
             {
               networking.hostName = "aroldo";
               system.stateVersion = "25.11";
+              services.headplane.package = inputs.headplane.packages.x86_64-linux.headplane;
+              services.headplane.settings.integration.agent.package =
+                inputs.headplane.packages.x86_64-linux.headplane-agent;
             }
             (
               { config, ... }:
@@ -379,7 +385,10 @@
 
                 environment.systemPackages = [ agenix.packages.aarch64-darwin.default ];
 
-                homebrew.casks = [ "claude" ];
+                homebrew.casks = [
+                  "claude"
+                  "tailscale"
+                ];
 
                 system.stateVersion = 6;
               }

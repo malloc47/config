@@ -43,6 +43,10 @@ in
     aida
     malloc47
   ];
+  "headplane-cookie-secret.age".publicKeys = [
+    aroldo
+    malloc47
+  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila

@@ -49,6 +49,10 @@
 
   age.secrets = {
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
+    headplane-cookie-secret = {
+      file = ../secrets/headplane-cookie-secret.age;
+      owner = "headscale";
+    };
   };
 
   security.acme = {
@@ -130,6 +134,14 @@
       KEY=$(headscale preauthkeys create --user "$USER_ID" --reusable --expiration 24h -o json-line | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
       echo -n "$KEY" > /run/headscale/authkey
       chmod 600 /run/headscale/authkey
+
+      # Generate API key for Headplane
+      API_KEY=$(headscale apikeys create --expiration 90d -o json-line | sed -n 's/.*"apiKey":"\([^"]*\)".*/\1/p')
+      if [ -n "$API_KEY" ]; then
+        echo -n "$API_KEY" > /run/headscale/api-key
+        chmod 600 /run/headscale/api-key
+        chown headscale:headscale /run/headscale/api-key
+      fi
     '';
   };
 
@@ -146,12 +158,34 @@
     ];
   };
 
+  services.headplane = {
+    enable = true;
+    settings = {
+      headscale = {
+        url = "http://127.0.0.1:8085";
+        api_key_path = "/run/headscale/api-key";
+      };
+      server = {
+        host = "127.0.0.1";
+        port = 3000;
+        cookie_secret_path = config.age.secrets.headplane-cookie-secret.path;
+        cookie_secure = true;
+      };
+      integration.agent.enabled = false;
+    };
+  };
+
   services.caddy = {
     enable = true;
     virtualHosts."hs.malloc47.com" = {
       useACMEHost = "hs.malloc47.com";
       extraConfig = ''
-        reverse_proxy http://127.0.0.1:8085
+        handle /admin* {
+          reverse_proxy http://127.0.0.1:3000
+        }
+        handle {
+          reverse_proxy http://127.0.0.1:8085
+        }
       '';
     };
   };

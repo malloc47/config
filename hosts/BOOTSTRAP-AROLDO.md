@@ -166,7 +166,27 @@ sudo tailscale up \
 
 The pre-auth key expires after 24h but is only needed for this one-time registration. Once registered, aida reconnects automatically using its persistent node key in `/var/lib/tailscale/`.
 
-## 8. Enroll mobile/laptop clients
+## 8. Verify Headplane
+
+Headplane (web UI for Headscale) is available at `https://hs.malloc47.com/admin`. It requires an API key for authentication.
+
+The `headscale-bootstrap` oneshot generates an API key at `/run/headscale/api-key`. On first boot this should happen automatically. If Headplane shows an auth error, verify the key exists:
+
+```bash
+ssh aroldo 'sudo cat /run/headscale/api-key'
+```
+
+If empty or missing, generate one manually:
+
+```bash
+ssh aroldo 'sudo headscale apikeys create --expiration 90d'
+```
+
+Copy the key and paste it into the Headplane login page.
+
+Note: The API key expires after 90 days. The `headscale-bootstrap` oneshot regenerates one on each boot, but the key in `/run/headscale/api-key` is ephemeral (lost on reboot). For persistent access, create a long-lived key via the CLI and log in with it.
+
+## 9. Enroll mobile/laptop clients
 
 ### Android phone
 
