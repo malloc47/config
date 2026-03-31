@@ -116,7 +116,30 @@ ssh aroldo 'journalctl -fu acme-hs.malloc47.com'
 
 Wait for it to complete — Caddy needs the cert before it can serve HTTPS.
 
-## 6. Register aida as a Tailscale subnet router
+## 6. Register aroldo as a Tailscale exit node
+
+aroldo runs a Tailscale client that advertises itself as an exit node, allowing any device on the tailnet to route all internet traffic through the VPS.
+
+```bash
+ssh aroldo 'sudo tailscale up \
+  --login-server https://hs.malloc47.com \
+  --advertise-exit-node \
+  --reset \
+  --authkey $(sudo cat /run/headscale/authkey)'
+```
+
+Verify:
+
+```bash
+ssh aroldo 'tailscale status'
+```
+
+To use from a client:
+- **CLI**: `tailscale set --exit-node=aroldo`
+- **Android**: Tailscale app > three-dot menu > Use exit node > aroldo
+- **macOS**: Menu bar > Exit node > aroldo
+
+## 7. Register aida as a Tailscale subnet router
 
 First deploy aida (if not already) so that `tailscaled` is running:
 
@@ -143,7 +166,7 @@ sudo tailscale up \
 
 The pre-auth key expires after 24h but is only needed for this one-time registration. Once registered, aida reconnects automatically using its persistent node key in `/var/lib/tailscale/`.
 
-## 7. Enroll mobile/laptop clients
+## 8. Enroll mobile/laptop clients
 
 ### Android phone
 

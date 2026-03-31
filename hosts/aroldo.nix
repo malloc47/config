@@ -133,6 +133,19 @@
     '';
   };
 
+  services.tailscale = {
+    enable = true;
+    openFirewall = true;
+    useRoutingFeatures = "server";
+    # Initial registration: manually run tailscale up --authkey <key> with these same flags
+    extraUpFlags = [
+      "--login-server"
+      "https://hs.malloc47.com"
+      "--advertise-exit-node"
+      "--reset"
+    ];
+  };
+
   services.caddy = {
     enable = true;
     virtualHosts."hs.malloc47.com" = {
