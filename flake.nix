@@ -379,7 +379,10 @@
 
                 environment.systemPackages = [ agenix.packages.aarch64-darwin.default ];
 
-                homebrew.casks = [ "claude" ];
+                homebrew.casks = [
+                  "claude"
+                  "tailscale"
+                ];
 
                 system.stateVersion = 6;
               }
