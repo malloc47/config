@@ -44,8 +44,8 @@
 
   networking.defaultGateway = "192.3.76.1";
   networking.nameservers = [
-    "8.8.8.8"
-    "8.8.4.4"
+    "100.64.0.1"
+    "1.1.1.1"
   ];
 
   age.secrets = {
@@ -84,7 +84,7 @@
       dns = {
         magic_dns = true;
         base_domain = "ts.malloc47.com";
-        nameservers.global = [ "192.168.1.10" ];
+        nameservers.global = [ "100.64.0.1" ];
       };
       policy = {
         mode = "file";
@@ -123,7 +123,7 @@
     script = ''
       until headscale users list >/dev/null 2>&1; do sleep 1; done
 
-      if ! headscale users list -o json | grep -q '"name":"default"'; then
+      if ! headscale users list -o json-line | grep -q '"name":"default"'; then
         headscale users create default
       fi
 

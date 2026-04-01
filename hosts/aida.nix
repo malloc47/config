@@ -121,6 +121,7 @@
             domain = "*.home.malloc47.com";
             answer = "192.168.1.10";
           }
+          # Advertise this on the internal tailscale node only
           {
             enabled = true;
             domain = "status.malloc47.com";
