@@ -32,6 +32,7 @@ Capture ideas and pain points to work on when I have bandwidth:
 - [Beszel](https://github.com/henrygd/beszel) — lightweight server monitoring (CPU/RAM/disk) with hub on aroldo and agents on both machines
 - [CrowdSec](https://www.crowdsec.net/) — collaborative intrusion prevention (modern fail2ban with crowd-sourced threat intel), has Caddy bouncer plugin
 - [Headplane](https://github.com/tale/headplane) — web UI for Headscale node/ACL/DNS management without SSH
+- [App Connectors](https://github.com/juanfont/headscale/pull/3121) — once landed (targeting v0.31.0), replace AdGuard DNS rewrites for vanity domains (e.g. status.malloc47.com) with Headscale ACL-based domain routing through tagged connector nodes
 - [Vaultwarden](https://github.com/dani-garcia/vaultwarden) — lightweight Bitwarden server, benefits from always-on public availability separate from home server
 - Offsite backup target — use aroldo as Restic/Borg destination over Tailscale for geographic redundancy (limited by 45GB disk)
 - [Miniflux](https://miniflux.app/) / FreshRSS — lightweight RSS reader, always accessible
