@@ -341,22 +341,32 @@
     virtualHosts."dash.home.malloc47.com" = {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
-        forward_auth http://127.0.0.1:9091 {
-          uri /api/authz/forward-auth
-          copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+        handle /health {
+          respond 200
         }
-        reverse_proxy http://127.0.0.1:8082
+        handle {
+          forward_auth http://127.0.0.1:9091 {
+            uri /api/authz/forward-auth
+            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+          }
+          reverse_proxy http://127.0.0.1:8082
+        }
       '';
     };
 
     virtualHosts."adguard.home.malloc47.com" = {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
-        forward_auth http://127.0.0.1:9091 {
-          uri /api/authz/forward-auth
-          copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+        handle /health {
+          respond 200
         }
-        reverse_proxy http://127.0.0.1:3000
+        handle {
+          forward_auth http://127.0.0.1:9091 {
+            uri /api/authz/forward-auth
+            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+          }
+          reverse_proxy http://127.0.0.1:3000
+        }
       '';
     };
 

@@ -167,9 +167,9 @@
         {
           name = "Homepage";
           group = "aida";
-          url = "https://dash.home.malloc47.com";
+          url = "https://dash.home.malloc47.com/health";
           interval = "5m";
-          conditions = [ "[STATUS] == 401" ];
+          conditions = [ "[STATUS] == 200" ];
         }
         {
           name = "ntfy";
@@ -181,9 +181,9 @@
         {
           name = "AdGuard DNS";
           group = "aida";
-          url = "https://adguard.home.malloc47.com";
+          url = "https://adguard.home.malloc47.com/health";
           interval = "5m";
-          conditions = [ "[STATUS] == 401" ];
+          conditions = [ "[STATUS] == 200" ];
         }
       ];
     };
