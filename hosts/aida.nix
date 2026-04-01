@@ -94,6 +94,7 @@
 
   services.adguardhome = {
     enable = true;
+    mutableSettings = false;
     settings = {
       http.address = "127.0.0.1:3000";
       dns = {
@@ -109,20 +110,72 @@
           "1.1.1.1"
           "8.8.8.8"
         ];
+        hostsfile_enabled = false;
+      };
+      filtering = {
+        rewrites_enabled = true;
+        filtering_enabled = true;
         rewrites = [
           {
+            enabled = true;
             domain = "*.home.malloc47.com";
             answer = "192.168.1.10";
           }
           {
+            enabled = true;
             domain = "status.malloc47.com";
             answer = "100.64.0.3";
           }
         ];
-        hostsfile_enabled = false;
       };
+      filters = [
+        {
+          enabled = true;
+          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt";
+          name = "AdGuard DNS filter";
+          id = 1;
+        }
+        {
+          enabled = false;
+          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt";
+          name = "AdAway Default Blocklist";
+          id = 2;
+        }
+      ];
       # https://www.reddit.com/r/NixOS/comments/1kvpoje/remove_default_hosts_mapping_for_hostname/
       clients.runtime_sources.hosts = false;
+      clients.persistent = [
+        {
+          name = "Mercy Laptop";
+          ids = [
+            "192.168.1.120"
+            "d0:57:7e:f0:99:98"
+          ];
+          tags = [
+            "device_pc"
+            "os_windows"
+            "user_regular"
+          ];
+          uid = "019d0e43-082d-7048-9e20-4885d91a79bb";
+          use_global_settings = true;
+          filtering_enabled = false;
+        }
+        {
+          name = "cesare";
+          ids = [
+            "192.168.1.167"
+            "ae:d2:6f:c0:b4:32"
+          ];
+          tags = [
+            "device_pc"
+            "os_macos"
+            "user_regular"
+          ];
+          uid = "019d0e3e-3fa2-7247-9283-092c7fa7b0a3";
+          use_global_settings = true;
+          filtering_enabled = false;
+        }
+      ];
 
       users = [
         {
