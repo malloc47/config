@@ -32,6 +32,7 @@
     443
   ];
   networking.firewall.allowedUDPPorts = [ 3478 ];
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 443 ];
   networking.useDHCP = false;
 
   networking.interfaces.eth0.ipv4.addresses = [
@@ -54,8 +55,8 @@
   security.acme = {
     acceptTerms = true;
     defaults.email = "malloc47@gmail.com";
-    certs."hs.malloc47.com" = {
-      domain = "hs.malloc47.com";
+    certs."malloc47.com" = {
+      domain = "*.malloc47.com";
       dnsProvider = "cloudflare";
       dnsResolver = "1.1.1.1:53";
       environmentFile = config.age.secrets.cloudflare-acme.path;
@@ -133,6 +134,14 @@
     '';
   };
 
+  services.uptime-kuma = {
+    enable = true;
+    settings = {
+      HOST = "127.0.0.1";
+      PORT = "3001";
+    };
+  };
+
   services.tailscale = {
     enable = true;
     openFirewall = true;
@@ -142,6 +151,7 @@
       "--login-server"
       "https://hs.malloc47.com"
       "--advertise-exit-node"
+      "--accept-dns=false"
       "--reset"
     ];
   };
@@ -149,9 +159,15 @@
   services.caddy = {
     enable = true;
     virtualHosts."hs.malloc47.com" = {
-      useACMEHost = "hs.malloc47.com";
+      useACMEHost = "malloc47.com";
       extraConfig = ''
         reverse_proxy http://127.0.0.1:8085
+      '';
+    };
+    virtualHosts."status.malloc47.com" = {
+      useACMEHost = "malloc47.com";
+      extraConfig = ''
+        reverse_proxy http://127.0.0.1:3001
       '';
     };
   };

@@ -114,6 +114,10 @@
             domain = "*.home.malloc47.com";
             answer = "192.168.1.10";
           }
+          {
+            domain = "status.malloc47.com";
+            answer = "100.64.0.3";
+          }
         ];
         hostsfile_enabled = false;
       };
