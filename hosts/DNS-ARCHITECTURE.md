@@ -147,10 +147,16 @@ all other DNS through AdGuard for ad-blocking.
    All rewrites, filters, and client config must be defined in
    `hosts/aida.nix`. Changes via the web UI are overwritten on deploy.
 
-4. **Uptime Kuma monitoring**: Since `*.home.malloc47.com` resolves to
-   the LAN IP (192.168.1.10) which is not routable from aroldo, monitors
-   should target aida's Tailscale IP (100.64.0.1) with appropriate Host
-   headers for vhost routing.
+4. **Gatus monitoring on aroldo**: `*.home.malloc47.com` resolves to the
+   LAN IP (192.168.1.10) via AdGuard rewrite, which is not routable from
+   aroldo. `networking.hosts` on aroldo overrides these to aida's
+   Tailscale IP (100.64.0.1), allowing Gatus to reach aida services
+   using real domain names with correct SNI/TLS.
+
+5. **Auth-protected endpoints return 401**: Services behind Authelia
+   (Homepage, AdGuard) return 401 to non-browser requests without a
+   session. Gatus monitors these with `[STATUS] == 401` to confirm the
+   service + auth layer are both responding.
 
 ## Future: App Connectors
 

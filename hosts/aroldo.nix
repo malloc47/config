@@ -48,6 +48,17 @@
     "1.1.1.1"
   ];
 
+  # Override DNS for aida services to use Tailscale IP instead of
+  # unreachable LAN IP (192.168.1.10) from AdGuard rewrite
+  networking.hosts = {
+    "100.64.0.1" = [
+      "auth.home.malloc47.com"
+      "dash.home.malloc47.com"
+      "ntfy.home.malloc47.com"
+      "adguard.home.malloc47.com"
+    ];
+  };
+
   age.secrets = {
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
   };
@@ -134,11 +145,47 @@
     '';
   };
 
-  services.uptime-kuma = {
+  services.gatus = {
     enable = true;
     settings = {
-      HOST = "127.0.0.1";
-      PORT = "3001";
+      web.port = 3001;
+      endpoints = [
+        {
+          name = "Headscale";
+          group = "aroldo";
+          url = "https://hs.malloc47.com/health";
+          interval = "5m";
+          conditions = [ "[STATUS] == 200" ];
+        }
+        {
+          name = "Authelia";
+          group = "aida";
+          url = "https://auth.home.malloc47.com";
+          interval = "5m";
+          conditions = [ "[STATUS] == 200" ];
+        }
+        {
+          name = "Homepage";
+          group = "aida";
+          url = "https://dash.home.malloc47.com";
+          interval = "5m";
+          conditions = [ "[STATUS] == 401" ];
+        }
+        {
+          name = "ntfy";
+          group = "aida";
+          url = "https://ntfy.home.malloc47.com/v1/health";
+          interval = "5m";
+          conditions = [ "[STATUS] == 200" ];
+        }
+        {
+          name = "AdGuard DNS";
+          group = "aida";
+          url = "https://adguard.home.malloc47.com";
+          interval = "5m";
+          conditions = [ "[STATUS] == 401" ];
+        }
+      ];
     };
   };
 
