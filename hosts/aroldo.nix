@@ -54,13 +54,13 @@
     "100.64.0.1" = [
       "auth.home.malloc47.com"
       "dash.home.malloc47.com"
-      "ntfy.home.malloc47.com"
       "adguard.home.malloc47.com"
     ];
   };
 
   age.secrets = {
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
+    cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
   };
 
   security.acme = {
@@ -145,6 +145,27 @@
     '';
   };
 
+  services.cloudflared = {
+    enable = true;
+    tunnels."eaf269c8-e39f-4a4d-8a06-a3124655e590" = {
+      credentialsFile = config.age.secrets.cloudflared-credentials.path;
+      ingress = {
+        "ntfy.malloc47.com" = "http://localhost:2586";
+      };
+      default = "http_status:404";
+    };
+  };
+
+  services.ntfy-sh = {
+    enable = true;
+    settings = {
+      base-url = "https://ntfy.malloc47.com";
+      listen-http = "127.0.0.1:2586";
+      behind-proxy = true;
+      auth-default-access = "deny-all";
+    };
+  };
+
   services.gatus = {
     enable = true;
     settings = {
@@ -173,8 +194,8 @@
         }
         {
           name = "ntfy";
-          group = "aida";
-          url = "https://ntfy.home.malloc47.com/v1/health";
+          group = "aroldo";
+          url = "http://127.0.0.1:2586/v1/health";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
         }

@@ -37,6 +37,7 @@ in
   ];
   "cloudflared-credentials.age".publicKeys = [
     aida
+    aroldo
     malloc47
   ];
   "homepage-env.age".publicKeys = [

@@ -53,8 +53,6 @@
     };
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
 
-    cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
-
     homepage-env.file = ../secrets/homepage-env.age;
 
   };
@@ -187,16 +185,6 @@
     };
   };
 
-  services.ntfy-sh = {
-    enable = true;
-    settings = {
-      base-url = "https://ntfy.home.malloc47.com";
-      listen-http = "127.0.0.1:2586";
-      behind-proxy = true;
-      auth-default-access = "deny-all";
-    };
-  };
-
   services.homepage-dashboard = {
     enable = true;
     listenPort = 8082;
@@ -264,26 +252,14 @@
           {
             "ntfy" = {
               icon = "ntfy";
-              href = "https://ntfy.home.malloc47.com";
-              siteMonitor = "http://127.0.0.1:2586";
+              href = "https://ntfy.malloc47.com";
+              siteMonitor = "https://ntfy.malloc47.com";
             };
           }
         ];
       }
       {
         Network = [
-          {
-            "Cloudflare Tunnel" = {
-              icon = "cloudflare";
-              href = "https://one.dash.cloudflare.com";
-              widget = {
-                type = "cloudflared";
-                accountid = "{{HOMEPAGE_VAR_CF_ACCOUNT_ID}}";
-                tunnelid = "eaf269c8-e39f-4a4d-8a06-a3124655e590";
-                key = "{{HOMEPAGE_VAR_CF_API_TOKEN}}";
-              };
-            };
-          }
           {
             "OpenWRT Router" = {
               icon = "openwrt";
@@ -310,17 +286,6 @@
     ];
   };
 
-  services.cloudflared = {
-    enable = true;
-    tunnels."eaf269c8-e39f-4a4d-8a06-a3124655e590" = {
-      credentialsFile = config.age.secrets.cloudflared-credentials.path;
-      ingress = {
-        "ntfy-ext.malloc47.com" = "http://localhost:2586";
-      };
-      default = "http_status:404";
-    };
-  };
-
   services.caddy = {
     enable = true;
 
@@ -328,13 +293,6 @@
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
         reverse_proxy http://127.0.0.1:9091
-      '';
-    };
-
-    virtualHosts."ntfy.home.malloc47.com" = {
-      useACMEHost = "home.malloc47.com";
-      extraConfig = ''
-        reverse_proxy http://127.0.0.1:2586
       '';
     };
 
