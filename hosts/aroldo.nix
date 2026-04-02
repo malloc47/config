@@ -61,6 +61,7 @@
   age.secrets = {
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
     cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
+    ntfy-admin-password.file = ../secrets/ntfy-admin-password.age;
   };
 
   security.acme = {
@@ -164,6 +165,23 @@
       behind-proxy = true;
       auth-default-access = "deny-all";
     };
+  };
+
+  systemd.services.ntfy-bootstrap = {
+    description = "Create ntfy admin user and access rules";
+    after = [ "ntfy-sh.service" ];
+    requires = [ "ntfy-sh.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [ config.services.ntfy-sh.package ];
+    script = ''
+      if ! ntfy user list 2>/dev/null | grep -q "user admin"; then
+        NTFY_PASSWORD="$(cat ${config.age.secrets.ntfy-admin-password.path})" ntfy user add --role=admin admin
+      fi
+    '';
   };
 
   services.gatus = {
