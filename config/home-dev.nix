@@ -1,48 +1,56 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
+let
+  inherit (pkgs.stdenv) isLinux;
+in
 {
   imports = [
     ./emacs.nix
     ./repos.nix
   ];
 
-  home.packages = with pkgs; [
-    aspell
-    aspellDicts.en
-    clj-kondo
-    cljfmt
-    clojure
-    ffmpeg
-    gcc
-    pre-commit
-    gnumake
-    go-task
-    graphviz
-    leiningen
-    nixfmt-rfc-style
-    nixos-generators
-    nodePackages.mermaid-cli
-    nodejs
-    pandoc
-    protobuf
-    pyright
-    (python3.withPackages (
-      ps: with ps; [
-        virtualenv
-        wheel
-        setuptools
-        numpy
-        pandas
-      ]
-    ))
-    sbt
-    sqlite
-    term-do
-    wordnet
-  ];
+  home.packages =
+    with pkgs;
+    [
+      aspell
+      aspellDicts.en
+      clj-kondo
+      cljfmt
+      clojure
+      ffmpeg
+      gcc
+      pre-commit
+      gnumake
+      go-task
+      graphviz
+      leiningen
+      nixfmt-rfc-style
+      nixos-generators
+      nodePackages.mermaid-cli
+      nodejs
+      pandoc
+      protobuf
+      pyright
+      (python3.withPackages (
+        ps: with ps; [
+          virtualenv
+          wheel
+          setuptools
+          numpy
+          pandas
+        ]
+      ))
+      sbt
+      sqlite
+      wordnet
+    ]
+    ++ lib.optionals isLinux [
+      term-do
+    ];
 
   programs.java.enable = true;
 

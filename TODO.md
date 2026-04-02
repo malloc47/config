@@ -36,3 +36,7 @@ Capture ideas and pain points to work on when I have bandwidth:
 - Offsite backup target — use aroldo as Restic/Borg destination over Tailscale for geographic redundancy (limited by 45GB disk)
 - [Miniflux](https://miniflux.app/) / FreshRSS — lightweight RSS reader, always accessible
 - DNS-over-HTTPS proxy — public encrypted DNS entry point forwarding to AdGuard over tailnet, works without Tailscale active on device
+
+## Network
+
+Bifurcate wifi into separate LANs

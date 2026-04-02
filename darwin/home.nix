@@ -6,7 +6,7 @@
 {
   imports = [
     ../config/home.nix
-    ../config/emacs.nix
+    ../config/home-dev.nix
     ../config/terminal.nix
     ./wm.nix
     ./xwm.nix
@@ -14,13 +14,9 @@
   ];
 
   home.packages = with pkgs; [
-    clojure
-    go-task
     gnupg
-    nixfmt-rfc-style
     nixos-anywhere
     nixos-rebuild
-    python3
     rsync
   ];
 

@@ -32,6 +32,7 @@
       feh
       man-pages
       man-pages-posix
+      dnsutils
       vim
       wget
       xorg.xkill
