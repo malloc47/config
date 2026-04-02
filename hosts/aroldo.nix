@@ -1,5 +1,8 @@
 { config, pkgs, ... }:
 
+let
+  aidaTailscaleIP = "100.64.0.1";
+in
 {
   imports = [
     ../modules/settings.nix
@@ -44,14 +47,14 @@
 
   networking.defaultGateway = "192.3.76.1";
   networking.nameservers = [
-    "100.64.0.1"
+    aidaTailscaleIP
     "1.1.1.1"
   ];
 
   # Override DNS for aida services to use Tailscale IP instead of
   # unreachable LAN IP (192.168.1.10) from AdGuard rewrite
   networking.hosts = {
-    "100.64.0.1" = [
+    "${aidaTailscaleIP}" = [
       "auth.home.malloc47.com"
       "dash.home.malloc47.com"
       "adguard.home.malloc47.com"
@@ -100,7 +103,7 @@
       dns = {
         magic_dns = true;
         base_domain = "ts.malloc47.com";
-        nameservers.global = [ "100.64.0.1" ];
+        nameservers.global = [ aidaTailscaleIP ];
       };
       policy = {
         mode = "file";
@@ -275,7 +278,7 @@
 
       ++ aida
       title = aida (homelab)
-      host = 100.64.0.1
+      host = ${aidaTailscaleIP}
 
       + Internet
       menu = Internet
