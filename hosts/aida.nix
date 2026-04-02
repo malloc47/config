@@ -125,6 +125,11 @@
             domain = "status.malloc47.com";
             answer = "100.64.0.3";
           }
+          {
+            enabled = true;
+            domain = "smokeping.malloc47.com";
+            answer = "100.64.0.3";
+          }
         ];
       };
       filters = [

@@ -56,6 +56,9 @@
       "dash.home.malloc47.com"
       "adguard.home.malloc47.com"
     ];
+    "127.0.0.1" = [
+      "smokeping.malloc47.com"
+    ];
   };
 
   age.secrets = {
@@ -243,9 +246,63 @@
           conditions = [ "[STATUS] == 200" ];
           alerts = [ { type = "ntfy"; } ];
         }
+        {
+          name = "Smokeping";
+          group = "aroldo";
+          url = "https://smokeping.malloc47.com/smokeping.fcgi";
+          interval = "5m";
+          conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
+        }
       ];
     };
   };
+
+  services.smokeping = {
+    enable = true;
+    webService = false;
+    hostName = "smokeping.malloc47.com";
+    owner = "malloc47";
+    ownerEmail = "malloc47@gmail.com";
+    targetConfig = ''
+      probe = FPing
+      menu = Top
+      title = Network Latency Grapher
+
+      + Tailscale
+      menu = Tailscale
+      title = Tailscale Tunnel Latency
+
+      ++ aida
+      title = aida (homelab)
+      host = 100.64.0.1
+
+      + Internet
+      menu = Internet
+      title = Internet Endpoints
+
+      ++ CloudflareDNS
+      title = Cloudflare DNS
+      host = 1.1.1.1
+
+      ++ GoogleDNS
+      title = Google DNS
+      host = 8.8.8.8
+    '';
+  };
+
+  services.fcgiwrap.instances.smokeping = {
+    process = {
+      user = "smokeping";
+      group = "smokeping";
+    };
+    socket = {
+      user = "caddy";
+      group = "caddy";
+    };
+  };
+
+  users.users.caddy.extraGroups = [ "smokeping" ];
 
   services.tailscale = {
     enable = true;
@@ -273,6 +330,18 @@
       useACMEHost = "malloc47.com";
       extraConfig = ''
         reverse_proxy http://127.0.0.1:3001
+      '';
+    };
+    virtualHosts."smokeping.malloc47.com" = {
+      useACMEHost = "malloc47.com";
+      extraConfig = ''
+        root * /var/lib/smokeping
+        reverse_proxy unix/${config.services.fcgiwrap.instances.smokeping.socket.address} {
+          transport fastcgi {
+            split .fcgi
+          }
+        }
+        file_server
       '';
     };
   };
