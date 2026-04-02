@@ -62,6 +62,7 @@
     cloudflare-acme.file = ../secrets/cloudflare-acme.age;
     cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
     ntfy-admin-password.file = ../secrets/ntfy-admin-password.age;
+    ntfy-admin-password-env.file = ../secrets/ntfy-admin-password-env.age;
   };
 
   security.acme = {
@@ -186,7 +187,20 @@
 
   services.gatus = {
     enable = true;
+    environmentFile = config.age.secrets.ntfy-admin-password-env.path;
     settings = {
+      alerting.ntfy = {
+        url = "http://127.0.0.1:2586";
+        topic = "alerts";
+        priority = 3;
+        token = "$NTFY_TOKEN";
+        default-alert = {
+          enabled = true;
+          failure-threshold = 2;
+          success-threshold = 3;
+          send-on-resolved = true;
+        };
+      };
       web.port = 3001;
       endpoints = [
         {
@@ -195,6 +209,7 @@
           url = "https://hs.malloc47.com/health";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
         }
         {
           name = "Authelia";
@@ -202,6 +217,7 @@
           url = "https://auth.home.malloc47.com";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
         }
         {
           name = "Homepage";
@@ -209,6 +225,7 @@
           url = "https://dash.home.malloc47.com/health";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
         }
         {
           name = "ntfy";
@@ -216,6 +233,7 @@
           url = "http://127.0.0.1:2586/v1/health";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
         }
         {
           name = "AdGuard DNS";
@@ -223,6 +241,7 @@
           url = "https://adguard.home.malloc47.com/health";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
         }
       ];
     };

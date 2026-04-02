@@ -44,6 +44,10 @@ in
     aroldo
     malloc47
   ];
+  "ntfy-admin-password-env.age".publicKeys = [
+    aroldo
+    malloc47
+  ];
   "homepage-env.age".publicKeys = [
     aida
     malloc47
