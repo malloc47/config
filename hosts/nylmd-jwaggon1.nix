@@ -5,6 +5,11 @@
     ../modules/settings.nix
   ];
 
+  environment.variables = {
+    NIX_SSL_CERT_FILE = "/etc/ssl/system-certs.pem";
+    SSL_CERT_FILE = "/etc/ssl/system-certs.pem";
+  };
+
   settings = {
     username = "jwaggoner";
     email = "jwaggoner@drwholdings.com";
