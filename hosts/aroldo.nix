@@ -222,7 +222,7 @@
         {
           name = "Homepage";
           group = "aida";
-          url = "https://dash.home.malloc47.com/health";
+          url = "https://dash.home.malloc47.com/api/healthcheck";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
           alerts = [ { type = "ntfy"; } ];
@@ -238,7 +238,7 @@
         {
           name = "AdGuard DNS";
           group = "aida";
-          url = "https://adguard.home.malloc47.com/health";
+          url = "https://adguard.home.malloc47.com/login.html";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
           alerts = [ { type = "ntfy"; } ];
