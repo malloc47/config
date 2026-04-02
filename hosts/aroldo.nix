@@ -304,6 +304,9 @@
 
   users.users.caddy.extraGroups = [ "smokeping" ];
 
+  systemd.services.caddy.after = [ "smokeping.service" ];
+  systemd.services.caddy.wants = [ "smokeping.service" ];
+
   services.tailscale = {
     enable = true;
     openFirewall = true;
@@ -335,12 +338,17 @@
     virtualHosts."smokeping.malloc47.com" = {
       useACMEHost = "malloc47.com";
       extraConfig = ''
+        redir / /smokeping.fcgi permanent
+
         root * /var/lib/smokeping
-        reverse_proxy unix/${config.services.fcgiwrap.instances.smokeping.socket.address} {
+
+        @fcgi path *.fcgi
+        reverse_proxy @fcgi unix/${config.services.fcgiwrap.instances.smokeping.socket.address} {
           transport fastcgi {
             split .fcgi
           }
         }
+
         file_server
       '';
     };
