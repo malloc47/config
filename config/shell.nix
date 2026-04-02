@@ -52,6 +52,7 @@ in
         bindkey -s "^[x" 'term-do^M'
         term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
         ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
+        nr() { nix run $(print ''${*/#/nixpkgs\#})}
 
         materialize() {
           if [ -f "$1.link" ] ; then
@@ -163,7 +164,6 @@ in
         command term-do "$*"
         builtin cd $(cat ~/.term-do.d/pwd)
       }
-      ns() { if [ -f "flake.nix" ] ; then nix develop --command zsh ; else nix-shell ; fi }
 
       materialize() {
         if [ -f "$1.link" ] ; then
@@ -175,6 +175,9 @@ in
           chmod +w $1
         fi
       }
+
+      ns() { NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell "''${@/#/nixpkgs#}"; }
+      nr() { nix run "''${@/#/nixpkgs#}"; }
 
       if [[ $TERM == "dumb" ]]; then
           export PS1="$ "
