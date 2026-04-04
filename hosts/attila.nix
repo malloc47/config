@@ -3,7 +3,23 @@
 {
   imports = [
     ../modules/settings.nix
+    ../modules/motd.nix
   ];
+
+  motd = {
+    enable = true;
+    hardware = "dell xps 13 9315 · laptop";
+    specs = [
+      "12 cores"
+      "16GB"
+      "512GB"
+    ];
+    tags = [
+      "headless"
+      "wifi"
+      "battery"
+    ];
+  };
 
   services.openssh.enable = true;
 

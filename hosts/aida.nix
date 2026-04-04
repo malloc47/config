@@ -3,11 +3,28 @@
 {
   imports = [
     ../modules/settings.nix
+    ../modules/motd.nix
     # Uncomment to enable netboot provisioning for bare-metal installs:
     # ../modules/netboot.nix
   ];
 
   services.openssh.enable = true;
+
+  motd = {
+    enable = true;
+    hardware = "gmktec g10 · mini pc";
+    specs = [
+      "8 cores"
+      "12GB"
+      "512GB"
+    ];
+    tags = [
+      "dns"
+      "proxy"
+      "auth"
+      "dashboard"
+    ];
+  };
 
   networking.networkmanager.enable = false;
   networking.firewall.enable = true;

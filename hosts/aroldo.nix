@@ -6,7 +6,23 @@ in
 {
   imports = [
     ../modules/settings.nix
+    ../modules/motd.nix
   ];
+
+  motd = {
+    enable = true;
+    hardware = "racknerd vps";
+    specs = [
+      "2 cores"
+      "2.5GB"
+      "45GB"
+    ];
+    tags = [
+      "headscale"
+      "derp"
+      "monitoring"
+    ];
+  };
 
   services.openssh = {
     enable = true;
