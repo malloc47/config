@@ -55,6 +55,13 @@
       url = "git+ssh://git@github.com/malloc47/personal";
       flake = false;
     };
+
+    # Self-contained subflake — intentionally does NOT follow the main nixpkgs,
+    # because llm-agents.nix's `apm` package requires nixpkgs-unstable features
+    # (buildPythonApplication with `finalAttrs:` pattern).
+    ai-dev.url = "path:./ai-dev";
+
+    self.submodules = true;
   };
 
   outputs =
@@ -253,12 +260,17 @@
             (
               { config, ... }:
               {
+                home-manager.extraSpecialArgs = specialArgs;
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [
-                  config/home.nix
-                  config/home-dev.nix
-                ];
+                home-manager.users.${config.settings.username} = {
+                  imports = [
+                    config/home.nix
+                    config/home-dev.nix
+                    inputs.ai-dev.homeManagerModules.default
+                  ];
+                  programs.ai-dev.enable = true;
+                };
               }
             )
           ];

@@ -1,0 +1,16 @@
+theme "default"
+
+// Web client: localhost-only bind, no TLS.
+// Access via: ssh -L 8082:localhost:8082 <host>  ->  http://localhost:8082
+// Create a token with: zellij-ai web --create-token dev
+web_server true
+web_server_ip "127.0.0.1"
+web_server_port 8082
+web_sharing "on"
+enforce_https_for_localhost false
+
+ui {
+    pane_frames {
+        rounded_corners true
+    }
+}
