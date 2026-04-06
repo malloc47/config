@@ -1,5 +1,5 @@
 {
-  description = "AI coding tools (claude-code, opencode, agent-deck) with per-project sandboxing helpers and Zellij wrapper.";
+  description = "AI coding tools with per-project sandboxing helpers and session orchestration.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -47,30 +47,33 @@
               exec zellij --config ${./zellij-config.kdl} "$@"
             '';
           };
+        in
+        {
+          packages = {
+            inherit zellij-ai;
+            claude-code = agents.claude-code;
+            opencode = agents.opencode;
+            agent-deck = agents.agent-deck;
+            default = pkgs.buildEnv {
+              name = "ai-dev-env";
+              paths = [
+                agents.claude-code
+                agents.opencode
+                agents.agent-deck
+                zellij-ai
+                pkgs.zellij
+              ];
+            };
+          };
 
-          # Meta package: installs unwrapped tools
-          ai-dev-env = pkgs.buildEnv {
-            name = "ai-dev-env";
-            paths = [
+          devShell = pkgs.mkShell {
+            packages = [
               agents.claude-code
               agents.opencode
               agents.agent-deck
               zellij-ai
               pkgs.zellij
             ];
-          };
-        in
-        {
-          packages = {
-            inherit zellij-ai ai-dev-env;
-            claude-code = agents.claude-code;
-            opencode = agents.opencode;
-            agent-deck = agents.agent-deck;
-            default = ai-dev-env;
-          };
-
-          devShell = pkgs.mkShell {
-            packages = [ ai-dev-env ];
             shellHook = ''
               echo "ai-dev environment ready. Try: claude, opencode, agent-deck, zellij-ai"
             '';
@@ -99,7 +102,7 @@
             };
           };
 
-          # Per-project sandboxing helpers
+          # Per-project sandboxing helpers (no orchestration tools)
           lib = rec {
             inherit (defaults) sandboxPackages allowedDomains;
             mkSandbox = agent-sandbox.lib.${system}.mkSandbox;
@@ -153,7 +156,9 @@
                 inherit extraEnv;
               };
 
-            # Convenience: produce a devShell with sandboxed claude + opencode + raw agent-deck
+            # Convenience: produce a devShell with sandboxed claude + opencode.
+            # Orchestration tools (agent-deck, zellij) are not included —
+            # they run outside the sandbox and pick up whatever is on $PATH.
             mkProjectShell =
               {
                 extraDomains ? [ ],
@@ -182,7 +187,6 @@
                       extraEnv
                       ;
                   })
-                  agents.agent-deck
                 ]
                 ++ extraShellPackages;
               };
@@ -197,6 +201,13 @@
       apps = forAllSystems (system: (mkForSystem system).apps);
       lib = forAllSystems (system: (mkForSystem system).lib);
 
-      homeManagerModules.default = import ./home-manager.nix { inherit self; };
+      homeManagerModules = {
+        # Installs both layers — convenience for hosts that want everything
+        default = import ./home-manager.nix { inherit self; };
+        # Sandbox layer: raw claude-code + opencode
+        sandbox = import ./sandbox.nix { inherit self; };
+        # Session layer: agent-deck + zellij-ai
+        session = import ./session.nix { inherit self; };
+      };
     };
 }

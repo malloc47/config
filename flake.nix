@@ -269,7 +269,8 @@
                     config/home-dev.nix
                     inputs.ai-dev.homeManagerModules.default
                   ];
-                  programs.ai-dev.enable = true;
+                  programs.ai-sandbox.enable = true;
+                  programs.ai-session.enable = true;
                 };
               }
             )
