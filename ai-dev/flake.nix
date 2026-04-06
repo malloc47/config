@@ -47,6 +47,20 @@
               exec zellij --config ${./zellij-config.kdl} "$@"
             '';
           };
+
+          # Per-project sandboxing: harness+profile system
+          harnessDefinitions = import ./harnesses.nix { inherit pkgs agents defaults; };
+          profileDefinitions = import ./profiles.nix { inherit pkgs; };
+          projectLib = import ./lib.nix {
+            inherit
+              pkgs
+              agents
+              defaults
+              harnessDefinitions
+              profileDefinitions
+              ;
+            mkSandboxUpstream = agent-sandbox.lib.${system}.mkSandbox;
+          };
         in
         {
           packages = {
@@ -102,95 +116,7 @@
             };
           };
 
-          # Per-project sandboxing helpers (no orchestration tools)
-          lib = rec {
-            inherit (defaults) sandboxPackages allowedDomains;
-            mkSandbox = agent-sandbox.lib.${system}.mkSandbox;
-
-            # Wrap claude-code with project-specific sandbox settings.
-            #
-            # Usage in a project flake:
-            #   inputs.ai-dev.url = "github:malloc47/config?dir=ai-dev";
-            #   devShells.default = inputs.ai-dev.lib.x86_64-linux.mkProjectShell { };
-            #
-            # Or with overrides:
-            #   devShells.default = inputs.ai-dev.lib.x86_64-linux.mkProjectShell {
-            #     extraDomains = [ "pypi.org" "files.pythonhosted.org" ];
-            #     extraPackages = [ pkgs.python3 pkgs.poetry ];
-            #   };
-            mkSandboxedClaude =
-              {
-                extraDomains ? [ ],
-                extraPackages ? [ ],
-                extraStateDirs ? [ ],
-                extraStateFiles ? [ ],
-                extraEnv ? { },
-              }:
-              mkSandbox {
-                pkg = agents.claude-code;
-                binName = "claude";
-                outName = "claude";
-                allowedPackages = defaults.sandboxPackages ++ extraPackages;
-                stateDirs = defaults.claudeStateDirs ++ extraStateDirs;
-                stateFiles = defaults.claudeStateFiles ++ extraStateFiles;
-                restrictNetwork = true;
-                allowedDomains = defaults.allowedDomains ++ extraDomains;
-                inherit extraEnv;
-              };
-
-            mkSandboxedOpencode =
-              {
-                extraDomains ? [ ],
-                extraPackages ? [ ],
-                extraStateDirs ? [ ],
-                extraEnv ? { },
-              }:
-              mkSandbox {
-                pkg = agents.opencode;
-                binName = "opencode";
-                outName = "opencode";
-                allowedPackages = defaults.sandboxPackages ++ extraPackages;
-                stateDirs = defaults.opencodeStateDirs ++ extraStateDirs;
-                restrictNetwork = true;
-                allowedDomains = defaults.allowedDomains ++ extraDomains;
-                inherit extraEnv;
-              };
-
-            # Convenience: produce a devShell with sandboxed claude + opencode.
-            # Orchestration tools (agent-deck, zellij) are not included —
-            # they run outside the sandbox and pick up whatever is on $PATH.
-            mkProjectShell =
-              {
-                extraDomains ? [ ],
-                extraPackages ? [ ],
-                extraStateDirs ? [ ],
-                extraStateFiles ? [ ],
-                extraEnv ? { },
-                extraShellPackages ? [ ],
-              }:
-              pkgs.mkShell {
-                packages = [
-                  (mkSandboxedClaude {
-                    inherit
-                      extraDomains
-                      extraPackages
-                      extraStateDirs
-                      extraStateFiles
-                      extraEnv
-                      ;
-                  })
-                  (mkSandboxedOpencode {
-                    inherit
-                      extraDomains
-                      extraPackages
-                      extraStateDirs
-                      extraEnv
-                      ;
-                  })
-                ]
-                ++ extraShellPackages;
-              };
-          };
+          lib = projectLib;
         };
     in
     {
@@ -199,7 +125,20 @@
         default = (mkForSystem system).devShell;
       });
       apps = forAllSystems (system: (mkForSystem system).apps);
-      lib = forAllSystems (system: (mkForSystem system).lib);
+      lib = forAllSystems (system: (mkForSystem system).lib) // {
+        inherit forAllSystems;
+      };
+
+      templates = {
+        default = {
+          path = ./templates/default;
+          description = "Per-project AI sandbox with claude-code and opencode";
+        };
+        minimal = {
+          path = ./templates/minimal;
+          description = "Minimal AI sandbox with just claude-code";
+        };
+      };
 
       homeManagerModules = {
         # Installs both layers — convenience for hosts that want everything
