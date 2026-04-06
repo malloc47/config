@@ -17,7 +17,7 @@ let
 in
 {
   options.programs.ai-dev = {
-    enable = lib.mkEnableOption "sandboxed AI coding tools (claude, opencode, agent-deck, zellij-ai)";
+    enable = lib.mkEnableOption "AI coding tools (claude, opencode, agent-deck, zellij-ai)";
 
     installXdgZellijConfig = lib.mkOption {
       type = lib.types.bool;
@@ -33,7 +33,7 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = [
-      aiPkgs.claude
+      aiPkgs.claude-code
       aiPkgs.opencode
       aiPkgs.agent-deck
       aiPkgs.zellij-ai

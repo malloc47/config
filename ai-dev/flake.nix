@@ -1,5 +1,5 @@
 {
-  description = "Sandboxed AI coding tools (claude-code, opencode, agent-deck) with Zellij wrapper. Portable across NixOS, non-NixOS Linux, and macOS hosts with nix installed.";
+  description = "AI coding tools (claude-code, opencode, agent-deck) with per-project sandboxing helpers and Zellij wrapper.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -37,82 +37,9 @@
             config.allowUnfree = true; # claude-code is unfree
           };
           agents = llm-agents.packages.${system};
-          mkSandbox = agent-sandbox.lib.${system}.mkSandbox;
-
-          sandboxPackages = with pkgs; [
-            coreutils
-            git
-            ripgrep
-            fd
-            gnused
-            gnugrep
-            findutils
-            jq
-            which
-            nodejs
-            curl
-            openssh
-            diffutils
-            patch
-            gnutar
-            gzip
-          ];
-
-          allowedDomains = [
-            # Anthropic: API + OAuth login + telemetry
-            "api.anthropic.com"
-            "platform.claude.com"
-            "console.anthropic.com"
-            "statsig.anthropic.com"
-            "sentry.io"
-            # OpenAI (for opencode)
-            "api.openai.com"
-            # GitHub: git operations + npm registry
-            "github.com"
-            "api.github.com"
-            "objects.githubusercontent.com"
-            "registry.npmjs.org"
-          ];
-
-          claude = mkSandbox {
-            pkg = agents.claude-code;
-            binName = "claude";
-            outName = "claude";
-            allowedPackages = sandboxPackages;
-            stateDirs = [
-              # CWD-relative: per-project state
-              ".claude"
-              ".config/claude"
-              # HOME-relative: credentials, history, settings
-              # $HOME is expanded by bash at runtime, before bwrap overlays tmpfs
-              "$HOME/.claude"
-              "$HOME/.config/claude"
-            ];
-            stateFiles = [
-              "$HOME/.claude.json"
-              "$HOME/.claude.json.lock"
-            ];
-            restrictNetwork = true;
-            inherit allowedDomains;
-          };
-
-          opencode = mkSandbox {
-            pkg = agents.opencode;
-            binName = "opencode";
-            outName = "opencode";
-            allowedPackages = sandboxPackages;
-            stateDirs = [
-              ".opencode"
-              ".config/opencode"
-              "$HOME/.opencode"
-              "$HOME/.config/opencode"
-            ];
-            restrictNetwork = true;
-            inherit allowedDomains;
-          };
+          defaults = import ./defaults.nix { inherit pkgs; };
 
           # Zellij wrapper with config.kdl baked in via store path.
-          # Users run `zellij-ai` for the AI dev config; plain `zellij` still works for other uses.
           zellij-ai = pkgs.writeShellApplication {
             name = "zellij-ai";
             runtimeInputs = [ pkgs.zellij ];
@@ -121,12 +48,12 @@
             '';
           };
 
-          # Meta package: installs everything above in one go
+          # Meta package: installs unwrapped tools
           ai-dev-env = pkgs.buildEnv {
             name = "ai-dev-env";
             paths = [
-              claude
-              opencode
+              agents.claude-code
+              agents.opencode
               agents.agent-deck
               zellij-ai
               pkgs.zellij
@@ -135,12 +62,9 @@
         in
         {
           packages = {
-            inherit
-              claude
-              opencode
-              zellij-ai
-              ai-dev-env
-              ;
+            inherit zellij-ai ai-dev-env;
+            claude-code = agents.claude-code;
+            opencode = agents.opencode;
             agent-deck = agents.agent-deck;
             default = ai-dev-env;
           };
@@ -155,11 +79,11 @@
           apps = {
             claude = {
               type = "app";
-              program = "${claude}/bin/claude";
+              program = "${agents.claude-code}/bin/claude";
             };
             opencode = {
               type = "app";
-              program = "${opencode}/bin/opencode";
+              program = "${agents.opencode}/bin/opencode";
             };
             agent-deck = {
               type = "app";
@@ -174,6 +98,95 @@
               program = "${zellij-ai}/bin/zellij-ai";
             };
           };
+
+          # Per-project sandboxing helpers
+          lib = rec {
+            inherit (defaults) sandboxPackages allowedDomains;
+            mkSandbox = agent-sandbox.lib.${system}.mkSandbox;
+
+            # Wrap claude-code with project-specific sandbox settings.
+            #
+            # Usage in a project flake:
+            #   inputs.ai-dev.url = "github:malloc47/config?dir=ai-dev";
+            #   devShells.default = inputs.ai-dev.lib.x86_64-linux.mkProjectShell { };
+            #
+            # Or with overrides:
+            #   devShells.default = inputs.ai-dev.lib.x86_64-linux.mkProjectShell {
+            #     extraDomains = [ "pypi.org" "files.pythonhosted.org" ];
+            #     extraPackages = [ pkgs.python3 pkgs.poetry ];
+            #   };
+            mkSandboxedClaude =
+              {
+                extraDomains ? [ ],
+                extraPackages ? [ ],
+                extraStateDirs ? [ ],
+                extraStateFiles ? [ ],
+                extraEnv ? { },
+              }:
+              mkSandbox {
+                pkg = agents.claude-code;
+                binName = "claude";
+                outName = "claude";
+                allowedPackages = defaults.sandboxPackages ++ extraPackages;
+                stateDirs = defaults.claudeStateDirs ++ extraStateDirs;
+                stateFiles = defaults.claudeStateFiles ++ extraStateFiles;
+                restrictNetwork = true;
+                allowedDomains = defaults.allowedDomains ++ extraDomains;
+                inherit extraEnv;
+              };
+
+            mkSandboxedOpencode =
+              {
+                extraDomains ? [ ],
+                extraPackages ? [ ],
+                extraStateDirs ? [ ],
+                extraEnv ? { },
+              }:
+              mkSandbox {
+                pkg = agents.opencode;
+                binName = "opencode";
+                outName = "opencode";
+                allowedPackages = defaults.sandboxPackages ++ extraPackages;
+                stateDirs = defaults.opencodeStateDirs ++ extraStateDirs;
+                restrictNetwork = true;
+                allowedDomains = defaults.allowedDomains ++ extraDomains;
+                inherit extraEnv;
+              };
+
+            # Convenience: produce a devShell with sandboxed claude + opencode + raw agent-deck
+            mkProjectShell =
+              {
+                extraDomains ? [ ],
+                extraPackages ? [ ],
+                extraStateDirs ? [ ],
+                extraStateFiles ? [ ],
+                extraEnv ? { },
+                extraShellPackages ? [ ],
+              }:
+              pkgs.mkShell {
+                packages = [
+                  (mkSandboxedClaude {
+                    inherit
+                      extraDomains
+                      extraPackages
+                      extraStateDirs
+                      extraStateFiles
+                      extraEnv
+                      ;
+                  })
+                  (mkSandboxedOpencode {
+                    inherit
+                      extraDomains
+                      extraPackages
+                      extraStateDirs
+                      extraEnv
+                      ;
+                  })
+                  agents.agent-deck
+                ]
+                ++ extraShellPackages;
+              };
+          };
         };
     in
     {
@@ -182,6 +195,7 @@
         default = (mkForSystem system).devShell;
       });
       apps = forAllSystems (system: (mkForSystem system).apps);
+      lib = forAllSystems (system: (mkForSystem system).lib);
 
       homeManagerModules.default = import ./home-manager.nix { inherit self; };
     };

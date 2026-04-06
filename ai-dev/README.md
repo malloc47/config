@@ -1,84 +1,96 @@
 # ai-dev
 
-Portable subflake providing sandboxed AI coding tools (`claude-code`, `opencode`, `agent-deck`) and a `zellij-ai` session-manager wrapper with a baked-in config. Binaries are wrapped with bubblewrap and a domain-filtering HTTP proxy via [agent-sandbox.nix](https://github.com/archie-judd/agent-sandbox.nix); packaging comes from [llm-agents.nix](https://github.com/numtide/llm-agents.nix).
+Portable subflake providing AI coding tools and per-project sandboxing helpers.
 
-The subflake is designed to run identically on NixOS, non-NixOS Linux, and macOS hosts that have `nix` installed, so the same tooling follows you onto loaner machines and work VMs.
+**System-level**: installs unwrapped `claude-code`, `opencode`, `agent-deck`, and a `zellij-ai` session-manager wrapper. These go into the user environment via home-manager or `nix profile install`.
 
-## Usage
+**Project-level**: `lib.mkProjectShell`, `lib.mkSandboxedClaude`, and `lib.mkSandboxedOpencode` produce sandboxed wrappers with bubblewrap + domain-filtering proxy via [agent-sandbox.nix](https://github.com/archie-judd/agent-sandbox.nix). Each project customizes its own allowed domains, packages, and state paths.
 
-### 1. NixOS / home-manager (declarative)
+## System-level install
 
-From a flake that already has home-manager wired up:
+### NixOS / home-manager (declarative)
 
 ```nix
 {
   inputs.ai-dev.url = "github:malloc47/config?dir=ai-dev";
-  # ...
 }
 ```
-
-Then in the home-manager user config:
 
 ```nix
 {
   imports = [ inputs.ai-dev.homeManagerModules.default ];
   programs.ai-dev.enable = true;
-  # programs.ai-dev.installXdgZellijConfig = true;  # opt-in: write zellij config into ~/.config
 }
 ```
 
-### 2. Non-NixOS Linux (Ubuntu work VM, loaner box)
-
-Install [nix](https://nixos.org/download) (the Determinate Systems installer is a good default), then:
+### Non-NixOS Linux / standalone nix
 
 ```bash
-# Persistent install into user profile
 nix profile install github:malloc47/config?dir=ai-dev
-
-# Or ephemeral shell
-nix develop github:malloc47/config?dir=ai-dev
-
-# Or one-shot run
-nix run github:malloc47/config?dir=ai-dev#claude
 ```
 
-**Ubuntu 24.04 note:** bubblewrap user namespaces are blocked by default AppArmor. One-time fix:
+## Per-project sandbox
 
-```bash
-sudo tee /etc/apparmor.d/bwrap <<'EOF'
-abi <abi/4.0>,
-include <tunables/global>
-profile bwrap /usr/bin/bwrap flags=(unconfined) {
-  userns,
-  include if exists <local/bwrap>
-}
-EOF
-sudo systemctl reload apparmor
-```
-
-### 3. Per-project flake input
-
-Add the subflake to a project's `flake.nix` to get the same sandboxed tools in its devShell:
+Add a `flake.nix` in the project root:
 
 ```nix
 {
   inputs.ai-dev.url = "github:malloc47/config?dir=ai-dev";
 
-  outputs = { self, nixpkgs, ai-dev }: {
-    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
-      packages = [ ai-dev.packages.x86_64-linux.ai-dev-env ];
+  outputs = { ai-dev, ... }:
+    let system = "x86_64-linux";
+    in {
+      devShells.${system}.default = ai-dev.lib.${system}.mkProjectShell {
+        # Everything below is optional — defaults cover standard Anthropic/GitHub domains
+        extraDomains = [ "pypi.org" "files.pythonhosted.org" ];
+        extraPackages = p: with p; [ python3 poetry ];
+      };
     };
-  };
 }
 ```
 
-## Packages
+Then `nix develop` gives you a sandboxed `claude` and `opencode` scoped to that project.
 
-- `claude` — sandboxed Claude Code CLI
-- `opencode` — sandboxed OpenCode CLI
-- `agent-deck` — multi-agent orchestration TUI
-- `zellij-ai` — Zellij wrapper that loads the baked-in config
-- `ai-dev-env` — meta package bundling all of the above (default package)
+### Available lib functions
+
+**`mkProjectShell`** — convenience that returns a `mkShell` with sandboxed claude + opencode + raw agent-deck:
+
+```nix
+mkProjectShell {
+  extraDomains ? [];       # domains to add to the default allowlist
+  extraPackages ? [];      # packages available inside the sandbox
+  extraStateDirs ? [];     # additional read-write directories
+  extraStateFiles ? [];    # additional read-write files
+  extraEnv ? {};           # environment variables passed into the sandbox
+  extraShellPackages ? []; # packages added to the devShell (outside sandbox)
+}
+```
+
+**`mkSandboxedClaude`** / **`mkSandboxedOpencode`** — lower-level, returns a single sandboxed package:
+
+```nix
+mkSandboxedClaude {
+  extraDomains ? [];
+  extraPackages ? [];
+  extraStateDirs ? [];
+  extraStateFiles ? [];
+  extraEnv ? {};
+}
+```
+
+**`mkSandbox`** — re-export of `agent-sandbox.lib.${system}.mkSandbox` for full control.
+
+**`sandboxPackages`** / **`allowedDomains`** — the default lists, if you want to inspect or extend them in a custom `mkSandbox` call.
+
+### Default allowed domains
+
+- `api.anthropic.com`, `platform.claude.com`, `console.anthropic.com`, `statsig.anthropic.com`, `sentry.io`
+- `api.openai.com`
+- `github.com`, `api.github.com`, `objects.githubusercontent.com`, `registry.npmjs.org`
+
+### Default sandbox packages
+
+coreutils, git, ripgrep, fd, gnused, gnugrep, findutils, jq, which, nodejs, curl, openssh, diffutils, patch, gnutar, gzip
 
 ## Remote Zellij web access
 
