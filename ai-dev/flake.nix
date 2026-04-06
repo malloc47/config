@@ -59,10 +59,15 @@
           ];
 
           allowedDomains = [
+            # Anthropic: API + OAuth login + telemetry
             "api.anthropic.com"
+            "platform.claude.com"
+            "console.anthropic.com"
             "statsig.anthropic.com"
             "sentry.io"
+            # OpenAI (for opencode)
             "api.openai.com"
+            # GitHub: git operations + npm registry
             "github.com"
             "api.github.com"
             "objects.githubusercontent.com"
@@ -75,12 +80,17 @@
             outName = "claude";
             allowedPackages = sandboxPackages;
             stateDirs = [
+              # CWD-relative: per-project state
               ".claude"
               ".config/claude"
+              # HOME-relative: credentials, history, settings
+              # $HOME is expanded by bash at runtime, before bwrap overlays tmpfs
+              "$HOME/.claude"
+              "$HOME/.config/claude"
             ];
             stateFiles = [
-              ".claude.json"
-              ".claude.json.lock"
+              "$HOME/.claude.json"
+              "$HOME/.claude.json.lock"
             ];
             restrictNetwork = true;
             inherit allowedDomains;
@@ -94,6 +104,8 @@
             stateDirs = [
               ".opencode"
               ".config/opencode"
+              "$HOME/.opencode"
+              "$HOME/.config/opencode"
             ];
             restrictNetwork = true;
             inherit allowedDomains;
