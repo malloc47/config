@@ -10,20 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Initialize submodules
-        run: |
-          # Public submodules: check out normally
-          git submodule update --init config/.emacs.d/packages/nano-emacs
-
-          # Private submodule: redirect to a local stub repo
-          stub=$(mktemp -d)
-          mkdir -p "$stub/ssh/malloc47"
-          ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
-          git -C "$stub" init -b main
-          git -C "$stub" add .
-          git -C "$stub" -c user.name=CI -c user.email=ci@localhost commit -m "stub"
-          git config --file .gitmodules submodule.personal.url "$stub"
-          git submodule sync personal
-          git -c protocol.file.allow=always submodule update --init --remote personal
+        run: git submodule update --init config/.emacs.d/packages/nano-emacs
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
@@ -38,48 +25,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Initialize submodules
+        run: git submodule update --init config/.emacs.d/packages/nano-emacs
+      - name: Create personal stub
         run: |
-          git submodule update --init config/.emacs.d/packages/nano-emacs
-
           stub=$(mktemp -d)
           mkdir -p "$stub/ssh/malloc47"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
-          git -C "$stub" init -b main
-          git -C "$stub" add .
-          git -C "$stub" -c user.name=CI -c user.email=ci@localhost commit -m "stub"
-          git config --file .gitmodules submodule.personal.url "$stub"
-          git submodule sync personal
-          git -c protocol.file.allow=always submodule update --init --remote personal
+          echo "PERSONAL_STUB=$stub" >> "$GITHUB_ENV"
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
           extra_nix_config: |
             extra-platforms = aarch64-linux
-      - run: nix eval .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
+      - run: nix eval --override-input personal "path:$PERSONAL_STUB" .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
 
   eval-darwin:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        host: [cesare, nylmd-jwaggon1]
+        host: [cesare]
     steps:
       - uses: actions/checkout@v5
       - name: Initialize submodules
+        run: git submodule update --init config/.emacs.d/packages/nano-emacs
+      - name: Create personal stub
         run: |
-          git submodule update --init config/.emacs.d/packages/nano-emacs
-
           stub=$(mktemp -d)
-          mkdir -p "$stub/ssh/malloc47" "$stub/ssh/drw"
+          mkdir -p "$stub/ssh/malloc47"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
-          ssh-keygen -t ed25519 -f "$stub/ssh/drw/id_ed25519" -N "" -q
-          git -C "$stub" init -b main
-          git -C "$stub" add .
-          git -C "$stub" -c user.name=CI -c user.email=ci@localhost commit -m "stub"
-          git config --file .gitmodules submodule.personal.url "$stub"
-          git submodule sync personal
-          git -c protocol.file.allow=always submodule update --init --remote personal
+          echo "PERSONAL_STUB=$stub" >> "$GITHUB_ENV"
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
-      - run: nix eval .#darwinConfigurations.${{ matrix.host }}.system
+      - run: nix eval --override-input personal "path:$PERSONAL_STUB" .#darwinConfigurations.${{ matrix.host }}.system

@@ -63,7 +63,9 @@
   '';
 
   users.users.root.openssh.authorizedKeys.keys = [
-    (builtins.readFile ../personal/ssh/${config.settings.profile}/${config.settings.sshKeyName}.pub)
+    (builtins.readFile (
+      config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}.pub"
+    ))
   ];
 
 }

@@ -51,7 +51,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    self.submodules = true;
+    personal = {
+      url = "git+ssh://git@github.com/malloc47/personal";
+      flake = false;
+    };
   };
 
   outputs =
@@ -66,6 +69,7 @@
       nixos-hardware,
       agenix,
       git-hooks,
+      personal,
       ...
     }:
     let
@@ -102,92 +106,9 @@
             nixos/configuration-flake.nix
             hardware/vmware-fusion-arm.nix
             disk/vmware-fusion.nix
+            { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "salome";
-              system.stateVersion = "25.11";
-            }
-            (
-              { config, ... }:
-              {
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [
-                  config/home.nix
-                  config/home-dev.nix
-                  config/home-gui.nix
-                  config/home-vm.nix
-                ];
-              }
-            )
-          ];
-        };
-
-        drw = nixpkgs.lib.nixosSystem rec {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-            };
-          };
-          modules = [
-            home-manager.nixosModules.home-manager
-            modules/settings.nix
-            modules/user.nix
-            modules/nixpkgs.nix
-            modules/virtualization.nix
-            modules/networking.nix
-            modules/ssh.nix
-            modules/sound.nix
-            modules/gui.nix
-            hosts/drw-lxc.nix
-            nixos/configuration-flake.nix
-            hardware/lxc.nix
-            {
-              networking.hostName = "drw";
-              system.stateVersion = "25.11";
-            }
-            (
-              { config, ... }:
-              {
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [
-                  config/home.nix
-                  config/home-dev.nix
-                  config/home-gui.nix
-                  config/home-vm.nix
-                ];
-              }
-            )
-          ];
-        };
-
-        drw-vmware = nixpkgs.lib.nixosSystem rec {
-          system = "aarch64-linux";
-          specialArgs = {
-            inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-            };
-          };
-          modules = [
-            home-manager.nixosModules.home-manager
-            disko.nixosModules.disko
-            modules/settings.nix
-            modules/user.nix
-            modules/nixpkgs.nix
-            modules/virtualization.nix
-            modules/networking.nix
-            modules/ssh.nix
-            modules/sound.nix
-            modules/gui.nix
-            hosts/drw-vmware.nix
-            nixos/configuration-flake.nix
-            hardware/vmware-fusion-arm.nix
-            disk/vmware-fusion.nix
-            {
-              networking.hostName = "drw-vmware";
               system.stateVersion = "25.11";
             }
             (
@@ -217,13 +138,14 @@
               }
             )
             modules/settings.nix
+            { settings.sshKeys = "${personal}/ssh"; }
             (
               { config, ... }:
               {
                 # Enable guest tools so that we can extract the IP address from the guest
                 virtualisation.vmware.guest.enable = true;
                 users.users.root.openssh.authorizedKeys.keys = [
-                  (builtins.readFile personal/ssh/${config.settings.profile}/id_ed25519.pub)
+                  (builtins.readFile (config.settings.sshKeys + "/${config.settings.profile}/id_ed25519.pub"))
                 ];
               }
             )
@@ -250,6 +172,7 @@
             hosts/aida.nix
             nixos/configuration-flake.nix
             disk/gmktec-g10.nix
+            { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "aida";
               system.stateVersion = "25.11";
@@ -285,6 +208,7 @@
             hosts/aroldo.nix
             nixos/configuration-flake.nix
             disk/racknerd-vps.nix
+            { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "aroldo";
               system.stateVersion = "25.11";
@@ -321,6 +245,7 @@
             hosts/attila.nix
             nixos/configuration-flake.nix
             disk/dell-xps-9315.nix
+            { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "attila";
               system.stateVersion = "25.11";
@@ -352,6 +277,7 @@
             modules/settings.nix
             modules/user.nix
             modules/ssh.nix
+            { settings.sshKeys = "${personal}/ssh"; }
             agenix.darwinModules.default
             nix-homebrew.darwinModules.nix-homebrew
             darwin/homebrew.nix
@@ -390,45 +316,44 @@
           ];
         };
 
-        nylmd-jwaggon1 = nix-darwin.lib.darwinSystem rec {
-          specialArgs = {
-            inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              system = "aarch64-darwin";
-            };
-          };
-          modules = [
-            modules/settings.nix
-            modules/user.nix
-            modules/ssh.nix
-            nix-homebrew.darwinModules.nix-homebrew
-            darwin/homebrew.nix
-            darwin/configuration.nix
-            hosts/nylmd-jwaggon1.nix
-            home-manager.darwinModules.home-manager
-            (
-              { config, ... }:
-              {
-                home-manager.extraSpecialArgs = specialArgs;
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username} = import ./darwin/home.nix;
-                # Doing this to handle existing vmware files
-                home-manager.backupFileExtension = "backup";
+      };
 
-                # Set Git commit hash for darwin-version.
-                system.configurationRevision = self.rev or self.dirtyRev or null;
-                system.primaryUser = config.settings.username;
+      nixosModules = {
+        settings = ./modules/settings.nix;
+        user = ./modules/user.nix;
+        ssh = ./modules/ssh.nix;
+        nixpkgs = ./modules/nixpkgs.nix;
+        networking = ./modules/networking.nix;
+        virtualization = ./modules/virtualization.nix;
+        sound = ./modules/sound.nix;
+        gui = ./modules/gui.nix;
+        motd = ./modules/motd.nix;
+        vmware-guest = ./modules/vmware-guest.nix;
+        configuration-flake = ./nixos/configuration-flake.nix;
+      };
 
-                system.defaults.universalaccess.reduceMotion = true;
+      homeManagerModules = {
+        home = ./config/home.nix;
+        home-dev = ./config/home-dev.nix;
+        home-gui = ./config/home-gui.nix;
+        home-vm = ./config/home-vm.nix;
+      };
 
-                nixpkgs.hostPlatform = "aarch64-darwin";
+      darwinModules = {
+        configuration = ./darwin/configuration.nix;
+        homebrew = ./darwin/homebrew.nix;
+        home = ./darwin/home.nix;
+      };
 
-                system.stateVersion = 6;
-              }
-            )
-          ];
-        };
+      overlays.default = import ./pkgs/default.nix;
+
+      hardwareModules = {
+        lxc = ./hardware/lxc.nix;
+        vmware-fusion-arm = ./hardware/vmware-fusion-arm.nix;
+      };
+
+      diskModules = {
+        vmware-fusion = ./disk/vmware-fusion.nix;
       };
 
       packages.aarch64-linux.term-do =

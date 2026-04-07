@@ -19,7 +19,7 @@ let
             settings.PasswordAuthentication = false;
           };
           users.users.root.openssh.authorizedKeys.keys = [
-            (builtins.readFile ../personal/ssh/malloc47/id_ed25519.pub)
+            (builtins.readFile (config.settings.sshKeys + "/malloc47/id_ed25519.pub"))
           ];
         }
       )

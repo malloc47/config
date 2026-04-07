@@ -21,7 +21,7 @@ in
         uid = 1000;
         openssh.authorizedKeys.keys = [
           (builtins.readFile (
-            ../personal/ssh + "/${config.settings.profile}/${config.settings.sshKeyName}.pub"
+            config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}.pub"
           ))
         ];
         shell = pkgs.zsh;

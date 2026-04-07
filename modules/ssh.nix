@@ -36,11 +36,11 @@
         };
       };
       home.file."ssh-key" = {
-        source = ./. + "/../personal/ssh/${config.settings.profile}/${config.settings.sshKeyName}";
+        source = config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}";
         target = ".ssh/${config.settings.sshKeyName}";
       };
       home.file."ssh-key-pub" = {
-        source = ./. + "/../personal/ssh/${config.settings.profile}/${config.settings.sshKeyName}.pub";
+        source = config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}.pub";
         target = ".ssh/${config.settings.sshKeyName}.pub";
       };
     };

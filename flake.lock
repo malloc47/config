@@ -318,6 +318,22 @@
         "type": "github"
       }
     },
+    "personal": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774645989,
+        "narHash": "sha256-4ufHhBMwX/qLyOIxtyT+HgzIx+4cHz9r+nHEUNtRt9Q=",
+        "ref": "refs/heads/master",
+        "rev": "69613463dcd2e8c229d17bba720e43678182c00f",
+        "revCount": 67,
+        "type": "git",
+        "url": "ssh://git@github.com/malloc47/personal"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/malloc47/personal"
+      }
+    },
     "root": {
       "inputs": {
         "agenix": "agenix",
@@ -332,6 +348,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "personal": "personal",
         "sendkeys-tap": "sendkeys-tap"
       }
     },

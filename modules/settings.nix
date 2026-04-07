@@ -67,11 +67,18 @@ with lib;
           Groups to attach to the default user.
         '';
       };
+      sshKeys = mkOption {
+        type = types.path;
+        description = ''
+          Path to directory containing SSH key profiles. Each profile
+          is a subdirectory (e.g., malloc47/, drw/) containing key files.
+        '';
+      };
       sshKeyName = mkOption {
         type = with types; uniq str;
         description = ''
           Base name of the SSH key file (without extension) in
-          personal/ssh/<profile>/. Auto-detected from id_ed25519
+          <sshKeys>/<profile>/. Auto-detected from id_ed25519
           with fallback to id_rsa.
         '';
       };
@@ -112,7 +119,7 @@ with lib;
     settings.xkbFile = lib.mkIf (config.settings.vm) (lib.mkDefault "vm");
     settings.sshKeyName =
       let
-        profileDir = ../personal/ssh + "/${config.settings.profile}";
+        profileDir = config.settings.sshKeys + "/${config.settings.profile}";
       in
       lib.mkDefault (if builtins.pathExists (profileDir + "/id_ed25519") then "id_ed25519" else "id_rsa");
   };

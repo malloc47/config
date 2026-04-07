@@ -18,4 +18,3 @@ tasks:
       - nix eval --offline --read-only .#nixosConfigurations.attila.config.system.build.toplevel.drvPath
       - nix eval --offline --read-only .#nixosConfigurations.vm-iso.config.system.build.toplevel.drvPath
       - nix eval --offline --read-only .#darwinConfigurations.cesare.system
-      - nix eval --offline --read-only .#darwinConfigurations.nylmd-jwaggon1.system

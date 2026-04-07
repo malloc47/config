@@ -4,7 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a Nix/NixOS/nix-darwin configuration repository managing multiple machines via a single flake. The repo has partially adopted flakes — legacy `configuration.nix`-style files coexist with the flake-based entrypoints.
+This is a public Nix/NixOS/nix-darwin configuration repository managing personal machines via a single flake. It exports reusable modules consumed by a separate private `work-config` repository for work machines.
+
+## Multi-Repo Architecture
+
+This repo (`config`) is one of four repositories:
+
+```
+          ai-dev (public)
+           │          │
+           v          v
+personal → config ← work-config
+(private)  (public)   (private)
+
+work-config imports:
+            config.nixosModules.*
+            config.darwinModules.*
+            config.homeManagerModules.*
+            config.hardwareModules.*
+            config.diskModules.*
+            config.overlays.default
+```
+
+- **config** (this repo): Public personal NixOS/nix-darwin configs + exported modules
+- **personal**: Private repo consumed as a `flake = false` input; contains SSH keys and secrets
+- **work-config**: Private repo for work machines; imports config's modules via flake input
+- **ai-dev**: Standalone AI development toolkit, consumed by both config and work-config
+
+All cross-repo dependencies use flake inputs — no git submodules between repos.
 
 ## Commands
 
@@ -23,6 +50,9 @@ nix fmt
 
 # Update flake inputs
 nix flake update
+
+# Evaluate all hosts (via taskfile)
+task eval
 ```
 
 ## Architecture
@@ -31,8 +61,6 @@ nix flake update
 
 **NixOS hosts** (`nixosConfigurations`):
 - `salome` — aarch64-linux, VMware Fusion guest on M-series Mac
-- `drw` — x86_64-linux, LXC container on Ubuntu 22.04 (work machine)
-- `drw-vmware` — aarch64-linux, VMware Fusion guest for work machine
 - `aida` — x86_64-linux, baremetal on gmktec-g10 mini PC
 - `aroldo` — x86_64-linux, RackNerd VPS (Headscale + DERP relay)
 - `attila` — x86_64-linux, headless Dell XPS 13 9315 laptop
@@ -40,7 +68,14 @@ nix flake update
 
 **nix-darwin hosts** (`darwinConfigurations`):
 - `cesare` — aarch64-darwin, personal MacBook Pro (M-series)
-- `nylmd-jwaggon1` — aarch64-darwin, work MacBook Pro (M-series)
+
+**Exported modules** (consumed by work-config):
+- `nixosModules` — settings, user, ssh, nixpkgs, networking, virtualization, sound, gui, motd, vmware-guest, configuration-flake
+- `homeManagerModules` — home, home-dev, home-gui, home-vm
+- `darwinModules` — configuration, homebrew, home
+- `hardwareModules` — lxc, vmware-fusion-arm
+- `diskModules` — vmware-fusion
+- `overlays.default`
 
 ### Module Composition
 
@@ -55,11 +90,12 @@ Each host configuration in `flake.nix` assembles a stack of modules:
 ### Key Abstraction: `modules/settings.nix`
 
 A custom options module that normalizes per-host differences, avoiding host-name conditionals throughout the config. Key options:
+- `settings.sshKeys` — path to directory containing SSH key profiles (set to `"${inputs.personal}/ssh"` in this repo, `./ssh` in work-config)
 - `settings.vm` — boolean, suppresses keybindings already handled by the VM host
 - `settings.fontSize` / `settings.dpi` / `settings.fontName` — display scaling for Retina vs non-Retina
 - `settings.terminal` — terminal emulator choice (alacritty vs others)
 - `settings.xkbFile` — selects a keyboard layout from `xkb/`
-- `settings.profile` — groups machines by identity (e.g., `malloc47`, `drw`) to load the right SSH keys from `personal/ssh/<profile>/`
+- `settings.profile` — groups machines by identity (e.g., `malloc47`) to load the right SSH keys from `config.settings.sshKeys + "/<profile>/"`
 
 ### Userspace (Home-Manager)
 
@@ -67,27 +103,26 @@ A custom options module that normalizes per-host differences, avoiding host-name
 - macOS entrypoint: `darwin/home.nix`
 - All standalone dotfiles live in `config/` alongside `home.nix`
 - Dotfiles use three modes: raw files via `home.file.<n>.source`, inline strings via `home.file.<n>.text`, or fully Nix-generated (no separate file)
-
-### LXC Container Strategy (`drw`)
-
-On work Linux hardware, NixOS runs inside an LXC container (not a VM) to reduce overhead. The container shares the host X server rather than running its own:
-- The container filesystem is bind-mounted on the host at `~/lxc-share`
-- The host i3 config symlinks to the container's generated i3 config via that mount
-- Keybindings in the `drw` host config wrap application launches with `lxc exec nixos -- machinectl shell ...` so containerized apps appear in the host window manager
-- Setup/reset script: `lxc/lxc.sh`
+- Userspace config is shared: work-config imports `config.homeManagerModules.*` so both personal and work machines get the same dotfiles
 
 ### macOS-Specific (`darwin/`)
 
 - Homebrew managed declaratively via `nix-homebrew` (`darwin/homebrew.nix`)
 - macOS system defaults, keyboard (Karabiner), and window manager config in `darwin/configuration.nix`
-- Custom packages in `pkgs/` (albert, autoraise, aws-okta, etc.)
+- Custom packages in `pkgs/` (albert, autoraise, etc.)
 
 ### OpenWRT Router (`hosts/openwrt/`)
 
 UCI-format configuration files managed separately — not built by the flake. Applied manually to the router.
+
+### CI (`--override-input personal`)
+
+CI cannot access the private `personal` repo. The GitHub Actions workflow creates a stub directory with a dummy SSH key and passes it via `nix eval --override-input personal path:$stub`.
 
 ## Mistakes to Avoid
 
 - Files that are new to the repository need to be added to the git staging area before trying to deploy
 
 - Local build tests (nix build .#nixosConfigurations.<host>.config.system.build.toplevel) of builds intended for another host will only work if they share the same target architecture
+
+- When modifying exported modules, test that work-config still evaluates (the `nix eval` commands in work-config's taskfile)
