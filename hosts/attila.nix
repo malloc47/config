@@ -30,6 +30,7 @@
   };
 
   services.openssh.enable = true;
+  programs.ssh.startAgent = true;
 
   # Headless: ignore lid close
   services.logind.settings.Login = {

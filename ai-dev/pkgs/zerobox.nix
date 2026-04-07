@@ -4,6 +4,8 @@
   fetchFromGitHub,
   cmake,
   perl,
+  pkg-config,
+  libcap,
   libiconv,
   stdenv,
   runCommand,
@@ -95,11 +97,18 @@ rustPlatform.buildRustPackage {
   nativeBuildInputs = [
     cmake
     perl
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    pkg-config
   ];
 
-  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
-    libiconv
-  ];
+  buildInputs =
+    lib.optionals stdenv.hostPlatform.isDarwin [
+      libiconv
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
+      libcap
+    ];
 
   buildAndTestSubdir = "crates/zerobox";
 
