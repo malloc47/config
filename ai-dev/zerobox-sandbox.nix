@@ -135,10 +135,10 @@ in
         exec zerobox \
           --allow-read "$CWD" \
           --allow-write "$CWD" \
-          --allow-read /etc/passwd \
-          --allow-read /etc/resolv.conf \
-          --allow-read /etc/ssl \
-          --allow-read /etc/static \
+          --allow-read /etc \
+          --allow-read /run/current-system \
+          --allow-read /nix/store \
+          --allow-read /nix/var \
           --allow-read "$REAL_TMPDIR" \
           --allow-write "$REAL_TMPDIR" \
           --allow-read /tmp \
