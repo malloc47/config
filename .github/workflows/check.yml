@@ -28,7 +28,7 @@ jobs:
         run: git submodule update --init config/.emacs.d/packages/nano-emacs
       - name: Create personal stub
         run: |
-          stub=$(mktemp -d)
+          stub=$(realpath "$(mktemp -d)")
           mkdir -p "$stub/ssh/malloc47"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
           echo "PERSONAL_STUB=$stub" >> "$GITHUB_ENV"
@@ -37,7 +37,7 @@ jobs:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
           extra_nix_config: |
             extra-platforms = aarch64-linux
-      - run: nix eval --override-input personal "path:$PERSONAL_STUB" .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
+      - run: nix eval --override-input personal "path:$PERSONAL_STUB" '.#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath'
 
   eval-darwin:
     runs-on: macos-latest
@@ -51,11 +51,11 @@ jobs:
         run: git submodule update --init config/.emacs.d/packages/nano-emacs
       - name: Create personal stub
         run: |
-          stub=$(mktemp -d)
+          stub=$(realpath "$(mktemp -d)")
           mkdir -p "$stub/ssh/malloc47"
           ssh-keygen -t ed25519 -f "$stub/ssh/malloc47/id_ed25519" -N "" -q
           echo "PERSONAL_STUB=$stub" >> "$GITHUB_ENV"
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
-      - run: nix eval --override-input personal "path:$PERSONAL_STUB" .#darwinConfigurations.${{ matrix.host }}.system
+      - run: nix eval --override-input personal "path:$PERSONAL_STUB" '.#darwinConfigurations.${{ matrix.host }}.system'
