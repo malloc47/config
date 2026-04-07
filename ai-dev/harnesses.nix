@@ -1,5 +1,5 @@
 # Harness definitions: per-tool knowledge for sandbox configuration.
-# Each harness knows its package, binary name, state paths, and how to
+# Each harness knows its package, binary name, writable paths, and how to
 # inject CLI flags (e.g. --add-dir, --dangerously-skip-permissions).
 {
   pkgs,
@@ -11,19 +11,18 @@
     pkg = agents.claude-code;
     binName = "claude";
     outName = "claude";
-    stateDirs = defaults.claudeStateDirs;
-    stateFiles = defaults.claudeStateFiles;
+    allowWrite = defaults.claudeWritePaths;
     domains = [ ];
     packages = [ ];
 
     # Returns the pkg, possibly wrapped with extra CLI flags before sandboxing.
     mkWrappedPkg =
       {
-        extraStateDirs ? [ ],
+        extraWritePaths ? [ ],
         unrestricted ? false,
       }:
       let
-        addDirFlags = map (d: "--add-dir ${d}") extraStateDirs;
+        addDirFlags = map (d: "--add-dir ${d}") extraWritePaths;
         permFlags = if unrestricted then [ "--dangerously-skip-permissions" ] else [ ];
         allFlags = addDirFlags ++ permFlags;
       in
@@ -41,14 +40,13 @@
     pkg = agents.opencode;
     binName = "opencode";
     outName = "opencode";
-    stateDirs = defaults.opencodeStateDirs;
-    stateFiles = [ ];
+    allowWrite = defaults.opencodeWritePaths;
     domains = [ ];
     packages = [ ];
 
     mkWrappedPkg =
       {
-        extraStateDirs ? [ ],
+        extraWritePaths ? [ ],
         unrestricted ? false,
       }:
       agents.opencode;

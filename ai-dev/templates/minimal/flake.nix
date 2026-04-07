@@ -5,15 +5,17 @@
 
   outputs =
     { ai-dev, ... }:
-    ai-dev.lib.forAllSystems (
-      system:
-      let
-        ai = ai-dev.lib.${system};
-      in
-      {
-        devShells.${system}.default = ai.mkProjectShell {
-          harnesses = [ "claude-code" ];
-        };
-      }
-    );
+    {
+      devShells = ai-dev.lib.forAllSystems (
+        system:
+        let
+          ai = ai-dev.lib.${system};
+        in
+        {
+          default = ai.mkProjectShell {
+            harnesses = [ "claude-code" ];
+          };
+        }
+      );
+    };
 }

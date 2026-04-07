@@ -7,4 +7,5 @@
   term-do = prev.callPackage term-do/default.nix { };
   carve = prev.callPackage carve/default.nix { };
   swipe-aerospace = prev.callPackage swipe-aerospace/default.nix { };
+  zerobox = prev.callPackage ../ai-dev/pkgs/zerobox.nix { };
 })

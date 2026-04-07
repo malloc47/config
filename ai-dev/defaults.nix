@@ -39,21 +39,18 @@
     "registry.npmjs.org"
   ];
 
-  # State paths for Claude Code
-  claudeStateDirs = [
+  # Writable paths for Claude Code
+  claudeWritePaths = [
     ".claude"
     ".config/claude"
     "$HOME/.claude"
     "$HOME/.config/claude"
-  ];
-
-  claudeStateFiles = [
     "$HOME/.claude.json"
     "$HOME/.claude.json.lock"
   ];
 
-  # State paths for OpenCode
-  opencodeStateDirs = [
+  # Writable paths for OpenCode
+  opencodeWritePaths = [
     ".opencode"
     ".config/opencode"
     "$HOME/.opencode"

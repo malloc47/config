@@ -15,14 +15,14 @@ let
       (acc: p: {
         packages = acc.packages ++ (p.packages or [ ]);
         domains = acc.domains ++ (p.domains or [ ]);
-        stateDirs = acc.stateDirs ++ (p.stateDirs or [ ]);
-        stateFiles = acc.stateFiles ++ (p.stateFiles or [ ]);
+        allowWrite = acc.allowWrite ++ (p.allowWrite or [ ]);
+        allowRead = acc.allowRead ++ (p.allowRead or [ ]);
       })
       {
         packages = [ ];
         domains = [ ];
-        stateDirs = [ ];
-        stateFiles = [ ];
+        allowWrite = [ ];
+        allowRead = [ ];
       }
       profiles;
 
@@ -38,13 +38,12 @@ let
         pkg = h;
         binName = h.pname or h.name;
         outName = h.pname or h.name;
-        stateDirs = [ ];
-        stateFiles = [ ];
+        allowWrite = [ ];
         domains = [ ];
         packages = [ ];
         mkWrappedPkg =
           {
-            extraStateDirs ? [ ],
+            extraWritePaths ? [ ],
             unrestricted ? false,
           }:
           h;
@@ -57,23 +56,24 @@ let
       profiles ? [ ],
       extraDomains ? [ ],
       extraPackages ? [ ],
-      extraStateDirs ? [ ],
-      extraStateFiles ? [ ],
-      extraEnv ? { },
-      restrictNetwork ? true,
+      extraAllowWrite ? [ ],
+      extraAllowRead ? [ ],
+      env ? { },
+      # true = unrestricted network; false = restrict to domain allowlist.
+      unrestrictedNetwork ? false,
       unrestrictedHarness ? false,
     }:
     let
       harness = resolveHarness harnessSpec;
       merged = mergeProfiles profiles;
 
-      allStateDirs = harness.stateDirs ++ merged.stateDirs ++ extraStateDirs;
-      allStateFiles = (harness.stateFiles or [ ]) ++ merged.stateFiles ++ extraStateFiles;
+      allAllowWrite = harness.allowWrite ++ merged.allowWrite ++ extraAllowWrite;
+      allAllowRead = merged.allowRead ++ extraAllowRead;
       allDomains = defaults.allowedDomains ++ harness.domains ++ merged.domains ++ extraDomains;
       allPackages = defaults.sandboxPackages ++ harness.packages ++ merged.packages ++ extraPackages;
 
       wrappedPkg = harness.mkWrappedPkg {
-        inherit extraStateDirs;
+        extraWritePaths = extraAllowWrite;
         unrestricted = unrestrictedHarness;
       };
     in
@@ -81,15 +81,16 @@ let
       mkSandboxUpstream {
         pkg = wrappedPkg;
         inherit (harness) binName outName;
-        allowedPackages = allPackages;
-        stateDirs = allStateDirs;
-        stateFiles = allStateFiles;
-        inherit restrictNetwork;
-        allowedDomains = allDomains;
-        extraEnv = extraEnv;
+        packages = allPackages;
+        allowWrite = allAllowWrite;
+        allowRead = allAllowRead;
+        allowNet = if unrestrictedNetwork then true else allDomains;
+        inherit env;
       }
     else
-      # Darwin: bubblewrap unavailable, return unwrapped package
+      # Darwin: Seatbelt blocks macOS Keychain access, which claude-code
+      # and other tools need for OAuth credential storage.  Until zerobox
+      # gains a --allow-keychain or Mach-service allowlist, skip sandboxing.
       wrappedPkg;
 
   # High-level: produce a devShell from a list of harnesses.
@@ -102,11 +103,11 @@ let
       profiles ? [ ],
       extraDomains ? [ ],
       extraPackages ? [ ],
-      extraStateDirs ? [ ],
-      extraStateFiles ? [ ],
-      extraEnv ? { },
+      extraAllowWrite ? [ ],
+      extraAllowRead ? [ ],
+      env ? { },
       extraShellPackages ? [ ],
-      restrictNetwork ? true,
+      unrestrictedNetwork ? false,
       unrestrictedHarness ? false,
     }:
     let
@@ -117,10 +118,10 @@ let
             profiles
             extraDomains
             extraPackages
-            extraStateDirs
-            extraStateFiles
-            extraEnv
-            restrictNetwork
+            extraAllowWrite
+            extraAllowRead
+            env
+            unrestrictedNetwork
             unrestrictedHarness
             ;
         }
@@ -140,6 +141,5 @@ in
     ;
   inherit (defaults) sandboxPackages allowedDomains;
   profiles = profileDefinitions;
-  # Re-export for power users
   mkSandbox = mkSandboxUpstream;
 }

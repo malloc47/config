@@ -1,5 +1,5 @@
 # Composable tool profiles for sandbox configuration.
-# Each profile bundles packages, domains, and state paths for a tool ecosystem.
+# Each profile bundles packages, domains, and path permissions for a tool ecosystem.
 { pkgs }:
 {
   github = {
@@ -9,8 +9,7 @@
       "api.github.com"
       "objects.githubusercontent.com"
     ];
-    stateDirs = [ "$HOME/.config/gh" ];
-    stateFiles = [ ];
+    allowWrite = [ "$HOME/.config/gh" ];
   };
 
   python = {
@@ -22,8 +21,7 @@
       "pypi.org"
       "files.pythonhosted.org"
     ];
-    stateDirs = [ "$HOME/.cache/pip" ];
-    stateFiles = [ ];
+    allowWrite = [ "$HOME/.cache/pip" ];
   };
 
   node = {
@@ -32,11 +30,10 @@
       "registry.npmjs.org"
       "registry.yarnpkg.com"
     ];
-    stateDirs = [
+    allowWrite = [
       "$HOME/.npm"
       "node_modules"
     ];
-    stateFiles = [ ];
   };
 
   rust = {
@@ -49,11 +46,10 @@
       "static.crates.io"
       "index.crates.io"
     ];
-    stateDirs = [
+    allowWrite = [
       "$HOME/.cargo"
       "target"
     ];
-    stateFiles = [ ];
   };
 
   aws = {
@@ -61,15 +57,13 @@
     domains = [
       "sts.amazonaws.com"
     ];
-    stateDirs = [ "$HOME/.aws" ];
-    stateFiles = [ ];
+    allowWrite = [ "$HOME/.aws" ];
   };
 
   docker = {
     packages = [ pkgs.docker-client ];
     domains = [ ];
-    stateDirs = [ "$HOME/.docker" ];
-    stateFiles = [ ];
+    allowWrite = [ "$HOME/.docker" ];
   };
 
   nix = {
@@ -80,7 +74,6 @@
     domains = [
       "cache.nixos.org"
     ];
-    stateDirs = [ ];
-    stateFiles = [ ];
+    allowWrite = [ ];
   };
 }

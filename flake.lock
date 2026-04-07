@@ -23,30 +23,8 @@
         "type": "github"
       }
     },
-    "agent-sandbox": {
-      "inputs": {
-        "nixpkgs": [
-          "ai-dev",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1775329157,
-        "narHash": "sha256-F6drRHYG56ds/O4yQIzqtZVwrNwS/OauMZ8wBg62R5k=",
-        "owner": "archie-judd",
-        "repo": "agent-sandbox.nix",
-        "rev": "6619208255a9a4e2be844b6e57b2958bf359fe2f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "archie-judd",
-        "repo": "agent-sandbox.nix",
-        "type": "github"
-      }
-    },
     "ai-dev": {
       "inputs": {
-        "agent-sandbox": "agent-sandbox",
         "llm-agents": "llm-agents",
         "nixpkgs": "nixpkgs"
       },
@@ -383,11 +361,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1775399974,
-        "narHash": "sha256-uCjuOi5fN6Y/AfpWv/MH65CAoLEIHOg14PSrtzXGuJs=",
+        "lastModified": 1775486894,
+        "narHash": "sha256-JPl4+i8DuzCtvyd5lsvO1HudGBF5OXlkNyJJ0GbB6uw=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "c9e352e53c5164b68dd05acf5a87d5798b6aa003",
+        "rev": "1d2eae174c96e2ba8504813e3a5b5fa93964a768",
         "type": "github"
       },
       "original": {

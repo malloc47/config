@@ -7,10 +7,6 @@
       url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agent-sandbox = {
-      url = "github:archie-judd/agent-sandbox.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -18,7 +14,6 @@
       self,
       nixpkgs,
       llm-agents,
-      agent-sandbox,
     }:
     let
       supportedSystems = [
@@ -48,7 +43,8 @@
             '';
           };
 
-          # Per-project sandboxing: harness+profile system
+          # Per-project sandboxing: harness+profile system (backed by zerobox)
+          sandbox = import ./zerobox-sandbox.nix { inherit pkgs; };
           harnessDefinitions = import ./harnesses.nix { inherit pkgs agents defaults; };
           profileDefinitions = import ./profiles.nix { inherit pkgs; };
           projectLib = import ./lib.nix {
@@ -59,7 +55,7 @@
               harnessDefinitions
               profileDefinitions
               ;
-            mkSandboxUpstream = agent-sandbox.lib.${system}.mkSandbox;
+            mkSandboxUpstream = sandbox.mkSandbox;
           };
         in
         {
