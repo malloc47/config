@@ -4,6 +4,7 @@
   imports = [
     ../modules/settings.nix
     ../modules/motd.nix
+    ../modules/tailscale-client.nix
   ];
 
   motd = {
@@ -18,7 +19,13 @@
       "headless"
       "wifi"
       "battery"
+      "tailscale"
     ];
+  };
+
+  services.tailscale-client = {
+    enable = true;
+    loginServer = "https://hs.malloc47.com";
   };
 
   services.openssh.enable = true;
