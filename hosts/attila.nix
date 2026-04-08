@@ -32,6 +32,9 @@
   services.openssh.enable = true;
   programs.ssh.startAgent = true;
 
+  # Enable unprivileged user namespaces for bubblewrap (used by zerobox sandboxing)
+  security.unprivilegedUsernsClone = true;
+
   # Headless: ignore lid close
   services.logind.settings.Login = {
     HandleLidSwitch = "ignore";
