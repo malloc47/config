@@ -129,7 +129,7 @@ in
               nix_part=" %F{242}·%f %F{red}[''${(j. .)_nix_pkgs}]%f"
             fi
           fi
-          PROMPT="''${lambda_color}λ''${lambda_color:+%f} ''${host_part}$(_prompt_pwd)''${git_part}''${nix_part} "
+          PROMPT="''${lambda_color}λ''${lambda_color:+%f} ''${host_part}$(_prompt_pwd)''${git_part}''${nix_part} ▸ "
         }
 
         nixos-deploy() {
@@ -186,7 +186,7 @@ in
           if [[ -n "$SSH_CONNECTION" ]]; then
             HOST_PART="\[\e[36m\]\h\[\e[0m\]:"
           fi
-          export PS1="λ ''${HOST_PART}\w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') "
+          export PS1="λ ''${HOST_PART}\w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') ▸ "
       fi
 
       nixos-deploy() {
