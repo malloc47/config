@@ -37,6 +37,14 @@ Capture ideas and pain points to work on when I have bandwidth:
 - [Miniflux](https://miniflux.app/) / FreshRSS — lightweight RSS reader, always accessible
 - DNS-over-HTTPS proxy — public encrypted DNS entry point forwarding to AdGuard over tailnet, works without Tailscale active on device
 
+## Repo Hygiene
+
+- Normalize all repos on `main` branch (config and personal currently use `master`)
+
+## Security
+
+- Audit SSH private keys ending up in `/nix/store` — flake inputs (personal, work-config's `./ssh`) are copied to the store world-readable; consider using agenix for private keys instead
+
 ## Network
 
 Bifurcate wifi into separate LANs

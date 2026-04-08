@@ -71,7 +71,7 @@ with lib;
         type = types.path;
         description = ''
           Path to directory containing SSH key profiles. Each profile
-          is a subdirectory (e.g., malloc47/, drw/) containing key files.
+          is a subdirectory (e.g., malloc47/) containing key files.
         '';
       };
       sshKeyName = mkOption {
