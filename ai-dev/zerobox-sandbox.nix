@@ -79,7 +79,9 @@ in
         # each intermediate target.  On NixOS, paths like /etc/ssl and
         # $HOME/.config/claude are commonly symlinks into the nix store.
         # bwrap mounts literal paths, so we must also allow the real targets.
-        resolve_symlink_flags() {
+        # Resolve symlink chains for a path and append --allow-read (and
+        # optionally --allow-write) flags to SYMLINK_FLAGS for each target.
+        resolve_symlinks() {
           local path="$1"
           local mode="$2"  # "read" or "write"
           local current="$path"
@@ -97,9 +99,9 @@ in
               break
             fi
             seen="$seen $target"
-            echo "--allow-read $target"
+            SYMLINK_FLAGS="$SYMLINK_FLAGS --allow-read $target"
             if [ "$mode" = "write" ]; then
-              echo "--allow-write $target"
+              SYMLINK_FLAGS="$SYMLINK_FLAGS --allow-write $target"
             fi
             current="$target"
           done
@@ -110,21 +112,21 @@ in
         ${pkgs.lib.optionalString (allowWrite != [ ]) ''
           for p in ${builtins.concatStringsSep " " (map (p: ''"${p}"'') allowWrite)}; do
             if [ -e "$p" ]; then
-              SYMLINK_FLAGS="$SYMLINK_FLAGS $(resolve_symlink_flags "$p" write)"
+              resolve_symlinks "$p" write
             fi
           done
         ''}
         ${pkgs.lib.optionalString (allowRead != [ ]) ''
           for p in ${builtins.concatStringsSep " " (map (p: ''"${p}"'') allowRead)}; do
             if [ -e "$p" ]; then
-              SYMLINK_FLAGS="$SYMLINK_FLAGS $(resolve_symlink_flags "$p" read)"
+              resolve_symlinks "$p" read
             fi
           done
         ''}
         # Also resolve system paths that are symlinks on NixOS
         for p in /etc/resolv.conf /etc/ssl /etc/passwd /etc/static; do
           if [ -e "$p" ]; then
-            SYMLINK_FLAGS="$SYMLINK_FLAGS $(resolve_symlink_flags "$p" read)"
+            resolve_symlinks "$p" read
           fi
         done
 
