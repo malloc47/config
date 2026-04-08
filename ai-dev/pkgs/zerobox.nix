@@ -73,6 +73,14 @@ let
       sed -i '/^package = "codex-protocol"/d' $out/upstream/windows-sandbox-rs/Cargo.toml
       sed -i '/^path = "\.\.\/protocol"/d' $out/upstream/windows-sandbox-rs/Cargo.toml
 
+      # Remove /run/current-system/sw from platform defaults.
+      # On NixOS, bwrap fails with "Can't mkdir /run/current-system/sw"
+      # because /run is already ro-bound (added by the network policy for
+      # DNS resolution) and bwrap can't create subdirectories inside a
+      # read-only bind mount.  The /run binding already covers this path.
+      sed -i '/"\/run\/current-system\/sw"/d' \
+        $out/upstream/linux-sandbox/src/bwrap.rs
+
       # Apply zerobox patches
       cd $out
       for p in scripts/upstream-secret-substitution.patch \
