@@ -5,6 +5,7 @@
 }:
 {
   imports = [
+    ../config/home-osconfig-bridge.nix
     ../config/home.nix
     ../config/home-dev.nix
     ../config/terminal.nix

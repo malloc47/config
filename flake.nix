@@ -117,6 +117,7 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.users.${config.settings.username}.imports = [
+                  config/home-osconfig-bridge.nix
                   config/home.nix
                   config/home-dev.nix
                   config/home-gui.nix
@@ -182,7 +183,10 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+                home-manager.users.${config.settings.username}.imports = [
+                  config/home-osconfig-bridge.nix
+                  config/home.nix
+                ];
               }
             )
           ];
@@ -218,7 +222,10 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [ config/home.nix ];
+                home-manager.users.${config.settings.username}.imports = [
+                  config/home-osconfig-bridge.nix
+                  config/home.nix
+                ];
               }
             )
           ];
@@ -256,6 +263,7 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.users.${config.settings.username}.imports = [
+                  config/home-osconfig-bridge.nix
                   config/home.nix
                   config/home-dev.nix
                 ];
@@ -333,6 +341,7 @@
       };
 
       homeManagerModules = {
+        osconfig-bridge = ./config/home-osconfig-bridge.nix;
         home = ./config/home.nix;
         home-dev = ./config/home-dev.nix;
         home-gui = ./config/home-gui.nix;

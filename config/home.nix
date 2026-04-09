@@ -1,6 +1,5 @@
 {
   config,
-  osConfig,
   pkgs,
   ...
 }:
@@ -10,8 +9,6 @@
     ./git.nix
     ./shell.nix
   ];
-
-  settings = osConfig.settings;
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
