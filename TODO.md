@@ -26,6 +26,30 @@ Capture ideas and pain points to work on when I have bandwidth:
   - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
 - Ghostty / Kitty for better [Claude Code integration](https://code.claude.com/docs/en/terminal-config)
 
+## Emacs
+
+Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/2026/04/07/stealing-from-the-best-emacs-configs/):
+
+- Disable bidirectional text scanning to improve redisplay performance in large buffers
+- Skip fontification during active typing to reduce micro-stutters
+- Increase process output buffer to 4MB for better LSP server performance
+- Hide cursors in non-focused windows to reduce rendering overhead
+- Preserve existing clipboard content before killing text in Emacs
+- Remove duplicate entries from the kill ring to save slots
+- Persist kill ring across sessions using savehist mode
+- Strip text properties from kill ring entries to prevent file bloat
+- Auto-execute shell scripts by adding executable permissions on save
+- Switch re-builder to string syntax for more intuitive regexp development
+- Disable ffap hostname pinging to prevent network-related freezes
+- Enable minibuffer-regexp-mode for visual regexp structure feedback
+- Use proportional window resizing when splitting frames
+- Make C-x 1 toggle between single and multi-window layouts with winner-mode
+- Restore previous window configurations instead of permanently deleting them
+- Enable faster mark ring navigation with consecutive C-SPC presses
+- Recenter view after save-place restores cursor position
+- Auto-select help windows to streamline documentation viewing
+- Use built-in lazy isearch counting for match statistics
+
 ## VPS (aroldo)
 
 - [Beszel](https://github.com/henrygd/beszel) — lightweight server monitoring (CPU/RAM/disk) with hub on aroldo and agents on both machines
