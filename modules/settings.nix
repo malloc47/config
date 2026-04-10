@@ -51,6 +51,15 @@ with lib;
           that should be available on multiple hosts.
         '';
       };
+      displayName = mkOption {
+        default = null;
+        type = with types; nullOr str;
+        description = ''
+          Display name for this host, used in the shell prompt instead of
+          the system hostname. When null, the prompt falls back to the
+          default hostname (%m in zsh, \h in bash).
+        '';
+      };
       xkbFile = mkOption {
         default = "none";
         type = with types; uniq str;

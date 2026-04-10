@@ -103,7 +103,9 @@ in
           fi
           local host_part=""
           if [[ -n "$SSH_CONNECTION" ]]; then
-            host_part="%F{cyan}%m%f:"
+            host_part="%F{cyan}${
+              if config.settings.displayName != null then config.settings.displayName else "%m"
+            }%f:"
           fi
           local git_part=""
           if [[ -n "$vcs_info_msg_0_" ]]; then
@@ -184,7 +186,9 @@ in
       else
           HOST_PART=""
           if [[ -n "$SSH_CONNECTION" ]]; then
-            HOST_PART="\[\e[36m\]\h\[\e[0m\]:"
+            HOST_PART="\[\e[36m\]${
+              if config.settings.displayName != null then config.settings.displayName else "\\h"
+            }\[\e[0m\]:"
           fi
           export PS1="λ ''${HOST_PART}\w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') ▸ "
       fi
