@@ -51,6 +51,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    stylix = {
+      url = "github:danth/stylix/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     personal = {
       url = "git+ssh://git@github.com/malloc47/personal";
       flake = false;
@@ -69,6 +74,7 @@
       nixos-hardware,
       agenix,
       git-hooks,
+      stylix,
       personal,
       ...
     }:
@@ -346,6 +352,8 @@
         home-dev = ./config/home-dev.nix;
         home-gui = ./config/home-gui.nix;
         home-vm = ./config/home-vm.nix;
+        stylix = stylix.homeModules.stylix;
+        theme = ./config/theme.nix;
       };
 
       darwinModules = {

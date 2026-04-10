@@ -50,33 +50,7 @@ in
           y = 0;
         };
       };
-      colors = {
-        primary = {
-          background = "0xfdf6e3";
-          foreground = "0x586e75";
-        };
-        normal = {
-          black = "0xeee8d5";
-          red = "0xdc322f";
-          green = "0x859900";
-          yellow = "0xb58900";
-          blue = "0x268bd2";
-          magenta = "0xd33682";
-          cyan = "0x2aa198";
-          white = "0x073642";
-        };
-        bright = {
-          black = "0xfdf6e3";
-          red = "0xcb4b16";
-          green = "0x93a1a1";
-          yellow = "0x839496";
-          blue = "0x657b83";
-          magenta = "0x6c71c4";
-          cyan = "0x586e75";
-          white = "0x002b36";
-        };
-        draw_bold_text_with_bright_colors = false;
-      };
+      # Colors managed by Stylix (config/theme.nix)
       mouse = {
         hide_when_typing = false;
         bindings = [
