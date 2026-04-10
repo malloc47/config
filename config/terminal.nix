@@ -27,30 +27,7 @@ in
         history = 10000;
         multiplier = 3;
       };
-      font = {
-        normal = {
-          family = config.settings.fontName;
-          style = "Regular";
-        };
-        bold = {
-          family = config.settings.fontName;
-          style = "Bold";
-        };
-        italic = {
-          family = config.settings.fontName;
-          style = "Italic";
-        };
-        size = config.settings.fontSize;
-        offset = {
-          x = 0;
-          y = 0;
-        };
-        glyph_offset = {
-          x = 0;
-          y = 0;
-        };
-      };
-      # Colors managed by Stylix (config/theme.nix)
+      # Font and colors managed by Stylix (config/theme.nix)
       mouse = {
         hide_when_typing = false;
         bindings = [
