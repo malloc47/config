@@ -56,6 +56,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+    };
+
     personal = {
       url = "git+ssh://git@github.com/malloc47/personal";
       flake = false;
@@ -354,6 +358,7 @@
         home-vm = ./config/home-vm.nix;
         stylix = stylix.homeModules.stylix;
         theme = ./config/theme.nix;
+        home-ai = import ./config/home-ai.nix { inherit inputs; };
       };
 
       darwinModules = {
