@@ -1,4 +1,10 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  options,
+  pkgs,
+  ...
+}:
 {
   imports = [ ../modules/settings.nix ];
 
@@ -20,7 +26,8 @@
     };
     fonts.sizes.terminal = builtins.floor config.settings.fontSize;
 
-    targets = {
+    # Emacs target only exists in home-manager context, not at system level
+    targets = lib.mkIf (options.stylix.targets ? emacs) {
       # Emacs uses its own solarized-theme package; let it manage itself
       emacs.enable = false;
     };

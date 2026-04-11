@@ -365,6 +365,8 @@
         configuration = ./darwin/configuration.nix;
         homebrew = ./darwin/homebrew.nix;
         home = ./darwin/home.nix;
+        stylix = stylix.darwinModules.stylix;
+        theme = ./config/theme.nix;
       };
 
       overlays.default = import ./pkgs/default.nix;
