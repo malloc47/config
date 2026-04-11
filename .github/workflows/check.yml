@@ -9,8 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Initialize submodules
-        run: git submodule update --init config/.emacs.d/packages/nano-emacs
       - uses: cachix/install-nix-action@v30
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
@@ -24,8 +22,6 @@ jobs:
         host: [salome, aida, attila, vm-iso]
     steps:
       - uses: actions/checkout@v5
-      - name: Initialize submodules
-        run: git submodule update --init config/.emacs.d/packages/nano-emacs
       - name: Create personal stub
         run: |
           stub=$(realpath "$(mktemp -d)")
@@ -47,8 +43,6 @@ jobs:
         host: [cesare]
     steps:
       - uses: actions/checkout@v5
-      - name: Initialize submodules
-        run: git submodule update --init config/.emacs.d/packages/nano-emacs
       - name: Create personal stub
         run: |
           stub=$(realpath "$(mktemp -d)")

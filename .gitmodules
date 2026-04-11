@@ -1,3 +1,0 @@
-[submodule "config/.emacs.d/packages/nano-emacs"]
-	path = config/.emacs.d/packages/nano-emacs
-	url = https://github.com/rougier/nano-emacs.git
