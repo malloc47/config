@@ -104,18 +104,20 @@
           modules = [
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
-            modules/settings.nix
-            modules/user.nix
-            modules/nixpkgs.nix
-            modules/virtualization.nix
-            modules/networking.nix
-            modules/ssh.nix
-            modules/sound.nix
-            modules/gui.nix
-            hosts/salome.nix
-            nixos/configuration-flake.nix
-            hardware/vmware-fusion-arm.nix
-            disk/vmware-fusion.nix
+            self.nixosModules.settings
+            self.nixosModules.user
+            self.nixosModules.nixpkgs
+            self.nixosModules.virtualization
+            self.nixosModules.networking
+            self.nixosModules.ssh
+            self.nixosModules.sound
+            self.nixosModules.gui
+            self.nixosModules.configuration-flake
+            self.nixosModules.stylix
+            self.nixosModules.theme
+            self.hardwareModules.vmware-fusion-arm
+            self.diskModules.vmware-fusion
+            ./hosts/salome.nix
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "salome";
@@ -126,13 +128,20 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [
-                  config/home-osconfig-bridge.nix
-                  config/home.nix
-                  config/home-dev.nix
-                  config/home-gui.nix
-                  config/home-vm.nix
-                ];
+                home-manager.users.${config.settings.username} = {
+                  imports = [
+                    self.homeManagerModules.osconfig-bridge
+                    self.homeManagerModules.home
+                    self.homeManagerModules.home-dev
+                    self.homeManagerModules.home-gui
+                    self.homeManagerModules.home-vm
+                  ];
+                  # Emacs uses its own solarized-theme; don't let Stylix manage it
+                  stylix.targets.emacs.enable = false;
+                  # wm.nix / rofi.nix set these explicitly
+                  stylix.targets.i3.enable = false;
+                  stylix.targets.rofi.enable = false;
+                };
               }
             )
           ];
@@ -148,7 +157,7 @@
                 imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
               }
             )
-            modules/settings.nix
+            self.nixosModules.settings
             { settings.sshKeys = "${personal}/ssh"; }
             (
               { config, ... }:
@@ -175,14 +184,16 @@
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
             agenix.nixosModules.default
-            hardware/gmktec-g10.nix
-            modules/settings.nix
-            modules/user.nix
-            modules/nixpkgs.nix
-            modules/ssh.nix
-            hosts/aida.nix
-            nixos/configuration-flake.nix
-            disk/gmktec-g10.nix
+            self.nixosModules.settings
+            self.nixosModules.user
+            self.nixosModules.nixpkgs
+            self.nixosModules.ssh
+            self.nixosModules.configuration-flake
+            self.nixosModules.stylix
+            self.nixosModules.theme
+            self.hardwareModules.gmktec-g10
+            self.diskModules.gmktec-g10
+            ./hosts/aida.nix
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "aida";
@@ -194,8 +205,8 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.users.${config.settings.username}.imports = [
-                  config/home-osconfig-bridge.nix
-                  config/home.nix
+                  self.homeManagerModules.osconfig-bridge
+                  self.homeManagerModules.home
                 ];
               }
             )
@@ -214,14 +225,16 @@
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
             agenix.nixosModules.default
-            hardware/racknerd-vps.nix
-            modules/settings.nix
-            modules/user.nix
-            modules/nixpkgs.nix
-            modules/ssh.nix
-            hosts/aroldo.nix
-            nixos/configuration-flake.nix
-            disk/racknerd-vps.nix
+            self.nixosModules.settings
+            self.nixosModules.user
+            self.nixosModules.nixpkgs
+            self.nixosModules.ssh
+            self.nixosModules.configuration-flake
+            self.nixosModules.stylix
+            self.nixosModules.theme
+            self.hardwareModules.racknerd-vps
+            self.diskModules.racknerd-vps
+            ./hosts/aroldo.nix
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "aroldo";
@@ -233,8 +246,8 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.users.${config.settings.username}.imports = [
-                  config/home-osconfig-bridge.nix
-                  config/home.nix
+                  self.homeManagerModules.osconfig-bridge
+                  self.homeManagerModules.home
                 ];
               }
             )
@@ -254,14 +267,16 @@
             disko.nixosModules.disko
             agenix.nixosModules.default
             nixos-hardware.nixosModules.dell-xps-13-9315
-            hardware/dell-xps-9315.nix
-            modules/settings.nix
-            modules/user.nix
-            modules/nixpkgs.nix
-            modules/ssh.nix
-            hosts/attila.nix
-            nixos/configuration-flake.nix
-            disk/dell-xps-9315.nix
+            self.nixosModules.settings
+            self.nixosModules.user
+            self.nixosModules.nixpkgs
+            self.nixosModules.ssh
+            self.nixosModules.configuration-flake
+            self.nixosModules.stylix
+            self.nixosModules.theme
+            self.hardwareModules.dell-xps-9315
+            self.diskModules.dell-xps-9315
+            ./hosts/attila.nix
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "attila";
@@ -272,11 +287,15 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [
-                  config/home-osconfig-bridge.nix
-                  config/home.nix
-                  config/home-dev.nix
-                ];
+                home-manager.users.${config.settings.username} = {
+                  imports = [
+                    self.homeManagerModules.osconfig-bridge
+                    self.homeManagerModules.home
+                    self.homeManagerModules.home-dev
+                  ];
+                  # Emacs uses its own solarized-theme; don't let Stylix manage it
+                  stylix.targets.emacs.enable = false;
+                };
               }
             )
           ];
@@ -292,15 +311,17 @@
             };
           };
           modules = [
-            modules/settings.nix
-            modules/user.nix
-            modules/ssh.nix
+            self.nixosModules.settings
+            self.nixosModules.user
+            self.nixosModules.ssh
             { settings.sshKeys = "${personal}/ssh"; }
             agenix.darwinModules.default
             nix-homebrew.darwinModules.nix-homebrew
-            darwin/homebrew.nix
-            darwin/configuration.nix
-            hosts/cesare.nix
+            self.darwinModules.homebrew
+            self.darwinModules.configuration
+            self.darwinModules.stylix
+            self.darwinModules.theme
+            ./hosts/cesare.nix
             home-manager.darwinModules.home-manager
             (
               { config, ... }:
@@ -311,7 +332,14 @@
                 home-manager.extraSpecialArgs = specialArgs;
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username} = import ./darwin/home.nix;
+                home-manager.users.${config.settings.username} = {
+                  imports = [ self.darwinModules.home ];
+                  # Emacs uses its own solarized-theme; don't let Stylix manage it
+                  stylix.targets.emacs.enable = false;
+                  # wm.nix / rofi.nix set these explicitly
+                  stylix.targets.i3.enable = false;
+                  stylix.targets.rofi.enable = false;
+                };
                 # Doing this to handle existing vmware files
                 home-manager.backupFileExtension = "backup";
 
@@ -348,6 +376,8 @@
         motd = ./modules/motd.nix;
         vmware-guest = ./modules/vmware-guest.nix;
         configuration-flake = ./nixos/configuration-flake.nix;
+        stylix = stylix.nixosModules.stylix;
+        theme = ./config/theme.nix;
       };
 
       homeManagerModules = {
@@ -374,10 +404,16 @@
       hardwareModules = {
         lxc = ./hardware/lxc.nix;
         vmware-fusion-arm = ./hardware/vmware-fusion-arm.nix;
+        gmktec-g10 = ./hardware/gmktec-g10.nix;
+        racknerd-vps = ./hardware/racknerd-vps.nix;
+        dell-xps-9315 = ./hardware/dell-xps-9315.nix;
       };
 
       diskModules = {
         vmware-fusion = ./disk/vmware-fusion.nix;
+        gmktec-g10 = ./disk/gmktec-g10.nix;
+        racknerd-vps = ./disk/racknerd-vps.nix;
+        dell-xps-9315 = ./disk/dell-xps-9315.nix;
       };
 
       packages.aarch64-linux.term-do =
