@@ -1,10 +1,4 @@
-{
-  config,
-  lib,
-  options,
-  pkgs,
-  ...
-}:
+{ config, pkgs, ... }:
 {
   imports = [ ../modules/settings.nix ];
 
@@ -25,11 +19,5 @@
       package = pkgs.dejavu_fonts; # fallback package; actual font installed separately
     };
     fonts.sizes.terminal = builtins.floor config.settings.fontSize;
-
-    # Emacs target only exists in home-manager context, not at system level
-    targets = lib.mkIf (options.stylix.targets ? emacs) {
-      # Emacs uses its own solarized-theme package; let it manage itself
-      emacs.enable = false;
-    };
   };
 }
