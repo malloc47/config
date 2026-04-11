@@ -16,8 +16,11 @@ in
   home.packages =
     with pkgs;
     [
-      aspell
-      aspellDicts.en
+      (aspellWithDicts (
+        dicts: with dicts; [
+          en
+        ]
+      ))
       clj-kondo
       cljfmt
       clojure

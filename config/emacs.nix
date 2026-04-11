@@ -7,7 +7,7 @@
 {
   imports = [ ../modules/settings.nix ];
 
-  home.packages = with pkgs; [ ispell ];
+  home.packages = [ ];
 
   programs.emacs.enable = true;
   services.emacs.enable = true;

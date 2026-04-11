@@ -79,6 +79,8 @@ body { max-width: 80%; }
 ;; remove trailing whitespace on save
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+(setq dired-use-ls-dired nil)
+
 ;; dired open files with F
 (eval-after-load "dired"
   '(progn
