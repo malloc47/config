@@ -17,6 +17,7 @@
     jq
     killall
     moreutils
+    mosh
     pv
     ripgrep
     tree
