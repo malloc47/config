@@ -61,6 +61,10 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 - [Miniflux](https://miniflux.app/) / FreshRSS — lightweight RSS reader, always accessible
 - DNS-over-HTTPS proxy — public encrypted DNS entry point forwarding to AdGuard over tailnet, works without Tailscale active on device
 
+## Zellij
+
+- [zbuffers](https://github.com/Strech/zbuffers) — buffer management plugin for zellij
+
 ## Repo Hygiene
 
 - Normalize all repos on `main` branch (config and personal currently use `master`)
