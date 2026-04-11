@@ -171,6 +171,10 @@ in
       }
     '';
 
-    home.packages = [ agentPkgs.agent-deck ];
+    home.packages = [
+      agentPkgs.agent-deck
+      agentPkgs.claude-code
+      agentPkgs.opencode
+    ];
   };
 }
