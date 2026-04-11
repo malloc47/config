@@ -35,6 +35,7 @@ in
       settings = {
         theme = "solarized-light-soft";
         ui.pane_frames.rounded_corners = true;
+        show_startup_tips = false;
       }
       // lib.optionalAttrs cfg.webServer.enable {
         web_server = true;

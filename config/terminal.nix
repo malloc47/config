@@ -46,6 +46,18 @@ in
         unfocused_hollow = true;
         thickness = 1.0;
       };
+      keyboard.bindings = [
+        {
+          key = "F";
+          mods = "Super";
+          action = "ReceiveChar";
+        }
+        {
+          key = "B";
+          mods = "Super";
+          action = "ReceiveChar";
+        }
+      ];
       general.live_config_reload = true;
     };
   };
