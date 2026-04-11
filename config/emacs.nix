@@ -23,8 +23,6 @@
       (provide 'fonts)
       (set-frame-font "${config.settings.fontName}-${head (splitString "." (toString config.settings.fontSize))}")
       (setq default-frame-alist '((font . "${config.settings.fontName}-${head (splitString "." (toString config.settings.fontSize))}")))
-      (setq nano-font-size ${head (splitString "." (toString config.settings.fontSize))})
-      (setq nano-font-family-monospaced "${config.settings.fontName}")
     '';
   };
 }
