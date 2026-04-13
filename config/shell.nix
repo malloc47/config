@@ -52,7 +52,7 @@ in
         bindkey -s "^[x" 'term-do^M'
         term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
         ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
-        nr() { nix run $(print ''${*/#/nixpkgs\#})}
+        nr() { nix run "nixpkgs#$1" -- ''${@:2} }
 
         materialize() {
           if [ -f "$1.link" ] ; then
@@ -179,7 +179,7 @@ in
       }
 
       ns() { NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell "''${@/#/nixpkgs#}"; }
-      nr() { nix run "''${@/#/nixpkgs#}"; }
+      nr() { nix run "nixpkgs#$1" -- ''${@:2}; }
 
       if [[ $TERM == "dumb" ]]; then
           export PS1="$ "
