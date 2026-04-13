@@ -24,6 +24,7 @@
   programs.vim = {
     enable = true;
     defaultEditor = true;
+    packageConfigurable = pkgs.vim;
   };
 
   home.file."DefaultKeyBinding.dict" = {
