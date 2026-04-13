@@ -171,10 +171,21 @@ in
       }
     '';
 
+    home.file.".agent-deck/config.toml".source =
+      (pkgs.formats.toml { }).generate "agent-deck-config.toml"
+        {
+          default_tool = "claude";
+          theme = "light";
+          tmux = {
+            window_style_override = "default";
+          };
+        };
+
     home.packages = [
       agentPkgs.agent-deck
       agentPkgs.claude-code
       agentPkgs.opencode
+      claude-code-acp
     ];
   };
 }
