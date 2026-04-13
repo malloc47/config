@@ -149,7 +149,28 @@
                         "vendor_id": 1256
                     },
                     "ignore": false
-                }
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 22090,
+                        "vendor_id": 1008
+                    },
+                    "simple_modifications": [
+                        {
+                            "from": { "key_code": "left_command" },
+                            "to": [{ "key_code": "left_option" }]
+                        },
+                        {
+                            "from": { "key_code": "left_option" },
+                            "to": [{ "key_code": "left_command" }]
+                        },
+                        {
+                            "from": { "key_code": "non_us_backslash" },
+                            "to": [{ "key_code": "left_shift" }]
+                        }
+                    ]
+		}
             ],
             "name": "Default profile",
             "selected": true,
