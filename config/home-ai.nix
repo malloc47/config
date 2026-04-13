@@ -185,7 +185,7 @@ in
       agentPkgs.agent-deck
       agentPkgs.claude-code
       agentPkgs.opencode
-      claude-code-acp
+      pkgs.claude-code-acp
     ];
   };
 }
