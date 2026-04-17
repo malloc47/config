@@ -159,6 +159,7 @@ in
       '';
     sessionVariables = {
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
+      TINTED_TMUX_OPTION_ACTIVE = "1";
     };
   };
 
