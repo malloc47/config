@@ -17,6 +17,8 @@ in
       set -ag terminal-overrides ",*256col*:Tc"
       set -s extended-keys on
       set -as terminal-features 'tmux-256color:extkeys'
+      set-window-option -g window-active-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base00}"
+      set-window-option -g window-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base01}"
     '';
   };
 
@@ -159,7 +161,6 @@ in
       '';
     sessionVariables = {
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
-      TINTED_TMUX_OPTION_ACTIVE = "1";
     };
   };
 
