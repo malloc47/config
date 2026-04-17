@@ -35,5 +35,7 @@
   home.file.".inputrc".source = ./.inputrc;
   xdg.configFile.".user-dirs.dirs".source = ./.user-dirs.dirs;
 
+  services.ssh-agent.enable = true;
+
   home.stateVersion = "25.05";
 }
