@@ -5,21 +5,6 @@ in
 {
   imports = [ ../modules/settings.nix ];
 
-  programs.tmux = {
-    enable = true;
-    terminal = "tmux-256color";
-    shortcut = "u";
-    escapeTime = 0;
-    historyLimit = 50000;
-    mouse = true;
-    extraConfig = ''
-      set -ag terminal-overrides ",xterm*:Tc:smcup@:rmcup@"
-      set -ag terminal-overrides ",*256col*:Tc"
-      set -s extended-keys on
-      set -as terminal-features 'tmux-256color:extkeys'
-    '';
-  };
-
   programs.alacritty = {
     enable = true;
     settings = {
