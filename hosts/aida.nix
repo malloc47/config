@@ -119,6 +119,7 @@
           "https://cloudflare-dns.com/dns-query"
           "https://dns.google/dns-query"
           "[/lan/]192.168.1.1"
+          "[/ts.malloc47.com/]100.100.100.100"
           "[//]192.168.1.1"
         ];
         bootstrap_dns = [

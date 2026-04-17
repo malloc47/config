@@ -66,6 +66,7 @@ in
     aidaTailscaleIP
     "1.1.1.1"
   ];
+  networking.search = [ "ts.malloc47.com" ];
 
   # Override DNS for aida services to use Tailscale IP instead of
   # unreachable LAN IP (192.168.1.10) from AdGuard rewrite
