@@ -292,9 +292,14 @@
                     self.homeManagerModules.osconfig-bridge
                     self.homeManagerModules.home
                     self.homeManagerModules.home-dev
+                    self.homeManagerModules.home-ai
                   ];
                   # Emacs uses its own solarized-theme; don't let Stylix manage it
                   stylix.targets.emacs.enable = false;
+                  programs.ai-session = {
+                    enable = true;
+                    webServer.enable = true;
+                  };
                 };
               }
             )
