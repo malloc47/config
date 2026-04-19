@@ -76,8 +76,15 @@ in
       ];
     # xterm-ghostty terminfo is only available via the nixpkgs package; on macOS
     # where we install via Homebrew, use xterm-256color which Emacs already knows.
+    #
+    # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
+    # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as
+    # too large on Retina displays where Ghostty already handles HiDPI itself.
+    # Ghostty uses last-value-wins for duplicate keys, so this overrides Stylix's
+    # scaled value without touching the global settings.fontSize.
     } // lib.optionalAttrs stdenv.isDarwin {
       term = "xterm-256color";
+      font-size = builtins.floor config.settings.fontSize;
     };
   };
 
