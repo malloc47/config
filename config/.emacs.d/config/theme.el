@@ -14,11 +14,15 @@
 (setq initial-buffer-choice nil)
 (setq indicate-empty-lines nil)
 
-;; doom-themes generates true display-conditional face specs — each face
-;; has separate sub-specs for GUI true-color and terminal, chosen at
-;; render time per-frame.  doom-solarized-light has carefully tuned
-;; terminal face assignments so TUI mode looks close to GUI without
-;; daemon-specific load-time hacks.
+;; The Emacs daemon (started by LaunchAgent) lacks the COLORFGBG env var
+;; that terminals set, so Emacs defaults to background-mode=dark for TUI
+;; frames — applying dark-variant colors onto our light-background terminal.
+;; Force light mode since all our terminals use solarized-light via Stylix.
+(setq frame-background-mode 'light)
+
+;; doom-themes generates display-conditional face specs (separate sub-specs
+;; for GUI true-color and terminal) so a single load-theme works for all
+;; frame types.
 (use-package doom-themes
   :ensure t
   :config
