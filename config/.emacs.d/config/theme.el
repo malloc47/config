@@ -14,16 +14,15 @@
 (setq initial-buffer-choice nil)
 (setq indicate-empty-lines nil)
 
-;; base16-theme stores display-conditional face specs (truecolor GUI,
-;; 256-color terminal, 16-color terminal) rather than computing one fixed
-;; color set at load-theme call time.  This means a single load-theme
-;; call works for all frame types simultaneously — the correct sub-spec
-;; is selected per-frame at render time, so emacsclient -t and GUI frames
-;; both get the right colors without daemon-specific hacks.
-(use-package base16-theme
+;; doom-themes generates true display-conditional face specs — each face
+;; has separate sub-specs for GUI true-color and terminal, chosen at
+;; render time per-frame.  doom-solarized-light has carefully tuned
+;; terminal face assignments so TUI mode looks close to GUI without
+;; daemon-specific load-time hacks.
+(use-package doom-themes
   :ensure t
   :config
-  (load-theme 'base16-solarized-light t)
+  (load-theme 'doom-solarized-light t)
   (defun new-frame-setup (frame)
     (with-selected-frame frame
       ;; menu-bar-mode -1 at startup doesn't reliably apply to frames
