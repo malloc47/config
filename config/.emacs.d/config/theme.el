@@ -19,11 +19,16 @@
   :init
   (setq solarized-distinct-fringe-background t)
   :config
-  (load-theme 'solarized-light t)
   (defun new-frame-setup (frame)
     (with-selected-frame frame
       ;; menu-bar-mode -1 at startup doesn't reliably apply to frames
       ;; created later by emacsclient -t; enforce it per-frame
       (menu-bar-mode -1)
       (load-theme 'solarized-light t)))
-  (add-hook 'after-make-frame-functions 'new-frame-setup))
+  (add-hook 'after-make-frame-functions 'new-frame-setup)
+  ;; In daemon mode, defer theme loading to new-frame-setup so the theme
+  ;; detects the frame type (GUI vs TUI) correctly at frame-creation time.
+  ;; Loading here during daemon startup can lock in GUI-mode color specs
+  ;; before any TUI frame exists, producing wrong terminal colors.
+  (unless (daemonp)
+    (load-theme 'solarized-light t)))
