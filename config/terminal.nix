@@ -57,7 +57,8 @@ in
   };
 
   programs.ghostty = {
-    enable = true;
+    # nixpkgs ghostty only builds on Linux; macOS uses the Homebrew cask
+    enable = !stdenv.isDarwin;
     settings = {
       theme = "Builtin Solarized Light";
       cursor-style = "block";
