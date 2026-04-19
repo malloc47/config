@@ -14,15 +14,16 @@
 (setq initial-buffer-choice nil)
 (setq indicate-empty-lines nil)
 
-;; The Emacs daemon (started by LaunchAgent) lacks the COLORFGBG env var
-;; that terminals set, so Emacs defaults to background-mode=dark for TUI
-;; frames — applying dark-variant colors onto our light-background terminal.
-;; Force light mode since all our terminals use solarized-light via Stylix.
+;; The Emacs daemon (started by LaunchAgent) lacks COLORFGBG and COLORTERM.
+;; Without COLORFGBG, Emacs defaults to background-mode=dark; without
+;; COLORTERM, emacsclient TUI frames use 256-color mode instead of 24-bit
+;; truecolor — approximating hex colors through xterm-256 indices instead
+;; of sending them directly.  All our terminals (Ghostty) use solarized-light
+;; via Stylix and support truecolor.
 (setq frame-background-mode 'light)
+(unless (getenv "COLORTERM")
+  (setenv "COLORTERM" "truecolor"))
 
-;; doom-themes generates display-conditional face specs (separate sub-specs
-;; for GUI true-color and terminal) so a single load-theme works for all
-;; frame types.
 (use-package doom-themes
   :ensure t
   :config
