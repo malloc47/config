@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   inherit (pkgs) stdenv;
 in
@@ -74,6 +74,25 @@ in
         "super+b=text:b"
       ];
     };
+  };
+
+  # On macOS, programs.ghostty is disabled (nixpkgs build requires wayland),
+  # so write the config file directly. Use term=xterm-256color because the
+  # xterm-ghostty terminfo entry isn't available outside the nixpkgs package.
+  home.file.".config/ghostty/config" = lib.mkIf stdenv.isDarwin {
+    text = ''
+      term = xterm-256color
+      theme = Builtin Solarized Light
+      cursor-style = block
+      cursor-style-blink = false
+      shell-integration-features = no-cursor
+      window-decoration = auto
+      window-theme = system
+      font-family = ${config.settings.fontName}
+      font-size = ${toString (builtins.floor config.settings.fontSize)}
+      keybind = super+f=text:f
+      keybind = super+b=text:b
+    '';
   };
 
   programs.dircolors.enable = true;
