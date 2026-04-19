@@ -57,16 +57,21 @@ in
   };
 
   programs.ghostty = {
-    enable = false;
+    enable = true;
     settings = {
       theme = "Builtin Solarized Light";
       cursor-style = "block";
       cursor-style-blink = false;
       shell-integration-features = "no-cursor";
-      window-decoration = "none";
+      window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
       font-family = config.settings.fontName;
       font-size = builtins.floor config.settings.fontSize;
+      # Pass Super+F and Super+B through to Emacs (mirrors alacritty config)
+      keybind = [
+        "super+f=text:f"
+        "super+b=text:b"
+      ];
     };
   };
 

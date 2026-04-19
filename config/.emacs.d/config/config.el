@@ -28,7 +28,7 @@
 
 (use-package find-file-in-project
   :ensure t
-  :bind ("C-x C-S-f" . 'find-file-in-project))
+  :bind ("C-c p f" . 'find-file-in-project))
 
 (use-package multiple-cursors
   :ensure t
@@ -71,8 +71,8 @@ body { max-width: 80%; }
 (use-package synosaurus
   :ensure t
   :bind (:map markdown-mode-map
-	      ("C-M-;" . synosaurus-choose-and-replace)
-	      ("C-M-:" . synosaurus-lookup)))
+	      ("C-c w r" . synosaurus-choose-and-replace)
+	      ("C-c w l" . synosaurus-lookup)))
 
 (use-package mermaid-mode :ensure t)
 
@@ -130,7 +130,7 @@ body { max-width: 80%; }
 (use-package flyspell-correct
   :ensure t
   :after flyspell
-  :bind (:map flyspell-mode-map ("C-:" . flyspell-correct-wrapper)))
+  :bind (:map flyspell-mode-map ("C-c ;" . flyspell-correct-wrapper)))
 
 (use-package all-the-icons :ensure t)
 

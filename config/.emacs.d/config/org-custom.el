@@ -72,7 +72,7 @@
 	 (org-mode . turn-on-flyspell)
 	 (org-mode . auto-fill-mode))
   :bind (:map org-mode-map
-	      ("C-c C-SPC" . 'org-mark-ring-goto)
+	      ;; org-mark-ring-goto is available via the org default C-c &
 	      ("M-h" . nil)  ; This gets in the way of windmove config
 	      ("C-u" . universal-argument)))
 
@@ -167,5 +167,5 @@
 (use-package synosaurus
   :ensure t
   :bind (:map org-mode-map
-	      ("C-M-;" . synosaurus-choose-and-replace)
-	      ("C-M-:" . synosaurus-lookup)))
+	      ("C-c w r" . synosaurus-choose-and-replace)
+	      ("C-c w l" . synosaurus-lookup)))

@@ -27,7 +27,7 @@ with lib;
         default = false;
       };
       terminal = mkOption {
-        default = "alacritty";
+        default = "ghostty";
         type = with types; uniq str;
       };
       fontName = mkOption {

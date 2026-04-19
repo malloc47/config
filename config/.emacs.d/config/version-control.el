@@ -59,6 +59,7 @@
 
 (use-package git-gutter-fringe
   :ensure t
+  :if (display-graphic-p)
   :config
   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))

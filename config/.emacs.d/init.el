@@ -20,6 +20,7 @@
 (require 'python-lang)
 (require 'scala)
 (require 'haskell)
+(require 'terminal)
 (require 'keys)
 (require 'osx)
 (require 'typescript)
