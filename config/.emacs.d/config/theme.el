@@ -19,9 +19,11 @@
   :init
   (setq solarized-distinct-fringe-background t)
   :config
-  (when (display-graphic-p)
-    (load-theme 'solarized-light t))
+  (load-theme 'solarized-light t)
   (defun new-frame-setup (frame)
-    (when (display-graphic-p frame)
+    (with-selected-frame frame
+      ;; menu-bar-mode -1 at startup doesn't reliably apply to frames
+      ;; created later by emacsclient -t; enforce it per-frame
+      (menu-bar-mode -1)
       (load-theme 'solarized-light t)))
   (add-hook 'after-make-frame-functions 'new-frame-setup))
