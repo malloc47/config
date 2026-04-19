@@ -38,8 +38,5 @@
         ;; theme's intended #FDF6E3 background exactly.
         (set-face-attribute 'default frame
                             :background "unspecified-bg"
-                            :foreground "unspecified-fg")
-        ;; Re-run terminal init to pick up COLORTERM=truecolor for
-        ;; non-default faces that still use hex colors
-        (tty-run-terminal-initialization frame nil t))))
+                            :foreground "unspecified-fg"))))
   (add-hook 'after-make-frame-functions 'new-frame-setup))
