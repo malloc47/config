@@ -30,7 +30,16 @@
   (load-theme 'doom-solarized-light t)
   (defun new-frame-setup (frame)
     (with-selected-frame frame
-      ;; menu-bar-mode -1 at startup doesn't reliably apply to frames
-      ;; created later by emacsclient -t; enforce it per-frame
-      (menu-bar-mode -1)))
+      (menu-bar-mode -1)
+      (unless (display-graphic-p frame)
+        ;; TUI frames: use the terminal's own background/foreground
+        ;; rather than approximating hex colors through 256-color indices.
+        ;; Ghostty's solarized-light palette (via Stylix) matches the
+        ;; theme's intended #FDF6E3 background exactly.
+        (set-face-attribute 'default frame
+                            :background "unspecified-bg"
+                            :foreground "unspecified-fg")
+        ;; Re-run terminal init to pick up COLORTERM=truecolor for
+        ;; non-default faces that still use hex colors
+        (tty-run-terminal-initialization frame nil t))))
   (add-hook 'after-make-frame-functions 'new-frame-setup))
