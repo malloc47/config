@@ -114,7 +114,12 @@ in
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       GHOSTTY_TERMINFO="${ghosttyTerminfo}"
       if [ -d "$GHOSTTY_TERMINFO" ]; then
-        TERMINFO="$GHOSTTY_TERMINFO" ${infocmp} -x xterm-ghostty 2>/dev/null \
+        # Remove stale entry so infocmp reads the upstream source, not our
+        # own previously-compiled file.  Clear TERMINFO_DIRS to prevent any
+        # wrapper or shell-integration paths from interfering.
+        rm -f "$HOME/.terminfo/78/xterm-ghostty" "$HOME/.terminfo/x/xterm-ghostty"
+        env TERMINFO="$GHOSTTY_TERMINFO" TERMINFO_DIRS="" \
+          ${infocmp} -x xterm-ghostty 2>/dev/null \
           | ${sed} 's/colors#\(256\|0x100\)/colors#16777216/' \
           | ${tic} -x -o "$HOME/.terminfo" - 2>/dev/null || true
       fi
