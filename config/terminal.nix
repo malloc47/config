@@ -105,9 +105,11 @@ in
           "/Applications/Ghostty.app/Contents/Resources/terminfo"
         else
           "${pkgs.ghostty}/share/terminfo";
-      infocmp = if stdenv.isDarwin then "/usr/bin/infocmp" else "${pkgs.ncurses}/bin/infocmp";
-      tic = if stdenv.isDarwin then "/usr/bin/tic" else "${pkgs.ncurses}/bin/tic";
-      sed = if stdenv.isDarwin then "/usr/bin/sed" else "${pkgs.gnused}/bin/sed";
+      # Use nix's ncurses 6.x (not macOS system ncurses 5.7) — the system
+      # tic only supports 16-bit numeric values, truncating 16777216 to 256.
+      infocmp = "${pkgs.ncurses}/bin/infocmp";
+      tic = "${pkgs.ncurses}/bin/tic";
+      sed = "${pkgs.gnused}/bin/sed";
     in
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       GHOSTTY_TERMINFO="${ghosttyTerminfo}"
