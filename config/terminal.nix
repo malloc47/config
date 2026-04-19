@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (pkgs) stdenv;
 in
@@ -74,19 +79,44 @@ in
         "super+f=text:f"
         "super+b=text:b"
       ];
-    # xterm-ghostty terminfo is only available via the nixpkgs package; on macOS
-    # where we install via Homebrew, use xterm-256color which Emacs already knows.
-    #
-    # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
-    # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as
-    # too large on Retina displays where Ghostty already handles HiDPI itself.
-    # Ghostty uses last-value-wins for duplicate keys, so this overrides Stylix's
-    # scaled value without touching the global settings.fontSize.
-    } // lib.optionalAttrs stdenv.isDarwin {
-      term = "xterm-256color";
+      # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
+      # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as
+      # too large on Retina displays where Ghostty already handles HiDPI itself.
+      # Ghostty uses last-value-wins for duplicate keys, so this overrides Stylix's
+      # scaled value without touching the global settings.fontSize.
+    }
+    // lib.optionalAttrs stdenv.isDarwin {
       font-size = builtins.floor config.settings.fontSize;
     };
   };
+
+  # Build a modified xterm-ghostty terminfo with colors#16777216 (truecolor).
+  # Ghostty's upstream terminfo ships colors#256 and a Tc flag; Emacs's C-level
+  # init_tty reads the terminfo colors count directly, so emacsclient -t only
+  # gets 256 colors unless the terminfo itself declares 16777216.  This
+  # activation script patches the entry and installs it into ~/.terminfo/ so it
+  # takes precedence over the system copy.
+  home.activation.ghostty-terminfo =
+    let
+      # On macOS (Homebrew install) the terminfo lives inside the .app bundle.
+      # On NixOS the ghostty package puts it in $out/share/terminfo.
+      ghosttyTerminfo =
+        if stdenv.isDarwin then
+          "/Applications/Ghostty.app/Contents/Resources/terminfo"
+        else
+          "${pkgs.ghostty}/share/terminfo";
+      infocmp = if stdenv.isDarwin then "/usr/bin/infocmp" else "${pkgs.ncurses}/bin/infocmp";
+      tic = if stdenv.isDarwin then "/usr/bin/tic" else "${pkgs.ncurses}/bin/tic";
+      sed = if stdenv.isDarwin then "/usr/bin/sed" else "${pkgs.gnused}/bin/sed";
+    in
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      GHOSTTY_TERMINFO="${ghosttyTerminfo}"
+      if [ -d "$GHOSTTY_TERMINFO" ]; then
+        TERMINFO_DIRS="$GHOSTTY_TERMINFO" ${infocmp} -x xterm-ghostty 2>/dev/null \
+          | ${sed} 's/colors#256/colors#16777216/' \
+          | ${tic} -x -o "$HOME/.terminfo" - 2>/dev/null || true
+      fi
+    '';
 
   programs.dircolors.enable = true;
 }
