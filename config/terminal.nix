@@ -57,8 +57,11 @@ in
   };
 
   programs.ghostty = {
-    # nixpkgs ghostty only builds on Linux; macOS uses the Homebrew cask
-    enable = !stdenv.isDarwin;
+    enable = true;
+    # nixpkgs ghostty requires wayland and doesn't build on darwin;
+    # set package = null so the module manages config without installing.
+    # macOS gets the binary via the Homebrew cask (see darwin/homebrew.nix).
+    package = lib.mkIf stdenv.isDarwin null;
     settings = {
       theme = "Builtin Solarized Light";
       cursor-style = "block";
@@ -73,26 +76,11 @@ in
         "super+f=text:f"
         "super+b=text:b"
       ];
+    # xterm-ghostty terminfo is only available via the nixpkgs package; on macOS
+    # where we install via Homebrew, use xterm-256color which Emacs already knows.
+    } // lib.optionalAttrs stdenv.isDarwin {
+      term = "xterm-256color";
     };
-  };
-
-  # On macOS, programs.ghostty is disabled (nixpkgs build requires wayland),
-  # so write the config file directly. Use term=xterm-256color because the
-  # xterm-ghostty terminfo entry isn't available outside the nixpkgs package.
-  home.file.".config/ghostty/config" = lib.mkIf stdenv.isDarwin {
-    text = ''
-      term = xterm-256color
-      theme = Builtin Solarized Light
-      cursor-style = block
-      cursor-style-blink = false
-      shell-integration-features = no-cursor
-      window-decoration = auto
-      window-theme = system
-      font-family = ${config.settings.fontName}
-      font-size = ${toString (builtins.floor config.settings.fontSize)}
-      keybind = super+f=text:f
-      keybind = super+b=text:b
-    '';
   };
 
   programs.dircolors.enable = true;
