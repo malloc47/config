@@ -114,7 +114,7 @@ in
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       GHOSTTY_TERMINFO="${ghosttyTerminfo}"
       if [ -d "$GHOSTTY_TERMINFO" ]; then
-        TERMINFO_DIRS="$GHOSTTY_TERMINFO" ${infocmp} -x xterm-ghostty 2>/dev/null \
+        TERMINFO="$GHOSTTY_TERMINFO" ${infocmp} -x xterm-ghostty 2>/dev/null \
           | ${sed} 's/colors#\(256\|0x100\)/colors#16777216/' \
           | ${tic} -x -o "$HOME/.terminfo" - 2>/dev/null || true
       fi
