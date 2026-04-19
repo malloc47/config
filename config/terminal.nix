@@ -63,14 +63,12 @@ in
     # macOS gets the binary via the Homebrew cask (see darwin/homebrew.nix).
     package = lib.mkIf stdenv.isDarwin null;
     settings = {
-      theme = "Builtin Solarized Light";
+      # font, colors, and opacity are managed by Stylix
       cursor-style = "block";
       cursor-style-blink = false;
       shell-integration-features = "no-cursor";
       window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
-      font-family = config.settings.fontName;
-      font-size = builtins.floor config.settings.fontSize;
       # Pass Super+F and Super+B through to Emacs (mirrors alacritty config)
       keybind = [
         "super+f=text:f"
