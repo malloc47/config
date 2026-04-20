@@ -74,6 +74,7 @@ in
       shell-integration-features = "no-cursor";
       window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
+      split-divider-color = "#${config.lib.stylix.colors.base03}";
       # Pass Super+F and Super+B through to Emacs (mirrors alacritty config)
       keybind = [
         "super+f=text:f"
