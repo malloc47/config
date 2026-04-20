@@ -6,6 +6,11 @@
 }:
 let
   inherit (pkgs) stdenv;
+  # Ghostty modifier names after key-remap.  On macOS the remap swaps
+  # Command↔Option so "alt" = physical Command and "super" = physical
+  # Option.  On Linux no remap is active; names match physical keys.
+  cmd = if stdenv.isDarwin then "alt" else "super";
+  opt = if stdenv.isDarwin then "super" else "alt";
 in
 {
   imports = [ ../modules/settings.nix ];
@@ -76,36 +81,38 @@ in
       window-theme = "system";
       macos-option-as-alt = true;
       split-divider-color = "#${config.lib.stylix.colors.base03}";
-      # Swap Command and Option so Ghostty matches GUI Emacs, where
-      # mac-command-modifier = 'meta (Command = M-) and
-      # mac-option-modifier = nil   (Option  = s-).
-      # Keybinds below use post-remap names: "alt" = physical Command,
-      # "super" = physical Option.
-      key-remap = [
+      # On macOS, swap Command (super) and Option (alt) so Ghostty
+      # matches GUI Emacs, where mac-command-modifier = 'meta
+      # (Command = M-) and mac-option-modifier = nil (Option = s-).
+      # On Linux, Alt is already Meta — no remap needed.
+      key-remap = lib.mkIf stdenv.isDarwin [
         "super=alt"
         "alt=super"
       ];
-      # Pass Command+F and Command+B through to Emacs (mirrors alacritty config)
+      # Keybinds reference `cmd` / `opt` so the physical keys stay the
+      # same across platforms despite the macOS-only key-remap.
       keybind = [
-        "alt+f=text:f"
-        "alt+b=text:b"
+        # Pass Command+F / Command+B through to Emacs (mirrors alacritty)
+        "${cmd}+f=text:f"
+        "${cmd}+b=text:b"
         # Split navigation matching Emacs windmove M-h/j/k/l.
         # performable: only consumes the key when a split exists in that
         # direction; otherwise the keypress passes through to the
         # application (so Emacs windmove still works via M-h/j/k/l).
-        "performable:alt+h=goto_split:left"
-        "performable:alt+j=goto_split:down"
-        "performable:alt+k=goto_split:up"
-        "performable:alt+l=goto_split:right"
-        # Split management under Option+x leader, mirroring Emacs C-x:
-        #   Option+x 0 = close current split    (C-x 0  delete-window)
-        #   Option+x 1 = zoom/unzoom split      (C-x 1  delete-other-windows)
-        #   Option+x 2 = split below            (C-x 2  split-window-below)
-        #   Option+x 3 = split right            (C-x 3  split-window-right)
-        "super+x>0=close_surface"
-        "super+x>1=toggle_split_zoom"
-        "super+x>2=new_split:down"
-        "super+x>3=new_split:right"
+        "performable:${cmd}+h=goto_split:left"
+        "performable:${cmd}+j=goto_split:down"
+        "performable:${cmd}+k=goto_split:up"
+        "performable:${cmd}+l=goto_split:right"
+        # Split management under Option+x (macOS) / Alt+x (Linux) leader,
+        # mirroring Emacs C-x:
+        #   0 = close current split    (C-x 0  delete-window)
+        #   1 = zoom/unzoom split      (C-x 1  delete-other-windows)
+        #   2 = split below            (C-x 2  split-window-below)
+        #   3 = split right            (C-x 3  split-window-right)
+        "${opt}+x>0=close_surface"
+        "${opt}+x>1=toggle_split_zoom"
+        "${opt}+x>2=new_split:down"
+        "${opt}+x>3=new_split:right"
       ];
       # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
       # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as
