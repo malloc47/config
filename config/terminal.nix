@@ -83,7 +83,7 @@ in
         # performable: only consumes the key when a split exists in that
         # direction; otherwise the keypress passes through to the
         # application (so Emacs windmove still works).
-        "performable:performable:super+h=goto_split:left"
+        "performable:super+h=goto_split:left"
         "performable:super+j=goto_split:down"
         "performable:super+k=goto_split:up"
         "performable:super+l=goto_split:right"
