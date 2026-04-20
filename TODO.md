@@ -50,6 +50,11 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 - Auto-select help windows to streamline documentation viewing
 - Use built-in lazy isearch counting for match statistics
 
+## Terminal
+
+- Ghostty shell integration
+- Ghostty quick terminal setup / keybinding
+
 ## VPS (aroldo)
 
 - [Beszel](https://github.com/henrygd/beszel) — lightweight server monitoring (CPU/RAM/disk) with hub on aroldo and agents on both machines
