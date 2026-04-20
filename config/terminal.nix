@@ -46,6 +46,10 @@ in
       # Keybinds reference `cmd` / `opt` so the physical keys stay the
       # same across platforms despite the macOS-only key-remap.
       keybind = [
+        # Copy/paste: performable copy only fires when there's a selection,
+        # otherwise passes through (e.g., M-c in Emacs).
+        "performable:${cmd}+c=copy:clipboard"
+        "${cmd}+v=paste:clipboard"
         # Pass Command+F / Command+B through to Emacs
         "${cmd}+f=text:f"
         "${cmd}+b=text:b"
