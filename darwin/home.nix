@@ -88,9 +88,12 @@
         end repeat
       end open"
 
-    # Stable bundle ID, text-file handler declaration, no Dock icon
+    # osacompile omits CFBundleIdentifier but auto-generates
+    # CFBundleDocumentTypes for droplets — remove both before adding ours.
+    /usr/libexec/PlistBuddy -c "Delete :CFBundleIdentifier" "$PLIST" 2>/dev/null || true
+    /usr/libexec/PlistBuddy -c "Delete :CFBundleDocumentTypes" "$PLIST" 2>/dev/null || true
     /usr/libexec/PlistBuddy \
-      -c "Set :CFBundleIdentifier org.gnu.EmacsClient" \
+      -c "Add :CFBundleIdentifier string org.gnu.EmacsClient" \
       -c "Add :CFBundleDocumentTypes array" \
       -c "Add :CFBundleDocumentTypes:0 dict" \
       -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Editor" \
