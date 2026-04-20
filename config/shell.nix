@@ -66,11 +66,6 @@ in
       ''
         hg() { history | grep $1 }
         pg() { ps aux | grep $1 }
-        se() {
-          local f
-          f="$(pbpaste 2>/dev/null || xclip -selection clipboard -o 2>/dev/null)" \
-            && [[ -f "$f" ]] && ''${EDITOR:-emacsclient -t} "$f"
-        }
         ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
         nr() { nix run "nixpkgs#$1" -- ''${@:2} }
 
@@ -181,11 +176,6 @@ in
     initExtra = ''
       hg() { history | grep "$1"; }
       pg() { ps aux | grep "$1"; }
-      se() {
-        local f
-        f="$(pbpaste 2>/dev/null || xclip -selection clipboard -o 2>/dev/null)" \
-          && [[ -f "$f" ]] && ''${EDITOR:-emacsclient -t} "$f"
-      }
       cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls; else builtin cd && ls; fi }
 
       materialize() {
