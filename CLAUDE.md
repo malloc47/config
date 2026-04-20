@@ -93,7 +93,6 @@ A custom options module that normalizes per-host differences, avoiding host-name
 - `settings.sshKeys` — path to directory containing SSH key profiles (set to `"${inputs.personal}/ssh"` in this repo, `./ssh` in work-config)
 - `settings.vm` — boolean, suppresses keybindings already handled by the VM host
 - `settings.fontSize` / `settings.dpi` / `settings.fontName` — display scaling for Retina vs non-Retina
-- `settings.terminal` — terminal emulator choice (alacritty vs others)
 - `settings.xkbFile` — selects a keyboard layout from `xkb/`
 - `settings.profile` — groups machines by identity (e.g., `malloc47`) to load the right SSH keys from `config.settings.sshKeys + "/<profile>/"`
 

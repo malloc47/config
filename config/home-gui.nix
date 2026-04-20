@@ -25,7 +25,7 @@
     executable = true;
     text = ''
       #!/usr/bin/env bash
-      ${config.settings.terminal} -e nmtui
+      ghostty -e nmtui
     '';
   };
 

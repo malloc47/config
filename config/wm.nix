@@ -70,8 +70,8 @@ with pkgs.lib;
           "${mod}+Control+q" = "restart";
           "${mod}+Shift+q" = "exec i3-nagbar -t warning -m 'Do you want to exit i3?' -b 'Yes' 'i3-msg exit'";
           "${mod}+Shift+c" = "kill";
-          "${mod}+Return" = "exec ${config.settings.terminal}";
-          "${mod}+Shift+Return" = "exec ${config.settings.terminal} -e tmux";
+          "${mod}+Return" = "exec ghostty";
+          "${mod}+Shift+Return" = "exec ghostty -e tmux";
           "${mod}+Shift+e" = "exec emacsclient -c";
           "${mod}+g" = "exec ${pkgs.rofi}/bin/rofi -show window";
           "${mod}+j" = "focus down";
@@ -215,7 +215,7 @@ with pkgs.lib;
     enable = true;
     font =
       config.settings.fontName + " " + (head (splitString "." (toString config.settings.fontSize)));
-    terminal = "${pkgs.alacritty}/bin/alacritty";
+    terminal = "${pkgs.ghostty}/bin/ghostty";
     extraConfig = {
       # Makes rofi default to using the monitor DPI
       dpi = 0;

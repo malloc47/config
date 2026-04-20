@@ -53,7 +53,7 @@ with pkgs.lib;
       automatically-unhide-macos-hidden-apps = true;
 
       mode.main.binding = {
-        "${mod}-enter" = "exec-and-forget ${pkgs.alacritty}/bin/alacritty";
+        "${mod}-enter" = "exec-and-forget ${pkgs.ghostty}/bin/ghostty";
         "${mod}-shift-n" = ''
           exec-and-forget osascript -e '
                     tell app "Terminal"

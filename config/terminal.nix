@@ -15,57 +15,6 @@ in
 {
   imports = [ ../modules/settings.nix ];
 
-  programs.alacritty = {
-    enable = true;
-    settings = {
-      window = {
-        padding = {
-          x = 2;
-          y = 2;
-        };
-        decorations = if (stdenv.isDarwin) then "Buttonless" else "Full";
-        dynamic_title = true;
-        option_as_alt = "Both";
-      };
-      scrolling = {
-        history = 10000;
-        multiplier = 3;
-      };
-      # Font and colors managed by Stylix (config/theme.nix)
-      mouse = {
-        hide_when_typing = false;
-        bindings = [
-          {
-            mouse = "Middle";
-            action = "PasteSelection";
-          }
-        ];
-      };
-      selection = {
-        semantic_escape_chars = ",│`|:\"' ()[]{}<>";
-        save_to_clipboard = false;
-      };
-      cursor = {
-        style = "Block";
-        unfocused_hollow = true;
-        thickness = 1.0;
-      };
-      keyboard.bindings = [
-        {
-          key = "F";
-          mods = "Super";
-          action = "ReceiveChar";
-        }
-        {
-          key = "B";
-          mods = "Super";
-          action = "ReceiveChar";
-        }
-      ];
-      general.live_config_reload = true;
-    };
-  };
-
   programs.ghostty = {
     enable = true;
     # nixpkgs ghostty requires wayland and doesn't build on darwin;
@@ -92,7 +41,7 @@ in
       # Keybinds reference `cmd` / `opt` so the physical keys stay the
       # same across platforms despite the macOS-only key-remap.
       keybind = [
-        # Pass Command+F / Command+B through to Emacs (mirrors alacritty)
+        # Pass Command+F / Command+B through to Emacs
         "${cmd}+f=text:f"
         "${cmd}+b=text:b"
         # Split navigation matching Emacs windmove M-h/j/k/l.

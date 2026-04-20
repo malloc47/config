@@ -26,10 +26,6 @@ with lib;
         type = types.bool;
         default = false;
       };
-      terminal = mkOption {
-        default = "ghostty";
-        type = with types; uniq str;
-      };
       fontName = mkOption {
         default = "Inconsolata";
         type = with types; uniq str;
