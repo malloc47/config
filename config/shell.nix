@@ -20,8 +20,83 @@ in
       # bracketed paste tokenizer.
       # set -g extended-keys on
       # set -as terminal-features 'tmux-256color:extkeys'
-      set-window-option -g window-active-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base00}"
-      set-window-option -g window-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base01}"
+      # Source active theme based on ~/.config/theme-mode
+      if-shell "[ \"$(cat ~/.config/theme-mode 2>/dev/null)\" = dark ]" \
+        "source-file ~/.config/tmux/theme-dark.conf" \
+        "source-file ~/.config/tmux/theme-light.conf"
+    '';
+  };
+
+  # Light/dark tmux theme snippets — toggled at runtime via toggle-theme
+  home.file."tmux-theme-light" = {
+    target = ".config/tmux/theme-light.conf";
+    text = with config.lib.stylix.colors; ''
+      set-window-option -g window-active-style "fg=#${base05},bg=#${base00}"
+      set-window-option -g window-style "fg=#${base05},bg=#${base01}"
+    '';
+  };
+
+  home.file."tmux-theme-dark" = {
+    target = ".config/tmux/theme-dark.conf";
+    text = ''
+      set-window-option -g window-active-style "fg=#93a1a1,bg=#002b36"
+      set-window-option -g window-style "fg=#93a1a1,bg=#073642"
+    '';
+  };
+
+  # Toggle between light and dark solarized across all tools.
+  # State is tracked in ~/.config/theme-mode ("light" or "dark").
+  home.file."toggle-theme" = {
+    target = "bin/toggle-theme";
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      set -e
+
+      MODE_FILE="$HOME/.config/theme-mode"
+      CURRENT=$(cat "$MODE_FILE" 2>/dev/null || echo "light")
+
+      if [ "$CURRENT" = "dark" ]; then
+        NEW="light"
+      else
+        NEW="dark"
+      fi
+
+      mkdir -p "$(dirname "$MODE_FILE")"
+      echo "$NEW" > "$MODE_FILE"
+
+      echo "Switching to $NEW mode..."
+
+      # 1. macOS: toggle system dark mode (Ghostty follows automatically)
+      if [ "$(uname)" = "Darwin" ]; then
+        if [ "$NEW" = "dark" ]; then
+          osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to true'
+        else
+          osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to false'
+        fi
+      fi
+
+      # 2. Linux: set XDG color-scheme portal (Ghostty follows)
+      if [ "$(uname)" = "Linux" ] && command -v dbus-send >/dev/null 2>&1; then
+        SCHEME=$( [ "$NEW" = "dark" ] && echo 1 || echo 2 )
+        dbus-send --session --type=method_call \
+          --dest=org.freedesktop.portal.Desktop \
+          /org/freedesktop/portal/desktop \
+          org.freedesktop.impl.portal.Settings.SetValue \
+          string:"org.freedesktop.appearance" \
+          string:"color-scheme" \
+          variant:uint32:$SCHEME 2>/dev/null || true
+      fi
+
+      # 3. Reload tmux theme
+      if tmux info >/dev/null 2>&1; then
+        tmux source-file "$HOME/.config/tmux/theme-$NEW.conf"
+      fi
+
+      # 4. Switch Emacs theme
+      emacsclient -e "(jw/apply-theme-mode \"$NEW\")" 2>/dev/null || true
+
+      echo "Done."
     '';
   };
 

@@ -18,14 +18,75 @@ in
     ./ghostty-terminfo.nix
   ];
 
+  # Disable Stylix's auto-generated Ghostty color theme so we can define
+  # our own light/dark pair that Ghostty switches automatically based on
+  # OS appearance.  Stylix still manages fonts and opacity.
+  stylix.targets.ghostty.colors.enable = false;
+
   programs.ghostty = {
     enable = true;
     # nixpkgs ghostty requires wayland and doesn't build on darwin;
     # set package = null so the module manages config without installing.
     # macOS gets the binary via the Homebrew cask (see darwin/homebrew.nix).
     package = lib.mkIf stdenv.isDarwin null;
+    # Dual solarized themes: Ghostty auto-switches based on OS dark mode
+    # (macOS appearance / Linux XDG portal).  Palette mapping mirrors
+    # Stylix's own modules/ghostty/hm.nix.
+    themes = {
+      solarized-light = {
+        background = "fdf6e3";
+        foreground = "586e75";
+        cursor-color = "586e75";
+        selection-background = "93a1a1";
+        selection-foreground = "586e75";
+        palette = [
+          "0=#fdf6e3"
+          "1=#dc322f"
+          "2=#859900"
+          "3=#b58900"
+          "4=#268bd2"
+          "5=#6c71c4"
+          "6=#2aa198"
+          "7=#586e75"
+          "8=#839496"
+          "9=#dc322f"
+          "10=#859900"
+          "11=#b58900"
+          "12=#268bd2"
+          "13=#6c71c4"
+          "14=#2aa198"
+          "15=#002b36"
+        ];
+      };
+      solarized-dark = {
+        background = "002b36";
+        foreground = "93a1a1";
+        cursor-color = "93a1a1";
+        selection-background = "586e75";
+        selection-foreground = "93a1a1";
+        palette = [
+          "0=#002b36"
+          "1=#dc322f"
+          "2=#859900"
+          "3=#b58900"
+          "4=#268bd2"
+          "5=#6c71c4"
+          "6=#2aa198"
+          "7=#93a1a1"
+          "8=#657b83"
+          "9=#dc322f"
+          "10=#859900"
+          "11=#b58900"
+          "12=#268bd2"
+          "13=#6c71c4"
+          "14=#2aa198"
+          "15=#fdf6e3"
+        ];
+      };
+    };
     settings = {
-      # font, colors, and opacity are managed by Stylix
+      # Font and opacity managed by Stylix; colors managed by themes above
+      theme = "light:solarized-light,dark:solarized-dark";
       cursor-style = "block";
       cursor-style-blink = false;
       shell-integration-features = "no-cursor";
