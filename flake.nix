@@ -421,10 +421,6 @@
         dell-xps-9315 = ./disk/dell-xps-9315.nix;
       };
 
-      packages.aarch64-linux.term-do =
-        nixpkgs.legacyPackages.aarch64-linux.callPackage ../pkgs/term-do/default.nix
-          { };
-
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
 
       checks = forAllSystems (system: {

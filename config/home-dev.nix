@@ -13,47 +13,42 @@ in
     ./repos.nix
   ];
 
-  home.packages =
-    with pkgs;
-    [
-      (aspellWithDicts (
-        dicts: with dicts; [
-          en
-        ]
-      ))
-      clj-kondo
-      cljfmt
-      clojure
-      ffmpeg
-      gcc
-      pre-commit
-      gnumake
-      go-task
-      graphviz
-      leiningen
-      nixfmt-rfc-style
-      nixos-generators
-      nodePackages.mermaid-cli
-      nodejs
-      pandoc
-      protobuf
-      pyright
-      (python3.withPackages (
-        ps: with ps; [
-          virtualenv
-          wheel
-          setuptools
-          numpy
-          pandas
-        ]
-      ))
-      sbt
-      sqlite
-      wordnet
-    ]
-    ++ lib.optionals isLinux [
-      term-do
-    ];
+  home.packages = with pkgs; [
+    (aspellWithDicts (
+      dicts: with dicts; [
+        en
+      ]
+    ))
+    clj-kondo
+    cljfmt
+    clojure
+    ffmpeg
+    gcc
+    pre-commit
+    gnumake
+    go-task
+    graphviz
+    leiningen
+    nixfmt-rfc-style
+    nixos-generators
+    nodePackages.mermaid-cli
+    nodejs
+    pandoc
+    protobuf
+    pyright
+    (python3.withPackages (
+      ps: with ps; [
+        virtualenv
+        wheel
+        setuptools
+        numpy
+        pandas
+      ]
+    ))
+    sbt
+    sqlite
+    wordnet
+  ];
 
   programs.java.enable = true;
 

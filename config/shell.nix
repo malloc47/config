@@ -66,8 +66,6 @@ in
       ''
         hg() { history | grep $1 }
         pg() { ps aux | grep $1 }
-        bindkey -s "^[x" 'term-do^M'
-        term-do() {command term-do "$*" && builtin cd $(cat ~/.term-do.d/pwd)}
         ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
         nr() { nix run "nixpkgs#$1" -- ''${@:2} }
 
@@ -179,10 +177,6 @@ in
       hg() { history | grep "$1"; }
       pg() { ps aux | grep "$1"; }
       cd() { if [[ -n "$1" ]]; then builtin cd "$1" && ls; else builtin cd && ls; fi }
-      term-do() {
-        command term-do "$*"
-        builtin cd $(cat ~/.term-do.d/pwd)
-      }
 
       materialize() {
         if [ -f "$1.link" ] ; then
