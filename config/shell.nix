@@ -15,8 +15,11 @@ in
     extraConfig = ''
       set -ag terminal-overrides ",xterm*:Tc:smcup@:rmcup@"
       set -ag terminal-overrides ",*256col*:Tc"
-      set -g extended-keys on
-      set -as terminal-features 'tmux-256color:extkeys'
+      # Disabled: CSI-u encoding breaks multi-line paste in Claude Code
+      # (anthropics/claude-code#43169). Re-enable when Claude fixes its
+      # bracketed paste tokenizer.
+      # set -g extended-keys on
+      # set -as terminal-features 'tmux-256color:extkeys'
       set-window-option -g window-active-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base00}"
       set-window-option -g window-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base01}"
     '';
