@@ -70,18 +70,37 @@
     '';
   };
 
-  # Set Emacs.app as the default handler for plain-text files so that
-  # Ghostty's write_scrollback_file:open opens scrollback in an Emacs
-  # GUI frame instead of TextEdit.  The nix-built Emacs.app lives in the
-  # store, so we must register it with Launch Services before duti can
-  # resolve the bundle identifier.
+  # Build a minimal AppleScript .app that wraps emacsclient, then register
+  # it as the default plain-text handler.  This lets Ghostty's
+  # write_scrollback_file:open open scrollback in a new Emacs GUI frame
+  # (via the running daemon) instead of launching TextEdit.
   home.activation.emacs-text-handler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    EMACS_APP="${config.programs.emacs.finalPackage}/Applications/Emacs.app"
-    if [ -d "$EMACS_APP" ]; then
-      /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$EMACS_APP"
-      BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$EMACS_APP/Contents/Info.plist")
-      ${pkgs.duti}/bin/duti -s "$BUNDLE_ID" public.plain-text all
-    fi
+    EMACSCLIENT="${config.programs.emacs.finalPackage}/bin/emacsclient"
+    APP_DIR="$HOME/Applications/EmacsClient.app"
+    PLIST="$APP_DIR/Contents/Info.plist"
+    LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+
+    rm -rf "$APP_DIR"
+    /usr/bin/osacompile -o "$APP_DIR" -e "
+      on open theFiles
+        repeat with aFile in theFiles
+          do shell script \"$EMACSCLIENT -n -c \" & quoted form of POSIX path of aFile
+        end repeat
+      end open"
+
+    # Stable bundle ID, text-file handler declaration, no Dock icon
+    /usr/libexec/PlistBuddy \
+      -c "Set :CFBundleIdentifier org.gnu.EmacsClient" \
+      -c "Add :CFBundleDocumentTypes array" \
+      -c "Add :CFBundleDocumentTypes:0 dict" \
+      -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Editor" \
+      -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes array" \
+      -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes:0 string public.plain-text" \
+      -c "Add :LSUIElement bool true" \
+      "$PLIST"
+
+    "$LSREGISTER" -f "$APP_DIR"
+    ${pkgs.duti}/bin/duti -s org.gnu.EmacsClient public.plain-text all
   '';
 
   # Let Home Manager install and manage itself.
