@@ -32,6 +32,7 @@ in
       window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
       quit-after-last-window-closed = true;
+      scrollback-limit = 100000;
       macos-option-as-alt = true;
       macos-hidden = "always";
       split-divider-color = "#${config.lib.stylix.colors.base03}";
@@ -71,6 +72,8 @@ in
         "${opt}+x>1=toggle_split_zoom"
         "${opt}+x>2=new_split:down"
         "${opt}+x>3=new_split:right"
+        # Open scrollback in $EDITOR (emacsclient)
+        "${cmd}+shift+s=write_scrollback_file:open"
       ];
       # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
       # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as

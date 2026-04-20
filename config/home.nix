@@ -28,7 +28,7 @@
   home.sessionPath = [ "$HOME/bin" ];
 
   home.sessionVariables = {
-    EDITOR = "vim";
+    EDITOR = "emacsclient -t";
   };
 
   home.file.".hushlogin".text = "";
