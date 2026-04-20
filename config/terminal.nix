@@ -82,19 +82,19 @@ in
         # performable: only consumes the key when a split exists in that
         # direction; otherwise the keypress passes through to the
         # application (so Emacs windmove still works).
-        "performable:alt+h=goto_split:left"
-        "performable:alt+j=goto_split:down"
-        "performable:alt+k=goto_split:up"
-        "performable:alt+l=goto_split:right"
+        "performable:performable:super+h=goto_split:left"
+        "performable:super+j=goto_split:down"
+        "performable:super+k=goto_split:up"
+        "performable:super+l=goto_split:right"
         # Split management under Super+x leader, mirroring Emacs C-x:
-        #   Super+x 0 = close current split    (C-x 0  delete-window)
-        #   Super+x 1 = zoom/unzoom split      (C-x 1  delete-other-windows)
-        #   Super+x 2 = split below            (C-x 2  split-window-below)
-        #   Super+x 3 = split right            (C-x 3  split-window-right)
-        "super+x>0=close_surface"
-        "super+x>1=toggle_split_zoom"
-        "super+x>2=new_split:down"
-        "super+x>3=new_split:right"
+        #   alt+x 0 = close current split    (C-x 0  delete-window)
+        #   alt+x 1 = zoom/unzoom split      (C-x 1  delete-other-windows)
+        #   alt+x 2 = split below            (C-x 2  split-window-below)
+        #   alt+x 3 = split right            (C-x 3  split-window-right)
+        "alt+x>0=close_surface"
+        "alt+x>1=toggle_split_zoom"
+        "alt+x>2=new_split:down"
+        "alt+x>3=new_split:right"
       ];
       # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
       # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as
