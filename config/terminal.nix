@@ -72,10 +72,10 @@ in
         "${opt}+x>1=toggle_split_zoom"
         "${opt}+x>2=new_split:down"
         "${opt}+x>3=new_split:right"
-        # Copy scrollback file path to clipboard; use `se` shell function
-        # to open in $EDITOR.  Ghostty hardcodes open/xdg-open for :open
-        # mode (ghostty-org/ghostty#2504), so we use :copy instead.
-        "${cmd}+shift+s=write_scrollback_file:copy"
+        # Open scrollback in Emacs.  Ghostty uses open/xdg-open (not
+        # $EDITOR) so macOS needs duti to set Emacs.app as the default
+        # text handler (see darwin/home.nix).  ghostty-org/ghostty#2504
+        "${cmd}+shift+s=write_scrollback_file:open"
       ];
       # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
       # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as

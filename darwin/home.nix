@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -68,6 +69,13 @@
       fi
     '';
   };
+
+  # Set Emacs.app as the default handler for plain-text files so that
+  # Ghostty's write_scrollback_file:open opens scrollback in an Emacs
+  # GUI frame instead of TextEdit.
+  home.activation.emacs-text-handler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.duti}/bin/duti -s org.gnu.Emacs public.plain-text all
+  '';
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
