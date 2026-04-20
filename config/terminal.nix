@@ -74,28 +74,38 @@ in
       shell-integration-features = "no-cursor";
       window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
+      macos-option-as-alt = true;
       split-divider-color = "#${config.lib.stylix.colors.base03}";
-      # Pass Super+F and Super+B through to Emacs (mirrors alacritty config)
+      # Swap Command and Option so Ghostty matches GUI Emacs, where
+      # mac-command-modifier = 'meta (Command = M-) and
+      # mac-option-modifier = nil   (Option  = s-).
+      # Keybinds below use post-remap names: "alt" = physical Command,
+      # "super" = physical Option.
+      key-remap = [
+        "super=alt"
+        "alt=super"
+      ];
+      # Pass Command+F and Command+B through to Emacs (mirrors alacritty config)
       keybind = [
-        "super+f=text:f"
-        "super+b=text:b"
+        "alt+f=text:f"
+        "alt+b=text:b"
         # Split navigation matching Emacs windmove M-h/j/k/l.
         # performable: only consumes the key when a split exists in that
         # direction; otherwise the keypress passes through to the
-        # application (so Emacs windmove still works).
-        "performable:super+h=goto_split:left"
-        "performable:super+j=goto_split:down"
-        "performable:super+k=goto_split:up"
-        "performable:super+l=goto_split:right"
-        # Split management under Super+x leader, mirroring Emacs C-x:
-        #   alt+x 0 = close current split    (C-x 0  delete-window)
-        #   alt+x 1 = zoom/unzoom split      (C-x 1  delete-other-windows)
-        #   alt+x 2 = split below            (C-x 2  split-window-below)
-        #   alt+x 3 = split right            (C-x 3  split-window-right)
-        "alt+x>0=close_surface"
-        "alt+x>1=toggle_split_zoom"
-        "alt+x>2=new_split:down"
-        "alt+x>3=new_split:right"
+        # application (so Emacs windmove still works via M-h/j/k/l).
+        "performable:alt+h=goto_split:left"
+        "performable:alt+j=goto_split:down"
+        "performable:alt+k=goto_split:up"
+        "performable:alt+l=goto_split:right"
+        # Split management under Option+x leader, mirroring Emacs C-x:
+        #   Option+x 0 = close current split    (C-x 0  delete-window)
+        #   Option+x 1 = zoom/unzoom split      (C-x 1  delete-other-windows)
+        #   Option+x 2 = split below            (C-x 2  split-window-below)
+        #   Option+x 3 = split right            (C-x 3  split-window-right)
+        "super+x>0=close_surface"
+        "super+x>1=toggle_split_zoom"
+        "super+x>2=new_split:down"
+        "super+x>3=new_split:right"
       ];
       # Stylix scales font-size by 4/3 on macOS to normalise across DPI differences
       # between Ghostty (72dpi base) and the OS (96dpi). In practice this reads as
