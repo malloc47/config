@@ -48,8 +48,8 @@ in
       keybind = [
         # Copy/paste: performable copy only fires when there's a selection,
         # otherwise passes through (e.g., M-c in Emacs).
-        "performable:${cmd}+c=copy:clipboard"
-        "${cmd}+v=paste:clipboard"
+        "performable:${cmd}+c=copy_to_clipboard"
+        "${cmd}+v=paste_from_clipboard"
         # Pass Command+F / Command+B through to Emacs
         "${cmd}+f=text:f"
         "${cmd}+b=text:b"
