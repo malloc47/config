@@ -28,6 +28,7 @@ in
       shell-integration-features = "no-cursor";
       window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
+      quit-after-last-window-closed = true;
       macos-option-as-alt = true;
       macos-hidden = "always";
       split-divider-color = "#${config.lib.stylix.colors.base03}";
