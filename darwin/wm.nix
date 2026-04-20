@@ -53,7 +53,9 @@ with pkgs.lib;
       automatically-unhide-macos-hidden-apps = true;
 
       mode.main.binding = {
-        "${mod}-enter" = "exec-and-forget ${pkgs.ghostty}/bin/ghostty";
+        # Ghostty is installed via Homebrew cask (darwin/homebrew.nix), not nix
+        # (nixpkgs ghostty requires wayland and doesn't build on darwin).
+        "${mod}-enter" = "exec-and-forget ghostty";
         "${mod}-shift-n" = ''
           exec-and-forget osascript -e '
                     tell app "Terminal"
