@@ -15,7 +15,7 @@ in
     extraConfig = ''
       set -ag terminal-overrides ",xterm*:Tc:smcup@:rmcup@"
       set -ag terminal-overrides ",*256col*:Tc"
-      set -s extended-keys on
+      set -g extended-keys on
       set -as terminal-features 'tmux-256color:extkeys'
       set-window-option -g window-active-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base00}"
       set-window-option -g window-style "fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base01}"
