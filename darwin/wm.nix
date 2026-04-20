@@ -55,7 +55,7 @@ with pkgs.lib;
       mode.main.binding = {
         # Ghostty is installed via Homebrew cask (darwin/homebrew.nix), not nix
         # (nixpkgs ghostty requires wayland and doesn't build on darwin).
-        "${mod}-enter" = "exec-and-forget ghostty";
+        "${mod}-enter" = "exec-and-forget /Applications/Ghostty.app/Contents/MacOS/ghostty";
         "${mod}-shift-n" = ''
           exec-and-forget osascript -e '
                     tell app "Terminal"
