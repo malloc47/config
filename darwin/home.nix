@@ -72,9 +72,16 @@
 
   # Set Emacs.app as the default handler for plain-text files so that
   # Ghostty's write_scrollback_file:open opens scrollback in an Emacs
-  # GUI frame instead of TextEdit.
+  # GUI frame instead of TextEdit.  The nix-built Emacs.app lives in the
+  # store, so we must register it with Launch Services before duti can
+  # resolve the bundle identifier.
   home.activation.emacs-text-handler = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    ${pkgs.duti}/bin/duti -s org.gnu.Emacs public.plain-text all
+    EMACS_APP="${config.programs.emacs.finalPackage}/Applications/Emacs.app"
+    if [ -d "$EMACS_APP" ]; then
+      /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$EMACS_APP"
+      BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$EMACS_APP/Contents/Info.plist")
+      ${pkgs.duti}/bin/duti -s "$BUNDLE_ID" public.plain-text all
+    fi
   '';
 
   # Let Home Manager install and manage itself.
