@@ -29,6 +29,7 @@ in
       window-decoration = if (stdenv.isDarwin) then "auto" else "none";
       window-theme = "system";
       macos-option-as-alt = true;
+      macos-hidden = true;
       split-divider-color = "#${config.lib.stylix.colors.base03}";
       # On macOS, swap Command (super) and Option (alt) so Ghostty
       # matches GUI Emacs, where mac-command-modifier = 'meta
