@@ -13,7 +13,10 @@ let
   opt = if stdenv.isDarwin then "super" else "alt";
 in
 {
-  imports = [ ../modules/settings.nix ];
+  imports = [
+    ../modules/settings.nix
+    ./ghostty-terminfo.nix
+  ];
 
   programs.ghostty = {
     enable = true;
@@ -75,41 +78,6 @@ in
       font-size = builtins.floor config.settings.fontSize;
     };
   };
-
-  # Build a modified xterm-ghostty terminfo with colors#16777216 (truecolor).
-  # Ghostty's upstream terminfo ships colors#256 and a Tc flag; Emacs's C-level
-  # init_tty reads the terminfo colors count directly, so emacsclient -t only
-  # gets 256 colors unless the terminfo itself declares 16777216.  This
-  # activation script patches the entry and installs it into ~/.terminfo/ so it
-  # takes precedence over the system copy.
-  home.activation.ghostty-terminfo =
-    let
-      # On macOS (Homebrew install) the terminfo lives inside the .app bundle.
-      # On NixOS the ghostty package puts it in $out/share/terminfo.
-      ghosttyTerminfo =
-        if stdenv.isDarwin then
-          "/Applications/Ghostty.app/Contents/Resources/terminfo"
-        else
-          "${pkgs.ghostty}/share/terminfo";
-      # Use nix's ncurses 6.x (not macOS system ncurses 5.7) — the system
-      # tic only supports 16-bit numeric values, truncating 16777216 to 256.
-      infocmp = "${pkgs.ncurses}/bin/infocmp";
-      tic = "${pkgs.ncurses}/bin/tic";
-      sed = "${pkgs.gnused}/bin/sed";
-    in
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      GHOSTTY_TERMINFO="${ghosttyTerminfo}"
-      if [ -d "$GHOSTTY_TERMINFO" ]; then
-        # Remove stale entry so infocmp reads the upstream source, not our
-        # own previously-compiled file.  Clear TERMINFO_DIRS to prevent any
-        # wrapper or shell-integration paths from interfering.
-        rm -f "$HOME/.terminfo/78/xterm-ghostty" "$HOME/.terminfo/x/xterm-ghostty"
-        env TERMINFO="$GHOSTTY_TERMINFO" TERMINFO_DIRS="" \
-          ${infocmp} -x xterm-ghostty 2>/dev/null \
-          | ${sed} 's/colors#\(256\|0x100\)/colors#16777216/' \
-          | ${tic} -x -o "$HOME/.terminfo" - 2>/dev/null || true
-      fi
-    '';
 
   programs.dircolors.enable = true;
 }
