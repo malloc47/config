@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -28,7 +29,7 @@
   home.sessionPath = [ "$HOME/bin" ];
 
   home.sessionVariables = {
-    EDITOR = "emacsclient -t";
+    EDITOR = lib.mkForce "emacsclient -t";
   };
 
   home.file.".hushlogin".text = "";
