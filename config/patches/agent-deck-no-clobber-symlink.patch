@@ -1,0 +1,19 @@
+diff --git a/internal/session/userconfig.go b/internal/session/userconfig.go
+index 048e57d..86b92b2 100644
+--- a/internal/session/userconfig.go
++++ b/internal/session/userconfig.go
+@@ -1491,6 +1491,14 @@ func SaveUserConfig(config *UserConfig) error {
+ 		return fmt.Errorf("failed to get config path: %w", err)
+ 	}
+ 
++	// Refuse to clobber symlinks. home-manager / Nix symlink this file into
++	// /nix/store (read-only), and the os.Rename below would silently replace
++	// the symlink with a regular file, detaching the config from its declared
++	// source. Bail out so declarative config wins.
++	if info, lerr := os.Lstat(configPath); lerr == nil && info.Mode()&os.ModeSymlink != 0 {
++		return fmt.Errorf("config.toml is a symlink (likely managed by home-manager/Nix); refusing to overwrite")
++	}
++
+ 	// Ensure directory exists
+ 	dir := filepath.Dir(configPath)
+ 	if err := os.MkdirAll(dir, 0o700); err != nil {

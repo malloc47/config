@@ -183,7 +183,10 @@ in
 
     home.packages = [
       (agentPkgs.agent-deck.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ./patches/agent-deck-no-extkeys.patch ];
+        patches = (old.patches or [ ]) ++ [
+          ./patches/agent-deck-no-extkeys.patch
+          ./patches/agent-deck-no-clobber-symlink.patch
+        ];
       }))
       agentPkgs.claude-code
       agentPkgs.opencode
