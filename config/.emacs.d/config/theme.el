@@ -35,26 +35,9 @@
   (defun jw/apply-theme-mode (mode)
     "Apply MODE (\"light\" or \"dark\") base16 solarized theme."
     (mapc #'disable-theme custom-enabled-themes)
-    (let* ((theme (intern (concat "base16-solarized-" mode)))
-           (palette (symbol-value
-                     (intern (concat "base16-solarized-" mode "-theme-colors")))))
+    (let ((theme (intern (concat "base16-solarized-" mode))))
       (setq frame-background-mode (intern mode))
       (load-theme theme t)
-      ;; base16's default modeline fg is base04 — low-contrast gray on every
-      ;; bg.  Use base07 (max-contrast) for the active modeline's fg against
-      ;; its darker base01 bg, and leave inactive at base00/base03 so the
-      ;; active/inactive bg distinction still reads.
-      (let ((base00 (plist-get palette :base00))
-            (base01 (plist-get palette :base01))
-            (base03 (plist-get palette :base03))
-            (base05 (plist-get palette :base05))
-            (base07 (plist-get palette :base07)))
-        (set-face-attribute 'mode-line nil
-                            :background base01 :foreground base07)
-        (set-face-attribute 'mode-line-inactive nil
-                            :background base00 :foreground base03)
-        (set-face-attribute 'mode-line-buffer-id nil
-                            :foreground base05 :weight 'bold))
       ;; TUI frames: use the terminal's own bg/fg rather than
       ;; approximating hex colors through 256-color indices.
       (dolist (frame (frame-list))
