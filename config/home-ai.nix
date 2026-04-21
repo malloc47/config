@@ -182,7 +182,9 @@ in
         };
 
     home.packages = [
-      agentPkgs.agent-deck
+      (agentPkgs.agent-deck.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ./patches/agent-deck-no-extkeys.patch ];
+      }))
       agentPkgs.claude-code
       agentPkgs.opencode
       pkgs.claude-code-acp
