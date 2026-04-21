@@ -40,15 +40,17 @@
                      (intern (concat "base16-solarized-" mode "-theme-colors")))))
       (setq frame-background-mode (intern mode))
       (load-theme theme t)
-      ;; base16's default modeline is base02 bg / base04 fg — a gray-on-gray
-      ;; pair that fails WCAG AA.  Swap to base01/base05 for the active line
-      ;; and base00/base03 for inactive so the pair tracks light/dark.
+      ;; base16's default modeline fg is base04 — low-contrast gray on every
+      ;; bg.  Use base07 (max-contrast) for the active modeline's fg against
+      ;; its darker base01 bg, and leave inactive at base00/base03 so the
+      ;; active/inactive bg distinction still reads.
       (let ((base00 (plist-get palette :base00))
             (base01 (plist-get palette :base01))
             (base03 (plist-get palette :base03))
-            (base05 (plist-get palette :base05)))
+            (base05 (plist-get palette :base05))
+            (base07 (plist-get palette :base07)))
         (set-face-attribute 'mode-line nil
-                            :background base01 :foreground base05)
+                            :background base01 :foreground base07)
         (set-face-attribute 'mode-line-inactive nil
                             :background base00 :foreground base03)
         (set-face-attribute 'mode-line-buffer-id nil
