@@ -9,6 +9,7 @@
     ../modules/settings.nix
     ./git.nix
     ./shell.nix
+    ./ghostty-terminfo.nix
   ];
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;

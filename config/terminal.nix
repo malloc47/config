@@ -15,7 +15,6 @@ in
 {
   imports = [
     ../modules/settings.nix
-    ./ghostty-terminfo.nix
   ];
 
   # Disable Stylix's auto-generated Ghostty color theme so we can define

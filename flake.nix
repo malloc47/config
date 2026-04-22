@@ -391,7 +391,6 @@
         home-dev = ./config/home-dev.nix;
         home-gui = ./config/home-gui.nix;
         home-vm = ./config/home-vm.nix;
-        ghostty-terminfo = ./config/ghostty-terminfo.nix;
         stylix = stylix.homeModules.stylix;
         theme = ./config/theme.nix;
         home-ai = import ./config/home-ai.nix { inherit inputs; };
