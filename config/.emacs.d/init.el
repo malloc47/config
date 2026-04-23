@@ -27,4 +27,4 @@
 (require 'nix-lang)
 (require 'yaml-lang)
 (require 'java-lang)
-(require 'jw-gpt)
+(require 'jw-ai)
