@@ -145,7 +145,6 @@ in
     }
     // lib.optionalAttrs stdenv.isDarwin {
       font-size = builtins.floor config.settings.fontSize;
-      macos-option-as-alt = "both";
     };
   };
 
