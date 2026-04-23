@@ -67,6 +67,7 @@ in
       window-theme = "system";
       font-family = config.settings.fontName;
       font-size = builtins.floor config.settings.fontSize;
+      macos-option-as-alt = "both";
     };
   };
 
