@@ -70,6 +70,33 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 
 - [zbuffers](https://github.com/Strech/zbuffers) — buffer management plugin for zellij
 
+## Theming
+
+Stylix drift — the light path generally flows through `config.lib.stylix.colors`, but
+several dark paths and older configs still hardcode solarized palettes, so switching
+polarity won't propagate cleanly.
+
+- Zellij: move the ~130-line inline `solarized-light-soft` KDL theme out of
+  `config/home-ai.nix:51-172` — no stylix involvement at all. Either derive the RGB
+  triples from `config.lib.stylix.colors` or document the decoupling.
+- agent-deck: `theme = "light"` is hardcoded in `config/home-ai.nix:178`. Derive from
+  `config.stylix.polarity` (or the same `~/.config/theme-mode` toggle tmux/emacs use)
+  so it follows system dark mode.
+- Emacs: `config/emacs.nix:38-55` hardcodes the solarized-dark base16 palette while
+  the light path uses `config.lib.stylix.colors.withHashtag`. Asymmetric — either
+  hardcode both or stylix-derive both.
+- Tmux: `config/shell.nix:42-43` hardcodes `fg=#93a1a1,bg=#002b36` / `bg=#073642` for
+  the dark session style; light path uses stylix. Same asymmetry as emacs.
+- i3 / i3status / i3bar: `stylix.targets.i3.enable = false` (set in `config/flake.nix`)
+  with a full hand-rolled solarized palette in `config/wm.nix:18-171`. Evaluate
+  whether stylix's current i3 module is usable; if so, drop the manual colors.
+- `config/theme.nix:13` passes `#fdf6e3` literally to ImageMagick for the blank
+  wallpaper — replace with `config.lib.stylix.colors.base00` (or similar) for
+  consistency.
+- Ghostty's dual palette (`config/terminal.nix:36-83`, with
+  `stylix.targets.ghostty.colors.enable = false`) is intentional — native OS-following
+  `light:X,dark:X` theme switching. Keep as a documented exception, not drift.
+
 ## Repo Hygiene
 
 - Normalize all repos on `main` branch (config and personal currently use `master`)
