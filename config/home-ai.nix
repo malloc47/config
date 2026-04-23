@@ -33,7 +33,7 @@ in
     programs.zellij = {
       enable = true;
       settings = {
-        theme = "solarized-light-soft";
+        theme = "stylix-soft";
         ui.pane_frames.rounded_corners = true;
         show_startup_tips = false;
       }
@@ -46,11 +46,11 @@ in
       };
     };
 
-    # Muted solarized variant: uses content tones for UI chrome instead of
-    # saturated accent colors. Auto-discovered by zellij from themes dir.
-    # RGB triples come from stylix so the theme tracks the active base16 scheme.
+    # Muted variant: uses content tones (base04/05) for UI chrome instead of
+    # saturated accents. RGB triples come from stylix so the theme tracks the
+    # active base16 scheme. Auto-discovered by zellij from the themes dir.
     # Literal `0` is zellij's "terminal default" sentinel — not a color.
-    xdg.configFile."zellij/themes/solarized-light-soft.kdl".text =
+    xdg.configFile."zellij/themes/stylix-soft.kdl".text =
       let
         c = config.lib.stylix.colors;
         rgb = name: "${c."${name}-rgb-r"} ${c."${name}-rgb-g"} ${c."${name}-rgb-b"}";
@@ -71,7 +71,7 @@ in
       in
       ''
         themes {
-            solarized-light-soft {
+            stylix-soft {
                 text_unselected {
                     base ${base05}
                     background ${base01}
