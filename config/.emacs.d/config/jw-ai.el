@@ -1,4 +1,4 @@
-(provide 'jw-gpt)
+(provide 'jw-ai)
 
 (use-package gptel
   :ensure t
@@ -26,3 +26,9 @@
 
   :custom
   (gptel-default-mode 'markdown-mode))
+
+(use-package agent-shell
+  :ensure t
+  :config
+  (setq agent-shell-anthropic-authentication
+        (agent-shell-anthropic-make-authentication :login t)))
