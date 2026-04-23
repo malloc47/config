@@ -111,9 +111,6 @@ in
         # otherwise passes through (e.g., M-c in Emacs).
         "performable:${cmd}+c=copy_to_clipboard"
         "${cmd}+v=paste_from_clipboard"
-        # Pass Command+F / Command+B through to Emacs
-        "${cmd}+f=text:f"
-        "${cmd}+b=text:b"
         # Split navigation matching Emacs windmove M-h/j/k/l.
         # performable: only consumes the key when a split exists in that
         # direction; otherwise the keypress passes through to the
