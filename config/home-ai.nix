@@ -46,130 +46,151 @@ in
       };
     };
 
-    # Muted solarized-light variant: uses content tones for UI chrome instead
-    # of saturated accent colors. Auto-discovered by zellij from themes dir.
-    xdg.configFile."zellij/themes/solarized-light-soft.kdl".text = ''
-      themes {
-          solarized-light-soft {
-              text_unselected {
-                  base 88 110 117
-                  background 238 232 213
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              text_selected {
-                  base 7 54 66
-                  background 253 246 227
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              ribbon_selected {
-                  base 238 232 213
-                  background 88 110 117
-                  emphasis_0 220 50 47
-                  emphasis_1 203 75 22
-                  emphasis_2 211 54 130
-                  emphasis_3 38 139 210
-              }
-              ribbon_unselected {
-                  base 101 123 131
-                  background 238 232 213
-                  emphasis_0 220 50 47
-                  emphasis_1 147 161 161
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              table_title {
-                  base 38 139 210
-                  background 0
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              table_cell_selected {
-                  base 7 54 66
-                  background 253 246 227
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              table_cell_unselected {
-                  base 88 110 117
-                  background 238 232 213
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              list_selected {
-                  base 7 54 66
-                  background 253 246 227
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              list_unselected {
-                  base 88 110 117
-                  background 238 232 213
-                  emphasis_0 203 75 22
-                  emphasis_1 42 161 152
-                  emphasis_2 38 139 210
-                  emphasis_3 211 54 130
-              }
-              frame_selected {
-                  base 38 139 210
-                  background 0
-                  emphasis_0 42 161 152
-                  emphasis_1 108 113 196
-                  emphasis_2 211 54 130
-                  emphasis_3 0
-              }
-              frame_highlight {
-                  base 42 161 152
-                  background 0
-                  emphasis_0 38 139 210
-                  emphasis_1 42 161 152
-                  emphasis_2 42 161 152
-                  emphasis_3 42 161 152
-              }
-              exit_code_success {
-                  base 133 153 0
-                  background 0
-                  emphasis_0 42 161 152
-                  emphasis_1 88 110 117
-                  emphasis_2 211 54 130
-                  emphasis_3 38 139 210
-              }
-              exit_code_error {
-                  base 220 50 47
-                  background 0
-                  emphasis_0 181 137 0
-                  emphasis_1 0
-                  emphasis_2 0
-                  emphasis_3 0
-              }
-              multiplayer_user_colors {
-                  player_1 211 54 130
-                  player_2 38 139 210
-                  player_3 0
-                  player_4 181 137 0
-                  player_5 42 161 152
-                  player_6 0
-                  player_7 108 113 196
-                  player_8 0
-                  player_9 0
-                  player_10 0
-              }
-          }
-      }
-    '';
+    # Muted solarized variant: uses content tones for UI chrome instead of
+    # saturated accent colors. Auto-discovered by zellij from themes dir.
+    # RGB triples come from stylix so the theme tracks the active base16 scheme.
+    # Literal `0` is zellij's "terminal default" sentinel — not a color.
+    xdg.configFile."zellij/themes/solarized-light-soft.kdl".text =
+      let
+        c = config.lib.stylix.colors;
+        rgb = name: "${c."${name}-rgb-r"} ${c."${name}-rgb-g"} ${c."${name}-rgb-b"}";
+        base00 = rgb "base00";
+        base01 = rgb "base01";
+        base02 = rgb "base02";
+        base04 = rgb "base04";
+        base05 = rgb "base05";
+        base06 = rgb "base06";
+        base08 = rgb "base08";
+        base09 = rgb "base09";
+        base0A = rgb "base0A";
+        base0B = rgb "base0B";
+        base0C = rgb "base0C";
+        base0D = rgb "base0D";
+        base0E = rgb "base0E";
+        base0F = rgb "base0F";
+      in
+      ''
+        themes {
+            solarized-light-soft {
+                text_unselected {
+                    base ${base05}
+                    background ${base01}
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                text_selected {
+                    base ${base06}
+                    background ${base00}
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                ribbon_selected {
+                    base ${base01}
+                    background ${base05}
+                    emphasis_0 ${base08}
+                    emphasis_1 ${base09}
+                    emphasis_2 ${base0F}
+                    emphasis_3 ${base0D}
+                }
+                ribbon_unselected {
+                    base ${base04}
+                    background ${base01}
+                    emphasis_0 ${base08}
+                    emphasis_1 ${base02}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                table_title {
+                    base ${base0D}
+                    background 0
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                table_cell_selected {
+                    base ${base06}
+                    background ${base00}
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                table_cell_unselected {
+                    base ${base05}
+                    background ${base01}
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                list_selected {
+                    base ${base06}
+                    background ${base00}
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                list_unselected {
+                    base ${base05}
+                    background ${base01}
+                    emphasis_0 ${base09}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0D}
+                    emphasis_3 ${base0F}
+                }
+                frame_selected {
+                    base ${base0D}
+                    background 0
+                    emphasis_0 ${base0C}
+                    emphasis_1 ${base0E}
+                    emphasis_2 ${base0F}
+                    emphasis_3 0
+                }
+                frame_highlight {
+                    base ${base0C}
+                    background 0
+                    emphasis_0 ${base0D}
+                    emphasis_1 ${base0C}
+                    emphasis_2 ${base0C}
+                    emphasis_3 ${base0C}
+                }
+                exit_code_success {
+                    base ${base0B}
+                    background 0
+                    emphasis_0 ${base0C}
+                    emphasis_1 ${base05}
+                    emphasis_2 ${base0F}
+                    emphasis_3 ${base0D}
+                }
+                exit_code_error {
+                    base ${base08}
+                    background 0
+                    emphasis_0 ${base0A}
+                    emphasis_1 0
+                    emphasis_2 0
+                    emphasis_3 0
+                }
+                multiplayer_user_colors {
+                    player_1 ${base0F}
+                    player_2 ${base0D}
+                    player_3 0
+                    player_4 ${base0A}
+                    player_5 ${base0C}
+                    player_6 0
+                    player_7 ${base0E}
+                    player_8 0
+                    player_9 0
+                    player_10 0
+                }
+            }
+        }
+      '';
 
     home.file.".agent-deck/config.toml".source =
       (pkgs.formats.toml { }).generate "agent-deck-config.toml"

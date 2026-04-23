@@ -76,9 +76,6 @@ Stylix drift — the light path generally flows through `config.lib.stylix.color
 several dark paths and older configs still hardcode solarized palettes, so switching
 polarity won't propagate cleanly.
 
-- Zellij: move the ~130-line inline `solarized-light-soft` KDL theme out of
-  `config/home-ai.nix:51-172` — no stylix involvement at all. Either derive the RGB
-  triples from `config.lib.stylix.colors` or document the decoupling.
 - agent-deck: `theme = "light"` is hardcoded in `config/home-ai.nix:178`. Derive from
   `config.stylix.polarity` (or the same `~/.config/theme-mode` toggle tmux/emacs use)
   so it follows system dark mode.
