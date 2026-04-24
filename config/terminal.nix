@@ -111,6 +111,11 @@ in
         # otherwise passes through (e.g., M-c in Emacs).
         "performable:${cmd}+c=copy_to_clipboard"
         "${cmd}+v=paste_from_clipboard"
+        # Insert last argument (M-. in zsh/readline).  Ghostty's kitty
+        # keyboard protocol encodes alt+period as a CSI sequence on Linux,
+        # bypassing zsh's ^[. binding.  Explicit esc: forces the plain ESC+.
+        # byte sequence that zsh expects.
+        "alt+period=esc:."
         # Split navigation matching Emacs windmove M-h/j/k/l.
         # performable: only consumes the key when a split exists in that
         # direction; otherwise the keypress passes through to the
