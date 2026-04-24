@@ -31,6 +31,9 @@
   services.openssh.enable = true;
   services.mosh-server.enable = true;
 
+  # Keep systemd --user services (e.g. emacs daemon) running after logout
+  users.users.${config.settings.username}.linger = true;
+
   # Headless: ignore lid close
   services.logind.settings.Login = {
     HandleLidSwitch = "ignore";
