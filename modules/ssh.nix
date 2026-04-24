@@ -1,48 +1,36 @@
 {
   config,
-  pkgs,
+  options,
   lib,
   ...
 }:
 {
   imports = [ ../modules/settings.nix ];
-  config = {
-
-    services =
-      { }
-      // lib.optionalAttrs config.settings.vm {
-        openssh = lib.mkIf (config.settings.vm) {
-          enable = true;
-          settings.X11Forwarding = true;
+  config = lib.mkMerge (
+    [
+      {
+        home-manager.users.${config.settings.username}.imports = [
+          ../config/home-ssh.nix
+        ];
+      }
+    ]
+    # sshd config is NixOS-only; nix-darwin's services.openssh doesn't
+    # expose the `settings` attribute.
+    ++ lib.optionals (options.services.openssh ? settings) [
+      {
+        services.openssh = {
+          enable = lib.mkIf config.settings.vm true;
+          settings = {
+            X11Forwarding = lib.mkIf config.settings.vm true;
+            # Keepalive: 30s * 6 = 180s blip tolerance. SSH-layer keepalive
+            # is preferred over kernel TCPKeepAlive (which only fires
+            # after ~2h, past most NAT timeouts).
+            ClientAliveInterval = lib.mkDefault 30;
+            ClientAliveCountMax = lib.mkDefault 6;
+            TCPKeepAlive = lib.mkDefault false;
+          };
         };
-      };
-
-    home-manager.users.${config.settings.username} = {
-      programs.ssh = {
-        enable = true;
-        # https://github.com/nix-community/home-manager/blob/bec08ef6e3b9d92f391a2940f6dbeffa50b17fa8/modules/programs/ssh.nix#L563-L574
-        enableDefaultConfig = false;
-        matchBlocks."*" = {
-          forwardAgent = false;
-          addKeysToAgent = "no";
-          compression = false;
-          serverAliveInterval = 0;
-          serverAliveCountMax = 3;
-          hashKnownHosts = false;
-          userKnownHostsFile = "~/.ssh/known_hosts";
-          controlMaster = "auto";
-          controlPath = "~/.ssh/master-%r@%n:%p";
-          controlPersist = "1h";
-        };
-      };
-      home.file."ssh-key" = {
-        source = config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}";
-        target = ".ssh/${config.settings.sshKeyName}";
-      };
-      home.file."ssh-key-pub" = {
-        source = config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}.pub";
-        target = ".ssh/${config.settings.sshKeyName}.pub";
-      };
-    };
-  };
+      }
+    ]
+  );
 }
