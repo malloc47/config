@@ -188,6 +188,7 @@
             self.nixosModules.user
             self.nixosModules.nixpkgs
             self.nixosModules.ssh
+            self.nixosModules.mosh
             self.nixosModules.configuration-flake
             self.nixosModules.stylix
             self.nixosModules.theme
@@ -229,6 +230,7 @@
             self.nixosModules.user
             self.nixosModules.nixpkgs
             self.nixosModules.ssh
+            self.nixosModules.mosh
             self.nixosModules.configuration-flake
             self.nixosModules.stylix
             self.nixosModules.theme
@@ -271,6 +273,7 @@
             self.nixosModules.user
             self.nixosModules.nixpkgs
             self.nixosModules.ssh
+            self.nixosModules.mosh
             self.nixosModules.configuration-flake
             self.nixosModules.stylix
             self.nixosModules.theme
@@ -384,6 +387,7 @@
         sound = ./modules/sound.nix;
         gui = ./modules/gui.nix;
         motd = ./modules/motd.nix;
+        mosh = ./modules/mosh.nix;
         vmware-guest = ./modules/vmware-guest.nix;
         configuration-flake = ./nixos/configuration-flake.nix;
         stylix = stylix.nixosModules.stylix;

@@ -29,6 +29,7 @@
   };
 
   services.openssh.enable = true;
+  services.mosh-server.enable = true;
 
   # Headless: ignore lid close
   services.logind.settings.Login = {

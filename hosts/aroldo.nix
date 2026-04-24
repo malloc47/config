@@ -36,6 +36,11 @@ in
     '';
   };
 
+  services.mosh-server = {
+    enable = true;
+    interface = "tailscale0";
+  };
+
   services.fail2ban = {
     enable = true;
     maxretry = 5;

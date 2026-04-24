@@ -9,6 +9,7 @@
   ];
 
   services.openssh.enable = true;
+  services.mosh-server.enable = true;
 
   motd = {
     enable = true;
