@@ -338,12 +338,17 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.users.${config.settings.username} = {
-                  imports = [ self.darwinModules.home ];
+                  imports = [
+                    self.darwinModules.home
+                    self.homeManagerModules.home-dev
+                    self.homeManagerModules.home-ai
+                  ];
                   # Emacs uses its own solarized-theme; don't let Stylix manage it
                   stylix.targets.emacs.enable = false;
                   # wm.nix / rofi.nix set these explicitly
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
+                  programs.ai-session.enable = true;
                 };
                 # Doing this to handle existing vmware files
                 home-manager.backupFileExtension = "backup";

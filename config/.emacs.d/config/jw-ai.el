@@ -27,6 +27,8 @@
   :custom
   (gptel-default-mode 'markdown-mode))
 
+(use-package shell-maker :ensure t)
+
 (use-package agent-shell
   :ensure t
   :config
