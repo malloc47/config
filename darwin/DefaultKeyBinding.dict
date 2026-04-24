@@ -19,5 +19,7 @@
 	<string>moveToEndOfDocument:</string>
 	<key>^$</key>
 	<string>moveToEndOfDocumentAndModifySelection:</string>
+	<key>^j</key>
+	<string>insertNewline:</string>
 </dict>
 </plist>
