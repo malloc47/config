@@ -49,6 +49,7 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 - Recenter view after save-place restores cursor position
 - Auto-select help windows to streamline documentation viewing
 - Use built-in lazy isearch counting for match statistics
+- https://github.com/magit/with-editor
 
 ## Terminal
 
@@ -107,3 +108,10 @@ polarity won't propagate cleanly.
 ## Network
 
 Bifurcate wifi into separate LANs
+
+## AI
+- https://github.com/utensils/mcp-nixos , https://mcp-nixos.io/
+- Bootstrap OpenCode
+
+## Automation
+- Examine https://github.com/notifications/subscriptions for updates and craft TODO items when these are closed
