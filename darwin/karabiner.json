@@ -127,6 +127,28 @@
                                 "type": "basic"
                             }
                         ]
+                    },
+                    {
+                        "description": "DJI Mic Mini button -> Handy voice-to-text (Opt+`)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "product_id": 16401, "vendor_id": 11427 }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "consumer_key_code": "volume_increment" },
+                                "to": [
+                                    {
+                                        "key_code": "grave_accent_and_tilde",
+                                        "modifiers": ["left_option"],
+                                        "repeat": false
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
                     }
                 ]
             },
@@ -153,6 +175,14 @@
                         "is_consumer": true,
                         "product_id": 28705,
                         "vendor_id": 1256
+                    },
+                    "ignore": false
+                },
+                {
+                    "identifiers": {
+                        "is_consumer": true,
+                        "product_id": 16401,
+                        "vendor_id": 11427
                     },
                     "ignore": false
                 },
