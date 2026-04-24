@@ -187,7 +187,7 @@ On LAN, you can alternatively use `https://ntfy.home.malloc47.com` directly.
 
 ## 10. Tailscale client (requires aroldo)
 
-aida acts as a Tailscale subnet router, advertising `192.168.1.0/24` to the Headscale network on aroldo. This step requires aroldo to be deployed and running first — see `BOOTSTRAP-AROLDO.md`.
+aida acts as a Tailscale subnet router, advertising `192.168.1.0/24` to the Headscale network on aroldo. This step requires aroldo to be deployed and running first — see `aroldo.md`.
 
 1. Deploy aida: `nixos-rebuild switch --flake .#aida`
 2. Get a pre-auth key from aroldo: `ssh aroldo 'sudo cat /run/headscale/authkey'`
