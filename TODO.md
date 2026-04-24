@@ -25,6 +25,7 @@ Capture ideas and pain points to work on when I have bandwidth:
 - Darwin: Remove LogiOptions+ in favor of Karabiner
   - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
 - Ghostty / Kitty for better [Claude Code integration](https://code.claude.com/docs/en/terminal-config)
+- Consider alternatives to handy for speech-to-text, primarily so I can have separate push-to-talk and toggle keybindings instead of having to choose one or another, in addition to better CLI control / integration.
 
 ## Emacs
 
