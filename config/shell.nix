@@ -5,6 +5,8 @@ in
 {
   imports = [ ../modules/settings.nix ];
 
+  stylix.targets.tmux.enable = false;
+
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
