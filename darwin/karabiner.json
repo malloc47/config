@@ -140,7 +140,13 @@
                     "ignore": false,
                     "mouse_flip_horizontal_wheel": true,
                     "mouse_flip_vertical_wheel": true,
-                    "pointing_motion_wheels_multiplier": 0.8
+                    "pointing_motion_wheels_multiplier": 0.8,
+                    "simple_modifications": [
+                        {
+                            "from": { "pointing_button": "button6" },
+                            "to": [{ "key_code": "mission_control" }]
+                        }
+                    ]
                 },
                 {
                     "identifiers": {
