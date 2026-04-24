@@ -91,6 +91,9 @@ polarity won't propagate cleanly.
 - Ghostty's dual palette (`config/terminal.nix:36-83`, with
   `stylix.targets.ghostty.colors.enable = false`) is intentional — native OS-following
   `light:X,dark:X` theme switching. Keep as a documented exception, not drift.
+- Stylix with the `autoEnable = true` implicitly themes things without asking;
+  audit what is being implicitly styled (e.g. vim) and convert to an opt-in
+  approach.
 
 ## Repo Hygiene
 
