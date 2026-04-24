@@ -82,8 +82,6 @@ polarity won't propagate cleanly.
 - Emacs: `config/emacs.nix:38-55` hardcodes the solarized-dark base16 palette while
   the light path uses `config.lib.stylix.colors.withHashtag`. Asymmetric — either
   hardcode both or stylix-derive both.
-- Tmux: `config/shell.nix:42-43` hardcodes `fg=#93a1a1,bg=#002b36` / `bg=#073642` for
-  the dark session style; light path uses stylix. Same asymmetry as emacs.
 - i3 / i3status / i3bar: `stylix.targets.i3.enable = false` (set in `config/flake.nix`)
   with a full hand-rolled solarized palette in `config/wm.nix:18-171`. Evaluate
   whether stylix's current i3 module is usable; if so, drop the manual colors.

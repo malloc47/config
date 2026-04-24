@@ -20,27 +20,6 @@ in
       # bracketed paste tokenizer.
       # set -g extended-keys on
       # set -as terminal-features 'tmux-256color:extkeys'
-      # Source active theme based on ~/.config/theme-mode
-      if-shell "[ \"$(cat ~/.config/theme-mode 2>/dev/null)\" = dark ]" \
-        "source-file ~/.config/tmux/theme-dark.conf" \
-        "source-file ~/.config/tmux/theme-light.conf"
-    '';
-  };
-
-  # Light/dark tmux theme snippets — toggled at runtime via toggle-theme
-  home.file."tmux-theme-light" = {
-    target = ".config/tmux/theme-light.conf";
-    text = with config.lib.stylix.colors; ''
-      set-window-option -g window-active-style "fg=#${base05},bg=#${base00}"
-      set-window-option -g window-style "fg=#${base05},bg=#${base01}"
-    '';
-  };
-
-  home.file."tmux-theme-dark" = {
-    target = ".config/tmux/theme-dark.conf";
-    text = ''
-      set-window-option -g window-active-style "fg=#93a1a1,bg=#002b36"
-      set-window-option -g window-style "fg=#93a1a1,bg=#073642"
     '';
   };
 
@@ -88,12 +67,7 @@ in
           variant:uint32:$SCHEME 2>/dev/null || true
       fi
 
-      # 3. Reload tmux theme
-      if tmux info >/dev/null 2>&1; then
-        tmux source-file "$HOME/.config/tmux/theme-$NEW.conf"
-      fi
-
-      # 4. Switch Emacs theme
+      # 3. Switch Emacs theme
       emacsclient -e "(jw/apply-theme-mode \"$NEW\")" 2>/dev/null || true
 
       echo "Done."
