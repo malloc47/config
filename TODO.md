@@ -66,6 +66,7 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 - Offsite backup target — use aroldo as Restic/Borg destination over Tailscale for geographic redundancy (limited by 45GB disk)
 - [Miniflux](https://miniflux.app/) / FreshRSS — lightweight RSS reader, always accessible
 - DNS-over-HTTPS proxy — public encrypted DNS entry point forwarding to AdGuard over tailnet, works without Tailscale active on device
+- My emacs rgrep is experiencing weird issues with vertico, and I'm tired of not having github-project-aware project search. Look around for the most minimal options in this area that are not overly coupled to project tooling.
 
 ## Zellij
 
