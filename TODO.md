@@ -21,6 +21,12 @@ Capture ideas and pain points to work on when I have bandwidth:
 - Keyboard: Ctrl+Shift+Return as paste
 - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
 - Consider alternatives to handy for speech-to-text, primarily so I can have separate push-to-talk and toggle keybindings instead of having to choose one or another, in addition to better CLI control / integration.
+- Aerospace alternative idea:
+  - https://github.com/tmandry/glide + https://github.com/jurplel/InstantSpaceSwitcher
+  - Have to figure out a way to move windows between desktops with keyboard
+	- https://github.com/tmandry/glide/issues/64
+  - Adopting native spaces should hopefully be less glitchy
+  - Has focus-follows-mouse built-in
 
 ## Emacs
 
