@@ -18,9 +18,6 @@ Capture ideas and pain points to work on when I have bandwidth:
   - https://apple.stackexchange.com/questions/354676/how-can-i-disable-xquartz-entirely-and-use-xorg-with-my-own-desktop-environment
 - `copyq` integration with Alfred https://github.com/albertlauncher/albert-plugin-python-copyq
   - Might work to get images working
-- nix-ify my ukelele keyboard setup
-  - Bug: fix the "switching back to US" that happens when opening certain Settings windows or
-    TextEdit
 - Keyboard: Ctrl+Shift+Return as paste
 - Darwin: Remove LogiOptions+ in favor of Karabiner
   - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
