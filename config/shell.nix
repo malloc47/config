@@ -118,6 +118,15 @@ in
           ) " $HOME/src/${config.settings.profile}";
       in
       ''
+        if [ $TERM = "dumb" ] || [ $TERM = "tramp" ] ; then
+          unset RPROMPT
+          unset RPS1
+          PS1="$ "
+          unsetopt zle
+          unsetopt rcs
+          return
+        fi
+
         hg() { history | grep $1 }
         pg() { ps aux | grep $1 }
         ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
@@ -206,10 +215,6 @@ in
         nixos-deploy() {
           nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
         }
-
-        if [[ $TERM == "dumb" ]]; then
-            export PROMPT="$ "
-        fi
       '';
     sessionVariables = {
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
