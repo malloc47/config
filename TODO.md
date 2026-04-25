@@ -19,9 +19,7 @@ Capture ideas and pain points to work on when I have bandwidth:
 - `copyq` integration with Alfred https://github.com/albertlauncher/albert-plugin-python-copyq
   - Might work to get images working
 - Keyboard: Ctrl+Shift+Return as paste
-- Darwin: Remove LogiOptions+ in favor of Karabiner
-  - Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
-- Ghostty / Kitty for better [Claude Code integration](https://code.claude.com/docs/en/terminal-config)
+- Then layer https://github.com/jtroo/kanata/ on top of the Karabiner virtual keyboard
 - Consider alternatives to handy for speech-to-text, primarily so I can have separate push-to-talk and toggle keybindings instead of having to choose one or another, in addition to better CLI control / integration.
 
 ## Emacs
