@@ -52,10 +52,11 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 - Auto-select help windows to streamline documentation viewing
 - Use built-in lazy isearch counting for match statistics
 - https://github.com/magit/with-editor
+- Alias for nixos-deploy within Emacs
 
 ## Terminal
 
-- Ghostty shell integration
+- Ghostty shell integration https://ghostty.org/docs/features/shell-integration
 - Ghostty quick terminal setup / keybinding
 
 ## VPS (aroldo)
@@ -118,3 +119,8 @@ Bifurcate wifi into separate LANs
 
 ## Automation
 - Examine https://github.com/notifications/subscriptions for updates and craft TODO items when these are closed
+
+## Homelab
+- Karakeep bookmark manager: https://github.com/karakeep-app/karakeep
+  - https://github.com/VandeeFeng/Emacs-Hoarder
+-
