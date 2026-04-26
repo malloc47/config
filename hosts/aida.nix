@@ -296,6 +296,15 @@
     ];
   };
 
+  services.karakeep = {
+    enable = true;
+    extraEnvironment = {
+      PORT = "3001";
+      DISABLE_SIGNUPS = "true";
+      DISABLE_NEW_RELEASE_CHECK = "true";
+    };
+  };
+
   services.tailscale = {
     enable = true;
     openFirewall = true;
@@ -348,6 +357,22 @@
             copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
           }
           reverse_proxy http://127.0.0.1:3000
+        }
+      '';
+    };
+
+    virtualHosts."bookmarks.home.malloc47.com" = {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        handle /api/healthcheck {
+          reverse_proxy http://127.0.0.1:3001
+        }
+        handle {
+          forward_auth http://127.0.0.1:9091 {
+            uri /api/authz/forward-auth
+            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+          }
+          reverse_proxy http://127.0.0.1:3001
         }
       '';
     };
