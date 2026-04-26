@@ -52,6 +52,22 @@ in
     aida
     malloc47
   ];
+  "authelia-oidc-hmac.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "authelia-oidc-private-key.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "authelia-karakeep-secret-digest.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "karakeep-oauth-env.age".publicKeys = [
+    aida
+    malloc47
+  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila

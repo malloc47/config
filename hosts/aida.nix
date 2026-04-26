@@ -73,6 +73,23 @@
 
     homepage-env.file = ../secrets/homepage-env.age;
 
+    authelia-oidc-hmac = {
+      file = ../secrets/authelia-oidc-hmac.age;
+      owner = "authelia-main";
+    };
+    authelia-oidc-private-key = {
+      file = ../secrets/authelia-oidc-private-key.age;
+      owner = "authelia-main";
+    };
+    authelia-karakeep-secret-digest = {
+      file = ../secrets/authelia-karakeep-secret-digest.age;
+      owner = "authelia-main";
+    };
+
+    karakeep-oauth-env = {
+      file = ../secrets/karakeep-oauth-env.age;
+      owner = "karakeep";
+    };
   };
 
   security.acme = {
@@ -100,11 +117,44 @@
       authentication_backend.file.path = config.age.secrets.authelia-users.path;
       access_control.default_policy = "one_factor";
       notifier.filesystem.filename = "/var/lib/authelia-main/notifications.txt";
+
+      identity_providers.oidc = {
+        # Karakeep's OIDC implementation does not advertise a complete claim
+        # set; Authelia's escape hatch forces email into the id_token.
+        claims_policies.karakeep.id_token = [ "email" ];
+        clients = [
+          {
+            client_id = "karakeep";
+            client_name = "Karakeep";
+            client_secret = ''{{ secret "${config.age.secrets.authelia-karakeep-secret-digest.path}" }}'';
+            public = false;
+            authorization_policy = "one_factor";
+            require_pkce = true;
+            pkce_challenge_method = "S256";
+            redirect_uris = [
+              "https://bookmarks.home.malloc47.com/api/auth/callback/custom"
+            ];
+            scopes = [
+              "openid"
+              "profile"
+              "email"
+            ];
+            response_types = [ "code" ];
+            grant_types = [ "authorization_code" ];
+            access_token_signed_response_alg = "none";
+            userinfo_signed_response_alg = "none";
+            token_endpoint_auth_method = "client_secret_basic";
+            claims_policy = "karakeep";
+          }
+        ];
+      };
     };
     secrets = {
       jwtSecretFile = config.age.secrets.authelia-jwt-secret.path;
       storageEncryptionKeyFile = config.age.secrets.authelia-storage-key.path;
       sessionSecretFile = config.age.secrets.authelia-session-secret.path;
+      oidcHmacSecretFile = config.age.secrets.authelia-oidc-hmac.path;
+      oidcIssuerPrivateKeyFile = config.age.secrets.authelia-oidc-private-key.path;
     };
   };
 
@@ -298,10 +348,22 @@
 
   services.karakeep = {
     enable = true;
+    environmentFile = config.age.secrets.karakeep-oauth-env.path;
     extraEnvironment = {
       PORT = "3001";
       DISABLE_SIGNUPS = "true";
       DISABLE_NEW_RELEASE_CHECK = "true";
+
+      NEXTAUTH_URL = "https://bookmarks.home.malloc47.com";
+      OAUTH_WELLKNOWN_URL = "https://auth.home.malloc47.com/.well-known/openid-configuration";
+      OAUTH_CLIENT_ID = "karakeep";
+      OAUTH_PROVIDER_NAME = "Authelia";
+      # Auto-link OIDC identity to a pre-existing local Karakeep account
+      # sharing the same email (otherwise users get a duplicate empty account).
+      OAUTH_ALLOW_DANGEROUS_EMAIL_ACCOUNT_LINKING = "true";
+      # Leave password auth enabled until OIDC is verified end-to-end; flip to
+      # "true" afterward to enforce SSO-only login.
+      DISABLE_PASSWORD_AUTH = "false";
     };
   };
 
@@ -364,16 +426,7 @@
     virtualHosts."bookmarks.home.malloc47.com" = {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
-        handle /api/healthcheck {
-          reverse_proxy http://127.0.0.1:3001
-        }
-        handle {
-          forward_auth http://127.0.0.1:9091 {
-            uri /api/authz/forward-auth
-            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
-          }
-          reverse_proxy http://127.0.0.1:3001
-        }
+        reverse_proxy http://127.0.0.1:3001
       '';
     };
 
