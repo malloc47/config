@@ -351,7 +351,7 @@
     environmentFile = config.age.secrets.karakeep-oauth-env.path;
     extraEnvironment = {
       PORT = "3001";
-      DISABLE_SIGNUPS = "true";
+      # DISABLE_SIGNUPS = "true";
       DISABLE_NEW_RELEASE_CHECK = "true";
 
       NEXTAUTH_URL = "https://bookmarks.home.malloc47.com";
@@ -363,7 +363,7 @@
       OAUTH_ALLOW_DANGEROUS_EMAIL_ACCOUNT_LINKING = "true";
       # Leave password auth enabled until OIDC is verified end-to-end; flip to
       # "true" afterward to enforce SSO-only login.
-      DISABLE_PASSWORD_AUTH = "false";
+      DISABLE_PASSWORD_AUTH = "true";
     };
   };
 
