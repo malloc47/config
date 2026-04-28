@@ -10,7 +10,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "https://github.com/acsandmann/rift/releases/download/v${version}/rift-universal-macos-${version}.tar.gz";
-    hash = "sha256-i5o6QfK6wJVHJaQDbCuJrUiM94u7XaPLvaBF30usfBg=";
+    hash = "sha256-Ofu4SdXw/ZP7RAr5SZ7fDqwetn4CcEyGHni1EDO1sCo=";
   };
 
   sourceRoot = ".";
