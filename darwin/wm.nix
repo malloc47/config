@@ -5,8 +5,9 @@
   ...
 }:
 let
-  mod = "alt";
-  pkgs-aerospace = pkgs-unstable.aerospace;
+  mod = "Alt";
+  modShift = "Alt + Shift";
+  modShiftCtrl = "Alt + Shift + Ctrl";
 in
 with pkgs.lib;
 {
@@ -15,23 +16,187 @@ with pkgs.lib;
   ];
 
   home.packages = with pkgs; [
-    # albert
-    autoraise
+    # autoraise — not needed, rift has built-in focus-follows-mouse
     flameshot
-    swipe-aerospace
+    rift
+    # swipe-aerospace — aerospace-specific, not needed with rift
   ];
 
-  launchd.agents.autoraise = {
+  # Rift config (TOML) managed by Nix
+  xdg.configFile."rift/config.toml".text = ''
+    [settings]
+    animate = false
+    animation_duration = 0.3
+    animation_fps = 100.0
+    default_disable = false
+
+    focus_follows_mouse = true
+    mouse_follows_focus = true
+    mouse_hides_on_focus = false
+
+    auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
+
+    run_on_start = []
+    hot_reload = true
+
+    [settings.layout]
+    mode = "traditional"
+
+    [settings.layout.master_stack]
+    master_ratio = 0.6
+    master_count = 1
+    master_side = "left"
+    new_window_placement = "master"
+
+    [settings.layout.scrolling]
+    column_width_ratio = 0.7
+    min_column_width_ratio = 0.3
+    max_column_width_ratio = 0.9
+    alignment = "center"
+    focus_navigation_style = "niri"
+
+    [settings.layout.stack]
+    stack_offset = 40.0
+    default_orientation = "perpendicular"
+
+    [settings.layout.gaps.outer]
+    top = 5
+    left = 10
+    bottom = 10
+    right = 10
+
+    [settings.layout.gaps.inner]
+    horizontal = 20
+    vertical = 20
+
+    [settings.ui.menu_bar]
+    enabled = false
+    show_empty = false
+    mode = "all"
+    active_label = "index"
+    display_style = "layout"
+
+    [settings.ui.stack_line]
+    enabled = false
+
+    [settings.ui.mission_control]
+    enabled = false
+
+    [settings.gestures]
+    enabled = true
+    invert_horizontal_swipe = false
+    swipe_vertical_tolerance = 0.4
+    skip_empty = true
+    fingers = 3
+    distance_pct = 0.08
+    haptics_enabled = true
+    haptic_pattern = "level_change"
+
+    [settings.window_snapping]
+    drag_swap_fraction = 0.3
+
+    [virtual_workspaces]
+    enabled = true
+    default_workspace_count = 10
+    auto_assign_windows = true
+    preserve_focus_per_workspace = true
+    workspace_auto_back_and_forth = false
+    reapply_app_rules_on_title_change = false
+    default_workspace = 0
+    workspace_rules = []
+    workspace_names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+
+    app_rules = [
+      { app_id = "org.flameshot", floating = true },
+    ]
+
+    [keys]
+    # Launch apps
+    "${mod} + Return" = { exec = ["/bin/bash", "-c", "open -a /Applications/Ghostty.app"] }
+    "${modShift} + N" = { exec = ["/bin/bash", "-c", "osascript -e 'tell app \"Terminal\" to activate do script \"sudo darwin-rebuild switch; read -s -k ?COMPLETE ; exit\"'"] }
+    "${mod} + N" = { exec = ["/bin/bash", "-c", "open -na 'Google Chrome' --args --new-window"] }
+    "${modShift} + E" = { exec = ["${pkgs.emacs}/bin/emacsclient", "-c", "-e", "(x-focus-frame nil)"] }
+    "${mod} + O" = { exec = ["/bin/bash", "-c", "/Applications/Albert.app/Contents/MacOS/Albert show 'clipboard '"] }
+    "${mod} + P" = { exec = ["/bin/bash", "-c", "/Applications/Albert.app/Contents/MacOS/Albert show 'apps '"] }
+
+    # Focus directions
+    "${mod} + H" = { move_focus = "left" }
+    "${mod} + J" = { move_focus = "down" }
+    "${mod} + K" = { move_focus = "up" }
+    "${mod} + L" = { move_focus = "right" }
+
+    # Move window
+    "${modShift} + H" = { move_node = "left" }
+    "${modShift} + J" = { move_node = "down" }
+    "${modShift} + K" = { move_node = "up" }
+    "${modShift} + L" = { move_node = "right" }
+
+    # Join with (container manipulation)
+    "${modShiftCtrl} + H" = { join_window = "left" }
+    "${modShiftCtrl} + J" = { join_window = "down" }
+    "${modShiftCtrl} + K" = { join_window = "up" }
+    "${modShiftCtrl} + L" = { join_window = "right" }
+
+    # Layout
+    "${mod} + Space" = "toggle_stack"
+    "${modShift} + Space" = "toggle_orientation"
+
+    # Floating / fullscreen
+    "${mod} + F" = "toggle_window_floating"
+    "${modShift} + F" = "toggle_fullscreen"
+
+    # Display sleep
+    "${modShift} + Ctrl + Meta + L" = { exec = ["/bin/bash", "-c", "pmset displaysleepnow"] }
+
+    # Workspaces (rift is 0-indexed)
+    "${mod} + 1" = { switch_to_workspace = 0 }
+    "${mod} + 2" = { switch_to_workspace = 1 }
+    "${mod} + 3" = { switch_to_workspace = 2 }
+    "${mod} + 4" = { switch_to_workspace = 3 }
+    "${mod} + 5" = { switch_to_workspace = 4 }
+    "${mod} + 6" = { switch_to_workspace = 5 }
+    "${mod} + 7" = { switch_to_workspace = 6 }
+    "${mod} + 8" = { switch_to_workspace = 7 }
+    "${mod} + 9" = { switch_to_workspace = 8 }
+    "${mod} + 0" = { switch_to_workspace = 9 }
+
+    # Move window to workspace
+    "${modShift} + 1" = { move_window_to_workspace = 0 }
+    "${modShift} + 2" = { move_window_to_workspace = 1 }
+    "${modShift} + 3" = { move_window_to_workspace = 2 }
+    "${modShift} + 4" = { move_window_to_workspace = 3 }
+    "${modShift} + 5" = { move_window_to_workspace = 4 }
+    "${modShift} + 6" = { move_window_to_workspace = 5 }
+    "${modShift} + 7" = { move_window_to_workspace = 6 }
+    "${modShift} + 8" = { move_window_to_workspace = 7 }
+    "${modShift} + 9" = { move_window_to_workspace = 8 }
+    "${modShift} + 0" = { move_window_to_workspace = 9 }
+
+    # Workspace navigation
+    "${mod} + Tab" = "switch_to_last_workspace"
+    "${mod} + Minus" = "prev_workspace"
+    "${mod} + Equal" = "next_workspace"
+
+    # Resize
+    "${modShift} + Equal" = "resize_window_grow"
+    "${modShift} + Minus" = "resize_window_shrink"
+
+    # Close focused window (Cmd+W via System Events)
+    "${modShift} + C" = { exec = ["/bin/bash", "-c", "osascript -e 'tell application \"System Events\" to keystroke \"w\" using command down'"] }
+
+    # Flameshot
+    "${modShift} + X" = { exec = ["${pkgs.flameshot}/bin/flameshot", "gui"] }
+
+    # Rift management
+    "${mod} + Z" = "toggle_space_activated"
+    "${mod} + Ctrl + Q" = "save_and_exit"
+  '';
+
+  launchd.agents.rift = {
     enable = true;
     config = {
       ProgramArguments = [
-        "${pkgs.autoraise}/bin/autoraise"
-        "-delay"
-        "0"
-        "-focusDelay"
-        "1"
-        "-mouseDelta"
-        "0.5"
+        "${pkgs.rift}/bin/rift"
       ];
       ProcessType = "Interactive";
       KeepAlive = {
@@ -41,177 +206,14 @@ with pkgs.lib;
     };
   };
 
-  programs.aerospace = {
-    enable = true;
-    package = pkgs-aerospace;
-    launchd.enable = true;
-    userSettings = {
-      enable-normalization-flatten-containers = true;
-      enable-normalization-opposite-orientation-for-nested-containers = true;
-      default-root-container-layout = "tiles";
-      default-root-container-orientation = "auto";
-      automatically-unhide-macos-hidden-apps = true;
+  # Aerospace — disabled in favor of rift
+  # programs.aerospace = { ... };
 
-      mode.main.binding = {
-        # Ghostty is installed via Homebrew cask (darwin/homebrew.nix), not nix
-        # (nixpkgs ghostty requires wayland and doesn't build on darwin).
-        "${mod}-enter" = "exec-and-forget /Applications/Ghostty.app/Contents/MacOS/ghostty";
-        "${mod}-shift-n" = ''
-          exec-and-forget osascript -e '
-                    tell app "Terminal"
-                      activate
-                      do script "sudo darwin-rebuild switch; read -s -k \\?COMPLETE ; exit"
-                    end tell'
-        '';
-        "${mod}-n" = "exec-and-forget open -na \"Google Chrome\" --args --new-window";
-        "${mod}-shift-e" = "exec-and-forget ${pkgs.emacs}/bin/emacsclient -c -e \"(x-focus-frame nil)\"";
-        # Switch to the homebrew Albert for now
-        "${mod}-o" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"clipboard \"";
-        "${mod}-p" = "exec-and-forget /Applications/Albert.app/Contents/MacOS/Albert show \"apps \"";
-        # "${mod}-o" = "exec-and-forget ${pkgs.albert}/bin/albert show \"clipboard \"";
-        # "${mod}-p" = "exec-and-forget ${pkgs.albert}/bin/albert show \"apps \"";
-        "${mod}-h" = "focus left";
-        "${mod}-j" = "focus down";
-        "${mod}-k" = "focus up";
-        "${mod}-l" = "focus right";
-        "${mod}-shift-h" = "move left";
-        "${mod}-shift-j" = "move down";
-        "${mod}-shift-k" = "move up";
-        "${mod}-shift-l" = "move right";
-        "${mod}-shift-ctrl-h" = "join-with left";
-        "${mod}-shift-ctrl-j" = "join-with down";
-        "${mod}-shift-ctrl-k" = "join-with up";
-        "${mod}-shift-ctrl-l" = "join-with right";
-        "${mod}-space" = "layout tiles accordion";
-        "${mod}-shift-space" = "layout vertical horizontal";
-        "${mod}-f" = [
-          "layout floating tiling"
-          ''
-            exec-and-forget osascript -e '
-              set windowTitle to ""
-              tell application "System Events" to tell (first process whose frontmost is true) to set windowTitle to name of window 1
-              if (windowTitle is not equal to "Zoom Meeting") then
-                error number -128
-              end if
-              tell application "System Events"
-                tell process "zoom.us"
-                  click menu item "Keep on top" of menu 1 of menu bar item "Meeting" of menu bar 1
-                end tell
-              end tell'
-          ''
-        ];
-        "${mod}-shift-f" = "fullscreen";
-        "${mod}-shift-ctrl-cmd-l" = "exec-and-forget pmset displaysleepnow";
-        # "${mod}-backtick" = "workspace 1";
-        "${mod}-1" = "workspace 1";
-        "${mod}-2" = "workspace 2";
-        "${mod}-3" = "workspace 3";
-        "${mod}-4" = "workspace 4";
-        "${mod}-5" = "workspace 5";
-        "${mod}-6" = "workspace 6";
-        "${mod}-7" = "workspace 7";
-        "${mod}-8" = "workspace 8";
-        "${mod}-9" = "workspace 9";
-        "${mod}-0" = "workspace 10";
-        "${mod}-shift-1" = "move-node-to-workspace 1";
-        "${mod}-shift-2" = "move-node-to-workspace 2";
-        "${mod}-shift-3" = "move-node-to-workspace 3";
-        "${mod}-shift-4" = "move-node-to-workspace 4";
-        "${mod}-shift-5" = "move-node-to-workspace 5";
-        "${mod}-shift-6" = "move-node-to-workspace 6";
-        "${mod}-shift-7" = "move-node-to-workspace 7";
-        "${mod}-shift-8" = "move-node-to-workspace 8";
-        "${mod}-shift-9" = "move-node-to-workspace 9";
-        "${mod}-shift-0" = "move-node-to-workspace 10";
-        "${mod}-tab" = "workspace-back-and-forth";
-        "${mod}-shift-equal" = "balance-sizes";
-        "${mod}-minus" = "workspace prev";
-        "${mod}-equal" = "workspace next";
-        "${mod}-shift-c" = "close";
-        "${mod}-r" = "mode resize";
-        "${mod}-esc" = [
-          "mode vm"
-          "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode default'"
-        ];
-        "${mod}-shift-x" = "exec-and-forget ${pkgs.flameshot}/bin/flameshot gui";
-      };
+  # AutoRaise — disabled, rift has built-in focus-follows-mouse
+  # launchd.agents.autoraise = { ... };
 
-      mode.resize.binding = {
-        h = "resize width -150";
-        j = "resize height +150";
-        k = "resize height -150";
-        l = "resize width +150";
-        enter = "mode main";
-        esc = "mode main";
-      };
-
-      # on-focus-changed = [
-      #   "exec-and-forget ${config.home.homeDirectory}/bin/aerospace-focus"
-      # ];
-
-      # Free all the keybindings for the vm
-      mode.vm.binding = {
-        "${mod}-backtick" = "workspace 1";
-        "${mod}-minus" = "workspace prev";
-        "${mod}-equal" = "workspace next";
-        "${mod}-esc" = [
-          "mode main"
-          "exec-and-forget ssh jwaggoner@localhost -p 2222 'i3-msg -s /run/user/*/i3/ipc-socket*  mode window'"
-        ];
-      };
-
-      # on-window-detected = [{
-      #     "if".app-id = "com.vmware.fusion";
-      #     check-further-callbacks = false;
-      #     run = ["move-node-to-workspace 2"];
-      #   }
-      # ];
-
-      on-window-detected = [
-        {
-          "if".app-id = "org.flameshot";
-          run = [ "layout floating" ];
-        }
-      ];
-
-      gaps = {
-        inner.horizontal = 20;
-        inner.vertical = 20;
-        outer.left = 10;
-        outer.bottom = 10;
-        outer.top = 5;
-        outer.right = 10;
-      };
-      workspace-to-monitor-force-assignment = {
-        "1" = "main";
-        "2" = "main";
-        "3" = "main";
-        "4" = "main";
-        "5" = "main";
-        "6" = "main";
-        "7" = "main";
-        "8" = "main";
-        "9" = "main";
-        "10" = "main";
-      };
-    };
-  };
-
-  home.file."bin/aerospace-focus" = {
-    target = "bin/aerospace-focus";
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      focused () {
-        echo $(${pkgs-aerospace}/bin/aerospace list-windows --focused --format "%{app-bundle-id}")
-      }
-      if [[ "$(focused)" == "com.vmware.fusion" ]]; then
-        sendkeys --targeted --no-activate --initial-delay 0 --application-name "VMWare Fusion" -c '<c:g:command>'
-      #else
-      #    ${pkgs-aerospace}/bin/aerospace mode main
-      fi
-    '';
-  };
+  # SwipeAeroSpace — aerospace-specific, disabled
+  # launchd.agents.swipe-aerospace = { ... };
 
   services.jankyborders = {
     enable = true;
@@ -222,26 +224,8 @@ with pkgs.lib;
     };
   };
 
-  launchd.agents.swipe-aerospace = {
-    enable = true;
-    config = {
-      ProgramArguments = [
-        "${pkgs.swipe-aerospace}/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace"
-      ];
-      ProcessType = "Interactive";
-      KeepAlive = {
-        SuccessfulExit = true;
-      };
-      RunAtLoad = true;
-    };
-  };
-
   targets.darwin.defaults = {
-    "club.mediosz.SwipeAeroSpace" = {
-      "skip-empty" = 1;
-      fingers = "Three";
-      threshold = 0.3;
-    };
+    # SwipeAeroSpace defaults removed
   };
 
   home.file."Library/Preferences/albert/config" = {
