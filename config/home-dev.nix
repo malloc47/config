@@ -19,6 +19,7 @@ in
         en
       ]
     ))
+    cargo
     clj-kondo
     cljfmt
     clojure
