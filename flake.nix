@@ -203,12 +203,24 @@
             (
               { config, ... }:
               {
+                age.secrets.ntfy-git-sync-password = {
+                  file = ./secrets/ntfy-git-sync-password.age;
+                  owner = config.settings.username;
+                };
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.users.${config.settings.username}.imports = [
-                  self.homeManagerModules.osconfig-bridge
-                  self.homeManagerModules.home
-                ];
+                home-manager.users.${config.settings.username} = {
+                  imports = [
+                    self.homeManagerModules.osconfig-bridge
+                    self.homeManagerModules.home
+                    self.homeManagerModules.git-sync
+                  ];
+                  services.git-sync = {
+                    enable = true;
+                    repos = [ "/home/${config.settings.username}/src/config" ];
+                    tokenFile = config.age.secrets.ntfy-git-sync-password.path;
+                  };
+                };
               }
             )
           ];
@@ -290,18 +302,27 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
+                age.secrets.ntfy-git-sync-password = {
+                  file = ./secrets/ntfy-git-sync-password.age;
+                  owner = config.settings.username;
+                };
                 home-manager.users.${config.settings.username} = {
                   imports = [
                     self.homeManagerModules.osconfig-bridge
                     self.homeManagerModules.home
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-ai
+                    self.homeManagerModules.git-sync
                   ];
-                  # Emacs uses its own solarized-theme; don't let Stylix manage it
                   stylix.targets.emacs.enable = false;
                   programs.ai-session = {
                     enable = true;
                     webServer.enable = true;
+                  };
+                  services.git-sync = {
+                    enable = true;
+                    repos = [ "/home/${config.settings.username}/src/config" ];
+                    tokenFile = config.age.secrets.ntfy-git-sync-password.path;
                   };
                 };
               }
@@ -340,18 +361,29 @@
                 home-manager.extraSpecialArgs = specialArgs;
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
+                age.secrets.ntfy-git-sync-password = {
+                  file = ./secrets/ntfy-git-sync-password.age;
+                  owner = config.settings.username;
+                };
                 home-manager.users.${config.settings.username} = {
                   imports = [
                     self.darwinModules.home
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-ai
+                    self.homeManagerModules.git-sync
                   ];
-                  # Emacs uses its own solarized-theme; don't let Stylix manage it
                   stylix.targets.emacs.enable = false;
-                  # wm.nix / rofi.nix set these explicitly
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
                   programs.ai-session.enable = true;
+                  services.git-sync = {
+                    enable = true;
+                    repos = [
+                      "/Users/${config.settings.username}/src/config"
+                      "/Users/${config.settings.username}/src/work-config"
+                    ];
+                    tokenFile = config.age.secrets.ntfy-git-sync-password.path;
+                  };
                 };
                 # Doing this to handle existing vmware files
                 home-manager.backupFileExtension = "backup";
@@ -404,6 +436,7 @@
         stylix = stylix.homeModules.stylix;
         theme = ./config/theme.nix;
         home-ai = import ./config/home-ai.nix { inherit inputs; };
+        git-sync = ./config/home-git-sync.nix;
       };
 
       darwinModules = {

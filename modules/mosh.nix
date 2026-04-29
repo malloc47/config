@@ -19,21 +19,23 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    { programs.mosh.enable = true; }
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      { programs.mosh.enable = true; }
 
-    (lib.mkIf (cfg.interface == null) {
-      programs.mosh.openFirewall = true;
-    })
+      (lib.mkIf (cfg.interface == null) {
+        programs.mosh.openFirewall = true;
+      })
 
-    (lib.mkIf (cfg.interface != null) {
-      programs.mosh.openFirewall = false;
-      networking.firewall.interfaces.${cfg.interface}.allowedUDPPortRanges = [
-        {
-          from = 60000;
-          to = 61000;
-        }
-      ];
-    })
-  ]);
+      (lib.mkIf (cfg.interface != null) {
+        programs.mosh.openFirewall = false;
+        networking.firewall.interfaces.${cfg.interface}.allowedUDPPortRanges = [
+          {
+            from = 60000;
+            to = 61000;
+          }
+        ];
+      })
+    ]
+  );
 }

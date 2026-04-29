@@ -72,4 +72,11 @@ in
     malloc47
     attila
   ];
+  "ntfy-git-sync-password.age".publicKeys = [
+    aroldo
+    aida
+    attila
+    cesare
+    malloc47
+  ];
 }

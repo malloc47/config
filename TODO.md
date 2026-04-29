@@ -103,7 +103,7 @@ polarity won't propagate cleanly.
 ## Repo Hygiene
 
 - Normalize all repos on `main` branch (config and personal currently use `master`)
-- Create an automatic (ideally evented or, at worst, time-based) way to automatically pull down config/ and work-config/ repo changes that I can run via launchd/systemd to pull down the latest github state so I don't forget to do a `git pull`.
+- ~~Create an automatic (ideally evented or, at worst, time-based) way to automatically pull down config/ and work-config/ repo changes~~ → implemented via `home-git-sync.nix` (ntfy subscriber, systemd/launchd). Pending: create agenix secrets, add GitHub Actions secret, deploy.
 
 ## Security
 

@@ -91,6 +91,7 @@ in
     cloudflared-credentials.file = ../secrets/cloudflared-credentials.age;
     ntfy-admin-password.file = ../secrets/ntfy-admin-password.age;
     ntfy-admin-password-env.file = ../secrets/ntfy-admin-password-env.age;
+    ntfy-git-sync-password.file = ../secrets/ntfy-git-sync-password.age;
   };
 
   security.acme = {
@@ -209,6 +210,11 @@ in
     script = ''
       if ! ntfy user list 2>/dev/null | grep -q "user admin"; then
         NTFY_PASSWORD="$(cat ${config.age.secrets.ntfy-admin-password.path})" ntfy user add --role=admin admin
+      fi
+
+      if ! ntfy user list 2>/dev/null | grep -q "user git-sync"; then
+        NTFY_PASSWORD="$(cat ${config.age.secrets.ntfy-git-sync-password.path})" ntfy user add git-sync
+        ntfy access git-sync git-sync rw
       fi
     '';
   };
