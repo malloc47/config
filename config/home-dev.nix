@@ -25,6 +25,7 @@ in
     clojure
     ffmpeg
     gcc
+    gh
     pre-commit
     gnumake
     go-task
