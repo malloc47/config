@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.services.git-sync;
+  cfg = config.services.ntfy-git-sync;
 
   syncScript = pkgs.writeShellApplication {
     name = "git-sync-subscriber";
@@ -53,7 +53,7 @@ let
   );
 in
 {
-  options.services.git-sync = {
+  options.services.ntfy-git-sync = {
     enable = lib.mkEnableOption "ntfy-based git repo sync";
 
     repos = lib.mkOption {
@@ -78,11 +78,11 @@ in
     assertions = [
       {
         assertion = cfg.repos != [ ];
-        message = "services.git-sync.repos must contain at least one repository path.";
+        message = "services.ntfy-git-sync.repos must contain at least one repository path.";
       }
     ];
 
-    systemd.user.services.git-sync = lib.mkIf pkgs.stdenv.isLinux {
+    systemd.user.services.ntfy-git-sync = lib.mkIf pkgs.stdenv.isLinux {
       Unit = {
         Description = "ntfy-based git repo sync";
         After = [ "network-online.target" ];

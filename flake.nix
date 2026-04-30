@@ -215,7 +215,7 @@
                     self.homeManagerModules.home
                     self.homeManagerModules.git-sync
                   ];
-                  services.git-sync = {
+                  services.ntfy-git-sync = {
                     enable = true;
                     repos = [ "/home/${config.settings.username}/src/config" ];
                     tokenFile = config.age.secrets.ntfy-git-sync-password.path;
@@ -319,7 +319,7 @@
                     enable = true;
                     webServer.enable = true;
                   };
-                  services.git-sync = {
+                  services.ntfy-git-sync = {
                     enable = true;
                     repos = [ "/home/${config.settings.username}/src/config" ];
                     tokenFile = config.age.secrets.ntfy-git-sync-password.path;
@@ -376,7 +376,7 @@
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
                   programs.ai-session.enable = true;
-                  services.git-sync = {
+                  services.ntfy-git-sync = {
                     enable = true;
                     repos = [
                       "/Users/${config.settings.username}/src/config"
