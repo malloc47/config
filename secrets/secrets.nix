@@ -4,6 +4,7 @@ let
   cesare = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEgj2i1LZ39cDblcHZesMEa0HW03F8UqfWMPRucxPiBb";
   aroldo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILo3pfY8U0RfVKsDDR3Fqqr/8LthqdTcdS8mmMeeKTjZ root@aroldo";
   malloc47 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE6Ql5G8d09APA4ABhzMk0gQtr8CGxeynRGlhOB+1pjk malloc47-2026-03";
+  malloc47-user = "age19a3dcu3xrl77my69a38uw62ret4edv2x87rkxedgndlpyacfsdeqkd0h2h";
 in
 {
   "nix-access-tokens.age".publicKeys = [

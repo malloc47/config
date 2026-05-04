@@ -27,7 +27,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # https://github.com/zhaofengli/nix-homebrew/issues/131
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew/a5409abd0d5013d79775d3419bcac10eacb9d8c5";
 
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -135,6 +136,7 @@
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-gui
                     self.homeManagerModules.home-vm
+                    self.homeManagerModules.home-agenix
                   ];
                   # Emacs uses its own solarized-theme; don't let Stylix manage it
                   stylix.targets.emacs.enable = false;
@@ -214,6 +216,7 @@
                     self.homeManagerModules.osconfig-bridge
                     self.homeManagerModules.home
                     self.homeManagerModules.git-sync
+                    self.homeManagerModules.home-agenix
                   ];
                   services.ntfy-git-sync = {
                     enable = true;
@@ -262,6 +265,7 @@
                 home-manager.users.${config.settings.username}.imports = [
                   self.homeManagerModules.osconfig-bridge
                   self.homeManagerModules.home
+                  self.homeManagerModules.home-agenix
                 ];
               }
             )
@@ -313,6 +317,7 @@
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-ai
                     self.homeManagerModules.git-sync
+                    self.homeManagerModules.home-agenix
                   ];
                   stylix.targets.emacs.enable = false;
                   programs.ai-session = {
@@ -371,6 +376,7 @@
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-ai
                     self.homeManagerModules.git-sync
+                    self.homeManagerModules.home-agenix
                   ];
                   stylix.targets.emacs.enable = false;
                   stylix.targets.i3.enable = false;
@@ -436,6 +442,7 @@
         stylix = stylix.homeModules.stylix;
         theme = ./config/theme.nix;
         home-ai = import ./config/home-ai.nix { inherit inputs; };
+        home-agenix = import ./config/home-agenix.nix { inherit inputs; };
         git-sync = ./config/home-git-sync.nix;
       };
 

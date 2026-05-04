@@ -202,6 +202,16 @@ in
           };
         };
 
+    programs.codex = {
+      enable = true;
+      package = agentPkgs.codex;
+    };
+
+    programs.claude-code = {
+      enable = true;
+      package = agentPkgs.claude-code;
+    };
+
     home.packages = [
       (agentPkgs.agent-deck.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -209,7 +219,6 @@ in
           ./patches/agent-deck-no-clobber-symlink.patch
         ];
       }))
-      agentPkgs.claude-code
       agentPkgs.opencode
       pkgs.claude-code-acp
     ];
