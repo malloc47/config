@@ -1,8 +1,8 @@
 diff --git a/internal/tmux/tmux.go b/internal/tmux/tmux.go
-index b5e2241..555b390 100644
+index 6e677be..006ba3d 100644
 --- a/internal/tmux/tmux.go
 +++ b/internal/tmux/tmux.go
-@@ -1745,8 +1745,6 @@ func (s *Session) Start(command string) error {
+@@ -1840,8 +1840,6 @@ func (s *Session) Start(command string) error {
  	//
  	// Note: history-limit is NOT set here — the user's tmux.conf value is respected.
  	// Users can override via [tmux] options = { "history-limit" = "50000" } in config.toml.
@@ -11,18 +11,18 @@ index b5e2241..555b390 100644
  	//
  	// Note: remain-on-exit is NOT set here — it is only enabled for sandbox sessions
  	// via OptionOverrides to avoid changing behaviour for non-sandbox sessions.
-@@ -1763,9 +1761,7 @@ func (s *Session) Start(command string) error {
- 		"set-option", "-t", s.Name, "mouse", "on", ";",
+@@ -1863,9 +1861,7 @@ func (s *Session) Start(command string) error {
+ 	startArgs = append(startArgs,
  		"set-option", "-t", s.Name, "-q", "allow-passthrough", "on", ";",
  		"set-option", "-t", s.Name, "set-clipboard", "on", ";",
 -		"set-option", "-t", s.Name, "escape-time", "10", ";",
 -		"set", "-sq", "extended-keys", "on", ";",
 -		"set", "-asq", "terminal-features", ",*:hyperlinks:extkeys")
 +		"set-option", "-t", s.Name, "escape-time", "10")
- 	_ = exec.Command("tmux", startArgs...).Run()
- 
+ 	_ = s.tmuxCmd(startArgs...).Run()
+
  	// Bind Ctrl+Q to detach at the tmux level as fallback for terminals where
-@@ -2004,17 +2000,13 @@ func (s *Session) EnableMouseMode() error {
+@@ -2115,17 +2111,13 @@ func (s *Session) EnableMouseMode() error {
  	// Enhancements included:
  	// - set-clipboard on: OSC 52 clipboard integration (Warp, iTerm2, kitty, etc.)
  	// - allow-passthrough on: OSC 8 hyperlinks, advanced escape sequences (tmux 3.2+)
@@ -31,7 +31,7 @@ index b5e2241..555b390 100644
  	// - escape-time 10: Fast Vim/editor responsiveness (default 500ms is too slow)
  	//
  	// Uses -q flag where supported to silently ignore on older tmux versions
- 	enhanceCmd := exec.Command("tmux",
+ 	enhanceCmd := s.tmuxCmd(
  		"set-option", "-t", s.Name, "set-clipboard", "on", ";",
  		"set-option", "-t", s.Name, "-q", "allow-passthrough", "on", ";",
 -		"set-option", "-t", s.Name, "escape-time", "10", ";",
