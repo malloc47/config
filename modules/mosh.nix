@@ -7,10 +7,16 @@
 
 let
   cfg = config.services.mosh-server;
-  patchedMosh = pkgs.mosh.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [
-      ../config/patches/mosh-osc52-selection-types.patch
-    ];
+  # See config/home.nix for context.  Builds mosh from the head of
+  # mobile-shell/mosh#1104 since the diff doesn't apply cleanly to the
+  # 1.4.0 release tarball.
+  patchedMosh = pkgs.mosh.overrideAttrs (_old: {
+    src = pkgs.fetchFromGitHub {
+      owner = "mgulick";
+      repo = "mosh";
+      rev = "e8337eff281f1cbecf6292dac64598ede7277928";
+      hash = "sha256-bWLAkZoH7ralcUxwt8KSSKSEh466NGTaaruFM7x99aE=";
+    };
   });
 in
 {

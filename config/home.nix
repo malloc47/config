@@ -19,10 +19,19 @@
     jq
     killall
     moreutils
-    (mosh.overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [
-        ./patches/mosh-osc52-selection-types.patch
-      ];
+    # Build mosh from the head of mobile-shell/mosh#1104, which extends
+    # OSC 52 forwarding to handle the empty-selector form tmux emits and
+    # preserves the selection-target parameter end-to-end.  The diff
+    # against 1.4.0 is too large for a simple .patch overlay, so we swap
+    # in the PR branch as source.  Pinned by SHA so the build is stable
+    # if the branch is force-pushed.
+    (mosh.overrideAttrs (_old: {
+      src = pkgs.fetchFromGitHub {
+        owner = "mgulick";
+        repo = "mosh";
+        rev = "e8337eff281f1cbecf6292dac64598ede7277928";
+        hash = "sha256-bWLAkZoH7ralcUxwt8KSSKSEh466NGTaaruFM7x99aE=";
+      };
     }))
     pv
     ripgrep
