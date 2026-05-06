@@ -19,7 +19,11 @@
     jq
     killall
     moreutils
-    mosh
+    (mosh.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [
+        ./patches/mosh-osc52-selection-types.patch
+      ];
+    }))
     pv
     ripgrep
     tree

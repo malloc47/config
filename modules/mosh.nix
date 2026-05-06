@@ -1,7 +1,17 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.services.mosh-server;
+  patchedMosh = pkgs.mosh.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      ../config/patches/mosh-osc52-selection-types.patch
+    ];
+  });
 in
 {
   options.services.mosh-server = {
@@ -21,7 +31,10 @@ in
 
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
-      { programs.mosh.enable = true; }
+      {
+        programs.mosh.enable = true;
+        programs.mosh.package = patchedMosh;
+      }
 
       (lib.mkIf (cfg.interface == null) {
         programs.mosh.openFirewall = true;
