@@ -24,6 +24,14 @@ in
       # (tmux-256color from ncurses omits the Ms capability otherwise).
       set -s set-clipboard on
       set -as terminal-features ',*:clipboard'
+      # tmux's own set-clipboard emit (copy-mode → Ms) emits with an empty
+      # selection flag (`\E]52;;<b64>\a`), which Ghostty silently ignores.
+      # Inner-program OSC 52 with explicit `c` flag works fine, so route
+      # copy-mode through copy-pipe to emit OSC 52 ourselves with `c`.
+      bind-key -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel '{ printf "\033]52;c;"; base64 -w0; printf "\a"; } > #{pane_tty}'
+      bind-key -T copy-mode    MouseDragEnd1Pane send -X copy-pipe-and-cancel '{ printf "\033]52;c;"; base64 -w0; printf "\a"; } > #{pane_tty}'
+      bind-key -T copy-mode-vi Enter             send -X copy-pipe-and-cancel '{ printf "\033]52;c;"; base64 -w0; printf "\a"; } > #{pane_tty}'
+      bind-key -T copy-mode    Enter             send -X copy-pipe-and-cancel '{ printf "\033]52;c;"; base64 -w0; printf "\a"; } > #{pane_tty}'
       # Disabled: CSI-u encoding breaks multi-line paste in Claude Code
       # (anthropics/claude-code#43169). Re-enable when Claude fixes its
       # bracketed paste tokenizer.
