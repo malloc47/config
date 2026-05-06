@@ -19,11 +19,11 @@ in
       set -ag terminal-overrides ",*256col*:Tc"
       # OSC 52 clipboard passthrough: lets tmux mouse selection reach the
       # outer terminal's clipboard (Ghostty → macOS).  `set-clipboard on`
-      # makes tmux emit OSC 52 on its own copy operations; the Ms override
-      # is required because tmux-256color from ncurses omits the capability
-      # and tmux refuses to emit OSC 52 without it.
+      # makes tmux emit OSC 52 on its own copy operations; the `clipboard`
+      # terminal-feature tells tmux the outer terminal supports OSC 52
+      # (tmux-256color from ncurses omits the Ms capability otherwise).
       set -s set-clipboard on
-      set -ag terminal-overrides ',*:Ms=\E]52;c;%p2%s\7'
+      set -as terminal-features ',*:clipboard'
       # Disabled: CSI-u encoding breaks multi-line paste in Claude Code
       # (anthropics/claude-code#43169). Re-enable when Claude fixes its
       # bracketed paste tokenizer.
