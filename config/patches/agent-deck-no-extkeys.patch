@@ -1,5 +1,4 @@
 diff --git a/internal/tmux/tmux.go b/internal/tmux/tmux.go
-index 6e677be..006ba3d 100644
 --- a/internal/tmux/tmux.go
 +++ b/internal/tmux/tmux.go
 @@ -1840,8 +1840,6 @@ func (s *Session) Start(command string) error {
@@ -19,10 +18,10 @@ index 6e677be..006ba3d 100644
 -		"set", "-sq", "extended-keys", "on", ";",
 -		"set", "-asq", "terminal-features", ",*:hyperlinks:extkeys")
 +		"set-option", "-t", s.Name, "escape-time", "10")
- 	_ = s.tmuxCmd(startArgs...).Run()
-
- 	// Bind Ctrl+Q to detach at the tmux level as fallback for terminals where
-@@ -2115,17 +2111,13 @@ func (s *Session) EnableMouseMode() error {
+ 	// Multi-client size negotiation. Web's xterm.js connects via a tmux -C
+ 	// control client (controlpipe.go) at the same time as native `tmux attach`
+ 	// clients (Ghostty, iTerm). Default `window-size latest` makes the window
+@@ -2130,17 +2126,13 @@ func (s *Session) EnableMouseMode() error {
  	// Enhancements included:
  	// - set-clipboard on: OSC 52 clipboard integration (Warp, iTerm2, kitty, etc.)
  	// - allow-passthrough on: OSC 8 hyperlinks, advanced escape sequences (tmux 3.2+)
