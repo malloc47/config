@@ -94,7 +94,6 @@ in
       quit-after-last-window-closed = true;
       scrollback-limit = 100000;
       macos-option-as-alt = true;
-      macos-hidden = "always";
       split-divider-color = "#${config.lib.stylix.colors.base03}";
       # On macOS, swap Command (super) and Option (alt) so Ghostty
       # matches GUI Emacs, where mac-command-modifier = 'meta
