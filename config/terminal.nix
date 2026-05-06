@@ -94,6 +94,11 @@ in
       quit-after-last-window-closed = true;
       scrollback-limit = 100000;
       macos-option-as-alt = true;
+      # Allow OSC 52 clipboard writes from inside the terminal (e.g. tmux
+      # forwarding mouse selections out to the system clipboard).  Default
+      # is `ask`, which silently rejects programmatic writes when no user
+      # is present to confirm.
+      clipboard-write = "allow";
       split-divider-color = "#${config.lib.stylix.colors.base03}";
       # On macOS, swap Command (super) and Option (alt) so Ghostty
       # matches GUI Emacs, where mac-command-modifier = 'meta
