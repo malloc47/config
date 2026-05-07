@@ -80,4 +80,8 @@ in
     cesare
     malloc47
   ];
+  "gh-token-github.age".publicKeys = [
+    malloc47
+    attila
+  ];
 }

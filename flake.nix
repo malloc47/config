@@ -318,6 +318,7 @@
                     self.homeManagerModules.home-ai
                     self.homeManagerModules.git-sync
                     self.homeManagerModules.home-agenix
+                    self.homeManagerModules.home-gh
                   ];
                   stylix.targets.emacs.enable = false;
                   programs.ai-session = {
@@ -443,6 +444,7 @@
         theme = ./config/theme.nix;
         home-ai = import ./config/home-ai.nix { inherit inputs; };
         home-agenix = import ./config/home-agenix.nix { inherit inputs; };
+        home-gh = ./config/home-gh.nix;
         git-sync = ./config/home-git-sync.nix;
       };
 
