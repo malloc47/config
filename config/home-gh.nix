@@ -29,8 +29,5 @@ in
   xdg.configFile."gh/hosts.yml".text = ''
     github.com:
         git_protocol: ssh
-        users:
-            malloc47:
-        user: malloc47
   '';
 }
