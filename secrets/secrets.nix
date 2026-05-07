@@ -83,5 +83,6 @@ in
   "gh-token-github.age".publicKeys = [
     malloc47
     attila
+    cesare
   ];
 }
