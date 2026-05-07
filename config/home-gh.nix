@@ -26,8 +26,9 @@ in
 
   home.packages = [ (lib.hiPrio gh-wrapped) ];
 
-  xdg.configFile."gh/hosts.yml".text = ''
-    github.com:
-        git_protocol: ssh
-  '';
+  # Intentionally empty: any host listed here makes gh's startup
+  # migration try to resolve a token via libsecret, which fails on
+  # hosts without a running secret service. Env vars cover auth;
+  # --hostname covers host targeting.
+  xdg.configFile."gh/hosts.yml".text = "";
 }
