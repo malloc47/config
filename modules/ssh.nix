@@ -10,7 +10,7 @@
     [
       {
         home-manager.users.${config.settings.username}.imports = [
-          ../config/home-ssh.nix
+          ../home/ssh.nix
         ];
       }
     ]

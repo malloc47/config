@@ -6,10 +6,10 @@
 }:
 {
   imports = [
-    ../config/home-osconfig-bridge.nix
-    ../config/home.nix
-    ../config/home-dev.nix
-    ../config/terminal.nix
+    ../home/osconfig-bridge.nix
+    ../home/default.nix
+    ../home/dev.nix
+    ../home/terminal.nix
     ./wm.nix
     ./xwm.nix
     ./audio.nix
@@ -36,7 +36,7 @@
   home.file.".hushlogin".text = "";
 
   home.file."vmware-preferences" = {
-    source = ../config/vmware-preferences;
+    source = ../home/vmware-preferences;
     target = "Library/Preferences/VMware\ Fusion/preferences";
   };
 

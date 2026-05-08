@@ -246,7 +246,7 @@ with pkgs.lib;
 
   home.file."Library/Preferences/albert/config" = {
     target = "Library/Preferences/albert/config";
-    source = ./. + "/../config/albert.conf";
+    source = ./. + "/../home/albert.conf";
   };
 
   launchd.agents.albert = {

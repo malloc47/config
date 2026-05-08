@@ -430,22 +430,22 @@
         vmware-guest = ./modules/vmware-guest.nix;
         configuration-flake = ./nixos/configuration-flake.nix;
         stylix = stylix.nixosModules.stylix;
-        theme = ./config/theme.nix;
+        theme = ./home/theme.nix;
       };
 
       homeManagerModules = {
-        osconfig-bridge = ./config/home-osconfig-bridge.nix;
-        home = ./config/home.nix;
-        home-dev = ./config/home-dev.nix;
-        home-gui = ./config/home-gui.nix;
-        home-vm = ./config/home-vm.nix;
-        ssh = ./config/home-ssh.nix;
+        osconfig-bridge = ./home/osconfig-bridge.nix;
+        home = ./home/default.nix;
+        home-dev = ./home/dev.nix;
+        home-gui = ./home/gui.nix;
+        home-vm = ./home/vm.nix;
+        ssh = ./home/ssh.nix;
         stylix = stylix.homeModules.stylix;
-        theme = ./config/theme.nix;
-        home-ai = import ./config/home-ai.nix { inherit inputs; };
-        home-agenix = import ./config/home-agenix.nix { inherit inputs; };
-        home-gh = ./config/home-gh.nix;
-        git-sync = ./config/home-git-sync.nix;
+        theme = ./home/theme.nix;
+        home-ai = import ./home/ai.nix { inherit inputs; };
+        home-agenix = import ./home/agenix.nix { inherit inputs; };
+        home-gh = ./home/gh.nix;
+        git-sync = ./home/git-sync.nix;
       };
 
       darwinModules = {
@@ -453,7 +453,7 @@
         homebrew = ./darwin/homebrew.nix;
         home = ./darwin/home.nix;
         stylix = stylix.darwinModules.stylix;
-        theme = ./config/theme.nix;
+        theme = ./home/theme.nix;
       };
 
       overlays.default = import ./pkgs/default.nix;
