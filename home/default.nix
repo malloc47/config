@@ -9,8 +9,10 @@
     ../modules/settings.nix
     ./git.nix
     ./shell.nix
-    ./ghostty-terminfo.nix
+    ./modules/ghostty-terminfo.nix
   ];
+
+  programs.ghostty-terminfo.enable = true;
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
