@@ -10,8 +10,10 @@ in
 {
   imports = [
     ./emacs.nix
-    ./repos.nix
+    ./modules/repo-clone.nix
   ];
+
+  services.repo-clone.enable = true;
 
   home.packages = with pkgs; [
     (aspellWithDicts (
