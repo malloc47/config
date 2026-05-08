@@ -303,6 +303,9 @@
             }
             (
               { config, ... }:
+              let
+                outer = config;
+              in
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
@@ -310,27 +313,37 @@
                   file = ./secrets/ntfy-git-sync-password.age;
                   owner = config.settings.username;
                 };
-                home-manager.users.${config.settings.username} = {
-                  imports = [
-                    self.homeManagerModules.osconfig-bridge
-                    self.homeManagerModules.home
-                    self.homeManagerModules.home-dev
-                    self.homeManagerModules.home-ai
-                    self.homeManagerModules.git-sync
-                    self.homeManagerModules.home-agenix
-                    self.homeManagerModules.home-gh
-                  ];
-                  stylix.targets.emacs.enable = false;
-                  programs.ai-session = {
-                    enable = true;
-                    webServer.enable = true;
+                home-manager.users.${config.settings.username} =
+                  { config, ... }:
+                  {
+                    imports = [
+                      self.homeManagerModules.osconfig-bridge
+                      self.homeManagerModules.home
+                      self.homeManagerModules.home-dev
+                      self.homeManagerModules.home-ai
+                      self.homeManagerModules.git-sync
+                      self.homeManagerModules.home-agenix
+                      self.homeManagerModules.home-gh
+                    ];
+                    stylix.targets.emacs.enable = false;
+                    programs.ai-session = {
+                      enable = true;
+                      webServer.enable = true;
+                    };
+                    services.ntfy-git-sync = {
+                      enable = true;
+                      repos = [ "/home/${config.settings.username}/src/config" ];
+                      tokenFile = outer.age.secrets.ntfy-git-sync-password.path;
+                    };
+                    age.secrets.gh-token-github = {
+                      file = ./secrets/gh-token-github.age;
+                      path = "${config.home.homeDirectory}/.config/agenix/gh-token-github";
+                    };
+                    programs.gh-agenix = {
+                      enable = true;
+                      tokenFile = config.age.secrets.gh-token-github.path;
+                    };
                   };
-                  services.ntfy-git-sync = {
-                    enable = true;
-                    repos = [ "/home/${config.settings.username}/src/config" ];
-                    tokenFile = config.age.secrets.ntfy-git-sync-password.path;
-                  };
-                };
               }
             )
           ];
@@ -444,7 +457,7 @@
         theme = ./home/modules/theme.nix;
         home-ai = import ./home/modules/ai-session.nix { inherit inputs; };
         home-agenix = import ./home/agenix.nix { inherit inputs; };
-        home-gh = ./home/gh.nix;
+        home-gh = ./home/modules/gh.nix;
         git-sync = ./home/modules/git-sync.nix;
       };
 
