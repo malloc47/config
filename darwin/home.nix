@@ -8,13 +8,14 @@
   imports = [
     ../home/osconfig-bridge.nix
     ../home/default.nix
-    ../home/dev.nix
+    ../home/modules/dev-toolchain.nix
     ../home/modules/ghostty-personal.nix
     ./wm.nix
     ./xwm.nix
     ./audio.nix
   ];
 
+  programs.dev-toolchain.enable = true;
   programs.ghostty-personal.enable = true;
 
   home.packages = with pkgs; [

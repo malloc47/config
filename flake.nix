@@ -144,6 +144,7 @@
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
                   programs.vmware-guest-helpers.enable = true;
+                  programs.dev-toolchain.enable = true;
                 };
               }
             )
@@ -327,6 +328,7 @@
                       self.homeManagerModules.home-gh
                     ];
                     stylix.targets.emacs.enable = false;
+                    programs.dev-toolchain.enable = true;
                     programs.ai-session = {
                       enable = true;
                       webServer.enable = true;
@@ -396,6 +398,7 @@
                   stylix.targets.emacs.enable = false;
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
+                  programs.dev-toolchain.enable = true;
                   programs.ai-session.enable = true;
                   services.ntfy-git-sync = {
                     enable = true;
@@ -450,7 +453,7 @@
       homeManagerModules = {
         osconfig-bridge = ./home/osconfig-bridge.nix;
         home = ./home/default.nix;
-        home-dev = ./home/dev.nix;
+        home-dev = ./home/modules/dev-toolchain.nix;
         home-gui = ./home/gui.nix;
         home-vm = ./home/modules/vmware-guest-helpers.nix;
         ssh = ./home/modules/ssh-personal.nix;
