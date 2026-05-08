@@ -143,6 +143,7 @@
                   # wm.nix / rofi.nix set these explicitly
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
+                  programs.vmware-guest-helpers.enable = true;
                 };
               }
             )
@@ -451,7 +452,7 @@
         home = ./home/default.nix;
         home-dev = ./home/dev.nix;
         home-gui = ./home/gui.nix;
-        home-vm = ./home/vm.nix;
+        home-vm = ./home/modules/vmware-guest-helpers.nix;
         ssh = ./home/modules/ssh-personal.nix;
         stylix = stylix.homeModules.stylix;
         theme = ./home/modules/theme.nix;
