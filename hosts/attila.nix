@@ -3,8 +3,8 @@
 {
   imports = [
     ../modules/settings.nix
-    ../modules/motd.nix
-    ../modules/tailscale-client.nix
+    ../nixos/modules/motd.nix
+    ../nixos/modules/tailscale-client.nix
   ];
 
   motd = {

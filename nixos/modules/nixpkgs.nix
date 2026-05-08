@@ -8,7 +8,7 @@
 }:
 {
   config = {
-    nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
+    nixpkgs.overlays = [ (import ../../pkgs/default.nix) ];
 
     environment.etc."overlays-compat" = {
       text = ''

@@ -5,7 +5,7 @@
   ...
 }:
 {
-  imports = [ ./settings.nix ];
+  imports = [ ../../modules/settings.nix ];
   config = {
     networking.networkmanager.enable = true;
     networking.firewall.enable = false;

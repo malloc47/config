@@ -9,7 +9,7 @@ let
 in
 {
   imports = [
-    ./settings.nix
+    ../../modules/settings.nix
   ];
 
   config = {

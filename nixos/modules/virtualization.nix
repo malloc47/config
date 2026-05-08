@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  imports = [ ./settings.nix ];
+  imports = [ ../../modules/settings.nix ];
 
   config = {
     virtualisation.docker.enable = !config.settings.vm;

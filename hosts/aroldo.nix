@@ -6,7 +6,7 @@ in
 {
   imports = [
     ../modules/settings.nix
-    ../modules/motd.nix
+    ../nixos/modules/motd.nix
   ];
 
   motd = {

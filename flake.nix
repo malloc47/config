@@ -418,16 +418,16 @@
 
       nixosModules = {
         settings = ./modules/settings.nix;
-        user = ./modules/user.nix;
-        ssh = ./modules/ssh.nix;
-        nixpkgs = ./modules/nixpkgs.nix;
-        networking = ./modules/networking.nix;
-        virtualization = ./modules/virtualization.nix;
-        sound = ./modules/sound.nix;
-        gui = ./modules/gui.nix;
-        motd = ./modules/motd.nix;
-        mosh = ./modules/mosh.nix;
-        vmware-guest = ./modules/vmware-guest.nix;
+        user = ./nixos/modules/user.nix;
+        ssh = ./nixos/modules/ssh.nix;
+        nixpkgs = ./nixos/modules/nixpkgs.nix;
+        networking = ./nixos/modules/networking.nix;
+        virtualization = ./nixos/modules/virtualization.nix;
+        sound = ./nixos/modules/sound.nix;
+        gui = ./nixos/modules/gui.nix;
+        motd = ./nixos/modules/motd.nix;
+        mosh = ./nixos/modules/mosh.nix;
+        vmware-guest = ./nixos/modules/vmware-guest.nix;
         configuration-flake = ./nixos/configuration-flake.nix;
         stylix = stylix.nixosModules.stylix;
         theme = ./home/theme.nix;

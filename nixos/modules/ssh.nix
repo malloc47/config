@@ -5,12 +5,12 @@
   ...
 }:
 {
-  imports = [ ../modules/settings.nix ];
+  imports = [ ../../modules/settings.nix ];
   config = lib.mkMerge (
     [
       {
         home-manager.users.${config.settings.username}.imports = [
-          ../home/ssh.nix
+          ../../home/ssh.nix
         ];
       }
     ]

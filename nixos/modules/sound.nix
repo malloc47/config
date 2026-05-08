@@ -5,7 +5,7 @@
   ...
 }:
 {
-  imports = [ ./settings.nix ];
+  imports = [ ../../modules/settings.nix ];
 
   config = {
     # hardware.pulseaudio.enable = true;

@@ -3,9 +3,9 @@
 {
   imports = [
     ../modules/settings.nix
-    ../modules/motd.nix
+    ../nixos/modules/motd.nix
     # Uncomment to enable netboot provisioning for bare-metal installs:
-    # ../modules/netboot.nix
+    # ../nixos/modules/netboot.nix
   ];
 
   services.openssh.enable = true;
