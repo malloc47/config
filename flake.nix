@@ -452,7 +452,7 @@
         home-dev = ./home/dev.nix;
         home-gui = ./home/gui.nix;
         home-vm = ./home/vm.nix;
-        ssh = ./home/ssh.nix;
+        ssh = ./home/modules/ssh-personal.nix;
         stylix = stylix.homeModules.stylix;
         theme = ./home/modules/theme.nix;
         home-ai = import ./home/modules/ai-session.nix { inherit inputs; };

@@ -9,9 +9,10 @@
   config = lib.mkMerge (
     [
       {
-        home-manager.users.${config.settings.username}.imports = [
-          ../../home/ssh.nix
-        ];
+        home-manager.users.${config.settings.username} = {
+          imports = [ ../../home/modules/ssh-personal.nix ];
+          programs.ssh-personal.enable = true;
+        };
       }
     ]
     # sshd config is NixOS-only; nix-darwin's services.openssh doesn't
