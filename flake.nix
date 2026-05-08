@@ -430,7 +430,7 @@
         vmware-guest = ./nixos/modules/vmware-guest.nix;
         configuration-flake = ./nixos/configuration-flake.nix;
         stylix = stylix.nixosModules.stylix;
-        theme = ./home/theme.nix;
+        theme = ./home/modules/theme.nix;
       };
 
       homeManagerModules = {
@@ -441,11 +441,11 @@
         home-vm = ./home/vm.nix;
         ssh = ./home/ssh.nix;
         stylix = stylix.homeModules.stylix;
-        theme = ./home/theme.nix;
-        home-ai = import ./home/ai.nix { inherit inputs; };
+        theme = ./home/modules/theme.nix;
+        home-ai = import ./home/modules/ai-session.nix { inherit inputs; };
         home-agenix = import ./home/agenix.nix { inherit inputs; };
         home-gh = ./home/gh.nix;
-        git-sync = ./home/git-sync.nix;
+        git-sync = ./home/modules/git-sync.nix;
       };
 
       darwinModules = {
@@ -453,7 +453,7 @@
         homebrew = ./darwin/homebrew.nix;
         home = ./darwin/home.nix;
         stylix = stylix.darwinModules.stylix;
-        theme = ./home/theme.nix;
+        theme = ./home/modules/theme.nix;
       };
 
       overlays.default = import ./pkgs/default.nix;

@@ -1,6 +1,6 @@
 { config, pkgs, ... }:
 {
-  imports = [ ../modules/settings.nix ];
+  imports = [ ../../modules/settings.nix ];
 
   stylix = {
     enable = true;

@@ -11,7 +11,7 @@ let
   agentPkgs = inputs.llm-agents.packages.${system};
 in
 {
-  imports = [ ../modules/settings.nix ];
+  imports = [ ../../modules/settings.nix ];
 
   options.programs.ai-session = {
     enable = lib.mkEnableOption "AI session orchestration (zellij + agent-deck)";
