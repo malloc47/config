@@ -6,10 +6,11 @@
 {
   imports = [
     ./modules/ghostty-personal.nix
-    ./wm.nix
+    ./modules/i3-personal.nix
   ];
 
   programs.ghostty-personal.enable = true;
+  programs.i3-personal.enable = true;
 
   home.packages = with pkgs; [
     anki
