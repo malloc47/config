@@ -145,6 +145,7 @@
                   stylix.targets.rofi.enable = false;
                   programs.vmware-guest-helpers.enable = true;
                   programs.dev-toolchain.enable = true;
+                  programs.gui-suite.enable = true;
                 };
               }
             )
@@ -454,7 +455,7 @@
         osconfig-bridge = ./home/osconfig-bridge.nix;
         home = ./home/default.nix;
         home-dev = ./home/modules/dev-toolchain.nix;
-        home-gui = ./home/gui.nix;
+        home-gui = ./home/modules/gui-suite.nix;
         home-vm = ./home/modules/vmware-guest-helpers.nix;
         ssh = ./home/modules/ssh-personal.nix;
         stylix = stylix.homeModules.stylix;
