@@ -8,10 +8,11 @@
   imports = [
     ../modules/settings.nix
     ./git.nix
-    ./shell.nix
+    ./modules/shell-personal.nix
     ./modules/ghostty-terminfo.nix
   ];
 
+  programs.shell-personal.enable = true;
   programs.ghostty-terminfo.enable = true;
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
