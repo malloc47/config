@@ -27,6 +27,7 @@ Capture ideas and pain points to work on when I have bandwidth:
 	- https://github.com/tmandry/glide/issues/64
   - Adopting native spaces should hopefully be less glitchy
   - Has focus-follows-mouse built-in
+- Remote image pasting over ssh: https://github.com/hqhq1025/clipaste
 
 ## Emacs
 
@@ -58,6 +59,13 @@ Ideas from [Stealing from the Best Emacs Configs](https://emacsredux.com/blog/20
 
 - Ghostty shell integration https://ghostty.org/docs/features/shell-integration
 - Ghostty quick terminal setup / keybinding
+
+## Shell
+
+- `nr` alias drops bare subcommands: `nr azure-cli -- login` fails with `KeyError: ''`
+  inside az (looks like an empty arg is forwarded), but `nr azure-cli -- login --scope X`
+  works. Workaround so far is `nix shell nixpkgs#azure-cli` then run `az` directly.
+  Fix the alias so the bare-subcommand case forwards correctly.
 
 ## VPS (aroldo)
 
