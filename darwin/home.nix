@@ -9,11 +9,13 @@
     ../home/osconfig-bridge.nix
     ../home/default.nix
     ../home/dev.nix
-    ../home/terminal.nix
+    ../home/modules/ghostty-personal.nix
     ./wm.nix
     ./xwm.nix
     ./audio.nix
   ];
+
+  programs.ghostty-personal.enable = true;
 
   home.packages = with pkgs; [
     gnupg

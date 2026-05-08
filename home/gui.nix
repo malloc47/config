@@ -5,9 +5,11 @@
 }:
 {
   imports = [
-    ./terminal.nix
+    ./modules/ghostty-personal.nix
     ./wm.nix
   ];
+
+  programs.ghostty-personal.enable = true;
 
   home.packages = with pkgs; [
     anki
