@@ -9,10 +9,11 @@ let
 in
 {
   imports = [
-    ./emacs.nix
+    ./modules/emacs-stylix.nix
     ./modules/repo-clone.nix
   ];
 
+  programs.emacs-stylix.enable = true;
   services.repo-clone.enable = true;
 
   home.packages = with pkgs; [
