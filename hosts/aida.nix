@@ -11,6 +11,8 @@
   services.openssh.enable = true;
   services.mosh-server.enable = true;
 
+  environment.systemPackages = [ pkgs.adguardian ];
+
   motd = {
     enable = true;
     hardware = "gmktec g10 · mini pc";

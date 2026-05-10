@@ -4,6 +4,7 @@
   geosanslight = prev.callPackage geosanslight/default.nix { };
   inconsolata-unstable = prev.callPackage inconsolata-unstable/default.nix { };
   aws-okta = prev.callPackage aws-okta/default.nix { };
+  adguardian = prev.callPackage adguardian/default.nix { };
   term-do = prev.callPackage term-do/default.nix { };
   carve = prev.callPackage carve/default.nix { };
   swipe-aerospace = prev.callPackage swipe-aerospace/default.nix { };
