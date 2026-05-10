@@ -35,6 +35,7 @@ in
       ffmpeg
       gcc
       gh
+      glow
       pre-commit
       gnumake
       go-task
