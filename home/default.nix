@@ -17,26 +17,18 @@
 
   xdg.configFile."nixpkgs/config.nix".source = ./nixpkgs.nix;
 
-  home.packages =
-    with pkgs;
-    [
-      home-manager
-      jq
-      killall
-      moreutils
-      mosh
-      pv
-      pertmux
-      ripgrep
-      tree
-      unzip
-      workmux
-      worktrunk
-      zip
-    ]
-    ++ lib.optionals pkgs.stdenv.isDarwin [
-      clipaste
-    ];
+  home.packages = with pkgs; [
+    home-manager
+    jq
+    killall
+    moreutils
+    mosh
+    pv
+    ripgrep
+    tree
+    unzip
+    zip
+  ];
 
   home.sessionPath = [ "$HOME/bin" ];
 

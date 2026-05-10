@@ -22,45 +22,53 @@ in
     programs.emacs-stylix.enable = true;
     services.repo-clone.enable = true;
 
-    home.packages = with pkgs; [
-      (aspellWithDicts (
-        dicts: with dicts; [
-          en
-        ]
-      ))
-      cargo
-      clj-kondo
-      cljfmt
-      clojure
-      ffmpeg
-      gcc
-      gh
-      glow
-      pre-commit
-      gnumake
-      go-task
-      graphviz
-      leiningen
-      nixfmt-rfc-style
-      nixos-generators
-      nodePackages.mermaid-cli
-      nodejs
-      pandoc
-      protobuf
-      pyright
-      (python3.withPackages (
-        ps: with ps; [
-          virtualenv
-          wheel
-          setuptools
-          numpy
-          pandas
-        ]
-      ))
-      sbt
-      sqlite
-      wordnet
-    ];
+    home.packages =
+      with pkgs;
+      [
+        (aspellWithDicts (
+          dicts: with dicts; [
+            en
+          ]
+        ))
+        cargo
+        clj-kondo
+        cljfmt
+        clojure
+        ffmpeg
+        gcc
+        gh
+        glow
+        pertmux
+        pre-commit
+        gnumake
+        go-task
+        graphviz
+        leiningen
+        nixfmt-rfc-style
+        nixos-generators
+        nodePackages.mermaid-cli
+        nodejs
+        pandoc
+        protobuf
+        pyright
+        (python3.withPackages (
+          ps: with ps; [
+            virtualenv
+            wheel
+            setuptools
+            numpy
+            pandas
+          ]
+        ))
+        sbt
+        sqlite
+        workmux
+        worktrunk
+        wordnet
+      ]
+      ++ lib.optionals pkgs.stdenv.isDarwin [
+        clipaste
+      ];
 
     programs.java.enable = true;
 
