@@ -7,4 +7,8 @@
   term-do = prev.callPackage term-do/default.nix { };
   carve = prev.callPackage carve/default.nix { };
   swipe-aerospace = prev.callPackage swipe-aerospace/default.nix { };
+  workmux = prev.callPackage workmux/default.nix { };
+  worktrunk = prev.callPackage worktrunk/default.nix { };
+  pertmux = prev.callPackage pertmux/default.nix { };
+  clipaste = prev.callPackage clipaste/default.nix { };
 })
