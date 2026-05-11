@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  pkgs-unstable ? pkgs,
   ...
 }:
 let
@@ -20,6 +21,7 @@ in
 
     programs.tmux = {
       enable = true;
+      package = pkgs-unstable.tmux;
       terminal = "tmux-256color";
       shortcut = "u";
       escapeTime = 0;

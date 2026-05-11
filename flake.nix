@@ -91,6 +91,16 @@
         "aarch64-darwin"
       ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+      pkgsUnstableFor =
+        system:
+        import nixpkgs-unstable {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            allowUnsupportedSystem = true;
+          };
+          overlays = [ ];
+        };
     in
     {
       nixosConfigurations = {
@@ -98,9 +108,7 @@
           system = "aarch64-linux";
           specialArgs = {
             inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-            };
+            pkgs-unstable = pkgsUnstableFor system;
           };
           modules = [
             home-manager.nixosModules.home-manager
@@ -129,6 +137,7 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
+                home-manager.extraSpecialArgs = specialArgs;
                 home-manager.users.${config.settings.username} = {
                   imports = [
                     self.homeManagerModules.osconfig-bridge
@@ -181,9 +190,7 @@
           system = "x86_64-linux";
           specialArgs = {
             inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-            };
+            pkgs-unstable = pkgsUnstableFor system;
           };
           modules = [
             home-manager.nixosModules.home-manager
@@ -214,6 +221,7 @@
                 };
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
+                home-manager.extraSpecialArgs = specialArgs;
                 home-manager.users.${config.settings.username} = {
                   imports = [
                     self.homeManagerModules.osconfig-bridge
@@ -236,9 +244,7 @@
           system = "x86_64-linux";
           specialArgs = {
             inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-            };
+            pkgs-unstable = pkgsUnstableFor system;
           };
           modules = [
             home-manager.nixosModules.home-manager
@@ -265,6 +271,7 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
+                home-manager.extraSpecialArgs = specialArgs;
                 home-manager.users.${config.settings.username}.imports = [
                   self.homeManagerModules.osconfig-bridge
                   self.homeManagerModules.home
@@ -279,9 +286,7 @@
           system = "x86_64-linux";
           specialArgs = {
             inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-            };
+            pkgs-unstable = pkgsUnstableFor system;
           };
           modules = [
             home-manager.nixosModules.home-manager
@@ -312,6 +317,7 @@
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
+                home-manager.extraSpecialArgs = specialArgs;
                 age.secrets.ntfy-git-sync-password = {
                   file = ./secrets/ntfy-git-sync-password.age;
                   owner = config.settings.username;
@@ -358,9 +364,7 @@
         cesare = nix-darwin.lib.darwinSystem rec {
           specialArgs = {
             inherit inputs;
-            pkgs-unstable = import nixpkgs-unstable {
-              system = "aarch64-darwin";
-            };
+            pkgs-unstable = pkgsUnstableFor "aarch64-darwin";
           };
           modules = [
             self.nixosModules.settings
