@@ -212,6 +212,14 @@ in
       package = agentPkgs.claude-code;
     };
 
+    programs.opencode = {
+      enable = true;
+      package = agentPkgs.opencode;
+      tui = {
+        theme = "system";
+      };
+    };
+
     home.packages = [
       (agentPkgs.agent-deck.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -219,7 +227,6 @@ in
           ./patches/agent-deck-no-clobber-symlink.patch
         ];
       }))
-      agentPkgs.opencode
       pkgs.claude-code-acp
     ];
   };
