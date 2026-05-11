@@ -28,6 +28,13 @@ in
       historyLimit = 50000;
       mouse = true;
       extraConfig = ''
+        # Advertise 24-bit color to tmux itself and to programs running inside
+        # tmux. OpenCode hides its system theme unless COLORTERM indicates
+        # truecolor support.
+        set -as terminal-features ",xterm*:RGB"
+        set -as terminal-features ",*256col*:RGB"
+        set -ga update-environment " COLORTERM"
+        set-environment -g COLORTERM truecolor
         set -ag terminal-overrides ",xterm*:Tc:smcup@:rmcup@"
         set -ag terminal-overrides ",*256col*:Tc"
         # OSC 52 clipboard passthrough: lets tmux mouse selection reach the
