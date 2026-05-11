@@ -215,9 +215,11 @@ in
     programs.opencode = {
       enable = true;
       package = agentPkgs.opencode;
-      tui = {
-        theme = "system";
-      };
+      settings.theme = lib.mkForce "system";
+      # # TODO: Latest home-manger / opencode need to nest theme here:
+      # tui = {
+      #   theme = "system";
+      # };
     };
 
     home.packages = [
