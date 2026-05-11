@@ -215,10 +215,6 @@
             (
               { config, ... }:
               {
-                age.secrets.ntfy-git-sync-password = {
-                  file = ./secrets/ntfy-git-sync-password.age;
-                  owner = config.settings.username;
-                };
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = specialArgs;
@@ -226,14 +222,8 @@
                   imports = [
                     self.homeManagerModules.osconfig-bridge
                     self.homeManagerModules.home
-                    self.homeManagerModules.git-sync
                     self.homeManagerModules.home-agenix
                   ];
-                  services.ntfy-git-sync = {
-                    enable = true;
-                    repos = [ "/home/${config.settings.username}/src/config" ];
-                    tokenFile = config.age.secrets.ntfy-git-sync-password.path;
-                  };
                 };
               }
             )
@@ -318,10 +308,6 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = specialArgs;
-                age.secrets.ntfy-git-sync-password = {
-                  file = ./secrets/ntfy-git-sync-password.age;
-                  owner = config.settings.username;
-                };
                 home-manager.users.${config.settings.username} =
                   { config, ... }:
                   {
@@ -330,7 +316,6 @@
                       self.homeManagerModules.home
                       self.homeManagerModules.home-dev
                       self.homeManagerModules.home-ai
-                      self.homeManagerModules.git-sync
                       self.homeManagerModules.home-agenix
                       self.homeManagerModules.home-gh
                     ];
@@ -339,11 +324,6 @@
                     programs.ai-session = {
                       enable = true;
                       webServer.enable = true;
-                    };
-                    services.ntfy-git-sync = {
-                      enable = true;
-                      repos = [ "/home/${config.settings.username}/src/config" ];
-                      tokenFile = outer.age.secrets.ntfy-git-sync-password.path;
                     };
                     age.secrets.gh-token-github = {
                       file = ./secrets/gh-token-github.age;
@@ -388,16 +368,11 @@
                 home-manager.extraSpecialArgs = specialArgs;
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                age.secrets.ntfy-git-sync-password = {
-                  file = ./secrets/ntfy-git-sync-password.age;
-                  owner = config.settings.username;
-                };
                 home-manager.users.${config.settings.username} = {
                   imports = [
                     self.darwinModules.home
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-ai
-                    self.homeManagerModules.git-sync
                     self.homeManagerModules.home-agenix
                   ];
                   stylix.targets.emacs.enable = false;
@@ -405,14 +380,6 @@
                   stylix.targets.rofi.enable = false;
                   programs.dev-toolchain.enable = true;
                   programs.ai-session.enable = true;
-                  services.ntfy-git-sync = {
-                    enable = true;
-                    repos = [
-                      "/Users/${config.settings.username}/src/config"
-                      "/Users/${config.settings.username}/src/work-config"
-                    ];
-                    tokenFile = config.age.secrets.ntfy-git-sync-password.path;
-                  };
                 };
                 # Doing this to handle existing vmware files
                 home-manager.backupFileExtension = "backup";
@@ -467,7 +434,6 @@
         home-ai = import ./home/modules/ai-session.nix { inherit inputs; };
         home-agenix = import ./home/agenix.nix { inherit inputs; };
         home-gh = ./home/modules/gh.nix;
-        git-sync = ./home/modules/git-sync.nix;
       };
 
       darwinModules = {
