@@ -2,10 +2,13 @@
 
 ;; Kitty Keyboard Protocol support
 ;; Enables full modifier+key pass-through when connected to a KKP-capable
-;; terminal (Ghostty, Kitty, WezTerm, Alacritty >=0.13). No-ops gracefully
-;; in GUI frames or terminals without KKP support.
+;; terminal (Ghostty, Kitty, WezTerm, Alacritty >=0.13).  Skipped entirely
+;; on pure-GUI sessions; in daemon mode `display-graphic-p` is nil at init
+;; load, so kkp is loaded and activates per-tty via global-kkp-mode's
+;; terminal-init hook when an emacsclient -t frame connects.
 (use-package kkp
   :ensure t
+  :if (not (display-graphic-p))
   :config
   (global-kkp-mode +1))
 
