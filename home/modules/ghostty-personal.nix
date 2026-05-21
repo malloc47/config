@@ -118,9 +118,11 @@ in
         # same across platforms despite the macOS-only key-remap.
         keybind = [
           # Copy/paste: performable copy only fires when there's a selection,
-          # otherwise passes through (e.g., M-c in Emacs).
+          # otherwise passes through (e.g., M-c in Emacs).  Paste lives on
+          # Ctrl+Shift+Enter (overriding Ghostty's default toggle_split_zoom)
+          # so that physical Cmd+v stays free to reach Emacs as M-v.
           "performable:${cmd}+c=copy_to_clipboard"
-          "${cmd}+v=paste_from_clipboard"
+          "ctrl+shift+enter=paste_from_clipboard"
           # Insert last argument (M-. in zsh/readline).  Ghostty's kitty
           # keyboard protocol encodes alt+period as a CSI sequence on Linux,
           # bypassing zsh's ^[. binding.  Explicit esc: forces the plain ESC+.
@@ -175,7 +177,6 @@ in
           "ctrl+tab=unbind"
           "ctrl+shift+tab=unbind"
           "ctrl+enter=unbind"
-          "ctrl+shift+enter=unbind"
           "ctrl+shift+p=unbind"
           "ctrl+,=unbind"
           "ctrl+shift+,=unbind"
