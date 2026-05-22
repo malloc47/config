@@ -131,20 +131,49 @@ in
 
           # Meta+<shifted-symbol> for Emacs TUI (US layout).
           #
-          # Ghostty's KKP `report-alternate-keys' enhancement is meant to
-          # emit the shifted codepoint alongside the base codepoint (e.g.
-          # for Shift+, send `44:60' so kkp.el returns M-< directly), but
-          # Ghostty does not include the alternate codepoint when an
-          # additional modifier (alt, after the Cmd→alt key-remap on
-          # macOS; or physical Alt on Linux) is combined with Shift on a
-          # symbol key.  kkp.el then hands Emacs M-S-, which Emacs folds
-          # to M-, , breaking M-< / M-> / M-@ and the rest of the
-          # Meta+shifted-symbol set.
+          # The Kitty Keyboard Protocol's `report-alternate-keys'
+          # enhancement (flag bit 4) is meant to emit the shifted
+          # codepoint alongside the base codepoint — e.g. for Shift+,
+          # send `CSI 44:60 ; 4 u' (base=44 `,', alternate=60 `<') so
+          # kkp.el can return M-< directly.  kkp.el requests this flag
+          # by default and the handshake succeeds, but Ghostty omits
+          # the `:60' when any non-shift modifier is also held.
           #
-          # These bindings bypass KKP for the affected combos and send
+          # Root cause is macOS-level, not configurable:
+          # `src/input/key_encode.zig' derives the shifted alternate
+          # from `event.utf8' (the AppKit `characters' field).  When
+          # Alt is in the modifier set — which it is in our setup,
+          # because `key-remap super=alt' makes physical Cmd read as
+          # Alt — AppKit does not populate that field with the
+          # shifted base-layout glyph, so `seq.alternates[0]' stays
+          # null and the wire bytes lack the alternate codepoint.
+          # Apple's API only exposes the layout-resolved key via
+          # text; synthesising it via UCKeyTranslate would break dead
+          # keys, so Kitty itself has the same gap.
+          #
+          # Refs:
+          #   ghostty-org/ghostty discussion #9511 — maintainer
+          #     confirms the limitation, no fix in flight:
+          #     https://github.com/ghostty-org/ghostty/discussions/9511
+          #   kovidgoyal/kitty #5586 — same constraint upstream:
+          #     https://github.com/kovidgoyal/kitty/issues/5586
+          #   kovidgoyal/kitty discussion #8126 — "kitty for some
+          #     reason is not reporting the shifted key — that's
+          #     probably a bug":
+          #     https://github.com/kovidgoyal/kitty/discussions/8126
+          #
+          # `macos-option-as-alt' does not fix this — either Option
+          # produces composed glyphs, or it produces no text; neither
+          # variant populates `event.utf8' with the shifted base
+          # character.  There is no Ghostty config knob in v1.3.1 or
+          # current main that changes this.
+          #
+          # Workaround: bypass KKP for the affected combos and send
           # the literal ESC+<shifted-char> byte sequence, which Emacs
-          # reads as Meta+<shifted-char>.  Drop entries here if Ghostty
-          # starts emitting the alternate codepoint for these combos.
+          # reads as Meta+<shifted-char>.  Mirrors the existing
+          # `alt+period=esc:.' workaround above.  Drop entries (or
+          # the whole block) when Ghostty computes the shifted glyph
+          # independently of AppKit's `characters' field.
           "alt+shift+comma=esc:<"
           "alt+shift+period=esc:>"
           "alt+shift+slash=esc:?"
