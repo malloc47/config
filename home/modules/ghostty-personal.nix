@@ -128,6 +128,44 @@ in
           # bypassing zsh's ^[. binding.  Explicit esc: forces the plain ESC+.
           # byte sequence that zsh expects.
           "alt+period=esc:."
+
+          # Meta+<shifted-symbol> for Emacs TUI (US layout).
+          #
+          # Ghostty's KKP `report-alternate-keys' enhancement is meant to
+          # emit the shifted codepoint alongside the base codepoint (e.g.
+          # for Shift+, send `44:60' so kkp.el returns M-< directly), but
+          # Ghostty does not include the alternate codepoint when an
+          # additional modifier (alt, after the Cmd→alt key-remap on
+          # macOS; or physical Alt on Linux) is combined with Shift on a
+          # symbol key.  kkp.el then hands Emacs M-S-, which Emacs folds
+          # to M-, , breaking M-< / M-> / M-@ and the rest of the
+          # Meta+shifted-symbol set.
+          #
+          # These bindings bypass KKP for the affected combos and send
+          # the literal ESC+<shifted-char> byte sequence, which Emacs
+          # reads as Meta+<shifted-char>.  Drop entries here if Ghostty
+          # starts emitting the alternate codepoint for these combos.
+          "alt+shift+comma=esc:<"
+          "alt+shift+period=esc:>"
+          "alt+shift+slash=esc:?"
+          "alt+shift+semicolon=esc::"
+          "alt+shift+apostrophe=esc:\""
+          "alt+shift+grave_accent=esc:~"
+          "alt+shift+minus=esc:_"
+          "alt+shift+equal=esc:+"
+          "alt+shift+backslash=esc:|"
+          "alt+shift+left_bracket=esc:{"
+          "alt+shift+right_bracket=esc:}"
+          "alt+shift+1=esc:!"
+          "alt+shift+2=esc:@"
+          "alt+shift+3=esc:#"
+          "alt+shift+4=esc:$"
+          "alt+shift+5=esc:%"
+          "alt+shift+6=esc:^"
+          "alt+shift+7=esc:&"
+          "alt+shift+8=esc:*"
+          "alt+shift+9=esc:("
+          "alt+shift+0=esc:)"
           # Split navigation matching Emacs windmove M-h/j/k/l.
           # performable: only consumes the key when a split exists in that
           # direction; otherwise the keypress passes through to the
