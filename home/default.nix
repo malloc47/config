@@ -21,6 +21,7 @@
     home-manager
     jq
     killall
+    clipssh
     moreutils
     mosh
     pv

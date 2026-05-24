@@ -12,4 +12,5 @@
   worktrunk = prev.callPackage worktrunk/default.nix { };
   pertmux = prev.callPackage pertmux/default.nix { };
   clipaste = prev.callPackage clipaste/default.nix { };
+  clipssh = prev.callPackage clipssh/default.nix { };
 })
