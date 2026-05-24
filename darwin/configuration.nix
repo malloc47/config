@@ -37,7 +37,14 @@
     allowBroken = false;
     allowUnsupportedSystem = true;
   };
-  nixpkgs.overlays = [ (import ../pkgs/default.nix) ];
+  nixpkgs.overlays = [
+    (import ../pkgs/default.nix)
+    # nix-homebrew currently expects ruby_4_0 for Homebrew 5.1.x, but
+    # nixpkgs 25.11 does not provide it yet. Homebrew 5.0.x used ruby_3_4.
+    (_final: prev: {
+      ruby_4_0 = prev.ruby_3_4;
+    })
+  ];
 
   # services.karabiner-elements.enable = true;
 

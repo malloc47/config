@@ -27,8 +27,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # https://github.com/zhaofengli/nix-homebrew/issues/131
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew/a5409abd0d5013d79775d3419bcac10eacb9d8c5";
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
