@@ -1,0 +1,5 @@
+# Override the user-global `*.lock` ignore: this Cargo.lock is
+# vendored intentionally so `buildRustPackage`'s `cargoLock` can
+# resolve the upstream recall crossterm git fork at the same
+# revision the published binary built against.
+!Cargo.lock

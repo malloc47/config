@@ -13,4 +13,6 @@
   pertmux = prev.callPackage pertmux/default.nix { };
   clipaste = prev.callPackage clipaste/default.nix { };
   clipssh = prev.callPackage clipssh/default.nix { };
+  claude-history = prev.callPackage claude-history/default.nix { };
+  recall = prev.callPackage recall/default.nix { };
 })
