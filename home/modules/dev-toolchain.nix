@@ -65,7 +65,6 @@ in
         workmux
         worktrunk
         wordnet
-        recall
       ]
       ++ lib.optionals (lib.elem pkgs.stdenv.hostPlatform.system pkgs.claude-history.meta.platforms) [
         claude-history
