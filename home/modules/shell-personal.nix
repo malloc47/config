@@ -120,6 +120,10 @@ in
       history = {
         expireDuplicatesFirst = true;
         path = "${config.xdg.dataHome}/zsh/zsh_history";
+        # SHARE_HISTORY off so tramp's `exec env ... /bin/sh -i` setup command
+        # isn't flushed to history before exec replaces zsh.
+        share = false;
+        append = true;
       };
       oh-my-zsh = {
         enable = true;
