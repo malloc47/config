@@ -14,7 +14,7 @@ in
   imports = [ ../../modules/settings.nix ];
 
   options.programs.ai-session = {
-    enable = lib.mkEnableOption "AI session orchestration (zellij + agent-deck)";
+    enable = lib.mkEnableOption "AI session orchestration";
 
     webServer = {
       enable = lib.mkOption {
@@ -192,16 +192,6 @@ in
         }
       '';
 
-    home.file.".agent-deck/config.toml".source =
-      (pkgs.formats.toml { }).generate "agent-deck-config.toml"
-        {
-          default_tool = "claude";
-          theme = "light";
-          tmux = {
-            window_style_override = "default";
-          };
-        };
-
     programs.codex = {
       enable = true;
       package = agentPkgs.codex;
@@ -223,13 +213,8 @@ in
     };
 
     home.packages = [
-      (agentPkgs.agent-deck.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ./patches/agent-deck-no-extkeys.patch
-          ./patches/agent-deck-no-clobber-symlink.patch
-        ];
-      }))
       pkgs.claude-code-acp
     ];
+
   };
 }
