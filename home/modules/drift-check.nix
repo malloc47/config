@@ -21,7 +21,7 @@ let
       escPath = lib.escapeShellArg f.path;
       escSource = lib.escapeShellArg "${f.source}";
       warn = ''
-        printf '\033[33mwarning\033[0m: %s has drifted from nix-managed source (will be reset on next switch):\n' \
+        printf '\033[33mwarning\033[0m: %s drifted from nix-managed source; resetting it now:\n' \
           ${escPath} >&2
       '';
       jsonCheck = ''
@@ -96,8 +96,8 @@ in
         diff are printed to stderr.  The deploy is never blocked.
 
         Modules that manage mutable config files via home.activation should
-        register their files here so users can see runtime changes before they
-        are silently overwritten on the next switch.
+        register their files here so users can see runtime changes just
+        before they are overwritten in the same switch.
       '';
     };
   };
