@@ -7,6 +7,50 @@
 let
   cfg = config.programs.drift-check;
   diff = "${pkgs.diffutils}/bin/diff";
+  jq = "${pkgs.jq}/bin/jq";
+
+  # Produce the shell that compares one registered file against its source.
+  # For format = "json", both sides are normalized through `jq -S` (sorted
+  # keys, canonical whitespace) before diffing, so cosmetic reformatting by
+  # the tool that owns the file (e.g. compact toJSON vs. pretty-printed
+  # rewrites) is not reported as drift. Comparison/diff failures are
+  # swallowed so a switch is never blocked.
+  checkFile =
+    f:
+    let
+      escPath = lib.escapeShellArg f.path;
+      escSource = lib.escapeShellArg "${f.source}";
+      warn = ''
+        printf '\033[33mwarning\033[0m: %s has drifted from nix-managed source (will be reset on next switch):\n' \
+          ${escPath} >&2
+      '';
+      jsonCheck = ''
+        if [ -e ${escPath} ]; then
+          _dc_want="$(${jq} -S . ${escSource} 2>/dev/null)"
+          _dc_have="$(${jq} -S . ${escPath} 2>/dev/null)"
+          if [ -z "$_dc_have" ]; then
+            # Unparseable on-disk JSON is itself drift worth surfacing.
+            ${warn}
+            ${diff} --color=always ${escSource} ${escPath} >&2 || true
+          elif [ "$_dc_want" != "$_dc_have" ]; then
+            ${warn}
+            ${diff} --color=always \
+              <(printf '%s\n' "$_dc_want") \
+              <(printf '%s\n' "$_dc_have") >&2 || true
+          fi
+          unset _dc_want _dc_have
+        fi
+      '';
+      rawCheck = ''
+        if [ -e ${escPath} ]; then
+          if ! ${diff} -q ${escSource} ${escPath} > /dev/null 2>&1; then
+            ${warn}
+            ${diff} --color=always ${escSource} ${escPath} >&2 || true
+          fi
+        fi
+      '';
+    in
+    if f.format == "json" then jsonCheck else rawCheck;
 in
 {
   options.programs.drift-check = {
@@ -21,6 +65,19 @@ in
             source = lib.mkOption {
               type = lib.types.path;
               description = "Nix store path of the canonical file content (e.g. pkgs.writeText result).";
+            };
+            format = lib.mkOption {
+              type = lib.types.enum [
+                "raw"
+                "json"
+              ];
+              default = "raw";
+              description = ''
+                How to compare the file. "raw" does a byte-for-byte diff.
+                "json" normalizes both sides through `jq -S` first, so key
+                ordering and whitespace differences are ignored and only
+                semantic JSON drift is reported.
+              '';
             };
             before = lib.mkOption {
               type = lib.types.listOf lib.types.str;
@@ -46,20 +103,8 @@ in
   };
 
   config = lib.mkIf (cfg.files != [ ]) {
-    home.activation.driftCheck =
-      lib.hm.dag.entryBetween (lib.unique (lib.concatMap (f: f.before) cfg.files)) [ "writeBoundary" ]
-        (
-          lib.concatStrings (
-            map (f: ''
-              if [ -e ${lib.escapeShellArg f.path} ]; then
-                if ! ${diff} -q ${f.source} ${lib.escapeShellArg f.path} > /dev/null 2>&1; then
-                  printf '\033[33mwarning\033[0m: %s has drifted from nix-managed source (will be reset on next switch):\n' \
-                    ${lib.escapeShellArg f.path} >&2
-                  ${diff} --color=always ${f.source} ${lib.escapeShellArg f.path} >&2 || true
-                fi
-              fi
-            '') cfg.files
-          )
-        );
+    home.activation.driftCheck = lib.hm.dag.entryBetween (lib.unique (
+      lib.concatMap (f: f.before) cfg.files
+    )) [ "writeBoundary" ] (lib.concatStrings (map checkFile cfg.files));
   };
 }
