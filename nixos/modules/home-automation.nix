@@ -61,6 +61,7 @@ in
       "shopping_list"
       "isal" # faster websocket compression
       "mqtt" # broker connection is added via the onboarding UI
+      "wiz" # WiZ lights auto-discovered on the LAN (packages pywizlight)
     ];
     config = {
       default_config = { };
