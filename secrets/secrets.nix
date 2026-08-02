@@ -69,6 +69,14 @@ in
     aida
     malloc47
   ];
+  "mqtt-password.age".publicKeys = [
+    aida
+    malloc47
+  ];
+  "mqtt-password-env.age".publicKeys = [
+    aida
+    malloc47
+  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila

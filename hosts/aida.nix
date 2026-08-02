@@ -4,6 +4,7 @@
   imports = [
     ../modules/settings.nix
     ../nixos/modules/motd.nix
+    ../nixos/modules/home-automation.nix
     # Uncomment to enable netboot provisioning for bare-metal installs:
     # ../nixos/modules/netboot.nix
   ];
@@ -92,6 +93,9 @@
       file = ../secrets/karakeep-oauth-env.age;
       owner = "karakeep";
     };
+
+    mqtt-password.file = ../secrets/mqtt-password.age;
+    mqtt-password-env.file = ../secrets/mqtt-password-env.age;
   };
 
   security.acme = {
@@ -99,6 +103,9 @@
     defaults.email = "malloc47@gmail.com";
     certs."home.malloc47.com" = {
       domain = "*.home.malloc47.com";
+      # The wildcard covers one label deeper (x.home.malloc47.com) but not the
+      # bare name, which Home Assistant is served on.
+      extraDomainNames = [ "home.malloc47.com" ];
       dnsProvider = "cloudflare";
       dnsResolver = "1.1.1.1:53";
       environmentFile = config.age.secrets.cloudflare-acme.path;
@@ -190,6 +197,12 @@
             domain = "*.home.malloc47.com";
             answer = "192.168.1.10";
           }
+          # The wildcard above does not match the bare name (Home Assistant).
+          {
+            enabled = true;
+            domain = "home.malloc47.com";
+            answer = "192.168.1.10";
+          }
           # Advertise this on the internal tailscale node only
           {
             enabled = true;
@@ -264,7 +277,7 @@
   services.homepage-dashboard = {
     enable = true;
     listenPort = 8082;
-    allowedHosts = "dash.home.malloc47.com";
+    allowedHosts = "dashboard.home.malloc47.com";
     environmentFile = config.age.secrets.homepage-env.path;
 
     settings = {
@@ -274,6 +287,10 @@
         Services = {
           style = "row";
           columns = 3;
+        };
+        "Home Automation" = {
+          style = "row";
+          columns = 2;
         };
         Network = {
           style = "row";
@@ -330,6 +347,24 @@
               icon = "ntfy";
               href = "https://ntfy.malloc47.com";
               siteMonitor = "https://ntfy.malloc47.com";
+            };
+          }
+        ];
+      }
+      {
+        "Home Automation" = [
+          {
+            "Home Assistant" = {
+              icon = "home-assistant";
+              href = "https://home.malloc47.com";
+              siteMonitor = "http://127.0.0.1:8123";
+            };
+          }
+          {
+            "Zigbee2MQTT" = {
+              icon = "zigbee2mqtt";
+              href = "https://zigbee.home.malloc47.com";
+              siteMonitor = "http://127.0.0.1:8080";
             };
           }
         ];
@@ -393,7 +428,7 @@
       '';
     };
 
-    virtualHosts."dash.home.malloc47.com" = {
+    virtualHosts."dashboard.home.malloc47.com" = {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
         handle /api/healthcheck {
