@@ -72,6 +72,14 @@ in
     };
   };
 
+  # Home Assistant's bluetooth integration (pulled in by default_config) needs a
+  # running BlueZ stack to drive aida's onboard adapter over DBus; without it,
+  # habluetooth only sees the raw hci0 device and fails to manage it.
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+
   # zigbee2mqtt — bridges the SLZB coordinator onto MQTT with HA discovery.
   services.zigbee2mqtt = {
     enable = true;
