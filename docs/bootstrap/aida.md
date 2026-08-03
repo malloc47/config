@@ -207,8 +207,10 @@ it must be added once through the UI. It persists across rebuilds/deploys.
 
 ### Pair Zigbee devices
 
-Visit `https://zigbee.home.malloc47.com` (behind Authelia), enable **Permit
-join**, and pair devices; they show up in Home Assistant via MQTT discovery.
+Once you have devices, follow the pairing runbook in
+[`docs/home-assistant.md`](../home-assistant.md) — enable **Permit join** in the
+z2m frontend (`https://zigbee.home.malloc47.com`, behind Authelia), pair, and the
+devices show up in Home Assistant via MQTT discovery.
 
 ## 10. Android ntfy app
 
