@@ -78,7 +78,7 @@ in
   networking.hosts = {
     "${aidaTailscaleIP}" = [
       "auth.home.malloc47.com"
-      "dash.home.malloc47.com"
+      "dashboard.home.malloc47.com"
       "adguard.home.malloc47.com"
     ];
     "127.0.0.1" = [
@@ -252,7 +252,7 @@ in
         {
           name = "Homepage";
           group = "aida";
-          url = "https://dash.home.malloc47.com/api/healthcheck";
+          url = "https://dashboard.home.malloc47.com/api/healthcheck";
           interval = "5m";
           conditions = [ "[STATUS] == 200" ];
           alerts = [ { type = "ntfy"; } ];

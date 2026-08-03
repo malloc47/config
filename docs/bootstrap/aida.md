@@ -52,6 +52,8 @@ Each secret must contain the following. If starting fresh, generate new values.
 | `authelia-users.age` | Authelia users YAML (see below) | Manual |
 | `cloudflared-credentials.age` | Tunnel credentials JSON (see step 6) | `cloudflared tunnel create` |
 | `homepage-env.age` | Environment variables for Homepage dashboard (see below) | Manual |
+| `mqtt-password.age` | Plaintext MQTT broker password | `openssl rand -base64 24` |
+| `mqtt-password-env.age` | `ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=<same value as mqtt-password.age>` | Manual |
 
 To create or edit a secret:
 
@@ -177,7 +179,38 @@ Visit `https://adguard.home.malloc47.com` and complete the setup wizard:
 2. Set admin credentials
 3. Configure upstream DNS if prompted (declarative config should pre-fill these)
 
-## 9. Android ntfy app
+## 9. Home Assistant + MQTT (Zigbee)
+
+The Home Assistant, mosquitto (MQTT broker), and zigbee2mqtt services are
+declarative (`nixos/modules/home-automation.nix`). Two things still need a
+one-time manual pass.
+
+### Set the Zigbee coordinator address
+
+zigbee2mqtt reaches the SLZB-MR5U coordinator over the LAN. Set its IP in
+`nixos/modules/home-automation.nix` (the `slzb.host` value) and deploy.
+
+### Onboard Home Assistant and connect MQTT
+
+Home Assistant's broker connection is a config entry stored in
+`/var/lib/hass/.storage`, not something HA accepts from `configuration.yaml`, so
+it must be added once through the UI. It persists across rebuilds/deploys.
+
+1. Visit `https://home.malloc47.com` and complete onboarding (create the admin user).
+2. Add the MQTT integration: **Settings → Devices & Services → Add Integration → MQTT**, then:
+   - Broker: `127.0.0.1`
+   - Port: `1883`
+   - Username: `mqtt`
+   - Password: the value from `mqtt-password.age`
+3. Done — zigbee2mqtt publishes with Home Assistant discovery enabled, so paired
+   Zigbee devices appear as entities automatically (no per-device YAML).
+
+### Pair Zigbee devices
+
+Visit `https://zigbee.home.malloc47.com` (behind Authelia), enable **Permit
+join**, and pair devices; they show up in Home Assistant via MQTT discovery.
+
+## 10. Android ntfy app
 
 1. Add server: `https://ntfy-ext.malloc47.com`
 2. Login with the ntfy credentials from step 7
@@ -185,7 +218,7 @@ Visit `https://adguard.home.malloc47.com` and complete the setup wizard:
 
 On LAN, you can alternatively use `https://ntfy.home.malloc47.com` directly.
 
-## 10. Tailscale client (requires aroldo)
+## 11. Tailscale client (requires aroldo)
 
 aida acts as a Tailscale subnet router, advertising `192.168.1.0/24` to the Headscale network on aroldo. This step requires aroldo to be deployed and running first — see `aroldo.md`.
 
@@ -227,7 +260,10 @@ curl -H "Authorization: Bearer tk_..." \
   https://ntfy-ext.malloc47.com/unimatrix-alerts
 
 # Homepage dashboard
-curl -I https://dash.home.malloc47.com
+curl -I https://dashboard.home.malloc47.com
+
+# Home Assistant
+curl -I https://home.malloc47.com
 
 # Tailscale (requires aroldo)
 tailscale status
