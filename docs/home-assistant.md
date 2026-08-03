@@ -67,6 +67,15 @@ integration added (Settings → Devices & Services shows MQTT with no error).
 - **Firmware:** device OTA updates are handled in z2m's OTA tab; the SLZB
   coordinator's own firmware is updated through its web UI, not z2m.
 
+## Declarative Zigbee management (proposal)
+
+Groups, group membership, and **bindings** (device-to-device links that keep local
+control working when the coordinator/z2m/HA are down) are runtime state today, not
+declared in Nix. A design for reconciling them from a Nix-generated spec — plus the
+prior-art survey — is in
+[`docs/zigbee-declarative-reconciler.md`](./zigbee-declarative-reconciler.md).
+Not built; evaluate before committing to it.
+
 ## Adding another MQTT "add-on" (the pattern)
 
 To bring in another bridge (esphome, etc.), edit
