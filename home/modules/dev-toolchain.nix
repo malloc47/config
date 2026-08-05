@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  pkgs-unstable,
   ...
 }:
 let
@@ -63,7 +64,9 @@ in
         sbt
         sqlite
         workmux
-        worktrunk
+        # worktrunk's MSRV outpaces the pinned nixpkgs rustc, so build it with
+        # the newer toolchain from nixpkgs-unstable.
+        (worktrunk.override { inherit (pkgs-unstable) rustPlatform; })
         wordnet
       ]
       ++ lib.optionals (lib.elem pkgs.stdenv.hostPlatform.system pkgs.claude-history.meta.platforms) [
