@@ -6,14 +6,14 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "worktrunk";
-  version = "0.36.0";
+  version = "0.71.0";
 
   src = fetchCrate {
     inherit pname version;
-    hash = "sha256-bMWhAamq2Xya1KA+httyGuTNZj19GRR+CvRRRlozhpY=";
+    hash = "sha256-U+8ZpBEfnJSS25Zs8mgsXefZrGQZb4KGvY0v24OQLhw=";
   };
 
-  cargoHash = "sha256-SQSbAHzXlGKHW/Q5YO3+IE5u9o84L9jsYm0u8z30i2s=";
+  cargoHash = "sha256-NeP2y4B0R775wQO1nJqx93bOuHTZZsHCxHrjNEQ5qcA=";
 
   buildFeatures = [ "git-wt" ];
 
