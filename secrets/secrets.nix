@@ -86,4 +86,10 @@ in
     attila
     cesare
   ];
+
+  "deepseek-api-key.age".publicKeys = [
+    malloc47
+    attila
+    cesare
+  ];
 }
