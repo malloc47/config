@@ -62,6 +62,7 @@ in
       "isal" # faster websocket compression
       "mqtt" # broker connection is added via the onboarding UI
       "wiz" # WiZ lights auto-discovered on the LAN (packages pywizlight)
+      "reolink" # Reolink doorbell/cameras (packages reolink-aio)
     ];
     config = {
       default_config = { };
