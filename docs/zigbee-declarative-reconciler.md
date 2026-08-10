@@ -3,6 +3,11 @@
 **Status:** proposal / not built. This documents a design so it can be judged
 before any code is written.
 
+**Related but distinct:** `docs/zigbee-config-snapshot.md` (implemented) captures
+the UI-editable `devices.yaml`/`groups.yaml` so a deploy is a config backup. That
+covers *naming/grouping config*; this doc covers the *live mesh* (membership +
+bindings) that config files don't hold.
+
 ## Problem
 
 We want Kubernetes-style declarative management of the Zigbee mesh: assert desired

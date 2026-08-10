@@ -254,6 +254,29 @@ in
           nixos-deploy() {
             nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --no-reexec --sudo
           }
+
+          # Fold a host's live Z2M devices.yaml/groups.yaml back into the repo
+          # baseline so a deploy stays a faithful backup of UI (clickops) edits.
+          # Review the printed diff and commit; the commit is the backup.
+          z2m-foldin() {
+            local host="$1"
+            [ -n "$host" ] || host=aida
+            local dst="$HOME/src/config/hosts/$host/zigbee2mqtt"
+            local f tmp
+            mkdir -p "$dst"
+            for f in devices.yaml groups.yaml; do
+              tmp="$(mktemp)"
+              if ssh "$host" sudo cat "/var/lib/zigbee2mqtt/$f" > "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+                mv "$tmp" "$dst/$f"
+              else
+                rm -f "$tmp"
+                echo "z2m-foldin: failed to fetch $f from $host" >&2
+                return 1
+              fi
+            done
+            echo "z2m-foldin: updated $dst; review and commit:" >&2
+            git -C "$HOME/src/config" diff -- "hosts/$host/zigbee2mqtt"
+          }
         '';
       sessionVariables = {
         ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
@@ -304,6 +327,29 @@ in
 
         nixos-deploy() {
           nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --no-reexec --sudo
+        }
+
+        # Fold a host's live Z2M devices.yaml/groups.yaml back into the repo
+        # baseline so a deploy stays a faithful backup of UI (clickops) edits.
+        # Review the printed diff and commit; the commit is the backup.
+        z2m-foldin() {
+          local host="$1"
+          [ -n "$host" ] || host=aida
+          local dst="$HOME/src/config/hosts/$host/zigbee2mqtt"
+          local f tmp
+          mkdir -p "$dst"
+          for f in devices.yaml groups.yaml; do
+            tmp="$(mktemp)"
+            if ssh "$host" sudo cat "/var/lib/zigbee2mqtt/$f" > "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+              mv "$tmp" "$dst/$f"
+            else
+              rm -f "$tmp"
+              echo "z2m-foldin: failed to fetch $f from $host" >&2
+              return 1
+            fi
+          done
+          echo "z2m-foldin: updated $dst; review and commit:" >&2
+          git -C "$HOME/src/config" diff -- "hosts/$host/zigbee2mqtt"
         }
       '';
       sessionVariables = {

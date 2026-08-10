@@ -21,7 +21,12 @@
 # The Zigbee coordinator is an SMLIGHT SLZB-MR5U reached over the LAN, so
 # zigbee2mqtt talks to it over TCP — no USB/serial device or udev rules.
 
-{ config, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   # LAN address of the SLZB-MR5U Zigbee coordinator. 6638 is SMLIGHT's default
@@ -115,6 +120,52 @@ in
 
   systemd.services.zigbee2mqtt.serviceConfig.EnvironmentFile =
     config.age.secrets.mqtt-password-env.path;
+
+  # --- Declarative baseline for the mutable Z2M config (the clickops surface) ---
+  #
+  # The module regenerates only configuration.yaml from `settings` above;
+  # devices.yaml (friendly-name renames, per-device options) and groups.yaml
+  # (group definitions) are Z2M-owned and survive restarts. That makes them the
+  # UI-editable surface — but it also means they live only on aida's disk unless
+  # captured here.
+  #
+  # To make a deploy a restore point without clobbering UI edits, following the
+  # same seed-then-warn philosophy as home/modules/drift-check.nix:
+  #   * seed each file from the repo baseline only when it is ABSENT (fresh box /
+  #     disaster recovery), via tmpfiles `C` (copy-if-missing);
+  #   * on every switch, diff the live file against the baseline and WARN on
+  #     drift — never overwrite the running copy.
+  # Capture drift back into the repo with `z2m-foldin aida` (see shell-personal),
+  # then commit: the commit is the backup.
+  #
+  # NOTE: this captures naming/grouping config only. Device pairings live in
+  # database.db / coordinator_backup.json (binary) and are out of scope here.
+  systemd.tmpfiles.rules =
+    let
+      seed = name: src: "C /var/lib/zigbee2mqtt/${name} 0600 zigbee2mqtt zigbee2mqtt - ${src}";
+    in
+    [
+      "d /var/lib/zigbee2mqtt 0700 zigbee2mqtt zigbee2mqtt -"
+      (seed "devices.yaml" ../../hosts/aida/zigbee2mqtt/devices.yaml)
+      (seed "groups.yaml" ../../hosts/aida/zigbee2mqtt/groups.yaml)
+    ];
+
+  system.activationScripts.zigbee2mqttDriftCheck.text =
+    let
+      baseline = {
+        "devices.yaml" = ../../hosts/aida/zigbee2mqtt/devices.yaml;
+        "groups.yaml" = ../../hosts/aida/zigbee2mqtt/groups.yaml;
+      };
+      check = name: src: ''
+        live=/var/lib/zigbee2mqtt/${name}
+        if [ -e "$live" ] && ! ${pkgs.diffutils}/bin/diff -q ${src} "$live" >/dev/null 2>&1; then
+          echo "warning: zigbee2mqtt ${name} has drifted from the nix baseline" \
+               "(kept as-is; run 'z2m-foldin aida' to capture it):" >&2
+          ${pkgs.diffutils}/bin/diff ${src} "$live" >&2 || true
+        fi
+      '';
+    in
+    lib.concatStrings (lib.mapAttrsToList check baseline);
 
   # Reverse-proxy vhosts (merge with the services.caddy block in aida.nix).
   services.caddy.virtualHosts = {
