@@ -21,25 +21,25 @@ in
       enable = true;
       # https://github.com/nix-community/home-manager/blob/bec08ef6e3b9d92f391a2940f6dbeffa50b17fa8/modules/programs/ssh.nix#L563-L574
       enableDefaultConfig = false;
-      matchBlocks."*" = {
-        forwardAgent = false;
-        addKeysToAgent = "no";
-        compression = false;
+      # 26.05: matchBlocks + extraOptions are deprecated; settings.* is a
+      # freeform block whose attrs are raw OpenSSH directives (upstream names).
+      settings."*" = {
+        ForwardAgent = false;
+        AddKeysToAgent = "no";
+        Compression = false;
         # Keepalive: 30s * 6 = 180s blip tolerance. SSH-layer keepalive is
         # encrypted and detected in-band, unlike kernel TCPKeepAlive.
-        serverAliveInterval = 30;
-        serverAliveCountMax = 6;
-        hashKnownHosts = false;
-        userKnownHostsFile = "~/.ssh/known_hosts";
-        controlMaster = "auto";
-        controlPath = "~/.ssh/master-%r@%n:%p";
+        ServerAliveInterval = 30;
+        ServerAliveCountMax = 6;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "auto";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
         # Short enough that a silently-dead master doesn't poison new
         # invocations for long.
-        controlPersist = "10m";
-        extraOptions = {
-          TCPKeepAlive = "no";
-          ConnectTimeout = "10";
-        };
+        ControlPersist = "10m";
+        TCPKeepAlive = "no";
+        ConnectTimeout = "10";
       };
     };
 

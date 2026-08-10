@@ -215,10 +215,10 @@ with pkgs.lib;
         let
           xkbFile = ../../xkb + "/${config.settings.xkbFile}.xkb";
           compiledLayout = pkgs.runCommand "keyboard-layout" { } ''
-            ${pkgs.xorg.xkbcomp}/bin/xkbcomp ${xkbFile} $out
+            ${pkgs.xkbcomp}/bin/xkbcomp ${xkbFile} $out
           '';
         in
-        "${pkgs.xorg.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
+        "${pkgs.xkbcomp}/bin/xkbcomp ${compiledLayout} $DISPLAY"
       else
         "";
 

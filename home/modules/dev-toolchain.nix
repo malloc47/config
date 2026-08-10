@@ -45,9 +45,9 @@ in
         go-task
         graphviz
         leiningen
-        nixfmt-rfc-style
+        nixfmt
         nixos-generators
-        nodePackages.mermaid-cli
+        mermaid-cli
         nodejs
         pandoc
         protobuf

@@ -205,15 +205,13 @@ in
     programs.opencode = {
       enable = true;
       package = agentPkgs.opencode;
-      settings.theme = lib.mkForce "system";
-      # # TODO: Latest home-manger / opencode need to nest theme here:
-      # tui = {
-      #   theme = "system";
-      # };
+      # 26.05: opencode TUI settings (theme/keybinds) moved out of `settings`
+      # into a dedicated tui.json; set the theme under `tui`.
+      tui.theme = lib.mkForce "system";
     };
 
     home.packages = [
-      pkgs.claude-code-acp
+      pkgs.claude-agent-acp
     ];
 
   };

@@ -278,7 +278,7 @@
     enable = true;
     listenPort = 8082;
     allowedHosts = "dashboard.home.malloc47.com";
-    environmentFile = config.age.secrets.homepage-env.path;
+    environmentFiles = [ config.age.secrets.homepage-env.path ];
 
     settings = {
       title = "Unimatrix";
@@ -382,6 +382,12 @@
       }
     ];
   };
+
+  # karakeep builds its frontend with pnpm 9.15.9, which nixos-26.05 flagged
+  # insecure (CVE-2026-48995 et al.). pnpm is a build-time-only tool here — it
+  # is not in karakeep's runtime closure — so permit it until nixpkgs bumps
+  # karakeep off pnpm_9.
+  nixpkgs.config.permittedInsecurePackages = [ "pnpm-9.15.9" ];
 
   services.karakeep = {
     enable = true;

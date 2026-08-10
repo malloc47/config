@@ -35,7 +35,7 @@
       dnsutils
       vim
       wget
-      xorg.xkill
+      xkill
     ];
 
   documentation.enable = true;

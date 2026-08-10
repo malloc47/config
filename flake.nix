@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -11,7 +11,7 @@
     };
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -23,7 +23,7 @@
 
     # For MacOS
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/nix-darwin-25.11";
+      url = "github:LnL7/nix-darwin/nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -52,7 +52,7 @@
     };
 
     stylix = {
-      url = "github:danth/stylix/release-25.11";
+      url = "github:danth/stylix/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -129,7 +129,7 @@
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "salome";
-              system.stateVersion = "25.11";
+              system.stateVersion = "26.05";
             }
             (
               { config, ... }:
@@ -209,7 +209,7 @@
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "aida";
-              system.stateVersion = "25.11";
+              system.stateVersion = "26.05";
             }
             (
               { config, ... }:
@@ -253,7 +253,7 @@
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "aroldo";
-              system.stateVersion = "25.11";
+              system.stateVersion = "26.05";
             }
             (
               { config, ... }:
@@ -296,7 +296,7 @@
             { settings.sshKeys = "${personal}/ssh"; }
             {
               networking.hostName = "attila";
-              system.stateVersion = "25.11";
+              system.stateVersion = "26.05";
             }
             (
               { config, ... }:

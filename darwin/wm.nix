@@ -45,7 +45,7 @@ with pkgs.lib;
     enable = true;
     package = pkgs-aerospace;
     launchd.enable = true;
-    userSettings = {
+    settings = {
       enable-normalization-flatten-containers = true;
       enable-normalization-opposite-orientation-for-nested-containers = true;
       default-root-container-layout = "tiles";
