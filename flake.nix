@@ -175,6 +175,9 @@
             (
               { config, ... }:
               {
+                # The installer boots from squashfs, not a ZFS root, so adopt the
+                # 26.11 default explicitly to silence the forceImportRoot advisory.
+                boot.zfs.forceImportRoot = false;
                 # Enable guest tools so that we can extract the IP address from the guest
                 virtualisation.vmware.guest.enable = true;
                 users.users.root.openssh.authorizedKeys.keys = [
