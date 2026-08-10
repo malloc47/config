@@ -35,6 +35,15 @@ let
     host = "192.168.1.124";
     port = 6638;
   };
+
+  # UI-editable HA config files: repo baseline keyed by runtime filename. HA's
+  # editors write these and require a matching `!include` in the (nix-owned,
+  # read-only) configuration.yaml to load them — see the seed/drift wiring below.
+  haFiles = {
+    "automations.yaml" = ../../hosts/aida/home-assistant/automations.yaml;
+    "scenes.yaml" = ../../hosts/aida/home-assistant/scenes.yaml;
+    "scripts.yaml" = ../../hosts/aida/home-assistant/scripts.yaml;
+  };
 in
 {
   # mosquitto — the MQTT hub. Loopback only, no anonymous access.
@@ -71,6 +80,14 @@ in
     ];
     config = {
       default_config = { };
+      # Point the UI automation/scene/script editors at writable include files.
+      # The module unquotes leading-bang strings, so these become real YAML
+      # `!include` tags. Without them, the UI saves the file but HA never loads
+      # it and "New automation setup" times out. The files themselves stay
+      # HA-owned/writable and are backed up via the seed/drift wiring below.
+      automation = "!include automations.yaml";
+      scene = "!include scenes.yaml";
+      script = "!include scripts.yaml";
       http = {
         server_host = "127.0.0.1";
         trusted_proxies = [ "127.0.0.1" ];
@@ -78,6 +95,35 @@ in
       };
     };
   };
+
+  # Seed each UI-editable include from the repo baseline only when ABSENT, in
+  # home-assistant's own preStart (runs as `hass` after StateDirectory is set up
+  # and before HA starts) — HA hard-fails on a missing `!include`, so seeding
+  # must be guaranteed to complete first. Existing files are never overwritten,
+  # so UI edits always win. `mkAfter` keeps this after the module's own preStart.
+  systemd.services.home-assistant.preStart = lib.mkAfter (
+    lib.concatStrings (
+      lib.mapAttrsToList (name: src: ''
+        if [ ! -e /var/lib/hass/${name} ]; then
+          cp ${src} /var/lib/hass/${name}
+          chmod u+w /var/lib/hass/${name}
+        fi
+      '') haFiles
+    )
+  );
+
+  # Warn (never clobber) when a live HA include has drifted from the baseline,
+  # on every switch. Capture drift with `ha-foldin aida`, then commit.
+  system.activationScripts.homeAssistantDriftCheck.text = lib.concatStrings (
+    lib.mapAttrsToList (name: src: ''
+      live=/var/lib/hass/${name}
+      if [ -e "$live" ] && ! ${pkgs.diffutils}/bin/diff -q ${src} "$live" >/dev/null 2>&1; then
+        echo "warning: home-assistant ${name} has drifted from the nix baseline" \
+             "(kept as-is; run 'ha-foldin aida' to capture it):" >&2
+        ${pkgs.diffutils}/bin/diff ${src} "$live" >&2 || true
+      fi
+    '') haFiles
+  );
 
   # Home Assistant's bluetooth integration (pulled in by default_config) needs a
   # running BlueZ stack to drive aida's onboard adapter over DBus; without it,

@@ -83,3 +83,26 @@ To bring in another bridge (esphome, etc.), edit
 `mqtt://127.0.0.1:1883` with the `mqtt` account, enable its HA/MQTT discovery,
 and add a Caddy vhost (behind Authelia unless it needs its own auth). HA
 auto-discovers it — no broker or HA changes required.
+
+## UI automations / scenes / scripts (clickops + backup)
+
+The HA UI editors write `automations.yaml` (list), `scenes.yaml` (list), and
+`scripts.yaml` (dict) into `/var/lib/hass`. The nix-owned, read-only
+`configuration.yaml` carries the matching `automation:/scene:/script: !include …`
+directives (in `nixos/modules/home-automation.nix`) so HA loads them. **Without
+those includes the UI saves the file but HA never loads it and "New automation
+setup" times out** — that is the symptom, not a parse error.
+
+The three files stay HA-writable (clickops keeps working) and are backed up the
+same way as the z2m yaml (see `docs/zigbee-config-snapshot.md`): the baseline
+lives at `hosts/aida/home-assistant/{automations,scenes,scripts}.yaml`, HA's
+`preStart` seeds each only when absent, and a switch-time drift check warns
+(non-fatal) when a live file diverges. Capture UI edits back into the repo with:
+
+```sh
+ha-foldin aida    # beside nixos-deploy / z2m-foldin in home/modules/shell-personal.nix
+```
+
+Review the diff and commit — the commit is the backup. Scope: automations/scenes/
+scripts config only; the HA database (`home-assistant_v2.db`) and `.storage` are
+not captured here.

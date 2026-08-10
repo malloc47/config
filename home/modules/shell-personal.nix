@@ -277,6 +277,27 @@ in
             echo "z2m-foldin: updated $dst; review and commit:" >&2
             git -C "$HOME/src/config" diff -- "hosts/$host/zigbee2mqtt"
           }
+
+          # Same as z2m-foldin but for Home Assistant's UI-editable includes.
+          ha-foldin() {
+            local host="$1"
+            [ -n "$host" ] || host=aida
+            local dst="$HOME/src/config/hosts/$host/home-assistant"
+            local f tmp
+            mkdir -p "$dst"
+            for f in automations.yaml scenes.yaml scripts.yaml; do
+              tmp="$(mktemp)"
+              if ssh "$host" sudo cat "/var/lib/hass/$f" > "$tmp" 2>/dev/null; then
+                mv "$tmp" "$dst/$f"
+              else
+                rm -f "$tmp"
+                echo "ha-foldin: failed to fetch $f from $host" >&2
+                return 1
+              fi
+            done
+            echo "ha-foldin: updated $dst; review and commit:" >&2
+            git -C "$HOME/src/config" diff -- "hosts/$host/home-assistant"
+          }
         '';
       sessionVariables = {
         ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE = "fg=10";
@@ -350,6 +371,27 @@ in
           done
           echo "z2m-foldin: updated $dst; review and commit:" >&2
           git -C "$HOME/src/config" diff -- "hosts/$host/zigbee2mqtt"
+        }
+
+        # Same as z2m-foldin but for Home Assistant's UI-editable includes.
+        ha-foldin() {
+          local host="$1"
+          [ -n "$host" ] || host=aida
+          local dst="$HOME/src/config/hosts/$host/home-assistant"
+          local f tmp
+          mkdir -p "$dst"
+          for f in automations.yaml scenes.yaml scripts.yaml; do
+            tmp="$(mktemp)"
+            if ssh "$host" sudo cat "/var/lib/hass/$f" > "$tmp" 2>/dev/null; then
+              mv "$tmp" "$dst/$f"
+            else
+              rm -f "$tmp"
+              echo "ha-foldin: failed to fetch $f from $host" >&2
+              return 1
+            fi
+          done
+          echo "ha-foldin: updated $dst; review and commit:" >&2
+          git -C "$HOME/src/config" diff -- "hosts/$host/home-assistant"
         }
       '';
       sessionVariables = {

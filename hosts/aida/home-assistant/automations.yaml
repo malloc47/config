@@ -1,0 +1,49 @@
+- id: '1786317932770'
+  alias: Test
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 057518eec1d3811d026ba93360c97e01
+    type: action
+    subtype: 1_single
+    trigger: device
+  conditions: []
+  actions:
+  - device_id: 57f45550e354cca511391d4d922cf0ac
+    domain: light
+    entity_id: cc9fd0d46e86dcaa8187544e53eb5f9d
+    type: flash
+  mode: single
+- id: '1786322842662'
+  alias: Test
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 057518eec1d3811d026ba93360c97e01
+    type: action
+    subtype: 1_single
+    metadata: {}
+    trigger: device
+  conditions: []
+  actions:
+  - device_id: 57f45550e354cca511391d4d922cf0ac
+    domain: light
+    entity_id: cc9fd0d46e86dcaa8187544e53eb5f9d
+    type: flash
+  mode: single
+- id: '1786324906219'
+  alias: Test
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 057518eec1d3811d026ba93360c97e01
+    type: action
+    subtype: 1_single
+    trigger: device
+  conditions: []
+  actions:
+  - type: toggle
+    device_id: 57f45550e354cca511391d4d922cf0ac
+    entity_id: cc9fd0d46e86dcaa8187544e53eb5f9d
+    domain: light
+  mode: single
