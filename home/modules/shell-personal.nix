@@ -252,7 +252,7 @@ in
           }
 
           nixos-deploy() {
-            nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
+            nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --no-reexec --sudo
           }
         '';
       sessionVariables = {
@@ -303,7 +303,7 @@ in
         fi
 
         nixos-deploy() {
-          nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --fast --use-remote-sudo
+          nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --no-reexec --sudo
         }
       '';
       sessionVariables = {
