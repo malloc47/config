@@ -77,6 +77,10 @@ in
     aida
     malloc47
   ];
+  "zwave-js-keys.json.age".publicKeys = [
+    aida
+    malloc47
+  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila

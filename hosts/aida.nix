@@ -96,6 +96,9 @@
 
     mqtt-password.file = ../secrets/mqtt-password.age;
     mqtt-password-env.file = ../secrets/mqtt-password-env.age;
+    # securityKeys JSON ({ S0_Legacy, S2_* }) merged into zwave-js's config at
+    # runtime via LoadCredential; see nixos/modules/home-automation.nix.
+    zwave-js-keys.file = ../secrets/zwave-js-keys.json.age;
   };
 
   security.acme = {
