@@ -216,12 +216,14 @@ in
 
   # zwave-js — Z-Wave JS server driving the Nabu Casa ZWA-2 (USB, enumerates as
   # a CDC-ACM device). HA's `zwave_js` integration (added via the onboarding UI)
-  # connects to it over the websocket server on 127.0.0.1:3000. The by-id path is
-  # stable across reboots, unlike /dev/ttyACM0. The four S0/S2 security keys come
-  # from the agenix secret and are merged into the driver config at runtime via
-  # systemd LoadCredential, so they never land in the world-readable nix store.
+  # connects to it over the websocket server on 127.0.0.1:3002 (the zwave-js
+  # default 3000 is taken by AdGuardHome's UI). The by-id path is stable across
+  # reboots, unlike /dev/ttyACM0. The four S0/S2 security keys come from the
+  # agenix secret and are merged into the driver config at runtime via systemd
+  # LoadCredential, so they never land in the world-readable nix store.
   services.zwave-js = {
     enable = true;
+    port = 3002;
     serialPort = "/dev/serial/by-id/usb-Nabu_Casa_ZWA-2_1CDBD4AD2A04-if00";
     secretsConfigFile = config.age.secrets.zwave-js-keys.path;
   };
