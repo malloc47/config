@@ -106,3 +106,46 @@ ha-foldin aida    # beside nixos-deploy / z2m-foldin in home/modules/shell-perso
 Review the diff and commit — the commit is the backup. Scope: automations/scenes/
 scripts config only; the HA database (`home-assistant_v2.db`) and `.storage` are
 not captured here.
+
+## Capturing UI edits back to Nix (runbook)
+
+The z2m and HA UI-editable files (`devices.yaml`/`groups.yaml` and
+`automations.yaml`/`scenes.yaml`/`scripts.yaml`) are seeded from the repo but stay
+writable, so clickops edits live only on aida until folded back into the repo. A
+`nixos-deploy` **warns** when they've drifted and **never** clobbers them, so
+there is no rush — capture whenever you want a fresh backup point.
+
+Prereq: the `z2m-foldin` / `ha-foldin` helpers live in your shell rc
+(`home/modules/shell-personal.nix`), so they become available after a
+`home-manager switch` on the machine you run them from. Until then use the manual
+equivalent in step 2.
+
+Run from `~/src/config`:
+
+1. (optional) Preview what's pending, without changing anything:
+   ```bash
+   for f in automations scenes scripts; do
+     echo "== $f =="
+     ssh aida "sudo cat /var/lib/hass/$f.yaml" | diff hosts/aida/home-assistant/$f.yaml - || true
+   done
+   ```
+2. Fold the live files into the repo:
+   ```bash
+   ha-foldin aida     # automations.yaml, scenes.yaml, scripts.yaml
+   z2m-foldin aida    # devices.yaml, groups.yaml
+   ```
+   Manual equivalent (no helper), per file:
+   ```bash
+   ssh aida "sudo cat /var/lib/hass/automations.yaml" > hosts/aida/home-assistant/automations.yaml
+   ```
+3. Review, then commit — **the commit is the backup**:
+   ```bash
+   git diff hosts/aida
+   git commit -am "aida: capture z2m/HA UI state"
+   ```
+4. (optional) `nixos-deploy aida` — the drift warning should now be gone.
+
+Note: `ha-foldin` overwrites the repo baseline with live state, so if the repo
+has automations that were *deleted* in the UI, folding in removes them from the
+repo too (that's the point — the repo tracks live). Review the diff before
+committing.
