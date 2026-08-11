@@ -149,3 +149,33 @@ Note: `ha-foldin` overwrites the repo baseline with live state, so if the repo
 has automations that were *deleted* in the UI, folding in removes them from the
 repo too (that's the point — the repo tracks live). Review the diff before
 committing.
+
+## Z-Wave (ZWA-2 controller)
+
+Declarative, no zwave-js-ui: HA's `zwave_js` integration connects over websocket
+to `services.zwave-js` (in `nixos/modules/home-automation.nix`), which drives the
+Nabu Casa **ZWA-2** USB stick and holds the S0/S2 security keys (agenix secret
+`zwave-js-keys.json.age`, merged at runtime). Device management is done from HA's
+built-in Z-Wave panel.
+
+- **Server:** `ws://127.0.0.1:3002` (the zwave-js default 3000 is AdGuardHome).
+  It binds all interfaces but 3002 is not opened in the firewall, so it's only
+  reachable on loopback (i.e. by HA).
+
+**One-time: add the integration.** HA → Settings → Devices & Services → Add
+integration → **Z-Wave** → when asked, do **not** use the Supervisor add-on
+(this isn't HAOS); enter the server URL `ws://127.0.0.1:3002` → submit. Keys are
+already server-side, so HA doesn't ask for them.
+
+**Pair a device (e.g. Zooz ZEN37 wall remote).**
+1. HA → Settings → Devices & Services → **Z-Wave** → **Add device** (opens an
+   inclusion window).
+2. Put the device into inclusion per its manual (ZEN37: tap the top-left button;
+   see Zooz docs). It's an 800LR S2 device.
+3. For S2, HA prompts for the **DSK PIN** — the 5-digit code on the device label /
+   QR. Enter it to include securely.
+4. Battery devices sleep; keep it awake (tap a button) until the interview
+   completes, then its buttons/scenes show up as events for automations.
+
+To move the controller to another host, re-pairing is avoided by restoring the
+controller NVM backup — out of scope here (like the z2m `database.db` gap).
