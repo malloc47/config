@@ -123,6 +123,12 @@
         {
           domain = "home.malloc47.com";
           authelia_url = "https://auth.home.malloc47.com";
+          # Internal-only assets (LAN/Tailscale); the gate exists for guest/child
+          # access, not credential theft, so favor long-lived sessions over
+          # frequent re-auth. NB Authelia durations: `m` = minute, `M` = month.
+          expiration = "1M"; # absolute session lifetime (was defaulting to 1h)
+          inactivity = "1w"; # idle timeout (was defaulting to 5m) — the fix
+          remember_me = "1M"; # "remember me" duration (default; explicit)
         }
       ];
       storage.local.path = "/var/lib/authelia-main/db.sqlite3";
