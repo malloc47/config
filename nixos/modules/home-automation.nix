@@ -81,6 +81,8 @@ in
     ];
     config = {
       default_config = { };
+      # Home/installation display name (Settings -> System -> General -> Name).
+      homeassistant.name = "Berry Patch";
       # Point the UI automation/scene/script editors at writable include files.
       # The module unquotes leading-bang strings, so these become real YAML
       # `!include` tags. Without them, the UI saves the file but HA never loads
