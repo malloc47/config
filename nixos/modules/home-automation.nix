@@ -78,6 +78,10 @@ in
       "wiz" # WiZ lights auto-discovered on the LAN (packages pywizlight)
       "reolink" # Reolink doorbell/cameras (packages reolink-aio)
       "zwave_js" # Z-Wave; connects to the zwave-js server below (added via UI)
+      # Send commands/broadcasts to Google Assistant from HA (packages
+      # gassist-text). OAuth is set up in the UI via Application Credentials;
+      # without this component the config flow 500s with "Invalid handler".
+      "google_assistant_sdk"
     ];
     config = {
       default_config = { };
