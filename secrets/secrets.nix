@@ -81,6 +81,12 @@ in
     aida
     malloc47
   ];
+  # Home Assistant long-lived access token for home-assistant-matter-hub
+  # (loaded as a systemd credential; see nixos/modules/home-automation.nix).
+  "home-assistant-matter-hub-token.age".publicKeys = [
+    aida
+    malloc47
+  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila

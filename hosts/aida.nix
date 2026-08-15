@@ -99,6 +99,10 @@
     # securityKeys JSON ({ S0_Legacy, S2_* }) merged into zwave-js's config at
     # runtime via LoadCredential; see nixos/modules/home-automation.nix.
     zwave-js-keys.file = ../secrets/zwave-js-keys.json.age;
+    # HA long-lived access token for home-assistant-matter-hub. No owner: the
+    # service runs as a DynamicUser and reads this via a systemd credential
+    # (LoadCredential runs as root before the drop), so root-only 0400 is fine.
+    home-assistant-matter-hub-token.file = ../secrets/home-assistant-matter-hub-token.age;
   };
 
   security.acme = {
@@ -374,6 +378,13 @@
               icon = "zigbee2mqtt";
               href = "https://zigbee.home.malloc47.com";
               siteMonitor = "http://127.0.0.1:8080";
+            };
+          }
+          {
+            "Matter Hub" = {
+              icon = "home-assistant";
+              href = "https://matter.home.malloc47.com";
+              siteMonitor = "http://127.0.0.1:8482";
             };
           }
         ];

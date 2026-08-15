@@ -230,6 +230,37 @@ in
     secretsConfigFile = config.age.secrets.zwave-js-keys.path;
   };
 
+  # home-assistant-matter-hub — exposes HA entities to Matter controllers so the
+  # legacy Google Home/Nest speakers (already Matter hubs) can voice-control them.
+  # It is not an "add-on" on the MQTT bus: it talks to HA directly over the
+  # websocket API using a long-lived access token. The token is delivered as a
+  # systemd credential (module reads accessTokenFile -> HAMH_HOME_ASSISTANT_ACCESS_TOKEN),
+  # so it never lands in the world-readable nix store.
+  #
+  # nixpkgs packages the actively-maintained RiDDiX fork (upstream t0bst4r was
+  # archived Jan 2026). The bridges and their entity filters are created in the
+  # web UI (port 8482, proxied below) and persist as mutable state under
+  # /var/lib/home-assistant-matter-hub — that is the clickops surface, analogous
+  # to z2m's devices.yaml; Nix owns only the service wiring, not the bridge list.
+  #
+  # Commissioning needs the LAN reachable on UDP/TCP 5540 (openFirewall) AND
+  # mDNS on UDP 5353 (matter.js runs its own responder, so no avahi) — the
+  # module's openFirewall does NOT cover 5353, so it is opened explicitly below.
+  # Matter also requires IPv6 and unfiltered multicast on the LAN; do not disable
+  # either. aida is on the same L2 as the Google devices, so discovery works.
+  services.home-assistant-matter-hub = {
+    enable = true;
+    openFirewall = true; # UDP/TCP 5540 (Matter commissioning)
+    accessTokenFile = config.age.secrets.home-assistant-matter-hub-token.path;
+    settings = {
+      homeAssistantUrl = "http://127.0.0.1:8123";
+      httpPort = 8482;
+    };
+  };
+
+  # mDNS for Matter device discovery/commissioning (not opened by openFirewall).
+  networking.firewall.allowedUDPPorts = [ 5353 ];
+
   # Reverse-proxy vhosts (merge with the services.caddy block in aida.nix).
   services.caddy.virtualHosts = {
     # Home Assistant on the bare home.malloc47.com; HA handles its own auth.
@@ -250,6 +281,22 @@ in
             copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
           }
           reverse_proxy http://127.0.0.1:8080
+        }
+      '';
+    };
+
+    # matter-hub admin/commissioning UI behind Authelia — this is where the
+    # bridges and their pairing codes live. Note: commissioning itself is Matter
+    # over the LAN (5540/mDNS), not this HTTP UI, so SSO here is fine.
+    "matter.home.malloc47.com" = {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        handle {
+          forward_auth http://127.0.0.1:9091 {
+            uri /api/authz/forward-auth
+            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+          }
+          reverse_proxy http://127.0.0.1:8482
         }
       '';
     };
