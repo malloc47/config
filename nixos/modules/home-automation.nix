@@ -67,6 +67,15 @@ in
   # terminates TLS and forwards.
   services.home-assistant = {
     enable = true;
+    # Custom (non-core) integrations from nixpkgs' home-assistant-custom-components.
+    # emporia_vue (magico13) covers the Emporia Vue energy monitors AND the Emporia
+    # EV charger (charge on/off + charge-rate control). Emporia has no local API, so
+    # it is cloud-only: added via the UI config flow with the Emporia app credentials,
+    # which land in HA's own state dir (not the world-readable nix store). Packages
+    # pyemvue. Without this, "Emporia Vue" never appears in Add Integration.
+    customComponents = [
+      pkgs.home-assistant-custom-components.emporia_vue
+    ];
     extraComponents = [
       "analytics"
       "google_translate"
