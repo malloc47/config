@@ -76,6 +76,16 @@ in
     customComponents = [
       pkgs.home-assistant-custom-components.emporia_vue
     ];
+    # Custom Lovelace (frontend) cards, registered as dashboard resources.
+    # Used by the LD2410 mmWave tuning dashboard: with the sensor's engineering
+    # mode on, plot each distance gate's live move/still energy so the per-gate
+    # sensitivities can be dialed in visually. plotly-chart-card gives the
+    # radar-like energy-vs-distance bar chart; apexcharts-card is kept for
+    # general time-series graphs. Card YAML is added on a dashboard via the UI.
+    customLovelaceModules = [
+      pkgs.home-assistant-custom-lovelace-modules.apexcharts-card
+      pkgs.home-assistant-custom-lovelace-modules.plotly-chart-card
+    ];
     extraComponents = [
       "analytics"
       "google_translate"
