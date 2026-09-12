@@ -14,4 +14,11 @@
   clipaste = prev.callPackage clipaste/default.nix { };
   clipssh = prev.callPackage clipssh/default.nix { };
   claude-history = prev.callPackage claude-history/default.nix { };
+
+  # Home Assistant custom component. Called through home-assistant's OWN
+  # python3Packages so buildHomeAssistantComponent and its deps (paho-mqtt)
+  # resolve against HA's interpreter, not the default python3Packages set.
+  home-assistant-toniebox =
+    final.home-assistant.python3Packages.callPackage home-assistant-toniebox/default.nix
+      { };
 })

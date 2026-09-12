@@ -82,6 +82,11 @@ in
       # nixpkgs advances past it this can become extraComponents = [ "yoto" ] and
       # drop the custom package.
       pkgs.home-assistant-custom-components.yoto_ha
+      # toniebox (git4sim/HA-Toniebox) — unofficial integration for the kids'
+      # Toniebox over the Tonie Cloud (config-flow login, cloud_push over MQTT;
+      # packages paho-mqtt). Not in nixpkgs, so packaged in-repo at
+      # pkgs/home-assistant-toniebox and exposed via overlays.default.
+      pkgs.home-assistant-toniebox
     ];
     # Custom Lovelace (frontend) cards, registered as dashboard resources.
     # Used by the LD2410 mmWave tuning dashboard: with the sensor's engineering
