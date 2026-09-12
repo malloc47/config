@@ -75,6 +75,13 @@ in
     # pyemvue. Without this, "Emporia Vue" never appears in Add Integration.
     customComponents = [
       pkgs.home-assistant-custom-components.emporia_vue
+      # yoto_ha (cdnninja) — community integration for the kids' Yoto players:
+      # media_player controls plus battery / now-playing / card-slot sensors, over
+      # the Yoto cloud (config-flow login, cloud_polling; packages yoto-api). Added
+      # via the UI. HA core gained a native `yoto` integration in 2026.6; once
+      # nixpkgs advances past it this can become extraComponents = [ "yoto" ] and
+      # drop the custom package.
+      pkgs.home-assistant-custom-components.yoto_ha
     ];
     # Custom Lovelace (frontend) cards, registered as dashboard resources.
     # Used by the LD2410 mmWave tuning dashboard: with the sensor's engineering
