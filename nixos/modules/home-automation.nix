@@ -98,6 +98,11 @@ in
       "reolink" # Reolink doorbell/cameras (packages reolink-aio)
       "zwave_js" # Z-Wave; connects to the zwave-js server below (added via UI)
       "esphome" # ESPHome devices added via UI (packages aioesphomeapi)
+      # Matter controller integration — added via the UI, connects to the
+      # matter-server below on ws://127.0.0.1:5580. This is HA commissioning and
+      # controlling real Matter devices (inbound), distinct from the matter-hub
+      # that exposes HA to Google (outbound). See services.matter-server below.
+      "matter"
       # Send commands/broadcasts to Google Assistant from HA (packages
       # gassist-text). OAuth is set up in the UI via Application Credentials;
       # without this component the config flow 500s with "Invalid handler".
@@ -253,6 +258,24 @@ in
     serialPort = "/dev/serial/by-id/usb-Nabu_Casa_ZWA-2_1CDBD4AD2A04-if00";
     secretsConfigFile = config.age.secrets.zwave-js-keys.path;
   };
+
+  # matter-server — HA's INBOUND Matter controller (python-matter-server). This
+  # is the opposite direction from home-assistant-matter-hub below: the hub
+  # EXPOSES HA's Zigbee/Z-Wave to Google as a Matter bridge (outbound), while
+  # this SERVER lets HA commission and control real Matter devices itself
+  # (inbound). HA's `matter` integration (added via the UI, see extraComponents)
+  # connects over the websocket on 127.0.0.1:5580 — loopback only, so
+  # openFirewall stays off; only HA needs to reach it.
+  #
+  # Purpose here: adopt the Matter-over-Wi-Fi bulbs that were previously only in
+  # Google Home. They are Wi-Fi, not Thread, so there is NO Thread border router
+  # / OTBR in play — commissioning is plain LAN + mDNS (the UDP 5353 rule below,
+  # opened for the hub, also covers controller discovery). Migration is a clean
+  # break: factory-reset each bulb (which decommissions it from Google's fabric),
+  # then commission it fresh into HA; afterwards add it to a matter-hub bridge so
+  # Google stays a pure voice layer. Matter needs IPv6 + unfiltered LAN multicast
+  # — see the hub notes below; do not disable either.
+  services.matter-server.enable = true;
 
   # home-assistant-matter-hub — exposes HA entities to Matter controllers so the
   # legacy Google Home/Nest speakers (already Matter hubs) can voice-control them.
