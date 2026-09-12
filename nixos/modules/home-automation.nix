@@ -287,7 +287,18 @@ in
   # then commission it fresh into HA; afterwards add it to a matter-hub bridge so
   # Google stays a pure voice layer. Matter needs IPv6 + unfiltered LAN multicast
   # — see the hub notes below; do not disable either.
-  services.matter-server.enable = true;
+  services.matter-server = {
+    enable = true;
+    # Pin CHIP's link-local IPv6 traffic to the wired LAN (eno1). aida has a
+    # DOWN, unused Wi-Fi iface (wlp1s0) that CHIP otherwise latches onto ("Got
+    # WiFi interface: wlp1s0"); since the LAN has no global IPv6, Matter
+    # commissioning/operational traffic rides link-local IPv6, which is
+    # interface-scoped — sending it out wlp1s0 makes PASE time out ("Secure
+    # Pairing Failed"). Not enabling --bluetooth-adapter: aida's BT adapter is
+    # owned by HA's bluetooth integration, so commission Wi-Fi Matter devices
+    # over the network (or via the HA phone app's BLE), not server-side BLE.
+    extraArgs.primary-interface = "eno1";
+  };
 
   # home-assistant-matter-hub — exposes HA entities to Matter controllers so the
   # legacy Google Home/Nest speakers (already Matter hubs) can voice-control them.
