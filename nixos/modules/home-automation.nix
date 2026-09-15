@@ -119,6 +119,12 @@ in
       # gassist-text). OAuth is set up in the UI via Application Credentials;
       # without this component the config flow 500s with "Invalid handler".
       "google_assistant_sdk"
+      # MTA New York City Transit — real-time NYC subway/bus arrivals via the
+      # MTA's GTFS-RT feeds (core since 2026.3; packages py-nymta). Added via the
+      # UI config flow: subway needs no key; bus tracking needs an MTA Bus Time
+      # API key (from bustime.mta.info) entered in the flow. Creates arrival
+      # sensors per stop; cloud_polling (~30s default).
+      "mta"
     ];
     config = {
       default_config = { };
