@@ -143,6 +143,18 @@ in
       # API key (from bustime.mta.info) entered in the flow. Creates arrival
       # sensors per stop; cloud_polling (~30s default).
       "mta"
+      # Integrations for devices already auto-discovered on the LAN. Without the
+      # component bundled, default_config's discovery still finds the device but
+      # its config-flow load fails with "No module named '<dep>'" (harmless log
+      # noise); enabling each bundles the dep so the device is actually usable and
+      # the errors clear. All are added/confirmed via the UI config flow.
+      "cast" # Google/Nest speakers (packages pychromecast)
+      "smlight" # SLZB-MR5U Zigbee coordinator diagnostics (packages pysmlight)
+      "shelly" # Shelly devices (packages aioshelly)
+      "androidtv_remote" # Google/Android TV remote (packages androidtvremote2)
+      "ipp" # network printer via IPP (packages pyipp)
+      "brother" # Brother network printer (packages brother)
+      "thread" # Thread border router mgmt (packages python-otbr-api)
     ];
     config = {
       default_config = { };
