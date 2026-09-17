@@ -110,6 +110,11 @@ in
     customLovelaceModules = [
       pkgs.home-assistant-custom-lovelace-modules.apexcharts-card
       pkgs.home-assistant-custom-lovelace-modules.plotly-chart-card
+      # flex-table-card — packaged in-repo (pkgs/home-assistant-flex-table-card).
+      # Renders gtfs2's next_departures* list attributes as a table of the next N
+      # upcoming trips (there is no dedicated gtfs2 card). Added on a dashboard as
+      # `custom:flex-table-card` via the UI.
+      pkgs.home-assistant-flex-table-card
     ];
     extraComponents = [
       "analytics"

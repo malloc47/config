@@ -24,4 +24,8 @@
   home-assistant-gtfs2 =
     final.home-assistant.python3Packages.callPackage home-assistant-gtfs2/default.nix
       { };
+
+  # Lovelace (frontend) card — plain JS, so a normal callPackage (not HA's
+  # python set). Registered via services.home-assistant.customLovelaceModules.
+  home-assistant-flex-table-card = prev.callPackage home-assistant-flex-table-card/default.nix { };
 })
