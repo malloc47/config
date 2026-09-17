@@ -96,7 +96,20 @@ in
       # select stop(s). Feeds (accept the county ToS):
       #   static: https://westchester-win.gmv.com:8443/repository/gtfs-public/GTFS_GMV_WCDOT.zip
       #   rt:     https://westchester.gmv.com/gtfsrtapi/api/tripupdates
+      #
+      # NOTE: gtfs-realtime is realtime-ONLY — it reads "Unknown" whenever the RT
+      # feed has no entry for a stop (e.g. between buses / outside the feed's
+      # look-ahead window). gtfs2 below supersedes it with schedule fallback;
+      # once the Bee-Line stop is reconfigured under gtfs2 and its config entry
+      # removed in the UI, this line can be dropped.
       pkgs.home-assistant-custom-components.gtfs-realtime
+      # gtfs2 (vingerha/gtfs2) — packaged in-repo (pkgs/home-assistant-gtfs2).
+      # Loads the full GTFS timetable into SQLite and overlays GTFS-RT, so a stop
+      # shows its SCHEDULED arrival when there is no live data and upgrades to the
+      # RT prediction when a bus is in range — the schedule fallback that
+      # gtfs-realtime lacks. Configured via the UI config flow with the same
+      # Bee-Line static zip + GTFS-RT trip-updates URL above.
+      pkgs.home-assistant-gtfs2
     ];
     # Custom Lovelace (frontend) cards, registered as dashboard resources.
     # Used by the LD2410 mmWave tuning dashboard: with the sensor's engineering
