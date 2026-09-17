@@ -87,28 +87,18 @@ in
       # packages paho-mqtt). Not in nixpkgs, so packaged in-repo at
       # pkgs/home-assistant-toniebox and exposed via overlays.default.
       pkgs.home-assistant-toniebox
-      # gtfs-realtime (bcpearce/homeassistant-gtfs-realtime) — generic GTFS +
-      # GTFS-RT arrival sensors for any transit agency (packages
-      # gtfs-realtime-bindings, gtfs-station-stop). Used here for the Westchester
-      # Bee-Line, which the MTA integration does NOT cover (separate agency).
-      # Added via the UI config flow (no API key): point it at Bee-Line's static
-      # GTFS zip for stop/route names plus the GTFS-RT trip-updates URL, then
-      # select stop(s). Feeds (accept the county ToS):
+      # gtfs2 (vingerha/gtfs2) — packaged in-repo (pkgs/home-assistant-gtfs2).
+      # Real-time transit arrivals for the Westchester Bee-Line, which the MTA
+      # integration does NOT cover (separate agency). Loads the full GTFS
+      # timetable into SQLite and overlays GTFS-RT, so a stop shows its SCHEDULED
+      # arrival when there is no live data and upgrades to the RT prediction when
+      # a bus is in range. (Replaced the realtime-ONLY bcpearce gtfs-realtime,
+      # which read "Unknown" whenever the RT feed had no entry for a stop.) Set up
+      # via the UI config flow (agency -> route -> origin -> destination), then
+      # enable Real-time in the integration's options with the trip-updates URL
+      # (no API key; accept the county ToS):
       #   static: https://westchester-win.gmv.com:8443/repository/gtfs-public/GTFS_GMV_WCDOT.zip
       #   rt:     https://westchester.gmv.com/gtfsrtapi/api/tripupdates
-      #
-      # NOTE: gtfs-realtime is realtime-ONLY — it reads "Unknown" whenever the RT
-      # feed has no entry for a stop (e.g. between buses / outside the feed's
-      # look-ahead window). gtfs2 below supersedes it with schedule fallback;
-      # once the Bee-Line stop is reconfigured under gtfs2 and its config entry
-      # removed in the UI, this line can be dropped.
-      pkgs.home-assistant-custom-components.gtfs-realtime
-      # gtfs2 (vingerha/gtfs2) — packaged in-repo (pkgs/home-assistant-gtfs2).
-      # Loads the full GTFS timetable into SQLite and overlays GTFS-RT, so a stop
-      # shows its SCHEDULED arrival when there is no live data and upgrades to the
-      # RT prediction when a bus is in range — the schedule fallback that
-      # gtfs-realtime lacks. Configured via the UI config flow with the same
-      # Bee-Line static zip + GTFS-RT trip-updates URL above.
       pkgs.home-assistant-gtfs2
     ];
     # Custom Lovelace (frontend) cards, registered as dashboard resources.
