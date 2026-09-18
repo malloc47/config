@@ -100,6 +100,15 @@ in
       #   static: https://westchester-win.gmv.com:8443/repository/gtfs-public/GTFS_GMV_WCDOT.zip
       #   rt:     https://westchester.gmv.com/gtfsrtapi/api/tripupdates
       pkgs.home-assistant-gtfs2
+      # adaptive_lighting (basnijholt) — circadian control: intercepts
+      # light.turn_on and adapts brightness + color temp (optionally RGB) by sun
+      # position, per-area config entries, with sleep mode and take-over-control
+      # detection. The de-facto standard (a rewrite of the older circadian_lighting;
+      # more capable than core `flux`). Added/configured via the UI config flow —
+      # just enabling the component controls no lights until a light group is set
+      # up. Will own color temp for its lights, so retire manual color-temp
+      # automations on those lights when adopting it.
+      pkgs.home-assistant-custom-components.adaptive_lighting
     ];
     # Custom Lovelace (frontend) cards, registered as dashboard resources.
     # Used by the LD2410 mmWave tuning dashboard: with the sensor's engineering
