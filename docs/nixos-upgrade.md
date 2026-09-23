@@ -14,18 +14,6 @@ curl -sI https://channels.nixos.org/nixos-26.11   # 302 → exists, 404 → not 
 
 ---
 
-## Prior art
-
-| From → To | `config` commit | `work-config` commit |
-|-----------|-----------------|----------------------|
-| 25.05 → 25.11 | `065fb52` (darwin), `74a28df` (cleanup) | — |
-| 25.11 → 26.05 | `63d28aa` | `9302885` |
-
-`git show <sha>` on any of those commits lists every renamed/removed option
-encountered during that upgrade.
-
----
-
 ## 1. Confirm the new release branch exists
 
 ```sh
@@ -245,3 +233,38 @@ These were noted during the 26.05 upgrade as things that will change at 26.11:
 
 - `boot.zfs.forceImportRoot = false` becomes the default — no manual action
   needed, the explicit `false` in `vm-iso` can be removed (see `65b5937`).
+
+---
+
+## Version history
+
+Every NixOS upgrade recorded in the `config` repo git history.
+`git show <sha>` on any flake-era commit lists the exact option renames and
+workarounds needed at that release.
+
+Versions not listed were skipped entirely (19.09, 23.05, 24.11).
+
+### Flake era (2025–present)
+
+| Version | Date applied | Primary commit | Notes |
+|---------|-------------|----------------|-------|
+| **26.05** | 2026-08-09 | `63d28aa` | First Claude-assisted upgrade. `65b5937` silenced a ZFS advisory same day. `work-config` counterpart: `9302885`. |
+| **25.11** | 2026-02-03 | `065ff2a` | Upgrade was folded into a darwin-focused commit ("Update darwin to 25.11"); `74a28df` (same day) was the follow-up cleanup. No dedicated `work-config` counterpart at the time. |
+| **25.05** | 2025-06-13 | `8e7b218` | Darwin side first. Non-flake NixOS channel upgraded in `7f829b5` (2025-07-11). The VM sub-flake was folded into the root hierarchy at 25.05 in `37a445e` (2025-07-06), marking the start of the current flake structure. |
+
+### Pre-flake / channel era (2019–2024)
+
+These upgrades used `sudo nix-channel --add` + `sudo nixos-rebuild --upgrade boot`
+rather than flake inputs, so no `flake.nix` changes are involved.
+
+| Version | Date applied | Commit | Notes |
+|---------|-------------|--------|-------|
+| **24.05** | 2024-06-09 | `48fab32` | |
+| **23.11** | 2024-05-18 | `4f17e56` | Applied ~18 months late; 24.05 followed three weeks later. |
+| **22.11** | 2022-12-01 | `95c79bb` | |
+| **22.05** | 2022-05-31 | `2bb7cbe` | |
+| **21.11** | 2021-12-01 | `89041dc` | |
+| **21.05** | 2021-09-25 | `7fb9d8c` | |
+| **20.09** | 2020-10-31 | `f6cdf66` | |
+| **20.03** | 2020-09-17 | `9261b4c` | |
+| **19.03** | 2019-04-11 | `123565c` | Oldest NixOS upgrade in the repo. |
