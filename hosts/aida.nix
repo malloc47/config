@@ -133,8 +133,10 @@
           send-on-resolved = true;
         };
       };
-      # z2m already owns :8080; keep gatus's own UI off it.
-      web.port = 3002;
+      # z2m owns :8080 and a local HA-side service holds :3002; keep gatus's
+      # (loopback-only) status UI on a free port.
+      web.address = "127.0.0.1";
+      web.port = 3003;
       endpoints = [
         {
           name = "Zigbee2MQTT";
