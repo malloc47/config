@@ -46,6 +46,7 @@ in
     malloc47
   ];
   "ntfy-admin-password-env.age".publicKeys = [
+    aida
     aroldo
     malloc47
   ];

@@ -103,6 +103,57 @@
     # service runs as a DynamicUser and reads this via a systemd credential
     # (LoadCredential runs as root before the drop), so root-only 0400 is fine.
     home-assistant-matter-hub-token.file = ../secrets/home-assistant-matter-hub-token.age;
+    # ntfy access token (NTFY_TOKEN=...) for the local gatus watchdog to publish
+    # alerts to aroldo's ntfy; same secret aroldo's gatus uses.
+    ntfy-admin-password-env.file = ../secrets/ntfy-admin-password-env.age;
+  };
+
+  # Zigbee mesh watchdog. aroldo's central gatus can't reach z2m (loopback) or
+  # the SLZB-MR5U coordinator (LAN 192.168.1.124, not routed over the tailnet),
+  # so this local gatus probes both directly and alerts via aroldo's ntfy.
+  #   - Zigbee2MQTT: the frontend on :8080 only starts once z2m has completed the
+  #     coordinator handshake, so a failure here catches BOTH a dead z2m and a
+  #     dead/unreachable SLZB (z2m crashloops and never opens :8080).
+  #   - SLZB-MR5U: an independent TCP probe of the Zigbee serial port :6638 flags
+  #     the coordinator directly (e.g. if it wedges while z2m stays up).
+  # aida being down entirely is already covered by aroldo's dashboard check.
+  services.gatus = {
+    enable = true;
+    environmentFile = config.age.secrets.ntfy-admin-password-env.path;
+    settings = {
+      alerting.ntfy = {
+        url = "https://ntfy.malloc47.com";
+        topic = "alerts";
+        priority = 3;
+        token = "$NTFY_TOKEN";
+        default-alert = {
+          enabled = true;
+          failure-threshold = 2;
+          success-threshold = 3;
+          send-on-resolved = true;
+        };
+      };
+      # z2m already owns :8080; keep gatus's own UI off it.
+      web.port = 3002;
+      endpoints = [
+        {
+          name = "Zigbee2MQTT";
+          group = "aida";
+          url = "http://127.0.0.1:8080/";
+          interval = "1m";
+          conditions = [ "[STATUS] == 200" ];
+          alerts = [ { type = "ntfy"; } ];
+        }
+        {
+          name = "SLZB-MR5U Coordinator";
+          group = "aida";
+          url = "tcp://192.168.1.124:6638";
+          interval = "1m";
+          conditions = [ "[CONNECTED] == true" ];
+          alerts = [ { type = "ntfy"; } ];
+        }
+      ];
+    };
   };
 
   security.acme = {
