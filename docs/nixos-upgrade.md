@@ -12,6 +12,17 @@ Check whether the new branch exists before starting:
 curl -sI https://channels.nixos.org/nixos-26.11   # 302 → exists, 404 → not yet
 ```
 
+**Commit subject line — mandatory format:**
+
+```
+Upgrade to NixOS X.YY
+```
+
+Both repos must use this exact prefix so upgrades are trivially grep-able from
+`git log`.  Never fold an upgrade into a commit titled after something else
+(e.g. "Update darwin to X.YY") — the 25.11 upgrade was buried that way and
+couldn't be found without reading diffs.
+
 ---
 
 ## 1. Confirm the new release branch exists
@@ -98,18 +109,21 @@ this is the primary audit trail for future upgrades.
 
 ```sh
 git add flake.nix flake.lock <...any fixed modules...>
-git commit -m "Upgrade to NixOS X.11
+git commit -m "Upgrade to NixOS X.YY
 
-Bump nixpkgs to nixos-X.11 and home-manager / nix-darwin / stylix to
-their X.11 releases; bump all stateVersions to X.11.
+Bump nixpkgs to nixos-X.YY and home-manager / nix-darwin / stylix to
+their X.YY releases; bump all stateVersions to X.YY.
 
-Fix options renamed or removed in X.11:
+Fix options renamed or removed in X.YY:
 - <option> -> <new-option>  (reason)
 - ...
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 git push origin master
 ```
+
+> **Subject line must be `Upgrade to NixOS X.YY`** — see the mandate at the
+> top of this document.
 
 ---
 
@@ -175,18 +189,21 @@ numeric `system-manager` version.
 
 ```sh
 git add flake.nix flake.lock <...any fixed hosts...>
-git commit -m "Upgrade to NixOS X.11 in lockstep with config
+git commit -m "Upgrade to NixOS X.YY in lockstep with config
 
-Bump nixpkgs to nixos-X.11 and home-manager/nix-darwin to their X.11
-releases; bump config input to <sha7> and stateVersions to X.11.
+Bump nixpkgs to nixos-X.YY and home-manager/nix-darwin to their X.YY
+releases; bump config input to <sha7> and stateVersions to X.YY.
 
-Fix options renamed or removed in X.11:
+Fix options renamed or removed in X.YY:
 - <option> -> <new-option>
 - ...
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 git push origin main
 ```
+
+> **Subject line must start with `Upgrade to NixOS X.YY`** — see the mandate
+> at the top of this document.
 
 ---
 
