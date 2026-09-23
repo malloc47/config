@@ -38,6 +38,7 @@ Also verify the companion inputs have their release branches cut:
 - `github:nix-community/home-manager/release-X.11`
 - `github:LnL7/nix-darwin/nix-darwin-X.11`
 - `github:danth/stylix/release-X.11`
+- `github:numtide/system-manager/release-X.11` (`work-config` only)
 
 ---
 
@@ -142,7 +143,15 @@ home-manager.url = "github:nix-community/home-manager/release-26.05";
 nix-darwin.url   = "github:LnL7/nix-darwin/nix-darwin-26.05";
 ```
 
-(`system-manager` has no release-tied URL; leave it on the rolling ref.)
+Also bump `system-manager` to its release branch — it follows the same model as
+`home-manager`:
+
+```nix
+system-manager.url = "github:numtide/system-manager/release-26.05";
+```
+
+(`system-manager` was pinned to `release-26.05` in `e92e937` after a `nix flake
+update` on 2026-09-23 pulled in a `main`-branch revision that required 26.11.)
 
 ### 3b. Relock, pointing `config` at the new `master` HEAD
 
