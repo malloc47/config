@@ -253,8 +253,24 @@ in
     };
   };
 
-  systemd.services.zigbee2mqtt.serviceConfig.EnvironmentFile =
-    config.age.secrets.mqtt-password-env.path;
+  systemd.services.zigbee2mqtt = {
+    serviceConfig = {
+      EnvironmentFile = config.age.secrets.mqtt-password-env.path;
+      # The SLZB-MR5U coordinator being briefly unavailable (a reboot, a
+      # transient wedge) makes z2m exit on startup. Treat that as transient:
+      # keep restarting forever on a fixed interval rather than crashlooping
+      # fast. z2m is load-bearing, so we never want it to stop trying.
+      Restart = lib.mkForce "always";
+      RestartSec = lib.mkForce 30;
+    };
+    # Disable systemd's start-rate limiter (default 5 starts / 10s) so repeated
+    # failed starts while the coordinator is down never trip 'start-limit-hit',
+    # which would leave z2m permanently dead until a manual reset-failed. Now it
+    # waits indefinitely for the SLZB-MR5U to come back. Trade-off: a genuine
+    # misconfig also loops instead of failing fast — the gatus watchdog surfaces
+    # that.
+    startLimitIntervalSec = 0;
+  };
 
   # --- Declarative baseline for the mutable Z2M config (the clickops surface) ---
   #
