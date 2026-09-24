@@ -146,14 +146,6 @@
           conditions = [ "[STATUS] == 200" ];
           alerts = [ { type = "ntfy"; } ];
         }
-        {
-          name = "SLZB-MR5U Coordinator";
-          group = "aida";
-          url = "tcp://192.168.1.124:6638";
-          interval = "1m";
-          conditions = [ "[CONNECTED] == true" ];
-          alerts = [ { type = "ntfy"; } ];
-        }
       ];
     };
   };

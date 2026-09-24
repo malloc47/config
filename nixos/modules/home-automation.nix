@@ -18,8 +18,9 @@
 #   mqtt-password      — plaintext MQTT password (mosquitto passwordFile)
 #   mqtt-password-env  — ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=<same password>
 #
-# The Zigbee coordinator is an SMLIGHT SLZB-MR5U reached over the LAN, so
-# zigbee2mqtt talks to it over TCP — no USB/serial device or udev rules.
+# The Zigbee coordinator is a Sonoff Zigbee 3.0 USB Dongle Plus MG24
+# (EFR32MG24, EmberZNet) on USB — see services.zigbee2mqtt.serial below.
+# (Replaced the LAN SLZB-MR5U, which failed with recurring radio faults.)
 
 {
   config,
@@ -29,13 +30,6 @@
 }:
 
 let
-  # LAN address of the SLZB-MR5U Zigbee coordinator. 6638 is SMLIGHT's default
-  # Zigbee TCP socket port; `ember` is the driver for its EFR32 radio.
-  slzb = {
-    host = "192.168.1.124";
-    port = 6638;
-  };
-
   # UI-editable HA config files: repo baseline keyed by runtime filename. HA's
   # editors write these and require a matching `!include` in the (nix-owned,
   # read-only) configuration.yaml to load them — see the seed/drift wiring below.
@@ -239,10 +233,12 @@ in
         # world-readable generated configuration.yaml in the nix store.
       };
       serial = {
-        port = "tcp://${slzb.host}:${toString slzb.port}";
+        # Sonoff Zigbee 3.0 USB Dongle Plus MG24 (EFR32MG24, EmberZNet) plugged
+        # into aida directly, replacing the failed LAN SLZB-MR5U. Same `ember`
+        # stack, so z2m restores the existing network from coordinator_backup.json
+        # (no re-pairing).
+        port = "/dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_MG24_9ecc6e632b8cf0119f9e2eb9d9065118-if00-port0";
         adapter = "ember";
-        # Values recommended by the SLZB-MR5U's own z2m config generator.
-        # baudrate is inert over a TCP coordinator but kept to match the snippet.
         baudrate = 115200;
         disable_led = false;
       };
@@ -256,7 +252,13 @@ in
   systemd.services.zigbee2mqtt = {
     serviceConfig = {
       EnvironmentFile = config.age.secrets.mqtt-password-env.path;
-      # The SLZB-MR5U coordinator being briefly unavailable (a reboot, a
+      # z2m runs with DevicePolicy=closed; grant access to the USB Zigbee dongle
+      # (the module already adds the dialout group). Append to keep its entries.
+      DeviceAllow = lib.mkAfter [
+        "char-ttyUSB rw"
+        "char-ttyACM rw"
+      ];
+      # The coordinator being briefly unavailable (a reboot, a
       # transient wedge) makes z2m exit on startup. Treat that as transient:
       # keep restarting forever on a fixed interval rather than crashlooping
       # fast. z2m is load-bearing, so we never want it to stop trying.
