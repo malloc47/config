@@ -2,3 +2,6 @@ home/.emacs.d/config/.nrepl-port
 .pre-commit-config.yaml
 *~
 *.swp
+
+# Local Conspectus (tmux/agent-launcher) pins — machine-specific, not repo config
+.conspectus.toml
