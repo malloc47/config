@@ -146,6 +146,14 @@ in
       # API key (from bustime.mta.info) entered in the flow. Creates arrival
       # sensors per stop; cloud_polling (~30s default).
       "mta"
+      # Bosch/Siemens Home Connect appliances (dishwasher, etc.) via the Home
+      # Connect cloud API (packages aiohomeconnect). Cloud OAuth: register an app
+      # at developer.home-connect.com (Authorization Code Grant, redirect URI
+      # https://my.home-assistant.io/redirect/oauth), then add its client ID/secret
+      # under Settings -> Devices & Services -> Application Credentials before
+      # adding the integration via the UI. Without this component the config flow
+      # 500s with "Invalid handler".
+      "home_connect"
       # Integrations for devices already auto-discovered on the LAN. Without the
       # component bundled, default_config's discovery still finds the device but
       # its config-flow load fails with "No module named '<dep>'" (harmless log
