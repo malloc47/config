@@ -101,6 +101,7 @@ in
 
   "deepseek-api-key.age".publicKeys = [
     malloc47
+    malloc47-user
     attila
     cesare
   ];
