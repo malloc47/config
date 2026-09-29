@@ -496,6 +496,23 @@
   # karakeep off pnpm_9.
   nixpkgs.config.permittedInsecurePackages = [ "pnpm-9.15.9" ];
 
+  # karakeep 0.32.0 bundles better-sqlite3 11.3.0, which calls
+  # node::RemoveEnvironmentCleanupHook from a C++ destructor run during V8 GC.
+  # On nixpkgs-26.05's default Node 24.21 there is no entered context there, so
+  # Node's CHECK aborts the process: "Assertion failed: (env) != nullptr". It is
+  # an intermittent GC/teardown race, so karakeep flaps (starts, serves, then
+  # SIGABRTs) rather than dying outright — it broke when 26.05 moved Node to 24.
+  # Upstream fixed this in better-sqlite3 >=12 (dropped the call), but karakeep
+  # still ships 11.3.0, so pin karakeep to Node 22, where 11.3.0 is fine. The
+  # package takes nodejs as an arg, compiles the native module against it, and
+  # runs on it (pkgs/by-name/ka/karakeep/package.nix). Drop this once nixpkgs'
+  # karakeep ships better-sqlite3 >=13.
+  nixpkgs.overlays = [
+    (final: prev: {
+      karakeep = prev.karakeep.override { nodejs = final.nodejs_22; };
+    })
+  ];
+
   services.karakeep = {
     enable = true;
     environmentFile = config.age.secrets.karakeep-oauth-env.path;
