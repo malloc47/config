@@ -39,7 +39,7 @@ in
         gcc
         gh
         glow
-        pertmux
+        # pertmux  # disabled 2026-09-29 — from-source Rust build; see note below
         pre-commit
         gnumake
         go-task
@@ -63,10 +63,16 @@ in
         ))
         sbt
         sqlite
-        workmux
+        # workmux / pertmux / worktrunk: disabled 2026-09-29 — expensive
+        # from-source Rust builds (LTO, opt-level=3) that OOM attila (16GB, no
+        # swap) when their parallel rustc jobs collide with other processes on
+        # the box. worktrunk also overrides to the unstable rustPlatform, so it
+        # is not cache-substitutable and rebuilds on every deploy. Re-enable
+        # once substitutable from a cache or attila has swap/more RAM.
+        # workmux
         # worktrunk's MSRV outpaces the pinned nixpkgs rustc, so build it with
         # the newer toolchain from nixpkgs-unstable.
-        (worktrunk.override { inherit (pkgs-unstable) rustPlatform; })
+        # (worktrunk.override { inherit (pkgs-unstable) rustPlatform; })
         wordnet
       ]
       ++ lib.optionals (lib.elem pkgs.stdenv.hostPlatform.system pkgs.claude-history.meta.platforms) [
