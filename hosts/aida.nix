@@ -12,7 +12,10 @@
   services.openssh.enable = true;
   services.mosh-server.enable = true;
 
-  environment.systemPackages = [ pkgs.adguardian ];
+  environment.systemPackages = [
+    pkgs.adguardian
+    pkgs.smartmontools # smartctl: read NVMe health / "Unsafe Shutdowns" counter
+  ];
 
   motd = {
     enable = true;
@@ -106,6 +109,45 @@
     # ntfy access token (NTFY_TOKEN=...) for the local gatus watchdog to publish
     # alerts to aroldo's ntfy; same secret aroldo's gatus uses.
     ntfy-admin-password-env.file = ../secrets/ntfy-admin-password-env.age;
+  };
+
+  # ── Hardware hardening, added after the 2026-09-27 abrupt power-off incident
+  # (aida died twice with NO shutdown transition, then did not auto-power-on).
+  #
+  # Hardware watchdog: the sp5100_tco (AMD) watchdog device is present but was
+  # unarmed (RuntimeWatchdogUSec=0), so a hard kernel/systemd hang could not
+  # self-recover. Arm it — systemd pets /dev/watchdog and the SoC hard-resets
+  # aida if systemd wedges for longer than this. This covers *hangs*; a true
+  # power loss is handled physically (UPS + BIOS "Restore on AC Power Loss =
+  # Power On"), which the log evidence points to as the actual cause here.
+  systemd.settings.Manager.RuntimeWatchdogSec = "30s";
+
+  # SMART monitoring for the NVMe (TWSC TSC3AN512). smartd runs scheduled
+  # self-tests and watches pre-fail attributes; on a warning it posts to
+  # aroldo's ntfy using the same token gatus uses. smartctl (in systemPackages)
+  # also exposes the NVMe "Unsafe Shutdowns" counter that corroborates power loss.
+  services.smartd = {
+    enable = true;
+    autodetect = true;
+    notifications = {
+      wall.enable = false;
+      mail = {
+        enable = true;
+        sender = "smartd@aida";
+        recipient = "malloc47";
+        # sendmail-compatible hook: smartd sets $SMARTD_MESSAGE and also pipes the
+        # composed message on stdin; forward whichever we get to ntfy. Guarded so
+        # a curl failure can never wedge smartd.
+        mailer = pkgs.writeShellScript "smartd-ntfy" ''
+          set -u
+          body="''${SMARTD_MESSAGE:-$(cat)}"
+          token="$(${pkgs.gnused}/bin/sed -n 's/^NTFY_TOKEN=//p' ${config.age.secrets.ntfy-admin-password-env.path} 2>/dev/null || true)"
+          args=(-s --max-time 10 -H "Title: aida SMART warning" -H "Priority: high" -H "Tags: warning,floppy_disk")
+          [ -n "$token" ] && args+=(-H "Authorization: Bearer $token")
+          ${pkgs.curl}/bin/curl "''${args[@]}" -d "$body" https://ntfy.malloc47.com/alerts >/dev/null 2>&1 || true
+        '';
+      };
+    };
   };
 
   # Zigbee mesh watchdog. aroldo's central gatus can't reach z2m (loopback) or

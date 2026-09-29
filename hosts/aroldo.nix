@@ -274,6 +274,26 @@ in
           alerts = [ { type = "ntfy"; } ];
         }
         {
+          # Fast, DNS-independent host-liveness probe of aida over the tailnet:
+          # raw IP + TCP:22, so it does NOT depend on aida's own DNS / Caddy /
+          # Authelia stack the way the app checks above do. Catches "the box is
+          # down" in ~2 min instead of ~10 min. Added after the 2026-09-27
+          # power-off incident so a full aida outage pages quickly.
+          name = "aida host";
+          group = "aida";
+          url = "tcp://${aidaTailscaleIP}:22";
+          interval = "1m";
+          conditions = [ "[CONNECTED] == true" ];
+          alerts = [
+            {
+              type = "ntfy";
+              description = "aida unreachable over tailnet (host down?)";
+              failure-threshold = 2;
+              send-on-resolved = true;
+            }
+          ];
+        }
+        {
           name = "Smokeping";
           group = "aroldo";
           url = "https://smokeping.malloc47.com/smokeping.fcgi";
