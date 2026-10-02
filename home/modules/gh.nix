@@ -20,7 +20,10 @@ let
   ]
   ++ lib.optional (cfg.enterpriseTokenFile != null) (
     injectEnv "GH_ENTERPRISE_TOKEN" cfg.enterpriseTokenFile
-  );
+  )
+  ++ lib.optional (
+    cfg.defaultHost != null
+  ) "  --run 'if [ -z \"\${GH_HOST:-}\" ]; then export GH_HOST=\"${cfg.defaultHost}\"; fi'";
 
   gh-wrapped = pkgs.symlinkJoin {
     name = "gh-with-agenix";
@@ -42,6 +45,13 @@ in
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = "Optional path to the file containing GH_ENTERPRISE_TOKEN at runtime, for accessing a GitHub Enterprise host alongside github.com.";
+    };
+
+    defaultHost = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "github.example.com";
+      description = "Optional hostname exported as GH_HOST (unless already set), making it gh's default target. Required for gh to pick up GH_ENTERPRISE_TOKEN, since hosts.yml is left empty.";
     };
   };
 
