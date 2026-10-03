@@ -60,6 +60,13 @@
       url = "github:numtide/llm-agents.nix";
     };
 
+    # Backlog.md task CLI, pinned to the v1.53.0 release commit that
+    # conspectus's dev shell uses (llm-agents.nix lags at 1.52.0). Upstream
+    # tags before CI bumps package.json, so this is the tag plus that bump.
+    backlog-md = {
+      url = "github:MrLesk/Backlog.md/c310b7087c3d8d618520bfe4b9918e1c8bc468c4";
+    };
+
     personal = {
       url = "git+ssh://git@github.com/malloc47/personal";
       flake = false;

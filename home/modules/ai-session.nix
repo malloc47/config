@@ -212,6 +212,10 @@ in
 
     home.packages = [
       pkgs.claude-agent-acp
+    ]
+    # Backlog.md ships no x86_64-darwin build.
+    ++ lib.optionals (inputs.backlog-md.packages ? ${system}) [
+      inputs.backlog-md.packages.${system}.backlog-md
     ];
 
   };
