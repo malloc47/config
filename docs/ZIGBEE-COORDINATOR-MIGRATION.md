@@ -512,7 +512,7 @@ for `Successfully configured` before moving it.
 
 ---
 
-## 11. Current state & open follow-ups (as of 2026-10-04 ~15:30)
+## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10)
 
 ### Network
 - USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN `0x1a62`,
@@ -531,9 +531,12 @@ for `Successfully configured` before moving it.
 ### Devices touched
 - **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack:**
   - **#2 `0x4ce175537eba0000` = "Play Room Lamp"**: deployed.
-  - **#1 `0x4ce1755369fc0000`, #3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**:
-    unpaired (used for diagnostics). They've all been joined before, so pair them via
-    the coordinator or a specific router, not "All".
+  - **#1 `0x4ce1755369fc0000`**: currently paired (joined the coordinator directly in
+    test 2), unnamed, not deployed.
+  - **#3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**: unpaired (diagnostics only).
+  - All three have been joined before, so pair them via the coordinator or a specific
+    router, not "All". To tell them apart, match the IEEE on the label (…69fc /
+    …b48716 / …7201), or pair one and read the address in z2m.
 - **Play Room Light Switch (ZBMINIR2) → Play Room Lamp:** a Zigbee binding can't do
   this. The ZBMINIR2 only sends commands (`toggle`) to bound devices in
   detach-relay mode. In normal mode it just reports state. So the HA automation
@@ -582,7 +585,7 @@ What this rules out:
 Seen with Hue parents directly (light 3, twice), and inferred for light 2, light 5,
 and the ZBMINIR2.
 
-### OPEN 1: is the re-join refusal the plug's firmware, router behavior, or leftover network state?
+### OPEN 1 (resolved enough): is the re-join refusal the plug's firmware, router behavior, or leftover network state?
 Hypotheses:
 - **J (plug-side):** the Gen3 plug's firmware (1.00.47) mishandles re-joining its last
   parent after a reset. For example, it tries a stale rejoin, or insists on that
@@ -633,6 +636,31 @@ Third Reality, and just pair via the coordinator). 1 fails, 2 succeeds, 4 fails 
 **generic router behavior** (same workaround; power-cycling the old parent may clear
 it). 1 succeeds → **leftover network state** (dig into which routers refuse, by when
 they joined).
+
+**Results (2026-10-04; tests 3–5 not run, by choice):**
+
+| # | Previous parent | Setup join | Factory reset, only the previous parent open |
+|---|---|---|---|
+| 1 | plug #2 (joined after the §7 fix; Third Reality firmware) | ✅ 15:24:11, parent 44651 | ❌ left (39 leave notices), no rejoin in the ~2.5 min left |
+| 2 | coordinator (Ember; re-formed clean 2026-10-03) | ✅ 15:57:16, parent 0 | ✅ **but 91 s after the leave** (15:59:07 → 16:00:38). Normal joins take 2–20 s |
+
+**Conclusion (good enough to stop):**
+- **Leftover network state is ruled out.** A router whose whole history is post-fix
+  refused its former child just like the older Hue bulbs.
+- **The plug *can* rejoin its previous parent.** The coordinator accepted it, after a
+  91-second delay. During that delay the coordinator's software saw nothing from the
+  plug.
+- **Most consistent explanation: router-side behavior, with a stack-dependent
+  timeout.** The old parent keeps a stale entry for the departed device and won't
+  accept its fresh association until that clears. Ember on the coordinator clears it
+  in about 90 s. The Hue (fw 1.163.1) and Third Reality plug (fw 1.00.47) routers
+  hold it longer than a pairing window. The plug-side alternative (it spends ~90 s
+  trying its old parent in some way the parent ignores, then falls back) isn't fully
+  excluded. Test 3 (power-cycle the old parent) or the sniffer would settle it.
+- **Practical upshot:** none of this is damage. **Re-pair previously joined devices
+  via the coordinator** (or a router that wasn't their last parent), or expect "All"
+  to fail for them. Possible extra workarounds, untested: power-cycle the old parent
+  first, or wait well past a pairing window before re-pairing.
 
 ### OPEN 2: about 400 undecryptable frames an hour since 2026-10-03
 - `NWK_DECRYPTION_FAILURE` (NCP counter 25, §9) was 0–5 a day for weeks: through the
