@@ -29,8 +29,11 @@ Sonoff MG24 migration — every gotcha below was hit for real, in the order list
    - **Trust-center address stuck at the factory IEEE** (if the IEEE was fixed
      *after* the first restore) → existing devices fine, but **new devices can't
      stay joined**. **Fix:** make the dongle leave its network so z2m re-restores
-     from backup (§7). Router-relayed joins were *still* broken afterwards (open,
-     see §11).
+     from backup (§7).
+4. After all that, **"Permit join (All)" still fails when *re-pairing* a device that
+   was joined before**: its previous parent router won't take it back. That's
+   pairing behavior, not network damage. Joins through any router work. **Workaround:**
+   permit-join on the coordinator or a router that wasn't its last parent (§11).
 
 ---
 
@@ -397,8 +400,8 @@ PAN/ext PAN/channel) → `zigbee-herdsman started (restored)`. Then re-run the r
 the TC address should equal the coordinator IEEE.
 - **Precondition:** the backup must match z2m's configured `pan_id` /
   `ext_pan_id` / `network_key`, or z2m forms a *new* network from config (= re-pair
-  everything). Our config sets none of these, so z2m defaults apply (PAN `0x1a62`,
-  ext PAN `dd…dd`), which match the backup.
+  everything). Check before running it: z2m logs `[INIT TC] Adapter network matches
+  config` on a normal start when they match.
 - z2m writes a fresh backup on every stop, so the restored frame counter is current.
   The `hashed_tclk` seed and network key are carried over (hashes verified identical
   before/after on 2026-10-03).
@@ -407,14 +410,15 @@ the TC address should equal the coordinator IEEE.
 - Observed cost: ~16 s outage. Existing devices carried on with no re-pair (46/46
   reporting, no conflicts or new delivery failures).
 
-**Result (2026-10-03):** **coordinator-direct joins fixed.** A brand-new plug joined,
-configured, and stayed. **Router-relayed joins were still broken** (open, §11).
+**Result (2026-10-03):** **joins fixed.** A brand-new plug joined, configured, and
+stayed. "All" pairing still looked broken afterwards. The 2026-10-04 testing in §11
+showed that joins through routers work fine; what fails is a *re-paired* device's
+previous parent refusing to take it back.
 
-**Workaround until §11 is resolved: pair new devices next to the coordinator** with
-permit-join restricted to it. In the frontend use **Permit join ▾ → Coordinator**,
-or publish `zigbee2mqtt/bridge/request/permit_join`
-`{"time":254,"device":"Coordinator"}`. Wait for `Successfully configured`, then move
-the device to its final spot.
+**Pairing advice:** for a device that has been joined before, use **Permit join ▾ →
+Coordinator** (or a router other than its last parent), or publish
+`zigbee2mqtt/bridge/request/permit_join` `{"time":254,"device":"Coordinator"}`. Wait
+for `Successfully configured` before moving it.
 
 ---
 
@@ -448,7 +452,33 @@ the device to its final spot.
 - Toggle debug at runtime (no restart): `zigbee2mqtt/bridge/request/options`
   `{"options":{"advanced":{"log_level":"debug"}}}` (set back to `"info"`).
 - Bridge topics of note: `bridge/info`, `bridge/devices` (retained), `bridge/health`,
-  `bridge/response/*`.
+  `bridge/response/*`. `bridge/devices` can lag after bind/unbind. For bindings,
+  `/var/lib/zigbee2mqtt/database.db` (`grep -a '"ieeeAddr":"<ieee>"' | jq`) is fresher.
+- **Open several specific routers at once:** send one targeted permit-join per router.
+  Each stays open for its own timer (z2m doesn't close the previous one), while the
+  coordinator stays closed. The router should ack with `PERMIT_JOINING_RESPONSE,
+  status=SUCCESS` (debug log). Close everything with `{"time":0}`.
+- **Which router a device joined through:** at debug level, `ezspTrustCenterJoinHandler:
+  … status=STANDARD_SECURITY_UNSECURED_JOIN … parentOfNewNodeId=<nwk>`. Map the
+  `<nwk>` to a device with the network map.
+- **Network map** (neighbor tables of every router, about 1–2 min, no downtime):
+  publish `zigbee2mqtt/bridge/request/networkmap` `{"type":"raw","routes":false}` and
+  read `bridge/response/networkmap`. In `links[]`, `source` is the neighbor heard by
+  `target`; `relationship` 1 = child. To find routers the coordinator can't hear, look
+  for routers that list the coordinator while the coordinator's (max 26-entry) table
+  doesn't list them. Expect the weakest routers to be missing when the table is full.
+- **Read an attribute directly** (bypasses reporting):
+  `zigbee2mqtt/<name>/get` `{"occupancy":""}`. A good way to tell "sensor not
+  detecting" from "sensor not reporting".
+- **Radio (NCP) counters:** herdsman logs `[NCP COUNTERS] a,b,c,…` **hourly at info**
+  (read-and-clear; a z2m restart resets the window). Column *n* = `EmberCounterType`
+  *n*: 16 JOIN_INDICATION, 21 NWK_FRAME_COUNTER_FAILURE, 25 **NWK_DECRYPTION_FAILURE**,
+  26 APS_DECRYPTION_FAILURE, 40 ADDRESS_CONFLICT_SENT. Table:
+  ```bash
+  ssh aida 'journalctl -u zigbee2mqtt --since -1d -o cat | sed -E "s/\x1b\[[0-9;]*m//g" \
+    | grep -F "[NCP COUNTERS]" | sed -E "s/^\[([0-9-]+ [0-9:]+)\].*\] /\1,/" \
+    | awk -F, "{print \$1, \"JOIN=\"\$18, \"NWKdec=\"\$27, \"APSdec=\"\$28}"'
+  ```
 
 ---
 
@@ -464,62 +494,166 @@ the device to its final spot.
   devices silently fail to join, or join then leave ~20–40 s later — §7.
 - **`bellows leave` CLI crash on EZSP v13** (`'sl_Status' object is not
   subscriptable`, bellows 0.49.1) — use the library script in §7.
+- **Re-pairing through the previous parent fails** (seen 2026-10-04 with Third
+  Reality Gen3 plugs): after a factory reset, a device won't rejoin through the router
+  it was last joined through. Nothing reaches the coordinator; it blinks until its
+  3-minute window ends. "All" always includes that router, so it fails. Pair via the
+  coordinator or another router. Whether it's the plug or the router is still open
+  (§11).
+- **z2m unbind side effects** (z2m 2.14 / herdsman 10.9.1): unbinding
+  `source → target` `genOnOff` also removes the **target's** `genOnOff → coordinator`
+  reporting binding. And herdsman can delete the wrong database entries when a device
+  has older unresolvable bind records. z2m still logs "Successfully unbound" (only
+  debug shows the ZDO status). **Reconfigure both devices afterwards.**
+- **SNZB-06P24 can silently stop sending occupancy reports** while illuminance keeps
+  flowing. Fix: z2m Reconfigure. Diagnose with a direct `get` of `occupancy`.
 - **RESET_SOFTWARE / ACK-timeout on network-attached coordinators** — widely reported
   for serial-over-TCP; strongly favors going **USB**.
 
 ---
 
-## 11. Current state & open follow-ups (as of 2026-10-03 ~23:00)
+## 11. Current state & open follow-ups (as of 2026-10-04 ~15:30)
 
-**Network:** USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN
-`0x1a62`, channel 11. Trust-center address **fixed at 22:47** by re-restoring from
-backup (§7) and re-verified with bellows. 46 devices reporting, 0 `ADDRESS_CONFLICT`,
-log level back to `info`.
+### Network
+- USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN `0x1a62`,
+  channel 11. Trust-center address fixed 2026-10-03 22:47 (§7) and re-verified with
+  bellows.
+- 46 devices reporting, 0 `ADDRESS_CONFLICT`, z2m log level `info`.
+- The network uses z2m's built-in PAN `0x1a62` and ext PAN `dd…dd` (both visible
+  over the air anyway). A neighboring network on the same
+  values and channel would look like part of this one over the air. Setting explicit
+  network parameters means a new network and re-pairing everything. Separate project
+  (details in private notes).
+- Backups on aida (`/var/lib/zigbee2mqtt/`): `backup-pre-tc-diag-20261003-223957/`,
+  `backup-pre-tc-fix-20261003-224354/`, and `backup-pre-tc-fix2-20261003-224646/`
+  (just before the §7 fix). No SLZB-era backup survives.
 
-**Backups on aida** (`/var/lib/zigbee2mqtt/`): `backup-pre-tc-diag-20261003-223957/`
-(before diagnosis), `backup-pre-tc-fix-20261003-224354/` (before the failed CLI
-`leave`; NCP unchanged), and `backup-pre-tc-fix2-20261003-224646/` (immediately
-before the real fix). Each holds `coordinator_backup.json`, `database.db`,
-`configuration.yaml`, and `state.json`. No pre-migration (SLZB-era)
-`coordinator_backup.json.premigrate` survives.
+### Devices touched
+- **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack:**
+  - **#2 `0x4ce175537eba0000` = "Play Room Lamp"**: deployed.
+  - **#1 `0x4ce1755369fc0000`, #3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**:
+    unpaired (used for diagnostics). They've all been joined before, so pair them via
+    the coordinator or a specific router, not "All".
+- **Play Room Light Switch (ZBMINIR2) → Play Room Lamp:** a Zigbee binding can't do
+  this. The ZBMINIR2 only sends commands (`toggle`) to bound devices in
+  detach-relay mode. In normal mode it just reports state. So the HA automation
+  `automation.play_room_lamp_follows_play_room_light_switch` (queued; mirrors on/off,
+  re-syncs after restarts) does it until the ZBMINIR2 is replaced. The test binding
+  was removed. The switch's database still has two harmless stale bind records
+  (see the §10 unbind note).
+- **Laundry Room Presence Sensor (SNZB-06P24):** occupancy reports had silently
+  stopped (illuminance still flowing); fixed by Reconfigure 2026-10-04 (§10).
 
-**Third Reality Smart Plug Gen3 (`3RSP02064Z`) 4-pack:**
-- **#2 `0x4ce175537eba0000`:** paired 22:56 via permit-join "Coordinator",
-  configured, and stayed (unnamed). To do: unplug/replug check, then rename (e.g.
-  "Play Room Lamp").
-- **#1 `0x4ce1755369fc0000`:** the earlier half-joined entry was force-removed.
-  The plug is believed **fine**; it failed because of Gotcha #4, not a defect.
-  Re-pair it via "Coordinator".
-- **#3, #4:** unpaired. Pair via "Coordinator" (§7 workaround).
+### What "All" pairing actually does: test results (2026-10-04)
+Joiner: plug #1 (and #3, #4 for A and B). Each trial opened permit-join on only the
+listed routers (coordinator closed unless listed), with z2m at debug level.
+"Previous parent" = the router the plug was joined through just before the factory
+reset.
 
-**OPEN — router-relayed joins still fail.** With permit-join "All"
-(22:50:52–22:55:03, after the fix) the plug never produced a join, while
-"Coordinator" worked in 12 s from the same spot. Two hypotheses (neither verified):
-1. **Routers hold the stale TC address.** Devices that joined or rejoined during the
-   wrong-TC window (Sep 24 → Oct 3, including rejoins around the whole-house breaker
-   cycle) may have recorded `f0:44:d3…` as the trust center and forward joins
-   ("Update-Device") to it.
-2. **Router link keys don't match the coordinator's key seed.** If the Sep 24
-   restore didn't carry over the SLZB's original `hashed_tclk` seed, routers' keys
-   (derived from the old seed) wouldn't decrypt at the coordinator, so their
-   forwarded joins are dropped. Can't check by comparison: the SLZB-era backup is
-   gone.
+| Trial | Open | Previous parent open? | Result |
+|---|---|---|---|
+| A | plug #2 | n/a (new plug) | ✅ |
+| B | Aqara T2 (joined Sep 25, during the wrong-TC window) | n/a (new plug) | ✅ |
+| C | Play Room Light Switch (ZBMINIR2, joined before the migration) | no | ✅ |
+| D | Living room overhead light 1 (Hue) | no | ✅ |
+| "All" ×2 | everything | **yes** | ❌ |
+| Round 1 | 7 Hue bulbs | **yes** (light 2) | ❌ |
+| Round 2 | Lower/Upper Stair, Foyer | no | ✅ (via Foyer) |
+| Round 3 | lights 3, 4, 5 | **yes** (light 5) | ❌ |
+| Round 4 | light 4 | no | ✅ |
+| Round 5 | light 3 | **yes** (light 3) | ❌ |
+| Round 6 | light 4 | no | ✅ |
+| **Round 7** (predicted ✅) | light 3 | no (prev = light 4) | **✅** |
+| **Round 8** (predicted ❌) | light 3 | **yes** (prev = light 3) | **❌** |
+| Soft rejoins ×3 (right after a z2m remove) | various | no each time | ✅ |
 
-**Next test (separates the hypotheses):** use permit-join **through a specific
-router** (`{"time":254,"device":"<router>"}`) with a pairing-mode plug placed next
-to that router:
-- **via plug #2** (`0x4ce175537eba0000`, joined *after* the fix). Should work
-  under both hypotheses. If it fails, the cause is something else entirely.
-- **via the Aqara T2 relay** (`0x54ef441001779c31`, joined Sep 25 *during* the
-  wrong-TC window). Fails under #1, works under #2.
-- **via a pre-migration router** (e.g. an Inovelli switch). Expected to fail
-  under both.
+**Finding:** after a factory reset, the plug won't rejoin through its previous parent.
+Nothing reaches the coordinator; it blinks until its 3-minute window ends. Through any
+other router it joins in seconds. "All" always includes the previous parent, so
+re-pairing a previously joined device with "All" fails.
 
-Run with z2m at debug level (§9) and grep for `TRUST_CENTER_JOIN`. A fix for either
-hypothesis likely means re-joining the affected routers, so weigh that against just
-using the "Coordinator" workaround for new devices.
+What this rules out:
+- the coordinator's trust-center handling (key handshake succeeds every time);
+- routers being unable to forward joins: each tested router forwarded someone's
+  join, and a factory reset produces about 25–40 `status=DEVICE_LEFT` notifications,
+  meaning that many routers reached the coordinator;
+- the "lost key seed" idea: herdsman restored `hashed_tclk` on Sep 24.
 
-**Unrelated, noticed in passing:** "Living room floor lamp" (`0xb4e8428f4c400000`)
-and "Closet under stairs" (`0xb4e8428fed0d0000`) have intermittent command
-failures. These predate the pairing work: "Closet under stairs" has failed about
-once a day since Sep 27.
+Seen with Hue parents directly (light 3, twice), and inferred for light 2, light 5,
+and the ZBMINIR2.
+
+### OPEN 1: is the re-join refusal the plug's firmware, router behavior, or leftover network state?
+Hypotheses:
+- **J (plug-side):** the Gen3 plug's firmware (1.00.47) mishandles re-joining its last
+  parent after a reset. For example, it tries a stale rejoin, or insists on that
+  parent.
+- **P (router-side, generic):** routers keep a stale entry for a departed child and
+  mishandle its next association. That would hit any device, regardless of this
+  network's history.
+- **S (leftover network state):** something from the migration or trust-center saga
+  in the routers or coordinator causes it.
+
+What we already know: each failure involves exactly one device and its previous
+parent, and the same router accepts the same plug once it's no longer the previous
+parent (rounds 5 vs 7). That points to state created by the join and leave itself,
+not damage spread across the network. But only one joiner model was tested, and the
+directly verified parent was a Hue bulb.
+
+Experiments, cheapest first. Each takes about 5–10 minutes, uses the targeted
+permit-join and debug logging from §9, and has the plug start from "joined via X":
+
+1. **Post-fix router as the previous parent (tests S).** Join plug #1 via **plug #2**,
+   which joined only after the §7 fix, then factory-reset it with only plug #2 open.
+   Plug #2 has no migration history, so a **failure rules out S**. A success points
+   at S, and the next step is comparing routers by when they joined.
+2. **Coordinator as the previous parent (tests J vs P, with visibility).** Join plug #1
+   via "Coordinator" only, then reset it with only the coordinator open. The
+   coordinator is a different stack (Ember) and was re-formed clean on 2026-10-03.
+   Because it's the parent, its debug log shows what the plug sends, even on failure.
+   **Failure:** points to J (or generic Zigbee behavior shared by every stack).
+   **Success:** points to P (the router stacks' handling).
+3. **Power-cycle the previous parent (characterizes P).** After a refused attempt,
+   air-gap or power-cycle that router, then retry with only it open. **Success:** the
+   stale state lives in the router's memory. Also try **waiting 30–60 minutes**
+   instead, to see whether it ages out.
+4. **Different joiner (separates J from P).** Repeat "join via router X, then reset
+   with only X open" using a device from another vendor (a new cheap router device,
+   or a low-stakes existing one with no custom bindings; factory-reset it without
+   removing it from z2m, so it keeps its name). **Failure:** P (affects everything).
+   **Success:** J (specific to these plugs). A Third Reality *bulb* as joiner would
+   separate "this plug model" from "this vendor's stack".
+5. **Sniffer (definitive).** A spare 802.15.4 stick running sniffer firmware, with
+   Wireshark on channel 11, the network key (from `coordinator_backup.json` on aida), and
+   ZigBeeAlliance09. It shows whether the plug sends an association request or a
+   rejoin to its old parent, how the parent answers, and whether it ever forwards
+   the join.
+
+**Reading the results:** 1 fails, 2 fails, 4 succeeds → **plug firmware** (report to
+Third Reality, and just pair via the coordinator). 1 fails, 2 succeeds, 4 fails →
+**generic router behavior** (same workaround; power-cycling the old parent may clear
+it). 1 succeeds → **leftover network state** (dig into which routers refuse, by when
+they joined).
+
+### OPEN 2: about 400 undecryptable frames an hour since 2026-10-03
+- `NWK_DECRYPTION_FAILURE` (NCP counter 25, §9) was 0–5 a day for weeks: through the
+  Sep 24 migration, the Sep 25 breaker cycle, and up to Oct 2.
+- It went to 26 in the Oct 3 20:48–21:48 hour (plug #1's first join, 21:18), then
+  about 230–540 an hour continuously after the 22:47 re-restore. It reached about
+  860–1,170 an hour during the 2026-10-04 join and leave testing, so join and leave
+  churn also produces them.
+- The NCP drops these frames internally; no callback says which device sent them.
+- **Ruled out:** plug #1 (unplugged; counts continued). No active device went silent.
+  A 75-second debug survey showed nothing unusual.
+- **Network map 2026-10-04 13:25:** three routers that hear the coordinator at
+  255/254 were missing from its full 26-entry table: Front porch light (Third
+  Reality bulb), and Living room overhead lights 2 and 4 (Hue). That's a sign the
+  coordinator couldn't decode them. After air-gapping the living-room bulbs (14:19)
+  all three were listed, **but** the porch light also recovered without being
+  power-cycled, so the cause isn't proven.
+- **Next:** check the counter in a quiet hour (no testing) to see whether the
+  14:19 power-cycle lowered the baseline. If it's still about 400 an hour: eliminate
+  by power-cycling candidate routers one at a time for 2 counter-hours each (the
+  porch light first), or use the sniffer (it shows the source address even when
+  the content can't be decrypted).
+- A neighbor network on the same z2m-default PAN and channel is also a candidate.
+  The sniffer would show it.
