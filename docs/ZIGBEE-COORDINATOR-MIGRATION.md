@@ -12,7 +12,11 @@ Sonoff MG24 migration — every gotcha below was hit for real, in the order list
    joins the **same network parameters** (IEEE, PAN ID, extended PAN ID, network
    key), restored from `coordinator_backup.json`. Same adapter family (both
    `ember`/EmberZNet) makes it seamless — no re-pair.
-2. Three things bite **after** the swap, in this order:
+2. **Write the backup IEEE onto the new dongle BEFORE z2m's first start on it**
+   (§2 step 5). z2m's restore records the dongle's *current* IEEE as the network's
+   **trust-center address**. Restore under the factory IEEE and that stale address
+   survives a later IEEE fix (Gotcha #4).
+3. Four things bite **after** the swap, in this order:
    - **IEEE clone silently fails** on EFR32 → the new radio keeps its factory IEEE
      → `ROUTE_ERROR_ADDRESS_CONFLICT` storm + broken reporting. **Fix:** write the
      backup IEEE onto the dongle.
@@ -22,6 +26,11 @@ Sonoff MG24 migration — every gotcha below was hit for real, in the order list
    - **A whole-house power cut wipes coordinator bindings** on switches/relays →
      scene buttons stop triggering HA + local/sensor load changes stop syncing.
      **Fix:** z2m Reconfigure the affected switches/relays.
+   - **Trust-center address stuck at the factory IEEE** (if the IEEE was fixed
+     *after* the first restore) → existing devices fine, but **new devices can't
+     stay joined**. **Fix:** make the dongle leave its network so z2m re-restores
+     from backup (§7). Router-relayed joins were *still* broken afterwards (open,
+     see §11).
 
 ---
 
@@ -106,6 +115,12 @@ above. Prefer it over another network coordinator.
    ```bash
    ssh aida 'ls -l /dev/serial/by-id/'
    ```
+5. **Write the backup IEEE onto the new dongle now, before z2m ever starts on
+   it.** Use the `write-ieee` commands from §4 (z2m stopped, IEEE in displayed
+   MSB-first form). z2m's automatic clone is unreliable on EFR32 (Gotcha #1). If
+   the first restore runs under the factory IEEE, the trust-center address is
+   recorded wrong and only a full re-restore fixes it (Gotcha #4). Doing this first
+   avoids both Gotchas #1 and #4, and the `ADDRESS_CONFLICT` pollution of Gotcha #2.
 
 ---
 
@@ -197,6 +212,11 @@ Notes:
 
 **Verify:** live coordinator IEEE now matches the backup (reversed), devices report
 again. The `ADDRESS_CONFLICT` storm will *persist* for now — that's Gotcha #2.
+
+> ⚠️ **If you fixed the IEEE *after* z2m had already restored the network** (as
+> happened in Sept 2026), the dongle's stored **trust-center address is still the
+> factory IEEE**. Existing devices won't notice, but new devices can't join. Check
+> it and fix it per §7 *before* calling the migration done.
 
 ---
 
@@ -296,11 +316,117 @@ switches/relays should drop off the list (bulbs/battery/attr-only stay, expected
 
 ---
 
-## 7. Post-transition verification checklist
+## 7. GOTCHA #4 — trust-center address stuck at the factory IEEE (new devices can't join)
+
+The coordinator is also the network's **Trust Center** (TC). EmberZNet records the
+TC's address in its security state when the network is **formed or restored**. If
+z2m restored the network while the dongle still had its factory IEEE (Gotcha #1),
+the recorded TC address is the factory IEEE. Fixing the IEEE afterwards (§4) changes
+the dongle's own EUI64, but every later z2m start just **resumes**
+(`[INIT TC] Adapter network matches config` → `started (resumed)`), so the TC
+address is never rewritten. **Nothing in the z2m logs flags it.** In Sept 2026 it
+went unnoticed for 9 days, until the first attempt to pair something new.
+
+**Symptoms** (seen 2026-10-03 pairing Third Reality Smart Plug Gen3 `3RSP02064Z`):
+- **Existing devices: completely fine.** They finished their key exchange long ago.
+- **Permit-join "All":** a new device in pairing mode produces **no z2m log line at
+  all**, even when it's right next to the coordinator. At debug level there are
+  **zero** `TRUST_CENTER_JOIN_HANDLER` / `CHILD_JOIN_HANDLER` EZSP callbacks.
+  Joins relayed by routers die silently.
+- **Permit-join "Coordinator":** the device joins and interviews, then **leaves on
+  its own ~20–40 s later** (`Device '…' left the network`) and goes back to pairing
+  mode (LED blinking). Configure fails with `Delivery failed` /
+  `Tried to get unknown/deleted device`. Zigbee 3.0 devices must complete a post-join
+  trust-center link-key exchange or leave.
+- **Lenient devices can stick anyway** (an Aqara T2 relay joined fine on Sep 25),
+  which hides the problem.
+- **Easy to misdiagnose as a dead device.** The first plug was written off as
+  defective until a second, brand-new plug reproduced the failure exactly.
+
+**Detect: read the NCP's security state.** z2m must be stopped, so expect a ~10 s
+outage. The bellows CLI's `info` prints the same data (its 5th line), but its
+`leave` command is broken on EZSP v13, so build one small script that does both,
+using the bellows CLI's own interpreter and site paths:
+```bash
+# one-time: create /tmp/ncp.py + /tmp/ncp.python on aida
+ssh aida 'W=$(nix build --no-link --print-out-paths nixpkgs#python3Packages.bellows)/bin/.bellows-wrapped
+  head -1 "$W" | sed "s/^#!//" > /tmp/ncp.python   # pinned python
+  sed -n 3p "$W" > /tmp/ncp.py                     # its site-path setup line
+  cat >> /tmp/ncp.py <<"EOF"
+import asyncio, sys
+from bellows.cli import util
+PORT = "/dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_MG24_9ecc6e632b8cf0119f9e2eb9d9065118-if00-port0"
+async def main(leave):
+    s = await util.setup(PORT, 115200)
+    print("networkInit:", await s.initialize_network())
+    print("eui64:", await s.getEui64())
+    print("state:", await s.networkState())
+    print("security:", await s.getCurrentSecurityState())
+    if leave:
+        print("leaveNetwork:", await s.leaveNetwork())
+        await asyncio.sleep(5)
+        print("state after:", await s.networkState())
+    await s.disconnect()
+asyncio.run(main(len(sys.argv) > 1 and sys.argv[1] == "leave"))
+EOF'
+# read-only check (z2m stopped ~10 s; the restart is chained unconditionally)
+ssh aida 'sudo systemctl stop zigbee2mqtt; sleep 3; sudo $(cat /tmp/ncp.python) /tmp/ncp.py; sudo systemctl start zigbee2mqtt'
+```
+**Healthy:** `trustCenterLongAddress` == the coordinator IEEE
+(`a4:5c:72:fe:ff:60:d6:24`). **Broken:** it shows the dongle's factory IEEE
+(`f0:44:d3:ff:fe:42:9e:b9` on this MG24).
+
+> aida's login shell is **zsh**. In remote commands, avoid words starting with `=`
+> (`echo ===` fails with `zsh: == not found`; that once killed a `trap` and left z2m
+> stopped). Chain the `systemctl start` with `;` instead of relying on a trap. If you
+> redact bellows output, **don't filter on "hashed"**: the security line contains
+> `TRUST_CENTER_USES_HASHED_LINK_KEY` and would vanish.
+
+**Fix: make the NCP leave its network so z2m re-restores from backup**, now with
+the correct IEEE:
+```bash
+ssh aida 'sudo systemctl stop zigbee2mqtt; sleep 3   # z2m writes a FRESH coordinator_backup.json on stop
+  B=/var/lib/zigbee2mqtt/backup-pre-tc-fix-$(date +%Y%m%d-%H%M%S); sudo mkdir -p $B
+  sudo cp -a /var/lib/zigbee2mqtt/{coordinator_backup.json,database.db,configuration.yaml,state.json} $B/
+  sudo $(cat /tmp/ncp.python) /tmp/ncp.py leave       # expect: state after: NO_NETWORK
+  sudo systemctl start zigbee2mqtt'
+ssh aida 'journalctl -u zigbee2mqtt --since -2min | grep -E "INIT TC|INIT FORM|herdsman started"'
+```
+Expect `[INIT TC] Forming from backup.` → `[INIT FORM] New network formed!` (same
+PAN/ext PAN/channel) → `zigbee-herdsman started (restored)`. Then re-run the read:
+the TC address should equal the coordinator IEEE.
+- **Precondition:** the backup must match z2m's configured `pan_id` /
+  `ext_pan_id` / `network_key`, or z2m forms a *new* network from config (= re-pair
+  everything). Our config sets none of these, so z2m defaults apply (PAN `0x1a62`,
+  ext PAN `dd…dd`), which match the backup.
+- z2m writes a fresh backup on every stop, so the restored frame counter is current.
+  The `hashed_tclk` seed and network key are carried over (hashes verified identical
+  before/after on 2026-10-03).
+- **`bellows leave` (CLI, 0.49.1) crashes on EZSP v13** before doing anything
+  (`TypeError: 'sl_Status' object is not subscriptable`). Use the script above.
+- Observed cost: ~16 s outage. Existing devices carried on with no re-pair (46/46
+  reporting, no conflicts or new delivery failures).
+
+**Result (2026-10-03):** **coordinator-direct joins fixed.** A brand-new plug joined,
+configured, and stayed. **Router-relayed joins were still broken** (open, §11).
+
+**Workaround until §11 is resolved: pair new devices next to the coordinator** with
+permit-join restricted to it. In the frontend use **Permit join ▾ → Coordinator**,
+or publish `zigbee2mqtt/bridge/request/permit_join`
+`{"time":254,"device":"Coordinator"}`. Wait for `Successfully configured`, then move
+the device to its final spot.
+
+---
+
+## 8. Post-transition verification checklist
 
 - [ ] `journalctl -u zigbee2mqtt`: `ember` handshake OK, **0** `RESET_SOFTWARE` /
       `NCP_FATAL` / `ACK_TIMEOUT`, `NRestarts` stable.
 - [ ] Live coordinator IEEE == backup IEEE (reversed). (`bridge/info`)
+- [ ] **Coordinator trust-center address == coordinator IEEE** (§7 read). Existing
+      devices working does NOT prove this.
+- [ ] **Pair a brand-new Zigbee 3.0 device both ways:** permit-join "Coordinator"
+      *and* "All". It must configure and still be joined after a couple of minutes.
 - [ ] `ADDRESS_CONFLICT` count over 60s == **0**.
 - [ ] Device count reporting ≈ full inventory; 0 delivery failures over ~10 min.
 - [ ] Scene/config buttons trigger their HA automations (Inovelli).
@@ -310,10 +436,13 @@ switches/relays should drop off the list (bulbs/battery/attr-only stay, expected
 
 ---
 
-## 8. Handy runtime controls (via HA `mqtt.publish` or `mosquitto_pub`)
+## 9. Handy runtime controls (via HA `mqtt.publish` or `mosquitto_pub`)
 
 - Permit join (pairing): `zigbee2mqtt/bridge/request/permit_join` `{"time":254}`
-  (close with `{"value":false}`).
+  (close with `{"time":0}`). Restrict to one parent with `"device"`: e.g.
+  `{"time":254,"device":"Coordinator"}`, or a router's friendly name / IEEE.
+- Force-remove a dead device: `zigbee2mqtt/bridge/request/device/remove`
+  `{"id":"<ieee or name>","force":true}` (also drops its HA discovery entities).
 - Reconfigure a device: `zigbee2mqtt/bridge/request/device/configure` `{"id":"<name>"}`.
 - Re-interview: `zigbee2mqtt/bridge/request/device/interview` `{"id":"<name>"}`.
 - Toggle debug at runtime (no restart): `zigbee2mqtt/bridge/request/options`
@@ -323,7 +452,7 @@ switches/relays should drop off the list (bulbs/battery/attr-only stay, expected
 
 ---
 
-## 9. Known-bug cheat-sheet
+## 10. Known-bug cheat-sheet
 
 - **`DatabaseEntry with ID 'N' does not exist`** when re-pairing a recently-removed
   device (z2m/herdsman #14135/#20670, "undelete not concurrency-safe"): the device
@@ -331,5 +460,66 @@ switches/relays should drop off the list (bulbs/battery/attr-only stay, expected
   z2m version bump, or route the device another way (e.g. the Shelly Dimmer G4 was
   moved to **Wi-Fi** via the HA Shelly integration and its Zigbee radio disabled).
 - **IEEE clone no-op on EFR32** — §4 (#32477).
+- **Trust-center address stuck at the factory IEEE** after a late IEEE fix: new
+  devices silently fail to join, or join then leave ~20–40 s later — §7.
+- **`bellows leave` CLI crash on EZSP v13** (`'sl_Status' object is not
+  subscriptable`, bellows 0.49.1) — use the library script in §7.
 - **RESET_SOFTWARE / ACK-timeout on network-attached coordinators** — widely reported
   for serial-over-TCP; strongly favors going **USB**.
+
+---
+
+## 11. Current state & open follow-ups (as of 2026-10-03 ~23:00)
+
+**Network:** USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN
+`0x1a62`, channel 11. Trust-center address **fixed at 22:47** by re-restoring from
+backup (§7) and re-verified with bellows. 46 devices reporting, 0 `ADDRESS_CONFLICT`,
+log level back to `info`.
+
+**Backups on aida** (`/var/lib/zigbee2mqtt/`): `backup-pre-tc-diag-20261003-223957/`
+(before diagnosis), `backup-pre-tc-fix-20261003-224354/` (before the failed CLI
+`leave`; NCP unchanged), and `backup-pre-tc-fix2-20261003-224646/` (immediately
+before the real fix). Each holds `coordinator_backup.json`, `database.db`,
+`configuration.yaml`, and `state.json`. No pre-migration (SLZB-era)
+`coordinator_backup.json.premigrate` survives.
+
+**Third Reality Smart Plug Gen3 (`3RSP02064Z`) 4-pack:**
+- **#2 `0x4ce175537eba0000`:** paired 22:56 via permit-join "Coordinator",
+  configured, and stayed (unnamed). To do: unplug/replug check, then rename (e.g.
+  "Play Room Lamp").
+- **#1 `0x4ce1755369fc0000`:** the earlier half-joined entry was force-removed.
+  The plug is believed **fine**; it failed because of Gotcha #4, not a defect.
+  Re-pair it via "Coordinator".
+- **#3, #4:** unpaired. Pair via "Coordinator" (§7 workaround).
+
+**OPEN — router-relayed joins still fail.** With permit-join "All"
+(22:50:52–22:55:03, after the fix) the plug never produced a join, while
+"Coordinator" worked in 12 s from the same spot. Two hypotheses (neither verified):
+1. **Routers hold the stale TC address.** Devices that joined or rejoined during the
+   wrong-TC window (Sep 24 → Oct 3, including rejoins around the whole-house breaker
+   cycle) may have recorded `f0:44:d3…` as the trust center and forward joins
+   ("Update-Device") to it.
+2. **Router link keys don't match the coordinator's key seed.** If the Sep 24
+   restore didn't carry over the SLZB's original `hashed_tclk` seed, routers' keys
+   (derived from the old seed) wouldn't decrypt at the coordinator, so their
+   forwarded joins are dropped. Can't check by comparison: the SLZB-era backup is
+   gone.
+
+**Next test (separates the hypotheses):** use permit-join **through a specific
+router** (`{"time":254,"device":"<router>"}`) with a pairing-mode plug placed next
+to that router:
+- **via plug #2** (`0x4ce175537eba0000`, joined *after* the fix). Should work
+  under both hypotheses. If it fails, the cause is something else entirely.
+- **via the Aqara T2 relay** (`0x54ef441001779c31`, joined Sep 25 *during* the
+  wrong-TC window). Fails under #1, works under #2.
+- **via a pre-migration router** (e.g. an Inovelli switch). Expected to fail
+  under both.
+
+Run with z2m at debug level (§9) and grep for `TRUST_CENTER_JOIN`. A fix for either
+hypothesis likely means re-joining the affected routers, so weigh that against just
+using the "Coordinator" workaround for new devices.
+
+**Unrelated, noticed in passing:** "Living room floor lamp" (`0xb4e8428f4c400000`)
+and "Closet under stairs" (`0xb4e8428fed0d0000`) have intermittent command
+failures. These predate the pairing work: "Closet under stairs" has failed about
+once a day since Sep 27.
