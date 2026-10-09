@@ -154,6 +154,9 @@ in
       # adding the integration via the UI. Without this component the config flow
       # 500s with "Invalid handler".
       "home_connect"
+      # LG ThinQ appliances via the cloud API (packages thinqconnect).
+      # Added via the UI config flow; credentials stay in HA's state directory.
+      "lg_thinq"
       # Integrations for devices already auto-discovered on the LAN. Without the
       # component bundled, default_config's discovery still finds the device but
       # its config-flow load fails with "No module named '<dep>'" (harmless log
