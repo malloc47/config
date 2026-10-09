@@ -590,6 +590,14 @@
       '';
     };
 
+    # Keep OAuth callbacks and cookies on the canonical bookmarks hostname.
+    virtualHosts."karakeep.home.malloc47.com" = {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        redir https://bookmarks.home.malloc47.com{uri} permanent
+      '';
+    };
+
     virtualHosts."bookmarks.home.malloc47.com" = {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
