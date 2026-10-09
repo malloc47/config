@@ -402,6 +402,19 @@ in
     };
   };
 
+  # ESPHome Device Builder — the dashboard for writing, compiling and OTA-flashing
+  # ESPHome firmware (the HA OS "ESPHome" add-on). Separate from HA's `esphome`
+  # integration (see extraComponents), which talks to the devices directly over
+  # their native API; this only builds and flashes. Device YAML, secrets.yaml and
+  # the PlatformIO toolchains live under /var/lib/esphome. Loopback only; the
+  # web UI is proxied below. Device online status comes from mDNS (UDP 5353,
+  # opened below).
+  services.esphome = {
+    enable = true;
+    address = "127.0.0.1";
+    port = 6052;
+  };
+
   # mDNS for Matter device discovery/commissioning (not opened by openFirewall).
   networking.firewall.allowedUDPPorts = [ 5353 ];
 
@@ -441,6 +454,21 @@ in
             copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
           }
           reverse_proxy http://127.0.0.1:8482
+        }
+      '';
+    };
+
+    # ESPHome Device Builder behind Authelia — browser-only, no app/API clients
+    # (HA reaches devices directly, not through the dashboard).
+    "esphome.home.malloc47.com" = {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        handle {
+          forward_auth http://127.0.0.1:9091 {
+            uri /api/authz/forward-auth
+            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+          }
+          reverse_proxy http://127.0.0.1:6052
         }
       '';
     };

@@ -474,6 +474,13 @@
               siteMonitor = "http://127.0.0.1:8482";
             };
           }
+          {
+            "ESPHome" = {
+              icon = "esphome";
+              href = "https://esphome.home.malloc47.com";
+              siteMonitor = "http://127.0.0.1:6052";
+            };
+          }
         ];
       }
       {
