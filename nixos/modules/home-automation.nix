@@ -25,6 +25,7 @@
 {
   config,
   pkgs,
+  pkgs-unstable,
   lib,
   ...
 }:
@@ -38,6 +39,34 @@ let
     "scenes.yaml" = ../../hosts/aida/home-assistant/scenes.yaml;
     "scripts.yaml" = ../../hosts/aida/home-assistant/scripts.yaml;
   };
+
+  # ESPHome >= 2026.9 (needed for a newer display refresh driver). nixpkgs tops
+  # out at 2026.8.0 (unstable) / 2026.5.1 (26.05), so bump unstable's package.
+  # Its deps already match 2026.9.1's pins in unstable; 2026.9 adds `ninja` and
+  # widens the wheel pin. The skipped tests only fail in the build sandbox
+  # (they write to $HOME or download icons). Drop this once nixpkgs-unstable's
+  # esphome reaches 2026.9.
+  esphome = pkgs-unstable.esphome.overridePythonAttrs (old: rec {
+    version = "2026.9.1";
+    src = pkgs-unstable.fetchFromGitHub {
+      owner = "esphome";
+      repo = "esphome";
+      tag = version;
+      hash = "sha256-EqjmwBppfxh5+2edF94ZzptQveVekehZ6dBDj96Ddeg=";
+    };
+    postPatch = builtins.replaceStrings [ "<0.48" ] [ "<0.49" ] old.postPatch;
+    dependencies = old.dependencies ++ [ pkgs-unstable.python3Packages.ninja ];
+    disabledTests = old.disabledTests ++ [
+      "test_make_registry_client_skips_private_package_probe"
+      "test_patch_registry_private_packages_skips_account_probe"
+    ];
+    disabledTestPaths = old.disabledTestPaths ++ [
+      "tests/component_tests/lvgl/test_list_outside_block.py"
+    ];
+  });
+  # ESPHome removed its built-in dashboard in 2026.7; the Device Builder is now a
+  # separate app that drives the `esphome` CLI (wired to the package above).
+  esphome-device-builder = pkgs-unstable.esphome-device-builder.override { inherit esphome; };
 in
 {
   # mosquitto — the MQTT hub. Loopback only, no anonymous access.
@@ -406,13 +435,65 @@ in
   # ESPHome firmware (the HA OS "ESPHome" add-on). Separate from HA's `esphome`
   # integration (see extraComponents), which talks to the devices directly over
   # their native API; this only builds and flashes. Device YAML, secrets.yaml and
-  # the PlatformIO toolchains live under /var/lib/esphome. Loopback only; the
-  # web UI is proxied below. Device online status comes from mDNS (UDP 5353,
-  # opened below).
+  # the toolchains live under /var/lib/esphome. Loopback only; the web UI is
+  # proxied below. Device online status comes from mDNS (UDP 5353, opened below).
+  #
+  # The 26.05 module still launches the pre-2026.7 `esphome dashboard`, so keep
+  # it for the user, state dir and sandboxing but start the Device Builder
+  # instead (nixpkgs#550245 converts the module upstream).
+  #
+  # Since 2026.9, ESP32 builds default to ESPHome's native ESP-IDF toolchain
+  # rather than PlatformIO (which nixpkgs wraps in an FHS env). It downloads
+  # generic-Linux cmake/gcc binaries into /var/lib/esphome/.cache, which NixOS
+  # cannot run, so give this service alone a nix-ld loader at the standard
+  # /lib64 path (a private bind mount, not system-wide programs.nix-ld) plus
+  # the libraries those tools link against.
   services.esphome = {
     enable = true;
+    package = esphome;
     address = "127.0.0.1";
     port = 6052;
+    environment = {
+      NIX_LD = pkgs.stdenv.cc.bintools.dynamicLinker;
+      NIX_LD_LIBRARY_PATH = lib.makeLibraryPath (
+        with pkgs;
+        [
+          stdenv.cc.cc
+          zlib
+          zstd
+          libusb1
+          systemd # libudev
+          ncurses
+          expat
+          bzip2
+          xz
+          openssl
+          libffi
+        ]
+      );
+    };
+  };
+  systemd.services.esphome = {
+    description = lib.mkForce "ESPHome Device Builder";
+    # nixpkgs' ninja spawns build commands via `sh` from PATH, not /bin/sh.
+    path = [ pkgs.bash ];
+    serviceConfig = {
+      ExecStart = lib.mkForce (
+        lib.escapeShellArgs [
+          (lib.getExe esphome-device-builder)
+          "--host"
+          config.services.esphome.address
+          "--port"
+          (toString config.services.esphome.port)
+          # The remote-build peer listener otherwise binds 0.0.0.0:6055, which
+          # is reachable over the tailnet; nothing offloads builds here.
+          "--remote-build-host"
+          "127.0.0.1"
+          "/var/lib/esphome"
+        ]
+      );
+      BindReadOnlyPaths = [ "${pkgs.nix-ld}/libexec/nix-ld:/lib64/ld-linux-x86-64.so.2" ];
+    };
   };
 
   # mDNS for Matter device discovery/commissioning (not opened by openFirewall).
