@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  ...
+}:
 
 let
   aidaTailscaleIP = "100.64.0.1";
@@ -106,6 +111,9 @@ in
 
   services.headscale = {
     enable = true;
+    # 0.29.4+ fixes the self node being sent as its own peer, which crashes
+    # the Tailscale Android app (tailscale/tailscale#20767); 26.05 ships 0.28.
+    package = pkgs-unstable.headscale;
     address = "127.0.0.1";
     port = 8085;
     settings = {
@@ -135,7 +143,13 @@ in
               {
                 action = "accept";
                 src = [ "*" ];
-                dst = [ "*:*" ];
+                # Since 0.29, "*" only matches tailnet IPs, so the subnet
+                # route and exit node need explicit destinations.
+                dst = [
+                  "*:*"
+                  "192.168.1.0/24:*"
+                  "autogroup:internet:*"
+                ];
               }
             ];
             autoApprovers = {
