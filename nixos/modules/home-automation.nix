@@ -40,33 +40,84 @@ let
     "scripts.yaml" = ../../hosts/aida/home-assistant/scripts.yaml;
   };
 
-  # ESPHome >= 2026.9 (needed for a newer display refresh driver). nixpkgs tops
-  # out at 2026.8.0 (unstable) / 2026.5.1 (26.05), so bump unstable's package.
-  # Its deps already match 2026.9.1's pins in unstable; 2026.9 adds `ninja` and
-  # widens the wheel pin. The skipped tests only fail in the build sandbox
-  # (they write to $HOME or download icons). Drop this once nixpkgs-unstable's
-  # esphome reaches 2026.9.
+  # ESPHome 2026.10 beta, for epaper_spi's `full_update_next` action (PR
+  # esphome/esphome#19213). nixpkgs tops out at 2026.8.0 (unstable) / 2026.5.1
+  # (26.05), so bump unstable's package. 2026.9+ adds `ninja` and widens the
+  # wheel pin; other deps are a few patch/minor releases behind upstream's pins
+  # in unstable, which pythonRelaxDeps tolerates. The skipped tests only fail in
+  # the build sandbox (no network, $HOME or serial port) or exercise dev
+  # tooling. Move to 2026.10.0 once released, and drop this once
+  # nixpkgs-unstable's esphome catches up.
   esphome = pkgs-unstable.esphome.overridePythonAttrs (old: rec {
-    version = "2026.9.1";
+    version = "2026.10.0b2";
     src = pkgs-unstable.fetchFromGitHub {
       owner = "esphome";
       repo = "esphome";
       tag = version;
-      hash = "sha256-EqjmwBppfxh5+2edF94ZzptQveVekehZ6dBDj96Ddeg=";
+      hash = "sha256-/OYRbGA79JZi5V3KlAaCq5gC2gHp9sWnvLMYooXcEWU=";
     };
     postPatch = builtins.replaceStrings [ "<0.48" ] [ "<0.49" ] old.postPatch;
     dependencies = old.dependencies ++ [ pkgs-unstable.python3Packages.ninja ];
     disabledTests = old.disabledTests ++ [
       "test_make_registry_client_skips_private_package_probe"
       "test_patch_registry_private_packages_skips_account_probe"
+      "test_make_registry_client_creates_http_cache_dir"
+      # Download ESP-IDF archives / probe a real serial port / run a helper
+      # script without esphome on PYTHONPATH (the wrapper adds it at runtime).
+      "test_run_reconfigure_flip_into_skip_mode_cleans_up"
+      "test_run_reconfigure_skip_steady_state_cleans_nothing"
+      "test_upload_using_esptool_arduino_toolchain"
+      "test_install_tool_archives_extracts_pending_in_parallel"
+      # Simulates an Apple-silicon host.
+      "test_pch_script_gcc10_wrapper_on_apple_silicon"
     ];
     disabledTestPaths = old.disabledTestPaths ++ [
       "tests/component_tests/lvgl/test_list_outside_block.py"
+      # Dev-tooling tests (dependency-pin sync, protobuf codegen) that need
+      # yamlrocks / a newer aioesphomeapi than unstable has; not used at runtime.
+      "tests/script/test_sync_dependency_versions.py"
+      "tests/unit_tests/components/api/test_api_protobuf_generator.py"
     ];
   });
   # ESPHome removed its built-in dashboard in 2026.7; the Device Builder is now a
   # separate app that drives the `esphome` CLI (wired to the package above).
-  esphome-device-builder = pkgs-unstable.esphome-device-builder.override { inherit esphome; };
+  # Bumped from unstable's 1.14.9 to the version ESPHome's own container pins
+  # for this release (docker/Dockerfile), along with the frontend it pins.
+  esphome-device-builder-frontend =
+    pkgs-unstable.esphome-device-builder.frontend.overridePythonAttrs
+      (old: rec {
+        version = "0.1.366";
+        src = pkgs-unstable.fetchFromGitHub {
+          owner = "esphome";
+          repo = "device-builder-frontend";
+          tag = version;
+          hash = "sha256-GbiWj4yVYCVRu4OD6MSetQJaPXlPfdS+b8OnorxVPTE=";
+        };
+        pnpmDeps = pkgs-unstable.fetchPnpmDeps {
+          inherit (old) pname;
+          inherit version src;
+          pnpm = pkgs-unstable.pnpm_11;
+          fetcherVersion = 4;
+          hash = "sha256-84zvZEy4ptVLy/B1WbIVh/hcdi4e/xkXEfd5uldR2wg=";
+        };
+      });
+  esphome-device-builder =
+    (pkgs-unstable.esphome-device-builder.override { inherit esphome; }).overridePythonAttrs
+      (old: rec {
+        version = "1.22.0";
+        src = pkgs-unstable.fetchFromGitHub {
+          owner = "esphome";
+          repo = "device-builder";
+          tag = version;
+          hash = "sha256-CVEet29wYX/0TzVIRkaNNdKNg03YTk4ERDglJqjaBVA=";
+        };
+        dependencies = map (
+          d:
+          if (d.pname or "") == "esphome-device-builder-frontend" then esphome-device-builder-frontend else d
+        ) old.dependencies;
+        # 1.22's MCP tests import jsonschema (a test-only extra).
+        nativeCheckInputs = old.nativeCheckInputs ++ [ pkgs-unstable.python3Packages.jsonschema ];
+      });
 in
 {
   # mosquitto — the MQTT hub. Loopback only, no anonymous access.
