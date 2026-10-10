@@ -19,6 +19,74 @@ in
   config = lib.mkIf cfg.enable {
     stylix.targets.tmux.enable = false;
 
+    # Compile and OTA-flash ESPHome devices from the repo configs that
+    # `nixos-deploy <host>` installed (hosts/<host>/esphome; docs/esphome.md).
+    # A script rather than a shell function so zsh and bash share one copy.
+    home.packages = [
+      (pkgs.writeShellApplication {
+        name = "esphome-deploy";
+        runtimeInputs = [
+          pkgs.openssh
+          pkgs.coreutils
+          pkgs.diffutils
+        ];
+        text = ''
+          host=aida
+          if [ "''${1-}" = "-H" ]; then
+            host="$2"
+            shift 2
+          fi
+          src="$HOME/src/config/hosts/$host/esphome"
+          all=()
+          for f in "$src"/*.yaml; do
+            if [ -e "$f" ]; then all+=("$(basename "$f" .yaml)"); fi
+          done
+          if [ $# -eq 0 ]; then
+            echo "usage: esphome-deploy [-H host] <device>... | --all" >&2
+            echo "devices on $host: ''${all[*]}" >&2
+            exit 2
+          fi
+          if [ "$1" = "--all" ]; then
+            set -- "''${all[@]}"
+          fi
+
+          # Refuse to flash anything but the working tree: the host's copies
+          # only change on `nixos-deploy`.
+          names=()
+          for dev in "$@"; do
+            [ -f "$src/$dev.yaml" ] || {
+              echo "esphome-deploy: no $src/$dev.yaml" >&2
+              exit 1
+            }
+            names+=("$dev.yaml")
+          done
+          ours="$(cd "$src" && sha256sum -- "''${names[@]}" common/*)"
+          # shellcheck disable=SC2029 # expand the names locally on purpose
+          theirs="$(ssh "$host" sudo sh -c "'cd /var/lib/esphome && sha256sum -- ''${names[*]} common/*'")"
+          if [ "$ours" != "$theirs" ]; then
+            echo "esphome-deploy: $host's configs differ from $src; run 'nixos-deploy $host' first:" >&2
+            diff <(echo "$ours") <(echo "$theirs") >&2 || true
+            exit 1
+          fi
+
+          failed=()
+          for dev in "$@"; do
+            unit="esphome-deploy@$dev.service"
+            # Follow the unit's log while `systemctl start` blocks on the oneshot.
+            # shellcheck disable=SC2029 # expand $unit locally on purpose
+            if ! ssh "$host" "sudo journalctl -f -n0 -o cat -u $unit & j=\$!; sudo systemctl start $unit; rc=\$?; sleep 1; sudo kill \$j; exit \$rc"; then
+              echo "esphome-deploy: $dev failed; see 'journalctl -u $unit' on $host" >&2
+              failed+=("$dev")
+            fi
+          done
+          if [ ''${#failed[@]} -gt 0 ]; then
+            echo "esphome-deploy: failed: ''${failed[*]}" >&2
+            exit 1
+          fi
+        '';
+      })
+    ];
+
     programs.tmux = {
       enable = true;
       package = pkgs-unstable.tmux;

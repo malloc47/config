@@ -88,6 +88,12 @@ in
     aida
     malloc47
   ];
+  # ESPHome secrets.yaml (shared Wi-Fi + per-device API key/OTA/AP passwords),
+  # symlinked into /var/lib/esphome; see nixos/modules/home-automation.nix.
+  "esphome-secrets.yaml.age".publicKeys = [
+    aida
+    malloc47
+  ];
   "wifi-unimatrix47.age".publicKeys = [
     malloc47
     attila

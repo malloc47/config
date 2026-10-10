@@ -1,0 +1,42 @@
+# Boilerplate shared by every device: Wi-Fi with a captive-portal fallback AP,
+# the encrypted HA API, OTA and logging. Include it from a device file with
+#
+#   packages:
+#     base: !include common/base.yaml
+#
+# and define these substitutions there (secrets come from secrets.yaml, which
+# is agenix-managed; see secrets/esphome-secrets.yaml.age):
+#
+#   name, friendly_name, api_key, ota_password, ap_password
+#
+# fw_rev is overridden at flash time by esphome-deploy-<name>.service with a
+# hash of the device's config, so HA's firmware version for the device shows
+# which repo config it is running.
+substitutions:
+  fw_rev: dev
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  project:
+    name: malloc47.${name}
+    version: ${fw_rev}
+
+logger:
+
+api:
+  encryption:
+    key: ${api_key}
+
+ota:
+  - platform: esphome
+    password: ${ota_password}
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: ${friendly_name} Fallback Hotspot
+    password: ${ap_password}
+
+captive_portal:

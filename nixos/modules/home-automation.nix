@@ -40,6 +40,47 @@ let
     "scripts.yaml" = ../../hosts/aida/home-assistant/scripts.yaml;
   };
 
+  # ESPHome device configs: every hosts/aida/esphome/<device>.yaml is a device,
+  # and common/ holds the packages they `!include`. See the esphome wiring below.
+  esphomeDir = ../../hosts/aida/esphome;
+  esphomeCommon = esphomeDir + "/common";
+  esphomeCommonFiles = builtins.attrNames (builtins.readDir esphomeCommon);
+  esphomeDevices =
+    lib.mapAttrs' (f: _: lib.nameValuePair (lib.removeSuffix ".yaml" f) (esphomeDir + "/${f}"))
+      (
+        lib.filterAttrs (f: type: type == "regular" && lib.hasSuffix ".yaml" f) (
+          builtins.readDir esphomeDir
+        )
+      );
+  # Firmware revision stamped into each device (esphome.project.version, shown as
+  # the firmware version in HA): a hash of everything that goes into its build
+  # except secrets, so a device whose HA version differs from this is stale.
+  esphomeFwRev =
+    file:
+    builtins.substring 0 8 (
+      builtins.hashString "sha256" (
+        lib.concatStrings (
+          [
+            esphome.version
+            (builtins.readFile file)
+          ]
+          ++ map (f: builtins.readFile (esphomeCommon + "/${f}")) esphomeCommonFiles
+        )
+      )
+    );
+  # Body of esphome-deploy@<device>.service: compile and OTA-flash one device.
+  esphomeDeploy = pkgs.writeShellScript "esphome-deploy" ''
+    case "$1" in
+    ${
+      lib.concatStrings (
+        lib.mapAttrsToList (name: file: "  ${name}) rev=${esphomeFwRev file} ;;\n") esphomeDevices
+      )
+    }  *) echo "esphome-deploy: no device '$1' in hosts/aida/esphome" >&2; exit 1 ;;
+    esac
+    echo "esphome-deploy: flashing $1 (fw_rev $rev, ESPHome ${esphome.version})"
+    exec esphome -s fw_rev "$rev" run --no-logs --device OTA "/var/lib/esphome/$1.yaml"
+  '';
+
   # ESPHome 2026.10 beta, for epaper_spi's `full_update_next` action (PR
   # esphome/esphome#19213). nixpkgs tops out at 2026.8.0 (unstable) / 2026.5.1
   # (26.05), so bump unstable's package. 2026.9+ adds `ninja` and widens the
@@ -485,9 +526,18 @@ in
   # ESPHome Device Builder — the dashboard for writing, compiling and OTA-flashing
   # ESPHome firmware (the HA OS "ESPHome" add-on). Separate from HA's `esphome`
   # integration (see extraComponents), which talks to the devices directly over
-  # their native API; this only builds and flashes. Device YAML, secrets.yaml and
-  # the toolchains live under /var/lib/esphome. Loopback only; the web UI is
-  # proxied below. Device online status comes from mDNS (UDP 5353, opened below).
+  # their native API; this only builds and flashes. The toolchains and build
+  # caches live under /var/lib/esphome. Loopback only; the web UI is proxied
+  # below. Device online status comes from mDNS (UDP 5353, opened below).
+  #
+  # The repo, not the Device Builder, owns the device configs: each device YAML
+  # (and common/) is a root-owned copy the Builder sees through a read-only bind
+  # mount, and secrets.yaml a symlink to the agenix secret, so saving in the
+  # Builder's editor fails rather than drifting.
+  # The Builder stays useful for status, logs and first-time browser flashing.
+  # Flashing is a separate step from a switch (it takes minutes and devices may
+  # be offline): `esphome-deploy <device>` from a workstation starts
+  # esphome-deploy@<device>.service below. See docs/esphome.md.
   #
   # The 26.05 module still launches the pre-2026.7 `esphome dashboard`, so keep
   # it for the user, state dir and sandboxing but start the Device Builder
@@ -544,7 +594,109 @@ in
         ]
       );
       BindReadOnlyPaths = [ "${pkgs.nix-ld}/libexec/nix-ld:/lib64/ld-linux-x86-64.so.2" ];
+      # The repo owns these (installed by the esphomeConfigs activation script
+      # below). The Builder saves via write-to-temp + rename, which would replace
+      # a merely root-owned file in its own state dir; a read-only bind mount
+      # makes the save fail instead. `-`: skip any not yet installed.
+      ReadOnlyPaths = [
+        "-/var/lib/esphome/common"
+      ]
+      ++ map (n: "-/var/lib/esphome/${n}.yaml") (builtins.attrNames esphomeDevices);
     };
+  };
+
+  # Compile + OTA-flash one device from its repo config, in the same toolchain
+  # environment and sandbox as the Device Builder (which shares the build cache).
+  systemd.services."esphome-deploy@" =
+    let
+      builder = config.systemd.services.esphome;
+    in
+    {
+      description = "Compile and OTA-flash ESPHome device %i";
+      inherit (builder) path;
+      # PATH comes from `path`; copying it too would define it twice.
+      environment = removeAttrs builder.environment [ "PATH" ];
+      serviceConfig =
+        removeAttrs builder.serviceConfig [
+          "ExecStart"
+          "Restart"
+        ]
+        // {
+          Type = "oneshot";
+          ExecStart = "${esphomeDeploy} %i";
+          TimeoutStartSec = "30min";
+        };
+    };
+
+  # secrets.yaml can stay a symlink (only the Builder's secrets editor resolves
+  # it, and that refusing is fine); the device configs cannot — see below.
+  systemd.tmpfiles.settings."10-esphome" = {
+    "/var/lib/esphome".d = {
+      user = "esphome";
+      group = "esphome";
+      mode = "0750";
+    };
+    "/var/lib/esphome/secrets.yaml"."L+".argument = config.age.secrets.esphome-secrets.path;
+  };
+
+  # Install the repo's device configs and common/ into /var/lib/esphome as
+  # root-owned copies. They can't be store symlinks: the Builder rejects any
+  # config whose resolved path leaves its config dir ("Invalid configuration
+  # filename"), which breaks its status and logs pages too. Files are rewritten
+  # in place (same inode) so the Builder's read-only bind mounts of them
+  # (ReadOnlyPaths above) see updates without a restart. A file not owned by
+  # root was replaced outside the repo: warn and show what is discarded. Configs
+  # of devices dropped from the repo are removed; ones created in the Builder
+  # are left alone with a warning.
+  system.activationScripts.esphomeConfigs = {
+    deps = [ "users" ];
+    text =
+      let
+        diff = "${pkgs.diffutils}/bin/diff";
+      in
+      ''
+        esphomeInstall() {
+          if [ -L "$2" ]; then rm -f "$2"; fi
+          if [ -e "$2" ] && [ "$(stat -c %U "$2")" != root ]; then
+            echo "warning: esphome $2 was modified outside the repo and is being replaced; discarding:" >&2
+            ${diff} "$1" "$2" >&2 || true
+            rm -f "$2"
+          fi
+          cat "$1" > "$2"
+          chown root:esphome "$2"
+          chmod 0640 "$2"
+        }
+        install -d -o esphome -g esphome -m 0750 /var/lib/esphome
+        for live in /var/lib/esphome/*.yaml; do
+          [ -e "$live" ] || [ -L "$live" ] || continue
+          case "$(basename "$live" .yaml)" in
+            secrets ${lib.concatMapStrings (n: "| ${n} ") (builtins.attrNames esphomeDevices)}) ;;
+            *)
+              if [ -L "$live" ] || [ "$(stat -c %U "$live")" = root ]; then
+                rm -f "$live"
+              else
+                echo "warning: esphome $live is not in hosts/aida/esphome (created in the Builder?)" >&2
+              fi
+              ;;
+          esac
+        done
+        if [ -L /var/lib/esphome/common ]; then rm -f /var/lib/esphome/common; fi
+        install -d -o root -g esphome -m 0750 /var/lib/esphome/common
+        for live in /var/lib/esphome/common/*; do
+          case "$(basename "$live")" in
+            ${lib.concatStringsSep " | " esphomeCommonFiles}) ;;
+            *) rm -rf "$live" ;;
+          esac
+        done
+      ''
+      + lib.concatMapStrings (
+        f: "esphomeInstall ${esphomeCommon + "/${f}"} /var/lib/esphome/common/${f}\n"
+      ) esphomeCommonFiles
+      + lib.concatStrings (
+        lib.mapAttrsToList (
+          name: file: "esphomeInstall ${file} /var/lib/esphome/${name}.yaml\n"
+        ) esphomeDevices
+      );
   };
 
   # mDNS for Matter device discovery/commissioning (not opened by openFirewall).

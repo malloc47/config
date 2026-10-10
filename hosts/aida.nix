@@ -109,6 +109,12 @@
     # ntfy access token (NTFY_TOKEN=...) for the local gatus watchdog to publish
     # alerts to aroldo's ntfy; same secret aroldo's gatus uses.
     ntfy-admin-password-env.file = ../secrets/ntfy-admin-password-env.age;
+    # ESPHome secrets.yaml, symlinked into /var/lib/esphome (home-automation.nix).
+    esphome-secrets = {
+      file = ../secrets/esphome-secrets.yaml.age;
+      owner = "esphome";
+      group = "esphome";
+    };
   };
 
   # ── Hardware hardening, added after the 2026-09-27 abrupt power-off incident

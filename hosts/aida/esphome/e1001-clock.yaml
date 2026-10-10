@@ -1,0 +1,104 @@
+# Seeed reTerminal E1001 (ESP32-S3, 7.5" e-paper) as a wall clock.
+substitutions:
+  name: e1001-clock
+  friendly_name: e1001-clock
+  api_key: !secret e1001_clock_api_key
+  ota_password: !secret e1001_clock_ota_password
+  ap_password: !secret e1001_clock_ap_password
+
+packages:
+  base: !include common/base.yaml
+
+esphome:
+  on_boot:
+    priority: 600
+    then:
+      # Populate system time from the E1001's onboard RTC immediately.
+      - pcf8563.read_time:
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+# Enable logging (on top of common/base.yaml)
+logger:
+  hardware_uart: UART0
+
+# E1001 onboard RTC bus
+i2c:
+  scl: GPIO20
+  sda: GPIO19
+
+# E1001 e-paper SPI bus
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+
+time:
+  - platform: pcf8563
+    id: rtc_time
+    address: 0x51
+    timezone: "America/New_York"
+    update_interval: never
+
+    on_time:
+      - seconds: 0
+        minutes: "*"
+        then:
+          - if:
+              condition:
+                lambda: |-
+                  return id(rtc_time).now().minute == 0;
+              then:
+                - epaper_spi.full_update_next: epaper_display
+          - component.update: epaper_display
+
+  - platform: homeassistant
+    id: ha_time
+    timezone: "America/New_York"
+
+    on_time_sync:
+      then:
+        - pcf8563.write_time:
+
+font:
+  - file: "gfonts://Inter@700"
+    id: clock_font
+    size: 150
+
+  - file: "gfonts://Inter@600"
+    id: ampm_font
+    size: 40
+
+  - file: "gfonts://Inter@500"
+    id: date_font
+    size: 34
+
+display:
+  - platform: epaper_spi
+    id: epaper_display
+    model: Seeed-reTerminal-E1001
+
+    update_interval: never
+
+    # Keep partial-refresh mode enabled, but make the automatic
+    # fallback much longer than our hourly forced refresh.
+    full_update_every: 255
+
+    lambda: |-
+      it.fill(Color::WHITE);
+
+      auto now = id(rtc_time).now();
+
+      if (now.is_valid()) {
+        it.strftime(
+          400,
+          240,
+          id(clock_font),
+          Color::BLACK,
+          TextAlign::CENTER,
+          "%I:%M",
+          now
+        );
+      }
