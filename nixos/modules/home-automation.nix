@@ -159,6 +159,21 @@ let
         # 1.22's MCP tests import jsonschema (a test-only extra).
         nativeCheckInputs = old.nativeCheckInputs ++ [ pkgs-unstable.python3Packages.jsonschema ];
       });
+
+  # Exterior doors/gates (plus the attic) for the e1001-clock panel: listed in
+  # its banner while open (via binary_sensor.perimeter_doors) and pushing a dashboard
+  # refresh when they change. Interior doors (kids' room, stairs closet) are
+  # deliberately left out.
+  perimeterDoors = [
+    "binary_sensor.front_door_contact"
+    "binary_sensor.dining_room_sliding_door_contact"
+    "binary_sensor.side_door_contact"
+    "binary_sensor.utility_room_door_contact"
+    "binary_sensor.basement_door_contact"
+    "binary_sensor.attic_door_contact"
+    "binary_sensor.west_gate_contact"
+    "binary_sensor.east_gate_contact"
+  ];
 in
 {
   imports = [ ./ha-puppet.nix ];
@@ -317,6 +332,56 @@ in
         max = 255;
         initial = "";
       };
+      # The perimeter list as a first-class HA entity, binary_sensor.perimeter_doors:
+      # Open while any member is open, usable like any door sensor in automations
+      # (members via its entity_id attribute / expand()). The panel's card reads
+      # its members (doors_entity) to list open doors. The unique_id lets its
+      # area/icon be set in the UI; membership stays here.
+      binary_sensor = [
+        {
+          platform = "group";
+          name = "Perimeter doors";
+          unique_id = "perimeter_doors";
+          device_class = "door";
+          entities = perimeterDoors;
+        }
+      ];
+      # Push a dashboard refresh to the e1001-clock panel (Puppet re-render +
+      # download) when something it shows changes, instead of waiting for its
+      # 15-minute poll: banner message, perimeter doors, weather updates (state
+      # or attributes), and HA start (deploys restart HA and Puppet; wait until
+      # entities have loaded). `restart` + a short delay coalesces bursts.
+      # Nix-managed alongside the UI's automations.yaml.
+      "automation eink" = [
+        {
+          id = "eink_panel_refresh";
+          alias = "E-ink panel: push dashboard refresh";
+          mode = "restart";
+          triggers = [
+            {
+              trigger = "state";
+              entity_id = perimeterDoors ++ [ "input_text.eink_banner" ];
+            }
+            {
+              trigger = "state";
+              entity_id = "weather.forecast_home";
+            }
+            {
+              trigger = "homeassistant";
+              event = "start";
+              id = "start";
+            }
+          ];
+          actions = [
+            { delay = "{{ '00:01:30' if trigger.id == 'start' else '00:00:05' }}"; }
+            {
+              action = "esphome.e1001_clock_refresh_dashboard";
+              data.full = false;
+              continue_on_error = true;
+            }
+          ];
+        }
+      ];
       http = {
         server_host = "127.0.0.1";
         trusted_proxies = [ "127.0.0.1" ];

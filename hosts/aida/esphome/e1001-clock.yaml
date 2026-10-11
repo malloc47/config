@@ -141,6 +141,32 @@ wifi:
   on_connect:
     - component.update: dashboard_image
 
+# Let HA push refreshes instead of waiting for the 15-minute poll: the
+# "E-ink panel: push dashboard refresh" automation (home-automation.nix) calls
+# esphome.e1001_clock_refresh_dashboard when the banner, perimeter doors or
+# weather change; the button is the manual equivalent in HA's UI. A refresh
+# re-fetches the Puppet render, which redraws the screen when it lands.
+# Merges with the api: block from common/base.yaml.
+api:
+  actions:
+    - action: refresh_dashboard
+      variables:
+        full: bool
+      then:
+        - if:
+            condition:
+              lambda: "return full;"
+            then:
+              - epaper_spi.full_update_next: epaper_display
+        - component.update: dashboard_image
+
+button:
+  - platform: template
+    name: "Refresh Dashboard"
+    icon: mdi:refresh
+    on_press:
+      - component.update: dashboard_image
+
 font:
   - file: "gfonts://Inter@700"
     id: clock_font

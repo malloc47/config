@@ -17,6 +17,9 @@ views:
         battery_entity: sensor.e1001_clock_battery_level
         external_power_entity: binary_sensor.e1001_clock_external_power
         days: 5
-        # Omit banner_template to use the card's default: input_text.eink_banner
-        # when set, otherwise the open doors/windows. Any Jinja works here; an
-        # empty result hides the banner.
+        # Open members of this binary sensor group (perimeter doors, defined in
+        # home-automation.nix) are listed in the banner with a door icon.
+        doors_entity: binary_sensor.perimeter_doors
+        # Omit banner_template to use the card's default message,
+        # input_text.eink_banner. Any Jinja works here; an empty result shows
+        # just the doors (or hides the banner if none are open).

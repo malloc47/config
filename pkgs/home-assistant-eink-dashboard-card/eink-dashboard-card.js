@@ -17,8 +17,10 @@
 //   battery_entity: sensor.<panel battery %>     # optional
 //   external_power_entity: binary_sensor.<...>   # optional; battery hidden while "on"
 //   days: 5                                      # daily forecast columns
-//   banner_template: "{{ ... }}"                 # Jinja; empty result hides the banner
+//   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
+//   doors_entity: binary_sensor.perimeter_doors  # group whose open members join the banner
 //   show_clock_area: false                       # outline the device-drawn area (design aid)
+//   hide_toasts: true                            # hide HA's toasts while shown (see below)
 //
 // Icons are Material Design Icons (https://pictogrammers.com/library/mdi/,
 // Apache-2.0), embedded as SVG paths so the card has no runtime dependencies.
@@ -61,10 +63,17 @@ const ICONS = {
   "battery-outline": "M16,20H8V6H16M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.67C6,21.4 6.6,22 7.33,22H16.67A1.33,1.33 0 0,0 18,20.67V5.33C18,4.6 17.4,4 16.67,4Z",
   "battery-alert-variant-outline": "M14 20H6V6H14M14.67 4H13V2H7V4H5.33C4.6 4 4 4.6 4 5.33V20.67C4 21.4 4.6 22 5.33 22H14.67C15.4 22 16 21.4 16 20.67V5.33C16 4.6 15.4 4 14.67 4M21 7H19V13H21V8M21 15H19V17H21V15Z",
   "information-outline": "M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z",
+  "door-open": "M12,3C10.89,3 10,3.89 10,5H3V19H2V21H22V19H21V5C21,3.89 20.11,3 19,3H12M12,5H19V19H12V5M5,11H7V13H5V11Z",
+  "garage-open-variant": "M22 9V20H20V11H4V20H2V9L12 5L22 9M19 12H5V14H19V12Z",
+  "window-open-variant": "M21 20V2H3V20H1V23H23V20M19 4V11H17V4M5 4H7V11H5M5 20V13H7V20M9 20V4H15V20M17 20V13H19V20Z",
   "bell-outline": "M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z",
 };
 
-const FONT_URL = new URL("./InterVariable.ttf", import.meta.url).href;
+// Static Inter instances autohinted at build time (see default.nix). With
+// Puppet's Chromium rasterizing text 1-bit (no anti-aliasing), the hinting keeps
+// stems even and stops small features like i-dots dropping out; anti-aliased
+// text thresholded to black/white came out blobby.
+const FONT_WEIGHTS = [500, 600, 700];
 
 // @font-face has no effect inside a shadow root, so register it on the document.
 if (!document.getElementById("eink-dashboard-card-font")) {
@@ -144,15 +153,10 @@ const BUCKETS = [
   { id: "night", start: 18, end: 30, label: "Night" },
 ];
 
+// Free-text message shown first in the banner (empty hides it). Open doors from
+// doors_entity are listed after it natively, with an icon and a short name.
 const DEFAULT_BANNER = `{%- set msg = states('input_text.eink_banner') -%}
-{%- if msg not in ['', 'unknown', 'unavailable'] -%}
-{{ msg }}
-{%- else -%}
-{%- set open = states.binary_sensor
-     | selectattr('attributes.device_class', 'in', ['door', 'garage_door', 'window'])
-     | selectattr('state', 'eq', 'on') | map(attribute='name') | list -%}
-{{ open | join(', ') ~ (' is open' if open | count == 1 else ' are open') if open else '' }}
-{%- endif -%}`;
+{{ msg if msg not in ['', 'unknown', 'unavailable'] else '' }}`;
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -436,6 +440,23 @@ class EinkDashboardCard extends HTMLElement {
     return { level: Math.round(level), icon: name };
   }
 
+  // Open members of doors_entity (a group), as banner items: an open-door icon
+  // (garage/window by device class) and the name without a trailing "Door".
+  // Gates use the door icon too: MDI's gate glyph breaks up at 22px in 1-bit.
+  _openDoors() {
+    const group = this._config.doors_entity && this._hass.states[this._config.doors_entity];
+    const members = group?.attributes?.entity_id || [];
+    return members
+      .map((id) => this._hass.states[id])
+      .filter((st) => st && st.state === "on")
+      .map((st) => {
+        const name = st.attributes.friendly_name || st.entity_id;
+        const dc = st.attributes.device_class;
+        const ic = dc === "garage_door" ? "garage-open-variant" : dc === "window" ? "window-open-variant" : "door-open";
+        return { icon: ic, text: name.replace(/\s+door$/i, "") };
+      });
+  }
+
   _sunEvent() {
     const sun = this._hass.states[this._config.sun_entity];
     if (!sun) return null;
@@ -449,6 +470,16 @@ class EinkDashboardCard extends HTMLElement {
 
   _render() {
     if (!this._hass || !this._config) return;
+    // Try the full door list first; if it overflows the banner, re-render once
+    // with the doors collapsed into a single summary item.
+    this._renderScreen(false);
+    const banner = this.shadowRoot.querySelector(".banner");
+    if (banner && banner.scrollWidth > banner.clientWidth + 1 && this._openDoors().length > 1) {
+      this._renderScreen(true);
+    }
+  }
+
+  _renderScreen(compactDoors) {
     const c = this._config;
     const weather = this._hass.states[c.weather_entity];
     const inside = c.inside_entity && this._hass.states[c.inside_entity];
@@ -461,7 +492,13 @@ class EinkDashboardCard extends HTMLElement {
     const battery = this._battery();
     const buckets = this._buckets();
     const days = this._days();
-    const banner = this._banner;
+    const doors = this._openDoors();
+    const bannerItems = [
+      ...(this._banner ? [{ icon: "bell-outline", text: this._banner, shrink: true }] : []),
+      ...(compactDoors
+        ? [{ icon: "door-open", text: `${doors.length} open: ${doors.map((d) => d.text).join(", ")}`, shrink: true }]
+        : doors),
+    ];
 
     const stat = (ic, value, label) => `
       <div class="stat">
@@ -514,13 +551,17 @@ class EinkDashboardCard extends HTMLElement {
         .day .hl { font-size: 20px; font-weight: 700; }
         .day .hl .lo { font-weight: 500; }
 
-        footer { display: flex; align-items: stretch; gap: 10px; padding: 6px 10px 8px; }
-        .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+        footer { display: flex; align-items: stretch; gap: 10px; padding: 6px 10px 8px; min-width: 0; }
+        .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 20px; overflow: hidden;
           background: #000; color: #fff; border-radius: 8px; padding: 0 14px; }
         .banner .icon { fill: #fff; }
-        .banner .text { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .banner .item { display: inline-flex; align-items: center; gap: 6px; flex: none;
+          font-size: 19px; font-weight: 600; white-space: nowrap; }
+        /* The message and the door summary shrink and ellipsize; door items don't. */
+        .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
+        .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
         .spacer { flex: 1; }
-        .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; }
+        .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; }
       </style>
       <div class="screen">
         <section class="hero">
@@ -578,8 +619,13 @@ class EinkDashboardCard extends HTMLElement {
         </section>
         <footer>
           ${
-            banner
-              ? `<div class="banner">${icon("bell-outline", 22)}<div class="text">${esc(banner)}</div></div>`
+            bannerItems.length
+              ? `<div class="banner">${bannerItems
+                  .map(
+                    (it) =>
+                      `<span class="item${it.shrink ? " shrink" : ""}">${icon(it.icon, 22)}<span>${esc(it.text)}</span></span>`,
+                  )
+                  .join("")}</div>`
               : `<div class="spacer"></div>`
           }
           <div class="updated">Updated ${esc(this._clockTime(Date.now()))}</div>
