@@ -11,6 +11,15 @@
 #                         left column; today/tomorrow outlook below
 #   2  /eink-panel/far    for reading at 6-9 ft: clock in x 160-640, y 8-180,
 #                         larger weekday/date; big today/tomorrow rows
+#
+# The panel runs in 4-level grayscale (the UC8179 4-gray model from
+# esphome/esphome#18470, installed as a local external component; see
+# epaperSpiG4 in nixos/modules/home-automation.nix). Backgrounds are 4-gray;
+# the clock and date are drawn 1-bit, so the per-minute update stays a
+# flash-free differential partial that leaves the grays alone. A background
+# whose content changed (Puppet sends ETags; unchanged ones come back 304)
+# gets a full 4-gray refresh when it's on screen, as do page switches and the
+# hourly refresh.
 substitutions:
   name: e1001-clock
   friendly_name: e1001-clock
@@ -20,6 +29,12 @@ substitutions:
 
 packages:
   base: !include common/base.yaml
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [epaper_spi]
 
 esphome:
   on_boot:
@@ -188,15 +203,17 @@ script:
 
 online_image:
   - id: dashboard_image
-    url: "https://eink.home.malloc47.com/eink-panel/clock?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
+    url: "https://eink.home.malloc47.com/eink-panel/clock?viewport=800x480&colors=000000,555555,AAAAAA,FFFFFF&format=png&wait=1500"
     format: PNG
-    type: BINARY
+    type: GRAYSCALE
     update_interval: 15min
     on_download_finished:
+      # Unchanged renders come back 304 (cached): nothing to redraw.
       - if:
           condition:
-            lambda: "return id(page) == 0;"
+            lambda: "return id(page) == 0 && !cached;"
           then:
+            - epaper_spi.full_update_next: epaper_display
             - component.update: epaper_display
     # The first scheduled fetch runs at boot, before Wi-Fi is up; without a
     # retry the panel would show only the clock until the next interval.
@@ -204,29 +221,33 @@ online_image:
       - delay: 30s
       - component.update: dashboard_image
   - id: focus_image
-    url: "https://eink.home.malloc47.com/eink-panel/focus?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
+    url: "https://eink.home.malloc47.com/eink-panel/focus?viewport=800x480&colors=000000,555555,AAAAAA,FFFFFF&format=png&wait=1500"
     format: PNG
-    type: BINARY
+    type: GRAYSCALE
     update_interval: 15min
     on_download_finished:
+      # Unchanged renders come back 304 (cached): nothing to redraw.
       - if:
           condition:
-            lambda: "return id(page) == 1;"
+            lambda: "return id(page) == 1 && !cached;"
           then:
+            - epaper_spi.full_update_next: epaper_display
             - component.update: epaper_display
     on_error:
       - delay: 30s
       - component.update: focus_image
   - id: far_image
-    url: "https://eink.home.malloc47.com/eink-panel/far?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
+    url: "https://eink.home.malloc47.com/eink-panel/far?viewport=800x480&colors=000000,555555,AAAAAA,FFFFFF&format=png&wait=1500"
     format: PNG
-    type: BINARY
+    type: GRAYSCALE
     update_interval: 15min
     on_download_finished:
+      # Unchanged renders come back 304 (cached): nothing to redraw.
       - if:
           condition:
-            lambda: "return id(page) == 2;"
+            lambda: "return id(page) == 2 && !cached;"
           then:
+            - epaper_spi.full_update_next: epaper_display
             - component.update: epaper_display
     on_error:
       - delay: 30s
@@ -307,18 +328,30 @@ font:
 display:
   - platform: epaper_spi
     id: epaper_display
-    model: Seeed-reTerminal-E1001
+    model: waveshare-7.5in-v2-4gray
+    # The E1001's wiring (as in the built-in seeed-reterminal-e1001 model).
+    cs_pin: GPIO10
+    dc_pin: GPIO11
+    reset_pin: GPIO12
+    busy_pin:
+      number: GPIO13
+      inverted: true
+      mode:
+        input: true
+        pullup: true
 
     update_interval: never
 
-    # Keep partial-refresh mode enabled, but make the automatic
-    # fallback much longer than our hourly forced refresh.
+    # Updates are differential partials (1-bit, grays untouched) unless a full
+    # 4-gray refresh is requested (changed background, page switch, hourly);
+    # the automatic fallback is much longer than the hourly forced refresh.
     full_update_every: 255
 
     lambda: |-
       it.fill(Color::WHITE);
 
-      // Background: the page's Puppet render (white pixels are "on"). Empty
+      // Background: the page's 4-gray Puppet render (each pixel's gray blends
+      // from off=black to on=white, so levels map straight through). Empty
       // until its first download finishes, leaving just the clock.
       it.image(0, 0,
                id(page) == 2 ? id(far_image) : id(page) == 1 ? id(focus_image) : id(dashboard_image),

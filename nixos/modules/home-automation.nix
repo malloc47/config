@@ -62,6 +62,8 @@ let
         lib.concatStrings (
           [
             esphome.version
+            # Local external components (installed under components/).
+            (builtins.unsafeDiscardStringContext (toString epaperSpiG4))
             (builtins.readFile file)
           ]
           ++ map (f: builtins.readFile (esphomeCommon + "/${f}")) esphomeCommonFiles
@@ -142,6 +144,39 @@ let
           hash = "sha256-84zvZEy4ptVLy/B1WbIVh/hcdi4e/xkXEfd5uldR2wg=";
         };
       });
+  # epaper_spi with the 4-gray UC8179 model from esphome/esphome#18470 (open;
+  # validated by its author on the reTerminal E1001), as a local external
+  # component for e1001-clock: this ESPHome's own epaper_spi plus the PR's three
+  # new files, pinned by commit. Installed at /var/lib/esphome/components by the
+  # esphomeConfigs activation below. The model registers without
+  # partial_update, which this ESPHome's validator requires for
+  # full_update_every > 1, so that default is patched in. Drop once the model is
+  # upstream.
+  epaperSpiG4 =
+    let
+      rev = "1aff3ccf70de920bcb2f90dd305a5a331775b1ab";
+      fetchPr =
+        file: hash:
+        pkgs.fetchurl {
+          url = "https://raw.githubusercontent.com/Daniel085/esphome/${rev}/esphome/components/epaper_spi/${file}";
+          inherit hash;
+        };
+    in
+    pkgs.runCommand "esphome-epaper-spi-g4-${esphome.version}" { } ''
+      mkdir -p $out
+      cp -r ${esphome}/lib/python3*/site-packages/esphome/components/epaper_spi $out/epaper_spi
+      chmod -R u+w $out
+      find $out -name __pycache__ -prune -exec rm -rf {} +
+      cp ${fetchPr "epaper_spi_uc8179_g4.cpp" "sha256-sZ5Csf71998PxSwBpwD0GB3UZXP8g77ranOZS6zGDjQ="} \
+        $out/epaper_spi/epaper_spi_uc8179_g4.cpp
+      cp ${fetchPr "epaper_spi_uc8179_g4.h" "sha256-UQ0gR4QCUgkBdzA6voCl2L9c1NjwSTqHWBrbm8uzPuA="} \
+        $out/epaper_spi/epaper_spi_uc8179_g4.h
+      cp ${fetchPr "models/uc8179_g4.py" "sha256-+mv+65KCXyTBNJldtgvuKAoWAWTAp7ieM+D2puNaQsQ="} \
+        $out/epaper_spi/models/uc8179_g4.py
+      sed -i 's/^\(        \)super().__init__(name, "EPaperUC8179G4", \*\*defaults)/\1defaults.setdefault("partial_update", True)\n&/' \
+        $out/epaper_spi/models/uc8179_g4.py
+      grep -q 'defaults.setdefault("partial_update", True)' $out/epaper_spi/models/uc8179_g4.py
+    '';
   esphome-device-builder =
     (pkgs-unstable.esphome-device-builder.override { inherit esphome; }).overridePythonAttrs
       (old: rec {
@@ -713,6 +748,7 @@ in
       # makes the save fail instead. `-`: skip any not yet installed.
       ReadOnlyPaths = [
         "-/var/lib/esphome/common"
+        "-/var/lib/esphome/components"
       ]
       ++ map (n: "-/var/lib/esphome/${n}.yaml") (builtins.attrNames esphomeDevices);
     };
@@ -793,6 +829,14 @@ in
               ;;
           esac
         done
+        # Local external components (built by Nix; see epaperSpiG4): replaced
+        # wholesale with root-owned copies, like common/.
+        rm -rf /var/lib/esphome/components
+        install -d -o root -g esphome -m 0750 /var/lib/esphome/components
+        cp -r --no-preserve=mode,ownership ${epaperSpiG4}/. /var/lib/esphome/components/
+        chown -R root:esphome /var/lib/esphome/components
+        find /var/lib/esphome/components -type d -exec chmod 0750 {} +
+        find /var/lib/esphome/components -type f -exec chmod 0640 {} +
         if [ -L /var/lib/esphome/common ]; then rm -f /var/lib/esphome/common; fi
         install -d -o root -g esphome -m 0750 /var/lib/esphome/common
         for live in /var/lib/esphome/common/*; do
@@ -820,9 +864,11 @@ in
   services.ha-puppet = {
     enable = true;
     tokenFile = config.age.secrets.ha-puppet-token.path;
-    # 1-bit hinted text instead of anti-aliased grey thresholded by Puppet's
-    # colour reduction; the card ships autohinted Inter for this.
-    monochromeText = true;
+    # The panel runs in 4-gray, so text is anti-aliased into the gray levels
+    # (Puppet's colors=000000,555555,AAAAAA,FFFFFF). For a 1-bit panel, turn
+    # this back on: anti-aliased grey thresholded to black/white comes out
+    # blobby, hinted 1-bit text doesn't.
+    monochromeText = false;
   };
   # Puppet keeps one browser page open, which only loads Lovelace resources on
   # a full page load: restart it with HA (whose restarts otherwise leave the

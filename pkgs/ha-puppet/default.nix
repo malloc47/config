@@ -11,7 +11,10 @@
 #   - listens on $PUPPET_LISTEN_HOST (default 127.0.0.1) instead of all
 #     interfaces, since anyone who can reach it can screenshot whatever the
 #     token's user can see;
-#   - defaults the Chromium path to nixpkgs' chromium.
+#   - defaults the Chromium path to nixpkgs' chromium;
+#   - sends a content-hash ETag with each image and answers 304 to a matching
+#     If-None-Match, so a client (ESPHome online_image) can tell an unchanged
+#     render from a new one and skip work, e.g. a flashing full e-paper refresh.
 {
   lib,
   buildNpmPackage,
@@ -54,7 +57,27 @@ buildNpmPackage {
                      '[process.env.PUPPET_OPTIONS_FILE, "./options-dev.json", "/data/options.json"].filter(Boolean).find(' \
       --replace-fail '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"' '"${lib.getExe chromium}"'
     substituteInPlace http.js \
-      --replace-fail 'server.listen(port);' 'server.listen(port, process.env.PUPPET_LISTEN_HOST || "127.0.0.1");'
+      --replace-fail 'server.listen(port);' 'server.listen(port, process.env.PUPPET_LISTEN_HOST || "127.0.0.1");' \
+      --replace-fail 'import http from "node:http";' 'import http from "node:http";
+    import { createHash } from "node:crypto";' \
+      --replace-fail '      response.writeHead(200, {
+            "Content-Type": contentType,
+            "Content-Length": image.length,
+          });
+          response.write(image);
+          response.end();' '      const etag = `"''${createHash("sha1").update(image).digest("hex")}"`;
+          if (request.headers["if-none-match"] === etag) {
+            response.writeHead(304, { ETag: etag });
+            response.end();
+          } else {
+            response.writeHead(200, {
+              "Content-Type": contentType,
+              "Content-Length": image.length,
+              ETag: etag,
+            });
+            response.write(image);
+            response.end();
+          }'
   '';
 
   installPhase = ''

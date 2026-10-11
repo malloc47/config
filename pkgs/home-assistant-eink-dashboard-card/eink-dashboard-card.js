@@ -33,6 +33,8 @@
 //   outdoor_hours: [7, 22]                       # focus: local hours "outside" for the outlook
 //   cold: 45                                     # focus: °F below which it's coat weather
 //   hot: 85                                      # focus: °F at/above which it's hot
+//   gray: false                                  # 4-gray panel: muted text and rules in gray
+//   show_updated: true                           # footer "Updated HH:MM" (changes every render)
 //   show_clock_area: false                       # outline the device-drawn area (design aid)
 //   hide_toasts: true                            # hide HA's toasts while shown (see below)
 //
@@ -235,6 +237,8 @@ class EinkDashboardCard extends HTMLElement {
       layout: "standard",
       rain_probability: 50,
       appliances: [],
+      gray: false,
+      show_updated: true,
       outdoor_hours: [7, 22],
       cold: 45,
       hot: 85,
@@ -939,22 +943,27 @@ class EinkDashboardCard extends HTMLElement {
           font-size: 16px; font-weight: 500; line-height: normal; letter-spacing: normal;
           text-align: left; text-transform: none; white-space: normal;
           display: grid;
+          /* 4-gray panels (gray: true) get dark-gray secondary text and solid
+             light-gray rules; 1-bit panels keep black text and dotted rules
+             (a gray there would threshold to white or black). */
+          --muted: ${c.gray ? "#555555" : "#000"};
+          --rule-h: ${c.gray ? "linear-gradient(#aaaaaa, #aaaaaa)" : "repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 3px)"};
+          --rule-v: ${c.gray ? "linear-gradient(#aaaaaa, #aaaaaa)" : "repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 3px)"};
         }
         .screen.standard { grid-template-rows: 186px 1px 118px 1px 122px 52px; }
         .screen.focus { grid-template-rows: 192px 1px 106px 1px 132px 48px; }
         .screen.far { grid-template-rows: 188px 1px 121px 1px 121px 48px; }
         .icon { fill: #000; flex: none; display: block; }
-        .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+        .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); }
         /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
-        .rule { margin: 0 16px; background: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 3px); }
-        .vrule { width: 1px; margin: 14px 0;
-          background: repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 3px); }
+        .rule { margin: 0 16px; background: var(--rule-h); }
+        .vrule { width: 1px; margin: 14px 0; background: var(--rule-v); }
 
         .hero { display: grid; grid-template-columns: 214px 372px 214px; }
         .now { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
         .now-top { display: flex; align-items: center; gap: 6px; }
         .now-temp { font-size: 54px; font-weight: 700; line-height: 1; }
-        .now-cond { font-size: 18px; font-weight: 600; margin-top: 6px; }
+        .now-cond { font-size: 18px; font-weight: 600; margin-top: 6px; color: var(--muted); }
         .hilo { display: flex; gap: 10px; font-size: 17px; font-weight: 600; margin-top: 2px; }
         .hilo span { display: inline-flex; align-items: center; gap: 1px; }
         .clock { margin: 10px 0; }
@@ -967,13 +976,14 @@ class EinkDashboardCard extends HTMLElement {
         .bucket { display: flex; align-items: center; justify-content: center; gap: 14px; }
         .bucket .name { font-size: 17px; font-weight: 700; }
         .bucket .t { font-size: 40px; font-weight: 700; line-height: 1.05; }
-        .meta { display: flex; align-items: center; gap: 3px; font-size: 16px; font-weight: 600; }
+        .meta { display: flex; align-items: center; gap: 3px; font-size: 16px; font-weight: 600; color: var(--muted); }
+        .meta .icon { fill: var(--muted); }
 
         .days { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
         .day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
         .day .name { font-size: 17px; font-weight: 700; }
         .day .hl { font-size: 20px; font-weight: 700; }
-        .day .hl .lo { font-weight: 500; }
+        .day .hl .lo { font-weight: 500; color: var(--muted); }
 
         footer { display: flex; align-items: stretch; gap: 10px; padding: 6px 10px 8px; min-width: 0; }
         .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 16px; overflow: hidden;
@@ -985,7 +995,8 @@ class EinkDashboardCard extends HTMLElement {
         .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
         .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
         .spacer { flex: 1; }
-        .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; }
+        .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; color: var(--muted); }
+        .battery .icon { fill: var(--muted); }
 
         /* focus layout: the panel draws the clock (x 146-654, y 8-184) and the
            weekday/date (left column, y 30-120); the card fills the rest. */
@@ -993,11 +1004,12 @@ class EinkDashboardCard extends HTMLElement {
         .fleft { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 16px; }
         .fclock { margin: 8px 0; }
         .fclock.outline, .fleft.outline { outline: 2px dashed #000; outline-offset: -2px; }
-        .fsun { display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; }
+        .fsun { display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; color: var(--muted); }
+        .fsun .icon { fill: var(--muted); }
         .fright { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
         .fright .out { display: flex; align-items: center; gap: 4px; }
         .fright .v { font-size: 38px; font-weight: 700; line-height: 1; }
-        .fright .t { font-size: 17px; font-weight: 600; }
+        .fright .t { font-size: 17px; font-weight: 600; color: var(--muted); }
         .fright .in { display: flex; align-items: center; gap: 4px; font-size: 24px; font-weight: 700; margin-top: 6px; }
         .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 2px 16px; }
         .orow { display: grid; grid-template-columns: 40px 122px 100px 1fr auto; align-items: center; column-gap: 10px; }
@@ -1005,12 +1017,13 @@ class EinkDashboardCard extends HTMLElement {
         .orow .rng { font-size: 23px; font-weight: 700; }
         .orow .txt { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .orow .wear { display: flex; align-items: center; gap: 6px; font-family: "EinkSansCondensed", sans-serif;
-          font-size: 18px; font-weight: 600; white-space: nowrap; }
+          font-size: 18px; font-weight: 600; white-space: nowrap; color: var(--muted); }
+        .orow .wear .icon, .xrow .wear .icon { fill: var(--muted); }
         .fdays { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
         .fday { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
         .fday .name { font-size: 18px; font-weight: 700; }
         .fday .hl { font-size: 20px; font-weight: 700; }
-        .fday .hl .lo { font-weight: 500; }
+        .fday .hl .lo { font-weight: 500; color: var(--muted); }
 
         /* far layout: the panel draws the clock (x 160-640) and the weekday/date
            (left column); everything else is sized for reading at 6-9 ft. */
@@ -1027,7 +1040,7 @@ class EinkDashboardCard extends HTMLElement {
         .xrow .txt { font-family: "EinkSansCondensed", sans-serif; font-size: 34px; font-weight: 700;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .xrow .wear { display: flex; align-items: center; gap: 8px; font-family: "EinkSansCondensed", sans-serif;
-          font-size: 28px; font-weight: 600;
+          font-size: 28px; font-weight: 600; color: var(--muted);
           white-space: nowrap; overflow: hidden; margin-top: 6px; }
       </style>
       <div class="screen ${["focus", "far"].includes(c.layout) ? c.layout : "standard"}">
@@ -1043,7 +1056,7 @@ ${c.layout === "focus" ? focusBody : c.layout === "far" ? farBody : standardBody
                   .join("")}</div>`
               : `<div class="spacer"></div>`
           }
-          <div class="updated">Updated ${esc(this._clockTime(Date.now()))}</div>
+          ${c.show_updated ? `<div class="updated">Updated ${esc(this._clockTime(Date.now()))}</div>` : ""}
           ${battery ? `<div class="battery">${icon(battery.icon, 22)}${battery.level}%</div>` : ""}
         </footer>
       </div>`;

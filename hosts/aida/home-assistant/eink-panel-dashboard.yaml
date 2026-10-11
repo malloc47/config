@@ -11,6 +11,11 @@ views:
     panel: true
     cards:
       - type: custom:eink-dashboard-card
+        # 4-gray panel: gray secondary text and rules. No "Updated" stamp, so
+        # an unchanged dashboard renders identically (Puppet's ETag then lets
+        # the panel skip a flashing full refresh).
+        gray: true
+        show_updated: false
         # NWS (official forecast, with precipitation probabilities); met.no takes
         # over while it's unavailable.
         weather_entity: weather.nws_khpn
@@ -40,6 +45,11 @@ views:
     panel: true
     cards:
       - type: custom:eink-dashboard-card
+        # 4-gray panel: gray secondary text and rules. No "Updated" stamp, so
+        # an unchanged dashboard renders identically (Puppet's ETag then lets
+        # the panel skip a flashing full refresh).
+        gray: true
+        show_updated: false
         layout: focus
         # NWS (official forecast, with precipitation probabilities); met.no takes
         # over while it's unavailable.
@@ -71,6 +81,11 @@ views:
     panel: true
     cards:
       - type: custom:eink-dashboard-card
+        # 4-gray panel: gray secondary text and rules. No "Updated" stamp, so
+        # an unchanged dashboard renders identically (Puppet's ETag then lets
+        # the panel skip a flashing full refresh).
+        gray: true
+        show_updated: false
         layout: far
         weather_entity: weather.nws_khpn
         fallback_weather_entity: weather.forecast_home
