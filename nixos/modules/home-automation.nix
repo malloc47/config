@@ -727,6 +727,9 @@ in
   services.ha-puppet = {
     enable = true;
     tokenFile = config.age.secrets.ha-puppet-token.path;
+    # 1-bit hinted text instead of anti-aliased grey thresholded by Puppet's
+    # colour reduction; the card ships autohinted Inter for this.
+    monochromeText = true;
   };
   # Puppet keeps one browser page open, which only loads Lovelace resources on
   # a full page load: restart it with HA (whose restarts otherwise leave the

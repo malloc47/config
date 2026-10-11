@@ -70,12 +70,14 @@ const FONT_URL = new URL("./InterVariable.ttf", import.meta.url).href;
 if (!document.getElementById("eink-dashboard-card-font")) {
   const style = document.createElement("style");
   style.id = "eink-dashboard-card-font";
-  style.textContent = `@font-face {
+  style.textContent = FONT_WEIGHTS.map(
+    (w) => `@font-face {
     font-family: "EinkInter";
-    src: url("${FONT_URL}") format("truetype");
-    font-weight: 100 900;
+    src: url("${new URL(`./Inter-${w}.ttf`, import.meta.url).href}") format("truetype");
+    font-weight: ${w};
     font-display: block;
-  }`;
+  }`,
+  ).join("\n");
   document.head.appendChild(style);
 }
 
@@ -195,6 +197,7 @@ class EinkDashboardCard extends HTMLElement {
       sun_entity: "sun.sun",
       banner_template: DEFAULT_BANNER,
       show_clock_area: false,
+      hide_toasts: true,
       ...config,
     };
     this._unsubscribe();
@@ -211,10 +214,52 @@ class EinkDashboardCard extends HTMLElement {
 
   connectedCallback() {
     this._ensureSubscriptions();
+    this._setToastsHidden(this._config?.hide_toasts !== false);
   }
 
   disconnectedCallback() {
     this._unsubscribe();
+    this._setToastsHidden(false);
+  }
+
+  // HA's frontend shows toasts ("Starting <integration>...", "Connection lost")
+  // over the page, and Puppet would screenshot them into the panel's image for
+  // a whole refresh interval. The toasts are top-layer popovers rendered by a
+  // <notification-manager> that HA mounts lazily (as a dialog, on the first
+  // toast) inside <home-assistant>'s shadow root, out of reach of the card's
+  // styles. So while the card is on screen, put a hiding stylesheet into that
+  // shadow root, and into each manager's own shadow root as it appears.
+  _setToastsHidden(hidden) {
+    const root = document.querySelector("home-assistant")?.shadowRoot;
+    if (!root) return;
+    const hideIn = (sr, css) => {
+      if (!sr || sr.getElementById?.("eink-hide-toasts") || sr.querySelector?.("#eink-hide-toasts")) return;
+      const style = document.createElement("style");
+      style.id = "eink-hide-toasts";
+      style.textContent = css;
+      sr.appendChild(style);
+    };
+    const hideManager = (m) => hideIn(m.shadowRoot, "ha-toast { display: none !important; }");
+    if (hidden) {
+      hideIn(root, "notification-manager { display: none !important; }");
+      root.querySelectorAll("notification-manager").forEach(hideManager);
+      if (!this._toastObserver) {
+        this._toastObserver = new MutationObserver(() =>
+          root.querySelectorAll("notification-manager").forEach((m) => {
+            hideManager(m);
+            // Its shadow root may render after insertion; retry once.
+            if (!m.shadowRoot?.querySelector("#eink-hide-toasts")) setTimeout(() => hideManager(m), 0);
+          }),
+        );
+        this._toastObserver.observe(root, { childList: true });
+      }
+    } else {
+      this._toastObserver?.disconnect();
+      this._toastObserver = null;
+      for (const sr of [root, ...[...root.querySelectorAll("notification-manager")].map((m) => m.shadowRoot)]) {
+        sr?.querySelector("#eink-hide-toasts")?.remove();
+      }
+    }
   }
 
   getCardSize() {
@@ -433,7 +478,7 @@ class EinkDashboardCard extends HTMLElement {
           position: relative; width: 800px; height: 480px; overflow: hidden;
           background: #fff; color: #000;
           font-family: "EinkInter", sans-serif; font-feature-settings: "tnum" 1;
-          font-size: 16px; font-weight: 400; line-height: normal; letter-spacing: normal;
+          font-size: 16px; font-weight: 500; line-height: normal; letter-spacing: normal;
           text-align: left; text-transform: none; white-space: normal;
           display: grid; grid-template-rows: 186px 1px 118px 1px 122px 52px;
         }

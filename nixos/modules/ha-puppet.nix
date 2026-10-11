@@ -34,6 +34,16 @@ in
       default = true;
       description = "Keep Chromium running between requests (faster renders, more memory).";
     };
+    monochromeText = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Have Chromium rasterize text 1-bit with full hinting (fontconfig
+        antialias=false) instead of anti-aliased grey. For 1-bit panels this is
+        far crisper than grey text thresholded to black/white, especially at
+        small sizes; pair it with hinted fonts.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -49,6 +59,22 @@ in
         PUPPET_OPTIONS_FILE = "/run/ha-puppet/options.json";
         PUPPET_LISTEN_HOST = "127.0.0.1";
         HOME = "/var/lib/ha-puppet";
+      }
+      // lib.optionalAttrs cfg.monochromeText {
+        FONTCONFIG_FILE = pkgs.writeText "ha-puppet-fonts.conf" ''
+          <?xml version="1.0"?>
+          <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+          <fontconfig>
+            <include ignore_missing="yes">/etc/fonts/fonts.conf</include>
+            <match target="font">
+              <edit name="antialias" mode="assign"><bool>false</bool></edit>
+              <edit name="hinting" mode="assign"><bool>true</bool></edit>
+              <edit name="hintstyle" mode="assign"><const>hintfull</const></edit>
+              <edit name="rgba" mode="assign"><const>none</const></edit>
+              <edit name="embeddedbitmap" mode="assign"><bool>false</bool></edit>
+            </match>
+          </fontconfig>
+        '';
       };
       serviceConfig = {
         ExecStartPre = pkgs.writeShellScript "ha-puppet-options" ''
