@@ -9,6 +9,8 @@
 #   0  /eink-panel/clock  dashboard, clock in x 214-586, y 10-176
 #   1  /eink-panel/focus  big clock in x 146-654, y 8-184, weekday/date in the
 #                         left column; today/tomorrow outlook below
+#   2  /eink-panel/far    for reading at 6-9 ft: clock in x 160-640, y 8-180,
+#                         larger weekday/date; big today/tomorrow rows
 substitutions:
   name: e1001-clock
   friendly_name: e1001-clock
@@ -124,7 +126,7 @@ binary_sensor:
     on_press:
       - script.execute:
           id: show_page
-          p: !lambda "return (id(page) + 2 - 1) % 2;"
+          p: !lambda "return (id(page) + 3 - 1) % 3;"
   - platform: gpio
     id: button_right
     pin:
@@ -134,7 +136,7 @@ binary_sensor:
     on_press:
       - script.execute:
           id: show_page
-          p: !lambda "return (id(page) + 1) % 2;"
+          p: !lambda "return (id(page) + 1) % 3;"
 
   - platform: template
     name: "External Power"
@@ -182,6 +184,7 @@ script:
     then:
       - component.update: dashboard_image
       - component.update: focus_image
+      - component.update: far_image
 
 online_image:
   - id: dashboard_image
@@ -214,6 +217,20 @@ online_image:
     on_error:
       - delay: 30s
       - component.update: focus_image
+  - id: far_image
+    url: "https://eink.home.malloc47.com/eink-panel/far?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
+    format: PNG
+    type: BINARY
+    update_interval: 15min
+    on_download_finished:
+      - if:
+          condition:
+            lambda: "return id(page) == 2;"
+          then:
+            - component.update: epaper_display
+    on_error:
+      - delay: 30s
+      - component.update: far_image
 
 # Fetch the backgrounds as soon as the network is up (boot and reconnects).
 # Merges with the wifi: block from common/base.yaml.
@@ -271,6 +288,22 @@ font:
     id: side_date_font
     size: 34
 
+  # Page 2 (far): clock and a larger weekday/date.
+  - file: "gfonts://Inter@700"
+    id: far_clock_font
+    size: 172
+    glyphs: "0123456789:"
+
+  # Abbreviated weekday: "Wednesday" doesn't fit beside 12:58 at a size
+  # readable across a room.
+  - file: "gfonts://Inter@600"
+    id: far_weekday_font
+    size: 36
+
+  - file: "gfonts://Inter@700"
+    id: far_date_font
+    size: 42
+
 display:
   - platform: epaper_spi
     id: epaper_display
@@ -287,14 +320,24 @@ display:
 
       // Background: the page's Puppet render (white pixels are "on"). Empty
       // until its first download finishes, leaving just the clock.
-      it.image(0, 0, id(page) == 1 ? id(focus_image) : id(dashboard_image),
+      it.image(0, 0,
+               id(page) == 2 ? id(far_image) : id(page) == 1 ? id(focus_image) : id(dashboard_image),
                Color::WHITE, Color::BLACK);
 
       auto now = id(rtc_time).now();
       if (now.is_valid()) {
         int h = now.hour % 12;
         if (h == 0) h = 12;
-        if (id(page) == 1) {
+        if (id(page) == 2) {
+          // Far clock area: x 160-640, y 8-180; weekday and date in the left
+          // column (x 0-160), sized for reading across a room.
+          it.printf(400, 160, id(far_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%d:%02d", h, now.minute);
+          it.printf(82, 80, id(far_weekday_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%s", now.strftime("%a").c_str());
+          it.printf(82, 132, id(far_date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%s %d", now.strftime("%b").c_str(), now.day_of_month);
+        } else if (id(page) == 1) {
           // Big clock area: x 146-654, y 8-184 (left blank by the focus card);
           // weekday and date in the left column above the card's sunrise/sunset.
           it.printf(400, 168, id(big_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,

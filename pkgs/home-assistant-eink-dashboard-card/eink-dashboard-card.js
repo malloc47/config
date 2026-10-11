@@ -28,7 +28,8 @@
 //       state_entity: sensor.dishwasher_operation_state
 //       running_states: [run]                    # default [run]; "pause" shows as paused
 //       progress_entity: sensor.dishwasher_program_progress   # optional "N%"
-//   layout: standard                             # "standard" or "focus" (big clock + outlook)
+//   layout: standard                             # "standard", "focus" (big clock + outlook) or
+//                                                # "far" (focus info, larger, for 6-9 ft away)
 //   outdoor_hours: [7, 22]                       # focus: local hours "outside" for the outlook
 //   cold: 45                                     # focus: °F below which it's coat weather
 //   hot: 85                                      # focus: °F at/above which it's hot
@@ -787,7 +788,7 @@ class EinkDashboardCard extends HTMLElement {
       </div>`;
 
     const standardBody =
-      c.layout === "focus"
+      c.layout === "focus" || c.layout === "far"
         ? ""
         : `
         <section class="hero">
@@ -842,7 +843,35 @@ class EinkDashboardCard extends HTMLElement {
             )
             .join("")}
         </section>`;
-    const outlook = c.layout === "focus" ? [this._outlookRow("today"), this._outlookRow("tomorrow")] : [];
+    const outlook =
+      c.layout === "focus" || c.layout === "far" ? [this._outlookRow("today"), this._outlookRow("tomorrow")] : [];
+    const farBody =
+      c.layout !== "far"
+        ? ""
+        : `
+        <section class="xtop">
+          <div class="xleft${c.show_clock_area ? " outline" : ""}"></div>
+          <div class="xclock${c.show_clock_area ? " outline" : ""}"></div>
+          <div class="xright">
+            ${icon(weather ? this._conditionIcon(weather.state, night && weather.state === "partlycloudy") : "alert-circle-outline", 52)}
+            <div class="v">${temp(wa.temperature)}</div>
+            <div class="in">${icon("home-thermometer-outline", 30)}${inside ? temp(inside.state) : "–"}</div>
+          </div>
+        </section>
+        ${outlook
+          .map(
+            (o) => `
+        <div class="rule"></div>
+        <section class="xrow">
+          ${icon(o.icon, 76)}
+          <div class="lr"><div class="lbl">${esc(o.label)}</div><div class="rng">${esc(o.range)}</div></div>
+          <div class="lr">
+            <div class="txt">${esc(o.text)}</div>
+            <div class="wear">${o.wear ? `${icon(o.wear.icon, 28)}<span>${esc(o.wear.text)}</span>` : ""}</div>
+          </div>
+        </section>`,
+          )
+          .join("")}`;
     const focusBody =
       c.layout !== "focus"
         ? ""
@@ -906,6 +935,7 @@ class EinkDashboardCard extends HTMLElement {
         }
         .screen.standard { grid-template-rows: 186px 1px 118px 1px 122px 52px; }
         .screen.focus { grid-template-rows: 192px 1px 106px 1px 132px 48px; }
+        .screen.far { grid-template-rows: 188px 1px 121px 1px 121px 48px; }
         .icon { fill: #000; flex: none; display: block; }
         .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
         /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
@@ -973,9 +1003,25 @@ class EinkDashboardCard extends HTMLElement {
         .fday .name { font-size: 18px; font-weight: 700; }
         .fday .hl { font-size: 20px; font-weight: 700; }
         .fday .hl .lo { font-weight: 500; }
+
+        /* far layout: the panel draws the clock (x 160-640) and the weekday/date
+           (left column); everything else is sized for reading at 6-9 ft. */
+        .xtop { display: grid; grid-template-columns: 160px 1fr 160px; }
+        .xclock { margin: 8px 0; }
+        .xclock.outline, .xleft.outline { outline: 2px dashed #000; outline-offset: -2px; }
+        .xright { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; }
+        .xright .v { font-size: 64px; font-weight: 700; line-height: 1; }
+        .xright .in { display: flex; align-items: center; gap: 4px; font-size: 30px; font-weight: 700; margin-top: 4px; }
+        .xrow { display: grid; grid-template-columns: 84px 216px 1fr; align-items: center; column-gap: 14px; padding: 0 16px; }
+        .xrow .lr { display: flex; flex-direction: column; }
+        .xrow .lbl { font-size: 26px; font-weight: 700; }
+        .xrow .rng { font-size: 56px; font-weight: 700; line-height: 1.05; white-space: nowrap; }
+        .xrow .txt { font-size: 34px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .xrow .wear { display: flex; align-items: center; gap: 8px; font-size: 27px; font-weight: 600;
+          white-space: nowrap; overflow: hidden; margin-top: 6px; }
       </style>
-      <div class="screen ${c.layout === "focus" ? "focus" : "standard"}">
-${c.layout === "focus" ? focusBody : standardBody}
+      <div class="screen ${["focus", "far"].includes(c.layout) ? c.layout : "standard"}">
+${c.layout === "focus" ? focusBody : c.layout === "far" ? farBody : standardBody}
         <footer>
           ${
             bannerItems.length

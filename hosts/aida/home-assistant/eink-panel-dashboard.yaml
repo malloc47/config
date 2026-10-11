@@ -63,3 +63,26 @@ views:
         outdoor_hours: [7, 22]
         cold: 45
         hot: 85
+  # Page 2: the focus information sized for reading at 6-9 ft (frame-mounted
+  # panels): bigger date and current temperatures beside the clock, and big
+  # Today/Tomorrow rows instead of the multi-day forecast.
+  - title: Far
+    path: far
+    panel: true
+    cards:
+      - type: custom:eink-dashboard-card
+        layout: far
+        weather_entity: weather.nws_khpn
+        fallback_weather_entity: weather.forecast_home
+        inside_entity: sensor.bedroom_climate_sensor_temperature
+        battery_entity: sensor.e1001_clock_battery_level
+        external_power_entity: binary_sensor.e1001_clock_external_power
+        doors_entity: binary_sensor.perimeter_doors
+        appliances:
+          - name: Dishwasher
+            icon: dishwasher
+            state_entity: sensor.dishwasher_operation_state
+            progress_entity: sensor.dishwasher_program_progress
+        outdoor_hours: [7, 22]
+        cold: 45
+        hot: 85
