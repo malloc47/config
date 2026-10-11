@@ -296,6 +296,12 @@ in
       # adding the integration via the UI. Without this component the config flow
       # 500s with "Invalid handler".
       "home_connect"
+      # National Weather Service forecasts (packages pynws): the e-ink panel's
+      # primary weather source (7 days of day/night periods and hourly
+      # forecasts with precipitation probability; met.no stays as its
+      # fallback). Added via the config flow; its "API key" is just a contact
+      # string NWS asks clients to send.
+      "nws"
       # LG ThinQ appliances via the cloud API (packages thinqconnect).
       # Added via the UI config flow; credentials stay in HA's state directory.
       "lg_thinq"
@@ -363,8 +369,12 @@ in
               entity_id = perimeterDoors ++ [ "input_text.eink_banner" ];
             }
             {
+              # NWS (the panel's primary source) and met.no (its fallback).
               trigger = "state";
-              entity_id = "weather.forecast_home";
+              entity_id = [
+                "weather.nws_khpn"
+                "weather.forecast_home"
+              ];
             }
             {
               trigger = "homeassistant";

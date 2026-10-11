@@ -7,7 +7,7 @@
 # refresh. Two pages, switched with the left/right buttons; both backgrounds
 # are prefetched, so switching needs no network:
 #   0  /eink-panel/clock  dashboard, clock in x 214-586, y 10-176
-#   1  /eink-panel/focus  big clock in x 146-654, y 8-170, weekday/date in the
+#   1  /eink-panel/focus  big clock in x 146-654, y 8-184, weekday/date in the
 #                         left column; today/tomorrow outlook below
 substitutions:
   name: e1001-clock
@@ -282,13 +282,13 @@ display:
         int h = now.hour % 12;
         if (h == 0) h = 12;
         if (id(page) == 1) {
-          // Big clock area: x 146-654, y 8-170 (left blank by the focus card);
+          // Big clock area: x 146-654, y 8-184 (left blank by the focus card);
           // weekday and date in the left column above the card's sunrise/sunset.
-          it.printf(400, 158, id(big_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+          it.printf(400, 168, id(big_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%d:%02d", h, now.minute);
-          it.printf(73, 62, id(side_weekday_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+          it.printf(73, 70, id(side_weekday_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%s", now.strftime("%A").c_str());
-          it.printf(73, 104, id(side_date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+          it.printf(73, 112, id(side_date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%s %d", now.strftime("%b").c_str(), now.day_of_month);
         } else {
           // Clock area: x 214-586, y 10-176 (left blank by the card).

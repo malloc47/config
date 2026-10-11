@@ -11,7 +11,9 @@
 //
 // Config:
 //   type: custom:eink-dashboard-card
-//   weather_entity: weather.forecast_home        # current conditions + forecasts
+//   weather_entity: weather.nws_khpn             # current conditions + forecasts
+//   fallback_weather_entity: weather.forecast_home  # optional; used while the primary is down
+//   rain_probability: 50                         # % at which an hour counts as rainy (when given)
 //   inside_entity: sensor.<indoor temperature>
 //   sun_entity: sun.sun                          # optional, next sunrise/sunset
 //   battery_entity: sensor.<panel battery %>     # optional
@@ -195,7 +197,8 @@ class EinkDashboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this._forecasts = { hourly: null, daily: null };
+    // Forecast subscriptions' latest data, keyed "<entity_id>|<forecast_type>".
+    this._fc = {};
     this._banner = "";
     // Active subscriptions by key ("hourly", "daily", "banner"): a promise of
     // the unsubscribe function, or a retry deadline after a failed subscribe.
@@ -213,6 +216,7 @@ class EinkDashboardCard extends HTMLElement {
       show_clock_area: false,
       hide_toasts: true,
       layout: "standard",
+      rain_probability: 50,
       outdoor_hours: [7, 22],
       cold: 45,
       hot: 85,
@@ -301,10 +305,21 @@ class EinkDashboardCard extends HTMLElement {
     if (!this._hass || !this._config || !this.isConnected) return;
     const conn = this._hass.connection;
     this._subscribedFor = conn;
-    const wanted = {
-      hourly: { type: "weather/subscribe_forecast", forecast_type: "hourly", entity_id: this._config.weather_entity },
-      daily: { type: "weather/subscribe_forecast", forecast_type: "daily", entity_id: this._config.weather_entity },
-    };
+    // Hourly plus daily forecasts for the primary and fallback weather entities,
+    // using twice_daily (day/night periods, e.g. NWS) where daily isn't offered.
+    // Entities not loaded yet are picked up on a later update.
+    const wanted = {};
+    for (const entity of [this._config.weather_entity, this._config.fallback_weather_entity].filter(Boolean)) {
+      const sf = this._hass.states[entity]?.attributes?.supported_features;
+      if (sf === undefined) continue;
+      const types = [];
+      if (sf & 2) types.push("hourly");
+      if (sf & 1) types.push("daily");
+      else if (sf & 4) types.push("twice_daily");
+      for (const type of types) {
+        wanted[`${entity}|${type}`] = { type: "weather/subscribe_forecast", forecast_type: type, entity_id: entity };
+      }
+    }
     if (this._config.banner_template) {
       wanted.banner = {
         type: "render_template",
@@ -322,7 +337,7 @@ class EinkDashboardCard extends HTMLElement {
           if (!("result" in m)) return;
           this._banner = String(m.result ?? "").trim();
         } else {
-          this._forecasts[key] = m.forecast || [];
+          this._fc[key] = m.forecast || [];
         }
         this._schedule();
       };
@@ -386,10 +401,63 @@ class EinkDashboardCard extends HTMLElement {
     return night ? this._nightIcon(condition) : CONDITION_ICON[condition] || "alert-circle-outline";
   }
 
+  // The weather source for this render: the primary entity, or the fallback
+  // while the primary is unavailable or has no forecasts yet. Daily forecasts
+  // are normalized to one entry per day (twice_daily periods paired up).
+  _src() {
+    if (this._srcCache) return this._srcCache;
+    const pick = (entity) => {
+      const state = entity && this._hass.states[entity];
+      if (!state) return null;
+      const hourly = this._fc[`${entity}|hourly`] || [];
+      const daily = this._fc[`${entity}|daily`] || this._pairTwiceDaily(this._fc[`${entity}|twice_daily`] || []);
+      const ok = !["unavailable", "unknown"].includes(state.state) && hourly.length > 0 && daily.length > 0;
+      return { entity, state, hourly, daily, ok };
+    };
+    const primary = pick(this._config.weather_entity);
+    const fallback = pick(this._config.fallback_weather_entity);
+    this._srcCache = (primary?.ok ? primary : fallback?.ok ? fallback : primary) || {
+      entity: this._config.weather_entity,
+      state: undefined,
+      hourly: [],
+      daily: [],
+      ok: false,
+    };
+    return this._srcCache;
+  }
+
+  // Day/night periods -> daily entries: the day period's high and condition,
+  // the following night's low, and the higher precipitation probability.
+  _pairTwiceDaily(periods) {
+    const days = new Map();
+    for (const p of periods) {
+      const date = this._local(p.datetime).date;
+      if (!days.has(date)) days.set(date, { datetime: p.datetime });
+      const d = days.get(date);
+      if (p.is_daytime) {
+        Object.assign(d, { datetime: p.datetime, condition: p.condition, temperature: p.temperature });
+      } else {
+        d.templow = p.temperature;
+        d.condition = d.condition || p.condition;
+      }
+      if (p.precipitation_probability != null) {
+        d.precipitation_probability = Math.max(d.precipitation_probability ?? 0, p.precipitation_probability);
+      }
+    }
+    return [...days.values()];
+  }
+
+  // A day's / bucket's precipitation: probability when the source gives one,
+  // else the amount.
+  _precipText(prob, amount) {
+    if (prob != null) return `${Math.round(prob)}%`;
+    return precip(amount, this._src().state?.attributes?.precipitation_unit || "");
+  }
+
   // Next three morning/afternoon/night buckets from the hourly forecast,
   // starting with whatever is left of the current one (if 2+ hours remain).
   _buckets() {
-    const hourly = this._forecasts.hourly || [];
+    const hourly = this._src().hourly;
     const today = this._local(Date.now()).date;
     const groups = new Map();
     for (const f of hourly) {
@@ -426,12 +494,15 @@ class EinkDashboardCard extends HTMLElement {
           temp: temps.length ? (night ? Math.min(...temps) : Math.max(...temps)) : null,
           tempLabel: night ? "Low" : "High",
           precip: g.hours.reduce((s, h) => s + (num(h.precipitation) || 0), 0),
+          prob: g.hours.some((h) => h.precipitation_probability != null)
+            ? Math.max(...g.hours.map((h) => h.precipitation_probability ?? 0))
+            : null,
         };
       });
   }
 
   _days() {
-    const daily = this._forecasts.daily || [];
+    const daily = this._src().daily;
     const today = this._local(Date.now()).date;
     const fromToday = this._config.days_include_today;
     return daily
@@ -440,7 +511,7 @@ class EinkDashboardCard extends HTMLElement {
   }
 
   _todayHiLo() {
-    const daily = this._forecasts.daily || [];
+    const daily = this._src().daily;
     const today = this._local(Date.now()).date;
     return daily.find((f) => this._local(f.datetime).date === today);
   }
@@ -505,12 +576,15 @@ class EinkDashboardCard extends HTMLElement {
 
   // °F for classification, whatever the weather entity reports in.
   _toF(t) {
-    const unit = this._hass.states[this._config.weather_entity]?.attributes?.temperature_unit;
+    const unit = this._src().state?.attributes?.temperature_unit;
     return unit === "°C" ? (t * 9) / 5 + 32 : t;
   }
 
   _isWet(f) {
-    const unit = this._hass.states[this._config.weather_entity]?.attributes?.precipitation_unit;
+    // With a probability (e.g. NWS), it's rainy when likely enough; otherwise
+    // go by amount or a wet condition.
+    if (f.precipitation_probability != null) return f.precipitation_probability >= this._config.rain_probability;
+    const unit = this._src().state?.attributes?.precipitation_unit;
     const min = unit === "mm" ? 0.25 : 0.01;
     return (
       (num(f.precipitation) || 0) >= min ||
@@ -526,7 +600,7 @@ class EinkDashboardCard extends HTMLElement {
     const d = new Date(`${now.date}T12:00:00Z`);
     d.setUTCDate(d.getUTCDate() + 1);
     const tomorrow = d.toISOString().slice(0, 10);
-    const hours = (this._forecasts.hourly || []).map((f) => {
+    const hours = this._src().hourly.map((f) => {
       const l = this._local(f.datetime);
       return { ...f, h: l.date === now.date ? l.hour : l.date === tomorrow ? l.hour + 24 : 99 };
     });
@@ -544,12 +618,24 @@ class EinkDashboardCard extends HTMLElement {
     const label = kind === "tomorrow" ? "Tomorrow" : tonight ? "Tonight" : "Today";
     if (!hours.length) return { label, icon: "alert-circle-outline", text: "No forecast", range: "", wear: null };
 
-    const unit = this._hass.states[this._config.weather_entity]?.attributes?.precipitation_unit || "";
+    const unit = this._src().state?.attributes?.precipitation_unit || "";
     const temps = hours.map((f) => num(f.temperature)).filter((t) => t !== null);
     const lo = Math.min(...temps);
     const hi = Math.max(...temps);
     const conds = hours.map((f) => f.condition);
     const worst = conds.reduce((a, b) => ((CONDITION_RANK[b] || 0) > (CONDITION_RANK[a] || 0) ? b : a));
+    // Most common condition, with "wet" conditions read as cloudy: for a dry
+    // window it's a better icon/description than the single worst hour (NWS
+    // tags slight-chance hours as rainy).
+    const WET = ["rainy", "pouring", "lightning-rainy", "lightning", "snowy", "snowy-rainy", "hail", "exceptional"];
+    const counts = {};
+    for (const c of conds) {
+      const k = WET.includes(c) ? "cloudy" : c;
+      counts[k] = (counts[k] || 0) + 1;
+    }
+    const usual = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+    const pops = hours.map((f) => f.precipitation_probability).filter((v) => v != null);
+    const maxPop = pops.length ? Math.max(...pops) : null;
     const nightish = tonight;
 
     // Rain spans: consecutive wet hours, bridging single dry hours.
@@ -580,7 +666,13 @@ class EinkDashboardCard extends HTMLElement {
       };
       const parts = spans.slice(0, 2).map((sp, i) => describe(sp, i === 0)).filter(Boolean);
       const total = wet.reduce((sum, f) => sum + (num(f.precipitation) || 0), 0);
-      text = `${parts.join(", ")}${spans.length > 2 ? ", …" : ""}${total >= 0.005 ? ` (${precip(total, unit)})` : ""}`;
+      const probs = wet.map((f) => f.precipitation_probability).filter((v) => v != null);
+      const amount = probs.length
+        ? ` (${Math.max(...probs)}%)`
+        : total >= 0.005
+          ? ` (${precip(total, unit)})`
+          : "";
+      text = `${parts.join(", ")}${spans.length > 2 ? ", …" : ""}${amount}`;
     } else {
       const sky = {
         sunny: tonight ? "clear" : "sunny",
@@ -590,8 +682,13 @@ class EinkDashboardCard extends HTMLElement {
         fog: "foggy",
         windy: "windy",
         "windy-variant": "windy",
-      }[worst];
-      text = sky ? `Dry, ${sky}` : "Dry";
+      }[usual];
+      if (maxPop !== null && maxPop >= 20) {
+        const Sky = sky ? sky[0].toUpperCase() + sky.slice(1) : "Mostly dry";
+        text = `${Sky}, ${maxPop}% chance of rain`;
+      } else {
+        text = sky ? `Dry, ${sky}` : "Dry";
+      }
     }
 
     // Dress for the coldest outdoor hour; flag heat separately.
@@ -616,7 +713,7 @@ class EinkDashboardCard extends HTMLElement {
 
     return {
       label,
-      icon: this._conditionIcon(worst, nightish),
+      icon: this._conditionIcon(spans.length ? worst : usual, nightish),
       text,
       range: Math.round(lo) === Math.round(hi) ? temp(lo) : `${Math.round(lo)}–${temp(hi)}`,
       wear,
@@ -625,6 +722,7 @@ class EinkDashboardCard extends HTMLElement {
 
   _render() {
     if (!this._hass || !this._config) return;
+    this._srcCache = null;
     // Try the full door list first; if it overflows the banner, re-render once
     // with the doors collapsed into a single summary item.
     this._renderScreen(false);
@@ -636,7 +734,7 @@ class EinkDashboardCard extends HTMLElement {
 
   _renderScreen(compactDoors) {
     const c = this._config;
-    const weather = this._hass.states[c.weather_entity];
+    const weather = this._src().state;
     const inside = c.inside_entity && this._hass.states[c.inside_entity];
     const sun = this._hass.states[c.sun_entity];
     const night = sun ? sun.state === "below_horizon" : false;
@@ -673,11 +771,10 @@ class EinkDashboardCard extends HTMLElement {
             </div>
             <div class="now-cond">${esc(CONDITION_TEXT[weather?.state] || weather?.state || "Unavailable")}</div>
             ${
-              hilo
-                ? `<div class="hilo"><span>${icon("arrow-up", 16)}${temp(hilo.temperature)}</span><span>${icon(
-                    "arrow-down",
-                    16,
-                  )}${temp(hilo.templow)}</span></div>`
+              hilo && (num(hilo.temperature) !== null || num(hilo.templow) !== null)
+                ? `<div class="hilo">${
+                    num(hilo.temperature) !== null ? `<span>${icon("arrow-up", 16)}${temp(hilo.temperature)}</span>` : ""
+                  }${num(hilo.templow) !== null ? `<span>${icon("arrow-down", 16)}${temp(hilo.templow)}</span>` : ""}</div>`
                 : ""
             }
           </div>
@@ -698,7 +795,7 @@ class EinkDashboardCard extends HTMLElement {
               <div>
                 <div class="name">${esc(b.label)}</div>
                 <div class="t">${temp(b.temp)}</div>
-                <div class="meta">${icon("water", 16)}${esc(precip(b.precip, unit))}</div>
+                <div class="meta">${icon("water", 16)}${esc(this._precipText(b.prob, b.precip))}</div>
               </div>
             </div>`,
             )
@@ -713,7 +810,7 @@ class EinkDashboardCard extends HTMLElement {
               <div class="name">${esc(this._weekday(d.datetime))}</div>
               ${icon(CONDITION_ICON[d.condition] || "alert-circle-outline", 36)}
               <div class="hl">${temp(d.temperature)} <span class="lo">/ ${temp(d.templow)}</span></div>
-              <div class="meta">${icon("water", 15)}${esc(precip(d.precipitation, unit))}</div>
+              <div class="meta">${icon("water", 15)}${esc(this._precipText(d.precipitation_probability, d.precipitation))}</div>
             </div>`,
             )
             .join("")}
@@ -761,7 +858,7 @@ class EinkDashboardCard extends HTMLElement {
               <div class="name">${esc(this._local(d.datetime).date === this._local(Date.now()).date ? "Today" : this._weekday(d.datetime))}</div>
               ${icon(CONDITION_ICON[d.condition] || "alert-circle-outline", 40)}
               <div class="hl">${temp(d.temperature)} <span class="lo">/ ${temp(d.templow)}</span></div>
-              <div class="meta">${icon("water", 15)}${esc(precip(d.precipitation, unit))}</div>
+              <div class="meta">${icon("water", 15)}${esc(this._precipText(d.precipitation_probability, d.precipitation))}</div>
             </div>`,
             )
             .join("")}
@@ -781,7 +878,7 @@ class EinkDashboardCard extends HTMLElement {
           display: grid;
         }
         .screen.standard { grid-template-rows: 186px 1px 118px 1px 122px 52px; }
-        .screen.focus { grid-template-rows: 178px 1px 120px 1px 132px 48px; }
+        .screen.focus { grid-template-rows: 192px 1px 106px 1px 132px 48px; }
         .icon { fill: #000; flex: none; display: block; }
         .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
         /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
@@ -826,8 +923,8 @@ class EinkDashboardCard extends HTMLElement {
         .spacer { flex: 1; }
         .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; }
 
-        /* focus layout: the panel draws the clock (x 146-654) and the weekday/date
-           (left column, y 24-112); the card fills the rest. */
+        /* focus layout: the panel draws the clock (x 146-654, y 8-184) and the
+           weekday/date (left column, y 30-120); the card fills the rest. */
         .ftop { display: grid; grid-template-columns: 146px 1fr 146px; }
         .fleft { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 16px; }
         .fclock { margin: 8px 0; }
@@ -838,7 +935,7 @@ class EinkDashboardCard extends HTMLElement {
         .fright .v { font-size: 38px; font-weight: 700; line-height: 1; }
         .fright .t { font-size: 17px; font-weight: 600; }
         .fright .in { display: flex; align-items: center; gap: 4px; font-size: 24px; font-weight: 700; margin-top: 6px; }
-        .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 4px 16px; }
+        .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 2px 16px; }
         .orow { display: grid; grid-template-columns: 40px 124px 104px 1fr auto; align-items: center; column-gap: 10px; }
         .orow .lbl { font-size: 22px; font-weight: 700; }
         .orow .rng { font-size: 24px; font-weight: 700; }

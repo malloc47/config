@@ -11,7 +11,10 @@ views:
     panel: true
     cards:
       - type: custom:eink-dashboard-card
-        weather_entity: weather.forecast_home
+        # NWS (official forecast, with precipitation probabilities); met.no takes
+        # over while it's unavailable.
+        weather_entity: weather.nws_khpn
+        fallback_weather_entity: weather.forecast_home
         inside_entity: sensor.bedroom_climate_sensor_temperature
         sun_entity: sun.sun
         battery_entity: sensor.e1001_clock_battery_level
@@ -32,15 +35,17 @@ views:
     cards:
       - type: custom:eink-dashboard-card
         layout: focus
-        weather_entity: weather.forecast_home
+        # NWS (official forecast, with precipitation probabilities); met.no takes
+        # over while it's unavailable.
+        weather_entity: weather.nws_khpn
+        fallback_weather_entity: weather.forecast_home
         inside_entity: sensor.bedroom_climate_sensor_temperature
         sun_entity: sun.sun
         battery_entity: sensor.e1001_clock_battery_level
         external_power_entity: binary_sensor.e1001_clock_external_power
         doors_entity: binary_sensor.perimeter_doors
-        # met.no forecasts today + 5 days, so 6 columns means starting at today.
+        # NWS forecasts 6 days past today (met.no, the fallback, only 5).
         days: 6
-        days_include_today: true
         # Hours you're likely to be outside (local), and the °F thresholds for
         # the clothing hint.
         outdoor_hours: [7, 22]
