@@ -91,23 +91,30 @@ const ICONS = {
   "bell-outline": "M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z",
 };
 
-// Static Inter instances autohinted at build time (see default.nix). With
-// Puppet's Chromium rasterizing text 1-bit (no anti-aliasing), the hinting keeps
-// stems even and stops small features like i-dots dropping out; anti-aliased
-// text thresholded to black/white came out blobby.
-const FONT_WEIGHTS = [500, 600, 700];
+// DejaVu Sans, whose hand-tuned TrueType hinting holds up best in Puppet's
+// 1-bit text rendering (Inter, even autohinted, came out with notched joins
+// at 15-21px). Book serves weights up to 500, Bold 600 and up; the condensed
+// family is available for tight spots.
+const FONT_FACES = [
+  ["EinkSans", "DejaVuSans.ttf", [400, 500]],
+  ["EinkSans", "DejaVuSans-Bold.ttf", [600, 700]],
+  ["EinkSansCondensed", "DejaVuSansCondensed.ttf", [400, 500]],
+  ["EinkSansCondensed", "DejaVuSansCondensed-Bold.ttf", [600, 700]],
+];
 
 // @font-face has no effect inside a shadow root, so register it on the document.
 if (!document.getElementById("eink-dashboard-card-font")) {
   const style = document.createElement("style");
   style.id = "eink-dashboard-card-font";
-  style.textContent = FONT_WEIGHTS.map(
-    (w) => `@font-face {
-    font-family: "EinkInter";
-    src: url("${new URL(`./Inter-${w}.ttf`, import.meta.url).href}") format("truetype");
+  style.textContent = FONT_FACES.flatMap(([family, file, weights]) =>
+    weights.map(
+      (w) => `@font-face {
+    font-family: "${family}";
+    src: url("${new URL(`./${file}`, import.meta.url).href}") format("truetype");
     font-weight: ${w};
     font-display: block;
   }`,
+    ),
   ).join("\n");
   document.head.appendChild(style);
 }
@@ -928,7 +935,7 @@ class EinkDashboardCard extends HTMLElement {
         .screen {
           position: relative; width: 800px; height: 480px; overflow: hidden;
           background: #fff; color: #000;
-          font-family: "EinkInter", sans-serif; font-feature-settings: "tnum" 1;
+          font-family: "EinkSans", sans-serif; font-feature-settings: "tnum" 1;
           font-size: 16px; font-weight: 500; line-height: normal; letter-spacing: normal;
           text-align: left; text-transform: none; white-space: normal;
           display: grid;
@@ -969,11 +976,11 @@ class EinkDashboardCard extends HTMLElement {
         .day .hl .lo { font-weight: 500; }
 
         footer { display: flex; align-items: stretch; gap: 10px; padding: 6px 10px 8px; min-width: 0; }
-        .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 20px; overflow: hidden;
+        .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 16px; overflow: hidden;
           background: #000; color: #fff; border-radius: 8px; padding: 0 14px; }
         .banner .icon { fill: #fff; }
         .banner .item { display: inline-flex; align-items: center; gap: 6px; flex: none;
-          font-size: 19px; font-weight: 600; white-space: nowrap; }
+          font-family: "EinkSansCondensed", sans-serif; font-size: 19px; font-weight: 600; white-space: nowrap; }
         /* The message and the door summary shrink and ellipsize; door items don't. */
         .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
         .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
@@ -993,11 +1000,12 @@ class EinkDashboardCard extends HTMLElement {
         .fright .t { font-size: 17px; font-weight: 600; }
         .fright .in { display: flex; align-items: center; gap: 4px; font-size: 24px; font-weight: 700; margin-top: 6px; }
         .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 2px 16px; }
-        .orow { display: grid; grid-template-columns: 40px 124px 104px 1fr auto; align-items: center; column-gap: 10px; }
-        .orow .lbl { font-size: 22px; font-weight: 700; }
-        .orow .rng { font-size: 24px; font-weight: 700; }
-        .orow .txt { font-size: 21px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .orow .wear { display: flex; align-items: center; gap: 6px; font-size: 19px; font-weight: 600; white-space: nowrap; }
+        .orow { display: grid; grid-template-columns: 40px 122px 100px 1fr auto; align-items: center; column-gap: 10px; }
+        .orow .lbl { font-size: 21px; font-weight: 700; }
+        .orow .rng { font-size: 23px; font-weight: 700; }
+        .orow .txt { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .orow .wear { display: flex; align-items: center; gap: 6px; font-family: "EinkSansCondensed", sans-serif;
+          font-size: 18px; font-weight: 600; white-space: nowrap; }
         .fdays { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
         .fday { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
         .fday .name { font-size: 18px; font-weight: 700; }
@@ -1016,8 +1024,10 @@ class EinkDashboardCard extends HTMLElement {
         .xrow .lr { display: flex; flex-direction: column; }
         .xrow .lbl { font-size: 26px; font-weight: 700; }
         .xrow .rng { font-size: 56px; font-weight: 700; line-height: 1.05; white-space: nowrap; }
-        .xrow .txt { font-size: 34px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .xrow .wear { display: flex; align-items: center; gap: 8px; font-size: 27px; font-weight: 600;
+        .xrow .txt { font-family: "EinkSansCondensed", sans-serif; font-size: 34px; font-weight: 700;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .xrow .wear { display: flex; align-items: center; gap: 8px; font-family: "EinkSansCondensed", sans-serif;
+          font-size: 28px; font-weight: 600;
           white-space: nowrap; overflow: hidden; margin-top: 6px; }
       </style>
       <div class="screen ${["focus", "far"].includes(c.layout) ? c.layout : "standard"}">
