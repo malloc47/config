@@ -148,10 +148,14 @@ http_request:
   timeout: 20s
   watchdog_timeout: 25s
 
-# Which page is on screen (see the header). Not restored across reboots.
+# Which page is on screen (see the header). Restored from flash (NVS) at boot,
+# so the selection survives reboots, power loss and OTA updates (NVS isn't
+# touched by OTA; the slot is keyed by the id, so keep it "page"). It's local,
+# so HA outages don't affect it.
 globals:
   - id: page
     type: int
+    restore_value: true
     initial_value: "0"
 
 script:
@@ -162,8 +166,17 @@ script:
       p: int
     then:
       - lambda: "id(page) = p;"
+      - script.execute: persist_page
       - epaper_spi.full_update_next: epaper_display
       - component.update: epaper_display
+  # Flush the new page to flash now rather than at the next 60s preferences
+  # write, so a reboot/OTA right after switching keeps it. Delayed so the
+  # globals component has stored the value first; restarts on rapid presses.
+  - id: persist_page
+    mode: restart
+    then:
+      - delay: 2s
+      - lambda: "global_preferences->sync();"
   # Re-fetch every page's background (HA pushes, the HA button, Wi-Fi up).
   - id: refresh_backgrounds
     then:
