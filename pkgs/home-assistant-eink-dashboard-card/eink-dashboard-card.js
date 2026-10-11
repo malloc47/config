@@ -22,6 +22,12 @@
 //   days_include_today: false                    # start the daily columns with today
 //   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
 //   doors_entity: binary_sensor.perimeter_doors  # group whose open members join the banner
+//   appliances:                                  # banner items while an appliance is running
+//     - name: Dishwasher
+//       icon: dishwasher                         # dishwasher / washing-machine / tumble-dryer
+//       state_entity: sensor.dishwasher_operation_state
+//       running_states: [run]                    # default [run]; "pause" shows as paused
+//       progress_entity: sensor.dishwasher_program_progress   # optional "N%"
 //   layout: standard                             # "standard" or "focus" (big clock + outlook)
 //   outdoor_hours: [7, 22]                       # focus: local hours "outside" for the outlook
 //   cold: 45                                     # focus: °F below which it's coat weather
@@ -78,6 +84,9 @@ const ICONS = {
   "snowflake": "M20.79,13.95L18.46,14.57L16.46,13.44V10.56L18.46,9.43L20.79,10.05L21.31,8.12L19.54,7.65L20,5.88L18.07,5.36L17.45,7.69L15.45,8.82L13,7.38V5.12L14.71,3.41L13.29,2L12,3.29L10.71,2L9.29,3.41L11,5.12V7.38L8.5,8.82L6.5,7.69L5.92,5.36L4,5.88L4.47,7.65L2.7,8.12L3.22,10.05L5.55,9.43L7.55,10.56V13.45L5.55,14.58L3.22,13.96L2.7,15.89L4.47,16.36L4,18.12L5.93,18.64L6.55,16.31L8.55,15.18L11,16.62V18.88L9.29,20.59L10.71,22L12,20.71L13.29,22L14.7,20.59L13,18.88V16.62L15.5,15.17L17.5,16.3L18.12,18.63L20,18.12L19.53,16.35L21.3,15.88L20.79,13.95M9.5,10.56L12,9.11L14.5,10.56V13.44L12,14.89L9.5,13.44V10.56Z",
   "thermometer-high": "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5H11A1 1 0 0 1 12 4Z",
   "sunglasses": "M7,17H4C2.38,17 0.96,15.74 0.76,14.14L0.26,11.15C0.15,10.3 0.39,9.5 0.91,8.92C1.43,8.34 2.19,8 3,8H9C9.83,8 10.58,8.35 11.06,8.96C11.17,9.11 11.27,9.27 11.35,9.45C11.78,9.36 12.22,9.36 12.64,9.45C12.72,9.27 12.82,9.11 12.94,8.96C13.41,8.35 14.16,8 15,8H21C21.81,8 22.57,8.34 23.09,8.92C23.6,9.5 23.84,10.3 23.74,11.11L23.23,14.18C23.04,15.74 21.61,17 20,17H17C15.44,17 13.92,15.81 13.54,14.3L12.64,11.59C12.26,11.31 11.73,11.31 11.35,11.59L10.43,14.37C10.07,15.82 8.56,17 7,17Z",
+  "dishwasher": "M18,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V4A2,2 0 0,0 18,2M10,4A1,1 0 0,1 11,5A1,1 0 0,1 10,6A1,1 0 0,1 9,5A1,1 0 0,1 10,4M7,4A1,1 0 0,1 8,5A1,1 0 0,1 7,6A1,1 0 0,1 6,5A1,1 0 0,1 7,4M18,20H6V8H18V20M14.67,15.33C14.69,16.03 14.41,16.71 13.91,17.21C12.86,18.26 11.15,18.27 10.09,17.21C9.59,16.71 9.31,16.03 9.33,15.33C9.4,14.62 9.63,13.94 10,13.33C10.37,12.5 10.81,11.73 11.33,11L12,10C13.79,12.59 14.67,14.36 14.67,15.33",
+  "washing-machine": "M14.83,11.17C16.39,12.73 16.39,15.27 14.83,16.83C13.27,18.39 10.73,18.39 9.17,16.83L14.83,11.17M6,2H18A2,2 0 0,1 20,4V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2M7,4A1,1 0 0,0 6,5A1,1 0 0,0 7,6A1,1 0 0,0 8,5A1,1 0 0,0 7,4M10,4A1,1 0 0,0 9,5A1,1 0 0,0 10,6A1,1 0 0,0 11,5A1,1 0 0,0 10,4M12,8A6,6 0 0,0 6,14A6,6 0 0,0 12,20A6,6 0 0,0 18,14A6,6 0 0,0 12,8Z",
+  "tumble-dryer": "M6,2H18A2,2 0 0,1 20,4V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2M7,4A1,1 0 0,0 6,5A1,1 0 0,0 7,6A1,1 0 0,0 8,5A1,1 0 0,0 7,4M10,4A1,1 0 0,0 9,5A1,1 0 0,0 10,6A1,1 0 0,0 11,5A1,1 0 0,0 10,4M12,8A6,6 0 0,0 6,14A6,6 0 0,0 12,20A6,6 0 0,0 18,14A6,6 0 0,0 12,8M8.11,10.5H10C9.76,11.88 10,12.67 10.58,13.29C11.68,14.36 12.16,15.71 11.89,17.5H10C10.24,16.12 10,15.33 9.42,14.71C8.32,13.64 7.85,12.29 8.11,10.5M12.11,10.5H14C13.76,11.88 14,12.67 14.58,13.29C15.68,14.36 16.16,15.71 15.89,17.5H14C14.24,16.12 14,15.33 13.42,14.71C12.32,13.64 11.85,12.29 12.11,10.5Z",
   "bell-outline": "M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z",
 };
 
@@ -217,6 +226,7 @@ class EinkDashboardCard extends HTMLElement {
       hide_toasts: true,
       layout: "standard",
       rain_probability: 50,
+      appliances: [],
       outdoor_hours: [7, 22],
       cold: 45,
       hot: 85,
@@ -545,6 +555,22 @@ class EinkDashboardCard extends HTMLElement {
       });
   }
 
+  // Running appliances as banner items: icon + "<name> <progress>%" (with
+  // "paused" mid-cycle). Nothing when idle, finished or unavailable.
+  _appliances() {
+    return (this._config.appliances || [])
+      .map((a) => {
+        const st = this._hass.states[a.state_entity]?.state;
+        const running = (a.running_states || ["run"]).includes(st);
+        const paused = st === "pause";
+        if (!running && !paused) return null;
+        const pct = a.progress_entity ? num(this._hass.states[a.progress_entity]?.state) : null;
+        const parts = [a.name, paused ? "paused" : null, pct !== null ? `${Math.round(pct)}%` : null];
+        return { icon: a.icon || "dishwasher", text: parts.filter(Boolean).join(" ") };
+      })
+      .filter(Boolean);
+  }
+
   _sunEvent() {
     const sun = this._hass.states[this._config.sun_entity];
     if (!sun) return null;
@@ -748,6 +774,7 @@ class EinkDashboardCard extends HTMLElement {
     const doors = this._openDoors();
     const bannerItems = [
       ...(this._banner ? [{ icon: "bell-outline", text: this._banner, shrink: true }] : []),
+      ...this._appliances(),
       ...(compactDoors
         ? [{ icon: "door-open", text: `${doors.length} open: ${doors.map((d) => d.text).join(", ")}`, shrink: true }]
         : doors),

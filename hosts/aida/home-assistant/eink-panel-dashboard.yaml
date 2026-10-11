@@ -23,6 +23,12 @@ views:
         # Open members of this binary sensor group (perimeter doors, defined in
         # home-automation.nix) are listed in the banner with a door icon.
         doors_entity: binary_sensor.perimeter_doors
+        # Shown in the banner (icon + progress) only while running/paused.
+        appliances:
+          - name: Dishwasher
+            icon: dishwasher
+            state_entity: sensor.dishwasher_operation_state
+            progress_entity: sensor.dishwasher_program_progress
         # Omit banner_template to use the card's default message,
         # input_text.eink_banner. Any Jinja works here; an empty result shows
         # just the doors (or hides the banner if none are open).
@@ -44,6 +50,12 @@ views:
         battery_entity: sensor.e1001_clock_battery_level
         external_power_entity: binary_sensor.e1001_clock_external_power
         doors_entity: binary_sensor.perimeter_doors
+        # Shown in the banner (icon + progress) only while running/paused.
+        appliances:
+          - name: Dishwasher
+            icon: dishwasher
+            state_entity: sensor.dishwasher_operation_state
+            progress_entity: sensor.dishwasher_program_progress
         # NWS forecasts 6 days past today (met.no, the fallback, only 5).
         days: 6
         # Hours you're likely to be outside (local), and the °F thresholds for

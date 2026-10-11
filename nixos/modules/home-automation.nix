@@ -355,8 +355,10 @@ in
       # Push a dashboard refresh to the e1001-clock panel (Puppet re-render +
       # download) when something it shows changes, instead of waiting for its
       # 15-minute poll: banner message, perimeter doors, weather updates (state
-      # or attributes), and HA start (deploys restart HA and Puppet; wait until
-      # entities have loaded). `restart` + a short delay coalesces bursts.
+      # or attributes), the dishwasher starting/stopping and every 10% of its
+      # progress (shown in the banner), and HA start (deploys restart HA and
+      # Puppet; wait until entities have loaded). `restart` + a short delay
+      # coalesces bursts.
       # Nix-managed alongside the UI's automations.yaml.
       "automation eink" = [
         {
@@ -377,9 +379,25 @@ in
               ];
             }
             {
+              trigger = "state";
+              entity_id = "sensor.dishwasher_operation_state";
+            }
+            {
+              trigger = "state";
+              entity_id = "sensor.dishwasher_program_progress";
+              id = "dishwasher_progress";
+            }
+            {
               trigger = "homeassistant";
               event = "start";
               id = "start";
+            }
+          ];
+          # Progress only refreshes when it crosses a 10% step.
+          conditions = [
+            {
+              condition = "template";
+              value_template = "{{ trigger.id != 'dishwasher_progress' or trigger.from_state is none or trigger.to_state is none or (trigger.to_state.state | int(0)) // 10 != (trigger.from_state.state | int(0)) // 10 }}";
             }
           ];
           actions = [
