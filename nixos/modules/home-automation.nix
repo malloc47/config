@@ -62,8 +62,10 @@ let
         lib.concatStrings (
           [
             esphome.version
-            # Local external components (installed under components/).
+            # Local external components and fonts (installed under
+            # components/ and fonts/).
             (builtins.unsafeDiscardStringContext (toString epaperSpiG4))
+            (builtins.unsafeDiscardStringContext (toString esphomeFonts))
             (builtins.readFile file)
           ]
           ++ map (f: builtins.readFile (esphomeCommon + "/${f}")) esphomeCommonFiles
@@ -197,6 +199,15 @@ let
       grep -q 'PLANE_BIT\[4\] = {0, 0, 1, 1};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
       grep -q 'PLANE_BIT_INV\[4\] = {1, 1, 0, 0};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
     '';
+  # Font files device configs reference as fonts/<name> (installed at
+  # /var/lib/esphome/fonts by the esphomeConfigs activation below): e1001-clock
+  # draws its battery indicator with the dashboard card's DejaVu Sans Bold and
+  # MDI's battery glyphs.
+  esphomeFonts = pkgs.runCommand "esphome-fonts" { } ''
+    mkdir $out
+    cp ${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans-Bold.ttf $out/
+    cp ${pkgs.material-design-icons}/share/fonts/truetype/materialdesignicons-webfont.ttf $out/
+  '';
   esphome-device-builder =
     (pkgs-unstable.esphome-device-builder.override { inherit esphome; }).overridePythonAttrs
       (old: rec {
@@ -769,6 +780,7 @@ in
       ReadOnlyPaths = [
         "-/var/lib/esphome/common"
         "-/var/lib/esphome/components"
+        "-/var/lib/esphome/fonts"
       ]
       ++ map (n: "-/var/lib/esphome/${n}.yaml") (builtins.attrNames esphomeDevices);
     };
@@ -849,14 +861,19 @@ in
               ;;
           esac
         done
-        # Local external components (built by Nix; see epaperSpiG4): replaced
-        # wholesale with root-owned copies, like common/.
-        rm -rf /var/lib/esphome/components
-        install -d -o root -g esphome -m 0750 /var/lib/esphome/components
-        cp -r --no-preserve=mode,ownership ${epaperSpiG4}/. /var/lib/esphome/components/
-        chown -R root:esphome /var/lib/esphome/components
-        find /var/lib/esphome/components -type d -exec chmod 0750 {} +
-        find /var/lib/esphome/components -type f -exec chmod 0640 {} +
+        # Local external components and fonts (built by Nix; see epaperSpiG4
+        # and esphomeFonts): replaced wholesale with root-owned copies, like
+        # common/.
+        esphomeInstallTree() {
+          rm -rf "$2"
+          install -d -o root -g esphome -m 0750 "$2"
+          cp -r --no-preserve=mode,ownership "$1"/. "$2"/
+          chown -R root:esphome "$2"
+          find "$2" -type d -exec chmod 0750 {} +
+          find "$2" -type f -exec chmod 0640 {} +
+        }
+        esphomeInstallTree ${epaperSpiG4} /var/lib/esphome/components
+        esphomeInstallTree ${esphomeFonts} /var/lib/esphome/fonts
         if [ -L /var/lib/esphome/common ]; then rm -f /var/lib/esphome/common; fi
         install -d -o root -g esphome -m 0750 /var/lib/esphome/common
         for live in /var/lib/esphome/common/*; do

@@ -20,6 +20,13 @@
 # whose content changed (Puppet sends ETags; unchanged ones come back 304)
 # gets a full 4-gray refresh when it's on screen, as do page switches and the
 # hourly refresh.
+#
+# The firmware also draws the battery level (MDI icon + percentage, in the
+# footer's muted gray) into a blank spot the card reserves at the right end of
+# the footer (x 718-790), from its own reading rather than through HA, or a
+# lightning bolt while on external power. It moves in 5% steps and each change is drawn by a full refresh (a gray changed by a
+# 1-bit partial would come out black or white), so it doesn't touch the render
+# or cost more than a full refresh per 5%.
 substitutions:
   name: e1001-clock
   friendly_name: e1001-clock
@@ -98,7 +105,7 @@ time:
 
 # Battery: ADC on GPIO1 behind a 2:1 divider enabled by GPIO21. The E1001 has
 # no charge-status pin, so "external power" is inferred from the cell sitting
-# at its charge voltage; the dashboard hides the battery level while it's on.
+# at its charge voltage; the battery indicator shows a lightning bolt then.
 output:
   - platform: gpio
     pin: GPIO21
@@ -117,6 +124,7 @@ sensor:
 
   - platform: copy
     source_id: battery_voltage
+    id: battery_level
     name: "Battery Level"
     unit_of_measurement: "%"
     device_class: battery
@@ -128,6 +136,8 @@ sensor:
       - clamp:
           min_value: 0
           max_value: 100
+    on_value:
+      - script.execute: battery_check
 
 binary_sensor:
   # Top-edge buttons: left = previous page, right = next page (GPIO5/GPIO4,
@@ -154,12 +164,15 @@ binary_sensor:
           p: !lambda "return (id(page) + 1) % 3;"
 
   - platform: template
+    id: external_power
     name: "External Power"
     device_class: power
     lambda: |-
       return id(battery_voltage).state > 4.12;
     filters:
       - delayed_off: 5min
+    on_state:
+      - script.execute: battery_check
 
 http_request:
   timeout: 20s
@@ -179,6 +192,11 @@ globals:
   - id: pending_full
     type: bool
     initial_value: "false"
+  # Battery level on screen, in 5% steps; -1 lightning bolt (external power),
+  # -2 no reading yet. Set by battery_check, drawn by the display lambda.
+  - id: battery_shown
+    type: int
+    initial_value: "-2"
 
 script:
   # Every display update goes through here. epaper_spi rejects an update while
@@ -201,6 +219,26 @@ script:
             - lambda: "id(pending_full) = false;"
             - epaper_spi.full_update_next: epaper_display
       - component.update: epaper_display
+  # Move the battery indicator to a new 5% step (or to/from the bolt). Only
+  # past 1.5% beyond the step's edge, so ADC noise around a boundary doesn't
+  # flip it back and forth. The change rides on the next minute tick's redraw,
+  # made a full refresh so the gray comes out right.
+  - id: battery_check
+    then:
+      - lambda: |-
+          int target;
+          if (id(external_power).state) {
+            target = -1;
+          } else {
+            float level = id(battery_level).state;
+            if (std::isnan(level)) return;
+            int shown = id(battery_shown);
+            if (shown >= 0 && std::fabs(level - shown) < 4.0f) return;
+            target = (int) std::lround(level / 5.0f) * 5;
+          }
+          if (target == id(battery_shown)) return;
+          id(battery_shown) = target;
+          id(pending_full) = true;
   # Show a page: full refresh, since the layouts differ too much for a
   # partial update to come out clean.
   - id: show_page
@@ -352,6 +390,34 @@ font:
     id: far_date_font
     size: 42
 
+  # Battery indicator, matching the card's footer text (DejaVu Sans Bold, 15px)
+  # and icons (MDI at 22px). Font files from esphomeFonts in home-automation.nix.
+  # Anti-aliased (2 bpp) like Puppet's text: the indicator only changes with a
+  # full 4-gray refresh, so its edge grays survive.
+  - file: fonts/DejaVuSans-Bold.ttf
+    id: battery_font
+    size: 15
+    bpp: 2
+    glyphs: "0123456789%"
+
+  - file: fonts/materialdesignicons-webfont.ttf
+    id: battery_icons
+    size: 22
+    bpp: 2
+    glyphs:
+      - "\U000F0079" # battery
+      - "\U000F007A" # battery-10
+      - "\U000F007B" # battery-20
+      - "\U000F007C" # battery-30
+      - "\U000F007D" # battery-40
+      - "\U000F007E" # battery-50
+      - "\U000F007F" # battery-60
+      - "\U000F0080" # battery-70
+      - "\U000F0081" # battery-80
+      - "\U000F0082" # battery-90
+      - "\U000F10CD" # battery-alert-variant-outline
+      - "\U000F140B" # lightning-bolt
+
 display:
   - platform: epaper_spi
     id: epaper_display
@@ -383,6 +449,32 @@ display:
       it.image(0, 0,
                id(page) == 2 ? id(far_image) : id(page) == 1 ? id(focus_image) : id(dashboard_image),
                Color::WHITE, Color::BLACK);
+
+      // Battery: icon + "NN%" (or a lightning bolt on external power)
+      // right-aligned in the card's blank footer spot (x 718-790), vertically
+      // centred like the card's footer row: y 453 on the dashboard (footer
+      // y 428-480), 455 on focus/far (432-480).
+      int shown = id(battery_shown);
+      if (shown == -1) {
+        it.print(790, (id(page) == 0 ? 453 : 455) - 11, id(battery_icons), Color(0x55, 0x55, 0x55),
+                 TextAlign::TOP_RIGHT, "\U000F140B", Color::WHITE);
+      } else if (shown >= 0) {
+        static const char *const ICONS[] = {
+            "\U000F007A", "\U000F007B", "\U000F007C", "\U000F007D", "\U000F007E",
+            "\U000F007F", "\U000F0080", "\U000F0081", "\U000F0082", "\U000F0079"};
+        const Color muted(0x55, 0x55, 0x55);
+        int cy = id(page) == 0 ? 453 : 455;
+        char text[12];
+        snprintf(text, sizeof(text), "%d%%", shown);
+        int x1, y1, w, h;
+        it.get_text_bounds(790, cy + 5, text, id(battery_font), TextAlign::BASELINE_RIGHT,
+                           &x1, &y1, &w, &h);
+        it.print(790, cy + 5, id(battery_font), muted, TextAlign::BASELINE_RIGHT, text, Color::WHITE);
+        const char *glyph = shown <= 5 ? "\U000F10CD"
+                                       : ICONS[std::min(std::max((shown + 5) / 10, 1), 10) - 1];
+        it.print(x1 - 4 - 22, cy - 11, id(battery_icons), muted, TextAlign::TOP_LEFT, glyph,
+                 Color::WHITE);
+      }
 
       auto now = id(rtc_time).now();
       if (now.is_valid()) {

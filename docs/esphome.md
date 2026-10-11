@@ -8,6 +8,7 @@ Device firmware configs live in the repo, not in the Device Builder
 | Device configs | `hosts/aida/esphome/<device>.yaml` (each file is one device) |
 | Shared boilerplate (Wi-Fi, fallback AP, API, OTA, logger, project stamp) | `hosts/aida/esphome/common/base.yaml`, pulled in via `packages:` |
 | Local external components (e.g. e1001-clock's 4-gray `epaper_spi`) | Built by Nix (`epaperSpiG4` in `nixos/modules/home-automation.nix`), installed at `/var/lib/esphome/components`; device YAML uses `external_components: source: {type: local, path: components}` |
+| Local font files (e.g. e1001-clock's DejaVu Sans Bold and MDI glyphs) | Built by Nix (`esphomeFonts` in `nixos/modules/home-automation.nix`), installed at `/var/lib/esphome/fonts`; device YAML uses `font: - file: fonts/<name>.ttf` |
 | Secrets (`secrets.yaml`) | `secrets/esphome-secrets.yaml.age` (agenix; aida + malloc47) |
 | On aida | `/var/lib/esphome/<device>.yaml`, `common/` → root-owned copies installed on switch (read-only to the Builder); `secrets.yaml` → symlink to `/run/agenix/esphome-secrets` |
 | Flash unit | `esphome-deploy@<device>.service` (oneshot; compile + OTA) |

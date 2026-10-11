@@ -22,8 +22,8 @@ views:
         fallback_weather_entity: weather.forecast_home
         inside_entity: sensor.bedroom_climate_sensor_temperature
         sun_entity: sun.sun
-        battery_entity: sensor.e1001_clock_battery_level
-        external_power_entity: binary_sensor.e1001_clock_external_power
+        # The panel draws its own battery level into this blank footer spot.
+        battery_slot: true
         days: 5
         # Open members of this binary sensor group (perimeter doors, defined in
         # home-automation.nix) are listed in the banner with a door icon.
@@ -57,8 +57,7 @@ views:
         fallback_weather_entity: weather.forecast_home
         inside_entity: sensor.bedroom_climate_sensor_temperature
         sun_entity: sun.sun
-        battery_entity: sensor.e1001_clock_battery_level
-        external_power_entity: binary_sensor.e1001_clock_external_power
+        battery_slot: true
         doors_entity: binary_sensor.perimeter_doors
         # Shown in the banner (icon + progress) only while running/paused.
         appliances:
@@ -90,8 +89,7 @@ views:
         weather_entity: weather.nws_khpn
         fallback_weather_entity: weather.forecast_home
         inside_entity: sensor.bedroom_climate_sensor_temperature
-        battery_entity: sensor.e1001_clock_battery_level
-        external_power_entity: binary_sensor.e1001_clock_external_power
+        battery_slot: true
         doors_entity: binary_sensor.perimeter_doors
         appliances:
           - name: Dishwasher
