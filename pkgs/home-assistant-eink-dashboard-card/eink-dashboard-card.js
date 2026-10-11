@@ -20,6 +20,8 @@
 //   sun_entity: sun.sun                          # optional, next sunrise/sunset
 //   battery_entity: sensor.<panel battery %>     # optional
 //   external_power_entity: binary_sensor.<...>   # optional; battery hidden while "on"
+//   battery_slot: false                          # leave the footer's battery spot blank for the
+//                                                # panel to draw (replaces battery_entity)
 //   days: 5                                      # daily forecast columns
 //   days_include_today: false                    # start the daily columns with today
 //   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
@@ -242,6 +244,7 @@ class EinkDashboardCard extends HTMLElement {
       appliances: [],
       gray: false,
       show_updated: true,
+      battery_slot: false,
       outdoor_hours: [7, 22],
       cold: 45,
       hot: 85,
@@ -1001,6 +1004,9 @@ class EinkDashboardCard extends HTMLElement {
         .spacer { flex: 1; }
         .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; color: var(--muted); }
         .battery .icon { fill: var(--muted); }
+        /* Drawn by the panel (battery_slot): icon + "100%", or a lightning bolt
+           on external power, at the footer's right end, x 718-790. */
+        .battery-slot { width: 72px; flex: none; }
 
         /* focus layout: the panel draws the clock (x 146-654, y 8-184) and the
            weekday/date (left column, y 30-120); the card fills the rest. */
@@ -1061,7 +1067,13 @@ ${c.layout === "focus" ? focusBody : c.layout === "far" ? farBody : standardBody
               : `<div class="spacer"></div>`
           }
           ${c.show_updated ? `<div class="updated">Updated ${esc(this._clockTime(Date.now()))}</div>` : ""}
-          ${battery ? `<div class="battery">${icon(battery.icon, 22)}${battery.level}%</div>` : ""}
+          ${
+            c.battery_slot
+              ? `<div class="battery-slot"></div>`
+              : battery
+                ? `<div class="battery">${icon(battery.icon, 22)}${battery.level}%</div>`
+                : ""
+          }
         </footer>
       </div>`;
   }
