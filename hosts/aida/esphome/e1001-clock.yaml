@@ -85,8 +85,8 @@ time:
                 lambda: |-
                   return id(rtc_time).now().minute == 0;
               then:
-                - epaper_spi.full_update_next: epaper_display
-          - component.update: epaper_display
+                - lambda: "id(pending_full) = true;"
+          - script.execute: redraw
 
   - platform: homeassistant
     id: ha_time
@@ -174,8 +174,33 @@ globals:
     type: int
     restore_value: true
     initial_value: "0"
+  # A full 4-gray refresh is wanted (hourly, page switch, changed background,
+  # HA asking); consumed by the next redraw.
+  - id: pending_full
+    type: bool
+    initial_value: "false"
 
 script:
+  # Every display update goes through here. epaper_spi rejects an update while
+  # a refresh is in progress (a full 4-gray one takes ~5s), which would drop a
+  # page switch or a changed background, so wait for it to go idle first; a
+  # new request just restarts the wait. A pending full is applied then, so a
+  # minute tick arriving meanwhile can't downgrade it to a partial.
+  - id: redraw
+    mode: restart
+    then:
+      - wait_until:
+          condition:
+            not:
+              epaper_spi.is_updating: epaper_display
+          timeout: 60s
+      - if:
+          condition:
+            lambda: "return id(pending_full);"
+          then:
+            - lambda: "id(pending_full) = false;"
+            - epaper_spi.full_update_next: epaper_display
+      - component.update: epaper_display
   # Show a page: full refresh, since the layouts differ too much for a
   # partial update to come out clean.
   - id: show_page
@@ -184,8 +209,8 @@ script:
     then:
       - lambda: "id(page) = p;"
       - script.execute: persist_page
-      - epaper_spi.full_update_next: epaper_display
-      - component.update: epaper_display
+      - lambda: "id(pending_full) = true;"
+      - script.execute: redraw
   # Flush the new page to flash now rather than at the next 60s preferences
   # write, so a reboot/OTA right after switching keeps it. Delayed so the
   # globals component has stored the value first; restarts on rapid presses.
@@ -213,8 +238,8 @@ online_image:
           condition:
             lambda: "return id(page) == 0 && !cached;"
           then:
-            - epaper_spi.full_update_next: epaper_display
-            - component.update: epaper_display
+            - lambda: "id(pending_full) = true;"
+            - script.execute: redraw
     # The first scheduled fetch runs at boot, before Wi-Fi is up; without a
     # retry the panel would show only the clock until the next interval.
     on_error:
@@ -231,8 +256,8 @@ online_image:
           condition:
             lambda: "return id(page) == 1 && !cached;"
           then:
-            - epaper_spi.full_update_next: epaper_display
-            - component.update: epaper_display
+            - lambda: "id(pending_full) = true;"
+            - script.execute: redraw
     on_error:
       - delay: 30s
       - component.update: focus_image
@@ -247,8 +272,8 @@ online_image:
           condition:
             lambda: "return id(page) == 2 && !cached;"
           then:
-            - epaper_spi.full_update_next: epaper_display
-            - component.update: epaper_display
+            - lambda: "id(pending_full) = true;"
+            - script.execute: redraw
     on_error:
       - delay: 30s
       - component.update: far_image
@@ -275,7 +300,9 @@ api:
             condition:
               lambda: "return full;"
             then:
-              - epaper_spi.full_update_next: epaper_display
+              # Applied by the next redraw (a changed background, or the
+              # minute tick if nothing changed).
+              - lambda: "id(pending_full) = true;"
         - script.execute: refresh_backgrounds
 
 button:

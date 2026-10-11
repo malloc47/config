@@ -176,6 +176,26 @@ let
       sed -i 's/^\(        \)super().__init__(name, "EPaperUC8179G4", \*\*defaults)/\1defaults.setdefault("partial_update", True)\n&/' \
         $out/epaper_spi/models/uc8179_g4.py
       grep -q 'defaults.setdefault("partial_update", True)' $out/epaper_spi/models/uc8179_g4.py
+      # Full 4-gray refreshes came out inverted on this E1001 (as on the
+      # Waveshare HAT reported in the PR's review): use the plane encoding of
+      # Waveshare's EPD_7IN5_V2_Display_4Gray sample (white=(0,0),
+      # black=(1,1)). The partial/fast-flip packing is separate and unchanged.
+      sed -i \
+        -e 's/LEVEL_BITS_DTM1\[4\] = {0, 0, 1, 1};/LEVEL_BITS_DTM1[4] = {1, 0, 1, 0};/' \
+        -e 's/LEVEL_BITS_DTM2\[4\] = {0, 1, 0, 1};/LEVEL_BITS_DTM2[4] = {1, 1, 0, 0};/' \
+        $out/epaper_spi/epaper_spi_uc8179_g4.cpp
+      grep -q 'LEVEL_BITS_DTM1\[4\] = {1, 0, 1, 0};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
+      grep -q 'LEVEL_BITS_DTM2\[4\] = {1, 1, 0, 0};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
+      # Same inversion on the 1-bit partial/fast-flip path: with CDI 0xA9 a 1
+      # bit is white (as the in-tree mono driver relies on), but the PR packs
+      # dark=1, so black->white strokes hit the toward-black LUT and old clock
+      # digits never cleared. Pack white=1 instead (stored previous plane too).
+      sed -i \
+        -e 's/PLANE_BIT\[4\] = {1, 1, 0, 0};/PLANE_BIT[4] = {0, 0, 1, 1};/' \
+        -e 's/PLANE_BIT_INV\[4\] = {0, 0, 1, 1};/PLANE_BIT_INV[4] = {1, 1, 0, 0};/' \
+        $out/epaper_spi/epaper_spi_uc8179_g4.cpp
+      grep -q 'PLANE_BIT\[4\] = {0, 0, 1, 1};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
+      grep -q 'PLANE_BIT_INV\[4\] = {1, 1, 0, 0};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
     '';
   esphome-device-builder =
     (pkgs-unstable.esphome-device-builder.override { inherit esphome; }).overridePythonAttrs
