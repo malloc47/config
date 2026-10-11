@@ -1,13 +1,15 @@
 // eink-dashboard-card — a full-screen Lovelace card laid out for an 800x480
-// 1-bit e-paper panel (Seeed reTerminal E1001). Meant to fill a panel view that
-// Puppet screenshots with colors=000000,FFFFFF; the panel's ESPHome firmware
+// e-paper panel (Seeed reTerminal E1001), 1-bit or 4-gray. Meant to fill a
+// panel view that Puppet screenshots with colors=000000,FFFFFF (1-bit) or
+// colors=000000,555555,AAAAAA,FFFFFF (4-gray); the panel's ESPHome firmware
 // downloads that image and draws the time and date itself into the blank
 // "clock area" at the top centre, so the clock keeps its per-minute partial
 // refresh while everything here refreshes on the image's slower schedule.
 //
-// Everything is pure black on white (Puppet maps each pixel to the nearer of
-// the two colours, so greys would just threshold) and drawn at fixed pixel
-// sizes for the panel resolution.
+// Puppet maps each pixel to the nearest palette colour, so the card only uses
+// those colours: black on white by default, plus #555555 secondary text and
+// #aaaaaa rules with gray: true. Everything is drawn at fixed pixel sizes for
+// the panel resolution.
 //
 // Config:
 //   type: custom:eink-dashboard-card
@@ -93,9 +95,10 @@ const ICONS = {
   "bell-outline": "M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z",
 };
 
-// DejaVu Sans, whose hand-tuned TrueType hinting holds up best in Puppet's
-// 1-bit text rendering (Inter, even autohinted, came out with notched joins
-// at 15-21px). Book serves weights up to 500, Bold 600 and up; the condensed
+// DejaVu Sans, whose hand-tuned TrueType hinting holds up best on the panel:
+// in 1-bit text rendering (services.ha-puppet.monochromeText) Inter, even
+// autohinted, came out with notched joins at 15-21px, and its anti-aliased
+// edges also reduce cleanly to the 4-gray palette. Book serves weights up to 500, Bold 600 and up; the condensed
 // family is available for tight spots.
 const FONT_FACES = [
   ["EinkSans", "DejaVuSans.ttf", [400, 500]],
@@ -955,7 +958,8 @@ class EinkDashboardCard extends HTMLElement {
         .screen.far { grid-template-rows: 188px 1px 121px 1px 121px 48px; }
         .icon { fill: #000; flex: none; display: block; }
         .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); }
-        /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
+        /* 1px rules: solid light gray (4-gray) or dotted black (1-bit, where
+           alternate pixels read as a light grey line) */
         .rule { margin: 0 16px; background: var(--rule-h); }
         .vrule { width: 1px; margin: 14px 0; background: var(--rule-v); }
 
@@ -1069,5 +1073,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "eink-dashboard-card",
   name: "E-ink dashboard",
-  description: "Full-screen 800x480 1-bit dashboard for an ESPHome e-paper panel (rendered via Puppet).",
+  description: "Full-screen 800x480 1-bit/4-gray dashboard for an ESPHome e-paper panel (rendered via Puppet).",
 });
