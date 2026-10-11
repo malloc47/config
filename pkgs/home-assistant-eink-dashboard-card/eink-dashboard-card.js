@@ -17,6 +17,7 @@
 //   battery_entity: sensor.<panel battery %>     # optional
 //   external_power_entity: binary_sensor.<...>   # optional; battery hidden while "on"
 //   days: 5                                      # daily forecast columns
+//   days_include_today: false                    # start the daily columns with today
 //   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
 //   doors_entity: binary_sensor.perimeter_doors  # group whose open members join the banner
 //   layout: standard                             # "standard" or "focus" (big clock + outlook)
@@ -432,7 +433,10 @@ class EinkDashboardCard extends HTMLElement {
   _days() {
     const daily = this._forecasts.daily || [];
     const today = this._local(Date.now()).date;
-    return daily.filter((f) => this._local(f.datetime).date > today).slice(0, this._config.days);
+    const fromToday = this._config.days_include_today;
+    return daily
+      .filter((f) => (fromToday ? this._local(f.datetime).date >= today : this._local(f.datetime).date > today))
+      .slice(0, this._config.days);
   }
 
   _todayHiLo() {
@@ -719,23 +723,18 @@ class EinkDashboardCard extends HTMLElement {
       c.layout !== "focus"
         ? ""
         : `
-        <section class="fclock${c.show_clock_area ? " outline" : ""}"></section>
-        <div class="rule"></div>
-        <section class="nowrow">
-          <div class="ncell">
-            ${icon(weather ? this._conditionIcon(weather.state, night && weather.state === "partlycloudy") : "alert-circle-outline", 40)}
-            <div class="v">${temp(wa.temperature)}</div>
+        <section class="ftop">
+          <div class="fleft${c.show_clock_area ? " outline" : ""}">
+            ${sunEvent ? `<div class="fsun">${icon(sunEvent.icon, 24)}${esc(sunEvent.time)}</div>` : ""}
+          </div>
+          <div class="fclock${c.show_clock_area ? " outline" : ""}"></div>
+          <div class="fright">
+            <div class="out">
+              ${icon(weather ? this._conditionIcon(weather.state, night && weather.state === "partlycloudy") : "alert-circle-outline", 40)}
+              <div class="v">${temp(wa.temperature)}</div>
+            </div>
             <div class="t">${esc(CONDITION_TEXT[weather?.state] || weather?.state || "Unavailable")}</div>
-          </div>
-          <div class="vrule"></div>
-          <div class="ncell">
-            ${icon("home-thermometer-outline", 30)}
-            <div class="v">${inside ? temp(inside.state) : "–"}</div>
-            <div class="t">Inside</div>
-          </div>
-          <div class="vrule"></div>
-          <div class="ncell">
-            ${sunEvent ? `${icon(sunEvent.icon, 30)}<div class="v" style="font-size:24px">${esc(sunEvent.time)}</div><div class="t">${esc(sunEvent.label)}</div>` : ""}
+            <div class="in">${icon("home-thermometer-outline", 26)}${inside ? temp(inside.state) : "–"}</div>
           </div>
         </section>
         <div class="rule"></div>
@@ -744,11 +743,11 @@ class EinkDashboardCard extends HTMLElement {
             .map(
               (o) => `
             <div class="orow">
-              ${icon(o.icon, 32)}
+              ${icon(o.icon, 38)}
               <div class="lbl">${esc(o.label)}</div>
-              <div class="txt">${esc(o.text)}</div>
               <div class="rng">${esc(o.range)}</div>
-              <div class="wear">${o.wear ? `${icon(o.wear.icon, 24)}<span>${esc(o.wear.text)}</span>` : ""}</div>
+              <div class="txt">${esc(o.text)}</div>
+              <div class="wear">${o.wear ? `${icon(o.wear.icon, 26)}<span>${esc(o.wear.text)}</span>` : ""}</div>
             </div>`,
             )
             .join("")}
@@ -759,9 +758,10 @@ class EinkDashboardCard extends HTMLElement {
             .map(
               (d) => `
             <div class="fday">
-              <div class="top">${esc(this._weekday(d.datetime))}${icon(CONDITION_ICON[d.condition] || "alert-circle-outline", 24)}</div>
+              <div class="name">${esc(this._local(d.datetime).date === this._local(Date.now()).date ? "Today" : this._weekday(d.datetime))}</div>
+              ${icon(CONDITION_ICON[d.condition] || "alert-circle-outline", 40)}
               <div class="hl">${temp(d.temperature)} <span class="lo">/ ${temp(d.templow)}</span></div>
-              <div class="meta" style="font-size:14px">${icon("water", 13)}${esc(precip(d.precipitation, unit))}</div>
+              <div class="meta">${icon("water", 15)}${esc(precip(d.precipitation, unit))}</div>
             </div>`,
             )
             .join("")}
@@ -781,7 +781,7 @@ class EinkDashboardCard extends HTMLElement {
           display: grid;
         }
         .screen.standard { grid-template-rows: 186px 1px 118px 1px 122px 52px; }
-        .screen.focus { grid-template-rows: 214px 1px 54px 1px 100px 1px 61px 48px; }
+        .screen.focus { grid-template-rows: 178px 1px 120px 1px 132px 48px; }
         .icon { fill: #000; flex: none; display: block; }
         .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
         /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
@@ -824,27 +824,31 @@ class EinkDashboardCard extends HTMLElement {
         .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
         .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
         .spacer { flex: 1; }
-
-        /* focus layout */
-        .fclock { margin: 8px 16px 6px; }
-        .fclock.outline { outline: 2px dashed #000; outline-offset: -2px; }
-        .nowrow { display: grid; grid-template-columns: 1.3fr 1px 1fr 1px 1fr; }
-        .ncell { display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .ncell .v { font-size: 32px; font-weight: 700; line-height: 1; }
-        .ncell .t { font-size: 17px; font-weight: 600; }
-        .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 2px 16px; }
-        .orow { display: grid; grid-template-columns: 34px 112px 1fr 92px 200px; align-items: center; column-gap: 8px; }
-        .orow .lbl { font-size: 19px; font-weight: 700; }
-        .orow .txt { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .orow .rng { font-size: 21px; font-weight: 700; text-align: right; }
-        .orow .wear { display: flex; align-items: center; gap: 6px; font-size: 17px; font-weight: 600;
-          white-space: nowrap; overflow: hidden; padding-left: 10px; }
-        .fdays { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
-        .fday { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
-        .fday .top { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; }
-        .fday .hl { font-size: 17px; font-weight: 700; }
-        .fday .hl .lo { font-weight: 500; }
         .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; }
+
+        /* focus layout: the panel draws the clock (x 146-654) and the weekday/date
+           (left column, y 24-112); the card fills the rest. */
+        .ftop { display: grid; grid-template-columns: 146px 1fr 146px; }
+        .fleft { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 16px; }
+        .fclock { margin: 8px 0; }
+        .fclock.outline, .fleft.outline { outline: 2px dashed #000; outline-offset: -2px; }
+        .fsun { display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; }
+        .fright { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
+        .fright .out { display: flex; align-items: center; gap: 4px; }
+        .fright .v { font-size: 38px; font-weight: 700; line-height: 1; }
+        .fright .t { font-size: 17px; font-weight: 600; }
+        .fright .in { display: flex; align-items: center; gap: 4px; font-size: 24px; font-weight: 700; margin-top: 6px; }
+        .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 4px 16px; }
+        .orow { display: grid; grid-template-columns: 40px 124px 104px 1fr auto; align-items: center; column-gap: 10px; }
+        .orow .lbl { font-size: 22px; font-weight: 700; }
+        .orow .rng { font-size: 24px; font-weight: 700; }
+        .orow .txt { font-size: 21px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .orow .wear { display: flex; align-items: center; gap: 6px; font-size: 19px; font-weight: 600; white-space: nowrap; }
+        .fdays { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
+        .fday { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+        .fday .name { font-size: 18px; font-weight: 700; }
+        .fday .hl { font-size: 20px; font-weight: 700; }
+        .fday .hl .lo { font-weight: 500; }
       </style>
       <div class="screen ${c.layout === "focus" ? "focus" : "standard"}">
 ${c.layout === "focus" ? focusBody : standardBody}

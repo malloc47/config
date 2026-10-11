@@ -38,7 +38,9 @@ views:
         battery_entity: sensor.e1001_clock_battery_level
         external_power_entity: binary_sensor.e1001_clock_external_power
         doors_entity: binary_sensor.perimeter_doors
-        days: 5
+        # met.no forecasts today + 5 days, so 6 columns means starting at today.
+        days: 6
+        days_include_today: true
         # Hours you're likely to be outside (local), and the °F thresholds for
         # the clothing hint.
         outdoor_hours: [7, 22]
