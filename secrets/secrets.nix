@@ -88,6 +88,12 @@ in
     aida
     malloc47
   ];
+  # Home Assistant long-lived access token of the non-admin `eink` user, for
+  # Puppet (services.ha-puppet; see nixos/modules/home-automation.nix).
+  "ha-puppet-token.age".publicKeys = [
+    aida
+    malloc47
+  ];
   # ESPHome secrets.yaml (shared Wi-Fi + per-device API key/OTA/AP passwords),
   # symlinked into /var/lib/esphome; see nixos/modules/home-automation.nix.
   "esphome-secrets.yaml.age".publicKeys = [

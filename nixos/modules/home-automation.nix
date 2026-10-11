@@ -161,6 +161,8 @@ let
       });
 in
 {
+  imports = [ ./ha-puppet.nix ];
+
   # mosquitto — the MQTT hub. Loopback only, no anonymous access.
   services.mosquitto = {
     enable = true;
@@ -239,6 +241,10 @@ in
       # upcoming trips (there is no dedicated gtfs2 card). Added on a dashboard as
       # `custom:flex-table-card` via the UI.
       pkgs.home-assistant-flex-table-card
+      # eink-dashboard-card — packaged in-repo (pkgs/home-assistant-eink-dashboard-card).
+      # The whole 800x480 screen of the e1001-clock panel, rendered by Puppet
+      # (services.ha-puppet below); used as the only card of a panel view.
+      pkgs.home-assistant-eink-dashboard-card
     ];
     extraComponents = [
       "analytics"
@@ -303,6 +309,14 @@ in
       automation = "!include automations.yaml";
       scene = "!include scenes.yaml";
       script = "!include scripts.yaml";
+      # Free-text message for the e1001-clock panel's banner; the card's default
+      # banner template shows it when set, else open doors/windows. Set it from
+      # automations (input_text.set_value) or the entity's more-info dialog.
+      input_text.eink_banner = {
+        name = "E-ink banner";
+        max = 255;
+        initial = "";
+      };
       http = {
         server_host = "127.0.0.1";
         trusted_proxies = [ "127.0.0.1" ];
@@ -594,6 +608,12 @@ in
         ]
       );
       BindReadOnlyPaths = [ "${pkgs.nix-ld}/libexec/nix-ld:/lib64/ld-linux-x86-64.so.2" ];
+      # Firmware builds (~1 min, all cores, ~1G) yield to aida's other services.
+      # Inherited by esphome-deploy@ below.
+      CPUWeight = "idle";
+      Nice = 19;
+      IOSchedulingClass = "idle";
+      MemoryHigh = "3G";
       # The repo owns these (installed by the esphomeConfigs activation script
       # below). The Builder saves via write-to-temp + rename, which would replace
       # a merely root-owned file in its own state dir; a read-only bind mount
@@ -699,6 +719,23 @@ in
       );
   };
 
+  # Puppet — screenshots the e-ink dashboard (eink-dashboard-card in a panel
+  # view at /eink-panel/clock) for the e1001-clock panel, which downloads it as
+  # its background and draws the time/date over it on-device. The token belongs
+  # to a dedicated non-admin HA user (`eink`), in secrets/ha-puppet-token.age
+  # (its age.secrets entry in hosts/aida.nix follows this flag).
+  services.ha-puppet = {
+    enable = true;
+    tokenFile = config.age.secrets.ha-puppet-token.path;
+  };
+  # Puppet keeps one browser page open, which only loads Lovelace resources on
+  # a full page load: restart it with HA (whose restarts otherwise leave the
+  # page on stale, failed subscriptions) and whenever the card changes.
+  systemd.services.ha-puppet = {
+    partOf = [ "home-assistant.service" ];
+    restartTriggers = [ pkgs.home-assistant-eink-dashboard-card ];
+  };
+
   # mDNS for Matter device discovery/commissioning (not opened by openFirewall).
   networking.firewall.allowedUDPPorts = [ 5353 ];
 
@@ -738,6 +775,25 @@ in
             copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
           }
           reverse_proxy http://127.0.0.1:8482
+        }
+      '';
+    };
+
+    # The e-ink panel's background image, from Puppet. No Authelia (the ESP32
+    # can't log in), so only the panel's dashboard path is reachable, and only
+    # from the LAN; everything else Puppet could render stays blocked.
+    "eink.home.malloc47.com" = lib.mkIf config.services.ha-puppet.enable {
+      useACMEHost = "home.malloc47.com";
+      extraConfig = ''
+        @panel {
+          path /eink-panel/*
+          remote_ip 192.168.1.0/24
+        }
+        handle @panel {
+          reverse_proxy http://127.0.0.1:10000
+        }
+        handle {
+          respond 403
         }
       '';
     };

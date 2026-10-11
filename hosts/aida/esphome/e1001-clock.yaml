@@ -1,4 +1,10 @@
-# Seeed reTerminal E1001 (ESP32-S3, 7.5" e-paper) as a wall clock.
+# Seeed reTerminal E1001 (ESP32-S3, 7.5" e-paper) as a wall clock + dashboard.
+#
+# The screen is a hybrid: the background is a PNG of the HA dashboard
+# /eink-panel/clock (eink-dashboard-card, rendered by Puppet on aida and fetched
+# from eink.home.malloc47.com), and the firmware draws the time and date into
+# the card's blank clock area (x 214-586, y 10-176) itself. The clock keeps its
+# per-minute partial refresh; the background is re-fetched every 15 minutes.
 substitutions:
   name: e1001-clock
   friendly_name: e1001-clock
@@ -15,11 +21,18 @@ esphome:
     then:
       # Populate system time from the E1001's onboard RTC immediately.
       - pcf8563.read_time:
+      # Power the battery voltage divider so the ADC can read it.
+      - output.turn_on: bsp_battery_enable
 
 esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
+
+# 8 MB octal PSRAM (per Seeed's E1001 ESPHome guide); holds the background image.
+psram:
+  mode: octal
+  speed: 80MHz
 
 # Enable logging (on top of common/base.yaml)
 logger:
@@ -62,18 +75,80 @@ time:
       then:
         - pcf8563.write_time:
 
+# Battery: ADC on GPIO1 behind a 2:1 divider enabled by GPIO21. The E1001 has
+# no charge-status pin, so "external power" is inferred from the cell sitting
+# at its charge voltage; the dashboard hides the battery level while it's on.
+output:
+  - platform: gpio
+    pin: GPIO21
+    id: bsp_battery_enable
+
+sensor:
+  - platform: adc
+    pin: GPIO1
+    id: battery_voltage
+    name: "Battery Voltage"
+    attenuation: 12db
+    update_interval: 60s
+    filters:
+      - multiply: 2.0
+    entity_category: diagnostic
+
+  - platform: copy
+    source_id: battery_voltage
+    name: "Battery Level"
+    unit_of_measurement: "%"
+    device_class: battery
+    accuracy_decimals: 0
+    filters:
+      - calibrate_linear:
+          - 4.15 -> 100.0
+          - 3.27 -> 0.0
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+binary_sensor:
+  - platform: template
+    name: "External Power"
+    device_class: power
+    lambda: |-
+      return id(battery_voltage).state > 4.12;
+    filters:
+      - delayed_off: 5min
+
+http_request:
+  timeout: 20s
+  watchdog_timeout: 25s
+
+online_image:
+  - id: dashboard_image
+    url: "https://eink.home.malloc47.com/eink-panel/clock?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
+    format: PNG
+    type: BINARY
+    update_interval: 15min
+    on_download_finished:
+      - component.update: epaper_display
+    # The first scheduled fetch runs at boot, before Wi-Fi is up; without a
+    # retry the panel would show only the clock until the next interval.
+    on_error:
+      - delay: 30s
+      - component.update: dashboard_image
+
+# Fetch the background as soon as the network is up (boot and reconnects).
+# Merges with the wifi: block from common/base.yaml.
+wifi:
+  on_connect:
+    - component.update: dashboard_image
+
 font:
   - file: "gfonts://Inter@700"
     id: clock_font
-    size: 150
+    size: 120
 
   - file: "gfonts://Inter@600"
-    id: ampm_font
-    size: 40
-
-  - file: "gfonts://Inter@500"
     id: date_font
-    size: 34
+    size: 26
 
 display:
   - platform: epaper_spi
@@ -89,16 +164,17 @@ display:
     lambda: |-
       it.fill(Color::WHITE);
 
-      auto now = id(rtc_time).now();
+      // Background: the Puppet render (white pixels are "on"). Empty until the
+      // first download finishes, leaving just the clock.
+      it.image(0, 0, id(dashboard_image), Color::WHITE, Color::BLACK);
 
+      // Clock area: x 214-586, y 10-176 (left blank by the card).
+      auto now = id(rtc_time).now();
       if (now.is_valid()) {
-        it.strftime(
-          400,
-          240,
-          id(clock_font),
-          Color::BLACK,
-          TextAlign::CENTER,
-          "%I:%M",
-          now
-        );
+        int h = now.hour % 12;
+        if (h == 0) h = 12;
+        it.printf(400, 116, id(clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                  "%d:%02d", h, now.minute);
+        it.printf(400, 160, id(date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                  "%s %d", now.strftime("%A, %B").c_str(), now.day_of_month);
       }

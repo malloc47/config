@@ -1,0 +1,22 @@
+# Dashboard for the e1001-clock e-paper panel. HA dashboards are UI-managed
+# (.storage), so this is the reference copy: create a dashboard with URL
+# `eink-panel` (HA requires a hyphen), hide it from the sidebar, make sure the
+# non-admin `eink` user can see it, then paste this into its raw configuration
+# editor. Puppet renders /eink-panel/clock and the panel downloads it from
+# https://eink.home.malloc47.com/eink-panel/clock (see e1001-clock.yaml).
+title: E-ink panel
+views:
+  - title: Clock
+    path: clock
+    panel: true
+    cards:
+      - type: custom:eink-dashboard-card
+        weather_entity: weather.forecast_home
+        inside_entity: sensor.bedroom_climate_sensor_temperature
+        sun_entity: sun.sun
+        battery_entity: sensor.e1001_clock_battery_level
+        external_power_entity: binary_sensor.e1001_clock_external_power
+        days: 5
+        # Omit banner_template to use the card's default: input_text.eink_banner
+        # when set, otherwise the open doors/windows. Any Jinja works here; an
+        # empty result hides the banner.

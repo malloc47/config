@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -106,6 +111,13 @@
     # service runs as a DynamicUser and reads this via a systemd credential
     # (LoadCredential runs as root before the drop), so root-only 0400 is fine.
     home-assistant-matter-hub-token.file = ../secrets/home-assistant-matter-hub-token.age;
+    # HA long-lived token of the non-admin `eink` user, for Puppet (the e-ink
+    # panel's renderer; DynamicUser + LoadCredential like the matter hub). Only
+    # declared while services.ha-puppet is enabled, so the repo still evaluates
+    # before the secret has been created.
+    ha-puppet-token = lib.mkIf config.services.ha-puppet.enable {
+      file = ../secrets/ha-puppet-token.age;
+    };
     # ntfy access token (NTFY_TOKEN=...) for the local gatus watchdog to publish
     # alerts to aroldo's ntfy; same secret aroldo's gatus uses.
     ntfy-admin-password-env.file = ../secrets/ntfy-admin-password-env.age;
