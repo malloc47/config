@@ -1,10 +1,13 @@
 # Seeed reTerminal E1001 (ESP32-S3, 7.5" e-paper) as a wall clock + dashboard.
 #
-# The screen is a hybrid: the background is a PNG of the HA dashboard
-# /eink-panel/clock (eink-dashboard-card, rendered by Puppet on aida and fetched
-# from eink.home.malloc47.com), and the firmware draws the time and date into
-# the card's blank clock area (x 214-586, y 10-176) itself. The clock keeps its
-# per-minute partial refresh; the background is re-fetched every 15 minutes.
+# The screen is a hybrid: the background is a PNG of an HA dashboard view
+# (eink-dashboard-card, rendered by Puppet on aida and fetched from
+# eink.home.malloc47.com), and the firmware draws the time and date into the
+# card's blank clock area itself, so the clock keeps its per-minute partial
+# refresh. Two pages, switched with the left/right buttons; both backgrounds
+# are prefetched, so switching needs no network:
+#   0  /eink-panel/clock  dashboard, clock in x 214-586, y 10-176
+#   1  /eink-panel/focus  big clock across y 8-206, today/tomorrow outlook
 substitutions:
   name: e1001-clock
   friendly_name: e1001-clock
@@ -109,6 +112,29 @@ sensor:
           max_value: 100
 
 binary_sensor:
+  # Top-edge buttons: left = previous page, right = next page (GPIO5/GPIO4,
+  # active low; per Seeed's E1001 ESPHome guide).
+  - platform: gpio
+    id: button_left
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - script.execute:
+          id: show_page
+          p: !lambda "return (id(page) + 2 - 1) % 2;"
+  - platform: gpio
+    id: button_right
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - script.execute:
+          id: show_page
+          p: !lambda "return (id(page) + 1) % 2;"
+
   - platform: template
     name: "External Power"
     device_class: power
@@ -121,6 +147,28 @@ http_request:
   timeout: 20s
   watchdog_timeout: 25s
 
+# Which page is on screen (see the header). Not restored across reboots.
+globals:
+  - id: page
+    type: int
+    initial_value: "0"
+
+script:
+  # Show a page: full refresh, since the layouts differ too much for a
+  # partial update to come out clean.
+  - id: show_page
+    parameters:
+      p: int
+    then:
+      - lambda: "id(page) = p;"
+      - epaper_spi.full_update_next: epaper_display
+      - component.update: epaper_display
+  # Re-fetch every page's background (HA pushes, the HA button, Wi-Fi up).
+  - id: refresh_backgrounds
+    then:
+      - component.update: dashboard_image
+      - component.update: focus_image
+
 online_image:
   - id: dashboard_image
     url: "https://eink.home.malloc47.com/eink-panel/clock?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
@@ -128,24 +176,42 @@ online_image:
     type: BINARY
     update_interval: 15min
     on_download_finished:
-      - component.update: epaper_display
+      - if:
+          condition:
+            lambda: "return id(page) == 0;"
+          then:
+            - component.update: epaper_display
     # The first scheduled fetch runs at boot, before Wi-Fi is up; without a
     # retry the panel would show only the clock until the next interval.
     on_error:
       - delay: 30s
       - component.update: dashboard_image
+  - id: focus_image
+    url: "https://eink.home.malloc47.com/eink-panel/focus?viewport=800x480&colors=000000,FFFFFF&format=png&wait=1500"
+    format: PNG
+    type: BINARY
+    update_interval: 15min
+    on_download_finished:
+      - if:
+          condition:
+            lambda: "return id(page) == 1;"
+          then:
+            - component.update: epaper_display
+    on_error:
+      - delay: 30s
+      - component.update: focus_image
 
-# Fetch the background as soon as the network is up (boot and reconnects).
+# Fetch the backgrounds as soon as the network is up (boot and reconnects).
 # Merges with the wifi: block from common/base.yaml.
 wifi:
   on_connect:
-    - component.update: dashboard_image
+    - script.execute: refresh_backgrounds
 
 # Let HA push refreshes instead of waiting for the 15-minute poll: the
 # "E-ink panel: push dashboard refresh" automation (home-automation.nix) calls
 # esphome.e1001_clock_refresh_dashboard when the banner, perimeter doors or
 # weather change; the button is the manual equivalent in HA's UI. A refresh
-# re-fetches the Puppet render, which redraws the screen when it lands.
+# re-fetches the Puppet renders, and the visible page redraws when its image lands.
 # Merges with the api: block from common/base.yaml.
 api:
   actions:
@@ -158,14 +224,14 @@ api:
               lambda: "return full;"
             then:
               - epaper_spi.full_update_next: epaper_display
-        - component.update: dashboard_image
+        - script.execute: refresh_backgrounds
 
 button:
   - platform: template
     name: "Refresh Dashboard"
     icon: mdi:refresh
     on_press:
-      - component.update: dashboard_image
+      - script.execute: refresh_backgrounds
 
 font:
   - file: "gfonts://Inter@700"
@@ -175,6 +241,16 @@ font:
   - file: "gfonts://Inter@600"
     id: date_font
     size: 26
+
+  # Page 1's big clock: digits and colon only, to keep flash use down.
+  - file: "gfonts://Inter@700"
+    id: big_clock_font
+    size: 200
+    glyphs: "0123456789:"
+
+  - file: "gfonts://Inter@600"
+    id: big_date_font
+    size: 30
 
 display:
   - platform: epaper_spi
@@ -190,17 +266,26 @@ display:
     lambda: |-
       it.fill(Color::WHITE);
 
-      // Background: the Puppet render (white pixels are "on"). Empty until the
-      // first download finishes, leaving just the clock.
-      it.image(0, 0, id(dashboard_image), Color::WHITE, Color::BLACK);
+      // Background: the page's Puppet render (white pixels are "on"). Empty
+      // until its first download finishes, leaving just the clock.
+      it.image(0, 0, id(page) == 1 ? id(focus_image) : id(dashboard_image),
+               Color::WHITE, Color::BLACK);
 
-      // Clock area: x 214-586, y 10-176 (left blank by the card).
       auto now = id(rtc_time).now();
       if (now.is_valid()) {
         int h = now.hour % 12;
         if (h == 0) h = 12;
-        it.printf(400, 116, id(clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
-                  "%d:%02d", h, now.minute);
-        it.printf(400, 160, id(date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
-                  "%s %d", now.strftime("%A, %B").c_str(), now.day_of_month);
+        if (id(page) == 1) {
+          // Big clock area: x 16-784, y 8-206 (left blank by the focus card).
+          it.printf(400, 164, id(big_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%d:%02d", h, now.minute);
+          it.printf(400, 202, id(big_date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%s %d", now.strftime("%A, %B").c_str(), now.day_of_month);
+        } else {
+          // Clock area: x 214-586, y 10-176 (left blank by the card).
+          it.printf(400, 116, id(clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%d:%02d", h, now.minute);
+          it.printf(400, 160, id(date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
+                    "%s %d", now.strftime("%A, %B").c_str(), now.day_of_month);
+        }
       }

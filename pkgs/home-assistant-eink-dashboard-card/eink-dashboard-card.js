@@ -19,6 +19,10 @@
 //   days: 5                                      # daily forecast columns
 //   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
 //   doors_entity: binary_sensor.perimeter_doors  # group whose open members join the banner
+//   layout: standard                             # "standard" or "focus" (big clock + outlook)
+//   outdoor_hours: [7, 22]                       # focus: local hours "outside" for the outlook
+//   cold: 45                                     # focus: °F below which it's coat weather
+//   hot: 85                                      # focus: °F at/above which it's hot
 //   show_clock_area: false                       # outline the device-drawn area (design aid)
 //   hide_toasts: true                            # hide HA's toasts while shown (see below)
 //
@@ -66,6 +70,11 @@ const ICONS = {
   "door-open": "M12,3C10.89,3 10,3.89 10,5H3V19H2V21H22V19H21V5C21,3.89 20.11,3 19,3H12M12,5H19V19H12V5M5,11H7V13H5V11Z",
   "garage-open-variant": "M22 9V20H20V11H4V20H2V9L12 5L22 9M19 12H5V14H19V12Z",
   "window-open-variant": "M21 20V2H3V20H1V23H23V20M19 4V11H17V4M5 4H7V11H5M5 20V13H7V20M9 20V4H15V20M17 20V13H19V20Z",
+  "umbrella-outline": "M12,4C8.9,4 6.18,6.03 5.3,9H18.7C17.82,6.04 15.09,4 12,4M12,2A9,9 0 0,1 21,11H13V19A3,3 0 0,1 10,22A3,3 0 0,1 7,19V18H9V19A1,1 0 0,0 10,20A1,1 0 0,0 11,19V11H3A9,9 0 0,1 12,2Z",
+  "tshirt-crew-outline": "M16,21H8A1,1 0 0,1 7,20V12.07L5.7,13.12C5.31,13.5 4.68,13.5 4.29,13.12L1.46,10.29C1.07,9.9 1.07,9.27 1.46,8.88L7.34,3H9C9,4.1 10.34,5 12,5C13.66,5 15,4.1 15,3H16.66L22.54,8.88C22.93,9.27 22.93,9.9 22.54,10.29L19.71,13.12C19.32,13.5 18.69,13.5 18.3,13.12L17,12.07V20A1,1 0 0,1 16,21M20.42,9.58L16.11,5.28C15.8,5.63 15.43,5.94 15,6.2C14.16,6.7 13.13,7 12,7C10.3,7 8.79,6.32 7.89,5.28L3.58,9.58L5,11L8,9H9V19H15V9H16L19,11L20.42,9.58Z",
+  "snowflake": "M20.79,13.95L18.46,14.57L16.46,13.44V10.56L18.46,9.43L20.79,10.05L21.31,8.12L19.54,7.65L20,5.88L18.07,5.36L17.45,7.69L15.45,8.82L13,7.38V5.12L14.71,3.41L13.29,2L12,3.29L10.71,2L9.29,3.41L11,5.12V7.38L8.5,8.82L6.5,7.69L5.92,5.36L4,5.88L4.47,7.65L2.7,8.12L3.22,10.05L5.55,9.43L7.55,10.56V13.45L5.55,14.58L3.22,13.96L2.7,15.89L4.47,16.36L4,18.12L5.93,18.64L6.55,16.31L8.55,15.18L11,16.62V18.88L9.29,20.59L10.71,22L12,20.71L13.29,22L14.7,20.59L13,18.88V16.62L15.5,15.17L17.5,16.3L18.12,18.63L20,18.12L19.53,16.35L21.3,15.88L20.79,13.95M9.5,10.56L12,9.11L14.5,10.56V13.44L12,14.89L9.5,13.44V10.56Z",
+  "thermometer-high": "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5H11A1 1 0 0 1 12 4Z",
+  "sunglasses": "M7,17H4C2.38,17 0.96,15.74 0.76,14.14L0.26,11.15C0.15,10.3 0.39,9.5 0.91,8.92C1.43,8.34 2.19,8 3,8H9C9.83,8 10.58,8.35 11.06,8.96C11.17,9.11 11.27,9.27 11.35,9.45C11.78,9.36 12.22,9.36 12.64,9.45C12.72,9.27 12.82,9.11 12.94,8.96C13.41,8.35 14.16,8 15,8H21C21.81,8 22.57,8.34 23.09,8.92C23.6,9.5 23.84,10.3 23.74,11.11L23.23,14.18C23.04,15.74 21.61,17 20,17H17C15.44,17 13.92,15.81 13.54,14.3L12.64,11.59C12.26,11.31 11.73,11.31 11.35,11.59L10.43,14.37C10.07,15.82 8.56,17 7,17Z",
   "bell-outline": "M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z",
 };
 
@@ -202,6 +211,10 @@ class EinkDashboardCard extends HTMLElement {
       banner_template: DEFAULT_BANNER,
       show_clock_area: false,
       hide_toasts: true,
+      layout: "standard",
+      outdoor_hours: [7, 22],
+      cold: 45,
+      hot: 85,
       ...config,
     };
     this._unsubscribe();
@@ -468,6 +481,144 @@ class EinkDashboardCard extends HTMLElement {
       : { icon: "weather-sunset-down", time: this._clockTime(set), label: "Sunset" };
   }
 
+  // ---- focus layout: "what to wear" outlook ------------------------------
+
+  _hourLabel(h) {
+    const hh = ((h % 24) + 24) % 24;
+    if (hh === 0) return "midnight";
+    if (hh === 12) return "noon";
+    return `${hh % 12 || 12} ${hh < 12 ? "AM" : "PM"}`;
+  }
+
+  // "1–3 PM" rather than "1 PM–3 PM" when both ends share AM/PM.
+  _hourRange(a, b) {
+    const la = this._hourLabel(a);
+    const lb = this._hourLabel(b);
+    const [na, sa] = la.split(" ");
+    const sb = lb.split(" ")[1];
+    return sa && sa === sb ? `${na}–${lb}` : `${la}–${lb}`;
+  }
+
+  // °F for classification, whatever the weather entity reports in.
+  _toF(t) {
+    const unit = this._hass.states[this._config.weather_entity]?.attributes?.temperature_unit;
+    return unit === "°C" ? (t * 9) / 5 + 32 : t;
+  }
+
+  _isWet(f) {
+    const unit = this._hass.states[this._config.weather_entity]?.attributes?.precipitation_unit;
+    const min = unit === "mm" ? 0.25 : 0.01;
+    return (
+      (num(f.precipitation) || 0) >= min ||
+      ["rainy", "pouring", "lightning-rainy", "snowy", "snowy-rainy", "hail"].includes(f.condition)
+    );
+  }
+
+  // Hourly forecast entries for one outlook window, tagged with a continuous
+  // hour number (hours after midnight run past 24 for "tonight").
+  _window(kind) {
+    const [start, end] = this._config.outdoor_hours;
+    const now = this._local(Date.now());
+    const d = new Date(`${now.date}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    const tomorrow = d.toISOString().slice(0, 10);
+    const hours = (this._forecasts.hourly || []).map((f) => {
+      const l = this._local(f.datetime);
+      return { ...f, h: l.date === now.date ? l.hour : l.date === tomorrow ? l.hour + 24 : 99 };
+    });
+    if (kind === "tomorrow") return hours.filter((f) => f.h >= 24 + start && f.h < 24 + end);
+    if (now.hour < end - 1) return hours.filter((f) => f.h >= Math.max(now.hour, start) && f.h < end);
+    // Late evening: describe the night instead (until 6 AM).
+    return hours.filter((f) => f.h >= now.hour && f.h < 30);
+  }
+
+  _outlookRow(kind) {
+    const hours = this._window(kind);
+    const now = this._local(Date.now());
+    const [, end] = this._config.outdoor_hours;
+    const tonight = kind === "today" && now.hour >= end - 1;
+    const label = kind === "tomorrow" ? "Tomorrow" : tonight ? "Tonight" : "Today";
+    if (!hours.length) return { label, icon: "alert-circle-outline", text: "No forecast", range: "", wear: null };
+
+    const unit = this._hass.states[this._config.weather_entity]?.attributes?.precipitation_unit || "";
+    const temps = hours.map((f) => num(f.temperature)).filter((t) => t !== null);
+    const lo = Math.min(...temps);
+    const hi = Math.max(...temps);
+    const conds = hours.map((f) => f.condition);
+    const worst = conds.reduce((a, b) => ((CONDITION_RANK[b] || 0) > (CONDITION_RANK[a] || 0) ? b : a));
+    const nightish = tonight;
+
+    // Rain spans: consecutive wet hours, bridging single dry hours.
+    const wet = hours.filter((f) => this._isWet(f));
+    const spans = [];
+    for (const f of wet) {
+      const last = spans[spans.length - 1];
+      if (last && f.h - last.end <= 1) last.end = f.h + 1;
+      else spans.push({ start: f.h, end: f.h + 1 });
+    }
+    const first = hours[0].h;
+    const lastH = hours[hours.length - 1].h + 1;
+    let text;
+    if (spans.length) {
+      const kindWord = conds.some((c) => c === "snowy")
+        ? "Snow"
+        : conds.some((c) => c === "snowy-rainy" || c === "hail")
+          ? "Sleet"
+          : conds.some((c) => c.startsWith("lightning"))
+            ? "Storms"
+            : "Rain";
+      const describe = (sp, lead) => {
+        const w = lead ? kindWord : "again";
+        if (sp.start <= first && sp.end >= lastH) return lead ? `${kindWord} ${tonight ? "all night" : "all day"}` : "";
+        if (sp.start <= first) return `${w} until ${this._hourLabel(sp.end)}`;
+        if (sp.end >= lastH) return `${w} from ${this._hourLabel(sp.start)}`;
+        return `${w} ${this._hourRange(sp.start, sp.end)}`;
+      };
+      const parts = spans.slice(0, 2).map((sp, i) => describe(sp, i === 0)).filter(Boolean);
+      const total = wet.reduce((sum, f) => sum + (num(f.precipitation) || 0), 0);
+      text = `${parts.join(", ")}${spans.length > 2 ? ", …" : ""}${total >= 0.005 ? ` (${precip(total, unit)})` : ""}`;
+    } else {
+      const sky = {
+        sunny: tonight ? "clear" : "sunny",
+        "clear-night": "clear",
+        partlycloudy: "partly cloudy",
+        cloudy: "cloudy",
+        fog: "foggy",
+        windy: "windy",
+        "windy-variant": "windy",
+      }[worst];
+      text = sky ? `Dry, ${sky}` : "Dry";
+    }
+
+    // Dress for the coldest outdoor hour; flag heat separately.
+    const loF = this._toF(lo);
+    const hiF = this._toF(hi);
+    const { cold, hot } = this._config;
+    let wear =
+      loF < 32
+        ? { icon: "snowflake", text: "Heavy coat" }
+        : loF < cold
+          ? { icon: "tshirt-crew-outline", text: "Coat" }
+          : loF < 58
+            ? { icon: "tshirt-crew-outline", text: "Jacket" }
+            : loF < 68
+              ? { icon: "tshirt-crew-outline", text: "Light layer" }
+              : { icon: "tshirt-crew-outline", text: "T-shirt" };
+    if (hiF >= hot) wear = { icon: "thermometer-high", text: `${wear.text === "T-shirt" ? "Hot" : `${wear.text}, hot`}` };
+    if (spans.length) {
+      const snow = conds.some((c) => c === "snowy" || c === "snowy-rainy");
+      wear = { icon: snow ? "snowflake" : "umbrella-outline", text: `${snow ? "Boots" : "Umbrella"}, ${wear.text.toLowerCase()}` };
+    }
+
+    return {
+      label,
+      icon: this._conditionIcon(worst, nightish),
+      text,
+      range: Math.round(lo) === Math.round(hi) ? temp(lo) : `${Math.round(lo)}–${temp(hi)}`,
+      wear,
+    };
+  }
+
   _render() {
     if (!this._hass || !this._config) return;
     // Try the full door list first; if it overflows the banner, re-render once
@@ -506,64 +657,10 @@ class EinkDashboardCard extends HTMLElement {
         <div><div class="stat-value">${esc(value)}</div><div class="label">${esc(label)}</div></div>
       </div>`;
 
-    this.shadowRoot.innerHTML = `
-      <style>
-        /* Inherited properties (HA sets line-height, fonts, colours on the page)
-           cross the shadow boundary; reset them so the layout is pixel-stable. */
-        :host { all: initial; display: block; }
-        .screen {
-          position: relative; width: 800px; height: 480px; overflow: hidden;
-          background: #fff; color: #000;
-          font-family: "EinkInter", sans-serif; font-feature-settings: "tnum" 1;
-          font-size: 16px; font-weight: 500; line-height: normal; letter-spacing: normal;
-          text-align: left; text-transform: none; white-space: normal;
-          display: grid; grid-template-rows: 186px 1px 118px 1px 122px 52px;
-        }
-        .icon { fill: #000; flex: none; display: block; }
-        .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
-        /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
-        .rule { margin: 0 16px; background: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 3px); }
-        .vrule { width: 1px; margin: 14px 0;
-          background: repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 3px); }
-
-        .hero { display: grid; grid-template-columns: 214px 372px 214px; }
-        .now { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-        .now-top { display: flex; align-items: center; gap: 6px; }
-        .now-temp { font-size: 54px; font-weight: 700; line-height: 1; }
-        .now-cond { font-size: 18px; font-weight: 600; margin-top: 6px; }
-        .hilo { display: flex; gap: 10px; font-size: 17px; font-weight: 600; margin-top: 2px; }
-        .hilo span { display: inline-flex; align-items: center; gap: 1px; }
-        .clock { margin: 10px 0; }
-        .clock.outline { outline: 2px dashed #000; outline-offset: -2px; }
-        .stats { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding-left: 22px; }
-        .stat { display: flex; align-items: center; gap: 10px; }
-        .stat-value { font-size: 26px; font-weight: 700; line-height: 1.05; }
-
-        .today { display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr; }
-        .bucket { display: flex; align-items: center; justify-content: center; gap: 14px; }
-        .bucket .name { font-size: 17px; font-weight: 700; }
-        .bucket .t { font-size: 40px; font-weight: 700; line-height: 1.05; }
-        .meta { display: flex; align-items: center; gap: 3px; font-size: 16px; font-weight: 600; }
-
-        .days { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
-        .day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
-        .day .name { font-size: 17px; font-weight: 700; }
-        .day .hl { font-size: 20px; font-weight: 700; }
-        .day .hl .lo { font-weight: 500; }
-
-        footer { display: flex; align-items: stretch; gap: 10px; padding: 6px 10px 8px; min-width: 0; }
-        .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 20px; overflow: hidden;
-          background: #000; color: #fff; border-radius: 8px; padding: 0 14px; }
-        .banner .icon { fill: #fff; }
-        .banner .item { display: inline-flex; align-items: center; gap: 6px; flex: none;
-          font-size: 19px; font-weight: 600; white-space: nowrap; }
-        /* The message and the door summary shrink and ellipsize; door items don't. */
-        .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
-        .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
-        .spacer { flex: 1; }
-        .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; }
-      </style>
-      <div class="screen">
+    const standardBody =
+      c.layout === "focus"
+        ? ""
+        : `
         <section class="hero">
           <div class="now">
             <div class="now-top">
@@ -616,7 +713,141 @@ class EinkDashboardCard extends HTMLElement {
             </div>`,
             )
             .join("")}
+        </section>`;
+    const outlook = c.layout === "focus" ? [this._outlookRow("today"), this._outlookRow("tomorrow")] : [];
+    const focusBody =
+      c.layout !== "focus"
+        ? ""
+        : `
+        <section class="fclock${c.show_clock_area ? " outline" : ""}"></section>
+        <div class="rule"></div>
+        <section class="nowrow">
+          <div class="ncell">
+            ${icon(weather ? this._conditionIcon(weather.state, night && weather.state === "partlycloudy") : "alert-circle-outline", 40)}
+            <div class="v">${temp(wa.temperature)}</div>
+            <div class="t">${esc(CONDITION_TEXT[weather?.state] || weather?.state || "Unavailable")}</div>
+          </div>
+          <div class="vrule"></div>
+          <div class="ncell">
+            ${icon("home-thermometer-outline", 30)}
+            <div class="v">${inside ? temp(inside.state) : "–"}</div>
+            <div class="t">Inside</div>
+          </div>
+          <div class="vrule"></div>
+          <div class="ncell">
+            ${sunEvent ? `${icon(sunEvent.icon, 30)}<div class="v" style="font-size:24px">${esc(sunEvent.time)}</div><div class="t">${esc(sunEvent.label)}</div>` : ""}
+          </div>
         </section>
+        <div class="rule"></div>
+        <section class="outlook">
+          ${outlook
+            .map(
+              (o) => `
+            <div class="orow">
+              ${icon(o.icon, 32)}
+              <div class="lbl">${esc(o.label)}</div>
+              <div class="txt">${esc(o.text)}</div>
+              <div class="rng">${esc(o.range)}</div>
+              <div class="wear">${o.wear ? `${icon(o.wear.icon, 24)}<span>${esc(o.wear.text)}</span>` : ""}</div>
+            </div>`,
+            )
+            .join("")}
+        </section>
+        <div class="rule"></div>
+        <section class="fdays">
+          ${days
+            .map(
+              (d) => `
+            <div class="fday">
+              <div class="top">${esc(this._weekday(d.datetime))}${icon(CONDITION_ICON[d.condition] || "alert-circle-outline", 24)}</div>
+              <div class="hl">${temp(d.temperature)} <span class="lo">/ ${temp(d.templow)}</span></div>
+              <div class="meta" style="font-size:14px">${icon("water", 13)}${esc(precip(d.precipitation, unit))}</div>
+            </div>`,
+            )
+            .join("")}
+        </section>`;
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        /* Inherited properties (HA sets line-height, fonts, colours on the page)
+           cross the shadow boundary; reset them so the layout is pixel-stable. */
+        :host { all: initial; display: block; }
+        .screen {
+          position: relative; width: 800px; height: 480px; overflow: hidden;
+          background: #fff; color: #000;
+          font-family: "EinkInter", sans-serif; font-feature-settings: "tnum" 1;
+          font-size: 16px; font-weight: 500; line-height: normal; letter-spacing: normal;
+          text-align: left; text-transform: none; white-space: normal;
+          display: grid;
+        }
+        .screen.standard { grid-template-rows: 186px 1px 118px 1px 122px 52px; }
+        .screen.focus { grid-template-rows: 214px 1px 54px 1px 100px 1px 61px 48px; }
+        .icon { fill: #000; flex: none; display: block; }
+        .label { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+        /* 1px dotted rules: alternate pixels read as a light grey line in 1-bit */
+        .rule { margin: 0 16px; background: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 3px); }
+        .vrule { width: 1px; margin: 14px 0;
+          background: repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 3px); }
+
+        .hero { display: grid; grid-template-columns: 214px 372px 214px; }
+        .now { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+        .now-top { display: flex; align-items: center; gap: 6px; }
+        .now-temp { font-size: 54px; font-weight: 700; line-height: 1; }
+        .now-cond { font-size: 18px; font-weight: 600; margin-top: 6px; }
+        .hilo { display: flex; gap: 10px; font-size: 17px; font-weight: 600; margin-top: 2px; }
+        .hilo span { display: inline-flex; align-items: center; gap: 1px; }
+        .clock { margin: 10px 0; }
+        .clock.outline { outline: 2px dashed #000; outline-offset: -2px; }
+        .stats { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding-left: 22px; }
+        .stat { display: flex; align-items: center; gap: 10px; }
+        .stat-value { font-size: 26px; font-weight: 700; line-height: 1.05; }
+
+        .today { display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr; }
+        .bucket { display: flex; align-items: center; justify-content: center; gap: 14px; }
+        .bucket .name { font-size: 17px; font-weight: 700; }
+        .bucket .t { font-size: 40px; font-weight: 700; line-height: 1.05; }
+        .meta { display: flex; align-items: center; gap: 3px; font-size: 16px; font-weight: 600; }
+
+        .days { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
+        .day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+        .day .name { font-size: 17px; font-weight: 700; }
+        .day .hl { font-size: 20px; font-weight: 700; }
+        .day .hl .lo { font-weight: 500; }
+
+        footer { display: flex; align-items: stretch; gap: 10px; padding: 6px 10px 8px; min-width: 0; }
+        .banner { flex: 1; min-width: 0; display: flex; align-items: center; gap: 20px; overflow: hidden;
+          background: #000; color: #fff; border-radius: 8px; padding: 0 14px; }
+        .banner .icon { fill: #fff; }
+        .banner .item { display: inline-flex; align-items: center; gap: 6px; flex: none;
+          font-size: 19px; font-weight: 600; white-space: nowrap; }
+        /* The message and the door summary shrink and ellipsize; door items don't. */
+        .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
+        .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
+        .spacer { flex: 1; }
+
+        /* focus layout */
+        .fclock { margin: 8px 16px 6px; }
+        .fclock.outline { outline: 2px dashed #000; outline-offset: -2px; }
+        .nowrow { display: grid; grid-template-columns: 1.3fr 1px 1fr 1px 1fr; }
+        .ncell { display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .ncell .v { font-size: 32px; font-weight: 700; line-height: 1; }
+        .ncell .t { font-size: 17px; font-weight: 600; }
+        .outlook { display: grid; grid-template-rows: 1fr 1fr; padding: 2px 16px; }
+        .orow { display: grid; grid-template-columns: 34px 112px 1fr 92px 200px; align-items: center; column-gap: 8px; }
+        .orow .lbl { font-size: 19px; font-weight: 700; }
+        .orow .txt { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .orow .rng { font-size: 21px; font-weight: 700; text-align: right; }
+        .orow .wear { display: flex; align-items: center; gap: 6px; font-size: 17px; font-weight: 600;
+          white-space: nowrap; overflow: hidden; padding-left: 10px; }
+        .fdays { display: grid; grid-template-columns: repeat(${days.length || 1}, 1fr); }
+        .fday { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+        .fday .top { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; }
+        .fday .hl { font-size: 17px; font-weight: 700; }
+        .fday .hl .lo { font-weight: 500; }
+        .updated, .battery { display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600; flex: none; }
+      </style>
+      <div class="screen ${c.layout === "focus" ? "focus" : "standard"}">
+${c.layout === "focus" ? focusBody : standardBody}
         <footer>
           ${
             bannerItems.length

@@ -23,3 +23,24 @@ views:
         # Omit banner_template to use the card's default message,
         # input_text.eink_banner. Any Jinja works here; an empty result shows
         # just the doors (or hides the banner if none are open).
+  # Page 1 (left/right buttons): big clock, condensed "now" row, today/tomorrow
+  # outlook (rain timing, temperature range and what to wear for outdoor hours)
+  # and the 5-day forecast.
+  - title: Focus
+    path: focus
+    panel: true
+    cards:
+      - type: custom:eink-dashboard-card
+        layout: focus
+        weather_entity: weather.forecast_home
+        inside_entity: sensor.bedroom_climate_sensor_temperature
+        sun_entity: sun.sun
+        battery_entity: sensor.e1001_clock_battery_level
+        external_power_entity: binary_sensor.e1001_clock_external_power
+        doors_entity: binary_sensor.perimeter_doors
+        days: 5
+        # Hours you're likely to be outside (local), and the °F thresholds for
+        # the clothing hint.
+        outdoor_hours: [7, 22]
+        cold: 45
+        hot: 85
