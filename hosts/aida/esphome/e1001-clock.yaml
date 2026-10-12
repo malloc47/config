@@ -388,20 +388,11 @@ button:
     on_press:
       - script.execute: refresh_backgrounds
 
+# The clock itself is block digits drawn by the display lambda (no font).
 font:
-  - file: "gfonts://Inter@700"
-    id: clock_font
-    size: 120
-
   - file: "gfonts://Inter@600"
     id: date_font
     size: 26
-
-  # Page 1's big clock: digits and colon only, to keep flash use down.
-  - file: "gfonts://Inter@700"
-    id: big_clock_font
-    size: 190
-    glyphs: "0123456789:"
 
   # Page 1's date, stacked beside the clock: weekday over "Oct 11".
   - file: "gfonts://Inter@600"
@@ -412,12 +403,7 @@ font:
     id: side_date_font
     size: 34
 
-  # Page 2 (far): clock and a larger weekday/date.
-  - file: "gfonts://Inter@700"
-    id: far_clock_font
-    size: 172
-    glyphs: "0123456789:"
-
+  # Page 2 (far): a larger weekday/date.
   # Abbreviated weekday: "Wednesday" doesn't fit beside 12:58 at a size
   # readable across a room.
   - file: "gfonts://Inter@600"
@@ -477,6 +463,48 @@ display:
     full_update_every: 255
 
     lambda: |-
+      // Block-digit clock: the classic 5x7 digit shapes with every cell drawn
+      // as 2x2 square blocks (so strokes are two blocks wide), blocks on a
+      // pitch of p px, centred on cx with the bottom at `bottom`. One cell of
+      // spacing between characters; the colon is one cell wide.
+      auto block_clock = [&](int cx, int bottom, int p, int hour, int minute) {
+        static const uint8_t DIGITS[10][7] = {  // rows, bit 4 = leftmost column
+            {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}, {0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E},
+            {0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F}, {0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E},
+            {0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02}, {0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E},
+            {0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E}, {0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08},
+            {0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E}, {0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C}};
+        // Gap between blocks: tight (1-2px); `airy` widens it to about a
+        // third of the pitch.
+        const bool airy = false;
+        const int gap = airy ? std::max(2, p / 3) : std::max(1, p / 5);
+        const int b = p - gap, cell = 2 * p;
+        auto draw_cell = [&](int x, int y) {
+          for (int dy = 0; dy < 2; dy++)
+            for (int dx = 0; dx < 2; dx++)
+              it.filled_rectangle(x + dx * p, y + dy * p, b, b, Color::BLACK);
+        };
+        char s[8];
+        snprintf(s, sizeof(s), "%d:%02d", hour, minute);
+        int cols = -1;
+        for (const char *c = s; *c; c++) cols += (*c == ':' ? 1 : 5) + 1;
+        int x = cx - (cols * cell - gap) / 2;
+        const int top = bottom - 7 * cell + gap;
+        for (const char *c = s; *c; c++) {
+          if (*c == ':') {
+            draw_cell(x, top + 2 * cell);
+            draw_cell(x, top + 4 * cell);
+            x += 2 * cell;
+            continue;
+          }
+          const uint8_t *g = DIGITS[*c - '0'];
+          for (int r = 0; r < 7; r++)
+            for (int k = 0; k < 5; k++)
+              if (g[r] & (0x10 >> k)) draw_cell(x + k * cell, top + r * cell);
+          x += 6 * cell;
+        }
+      };
+
       it.fill(Color::WHITE);
 
       // Background: the page's 4-gray Puppet render (each pixel's gray blends
@@ -517,8 +545,7 @@ display:
         if (id(page) == 2) {
           // Far clock area: x 160-640, y 8-180; weekday and date in the left
           // column (x 0-160), sized for reading across a room.
-          it.printf(400, 160, id(far_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
-                    "%d:%02d", h, now.minute);
+          block_clock(400, 160, 9, h, now.minute);
           it.printf(82, 80, id(far_weekday_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%s", now.strftime("%a").c_str());
           it.printf(82, 132, id(far_date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
@@ -526,16 +553,14 @@ display:
         } else if (id(page) == 1) {
           // Big clock area: x 146-654, y 8-184 (left blank by the focus card);
           // weekday and date in the left column above the card's sunrise/sunset.
-          it.printf(400, 168, id(big_clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
-                    "%d:%02d", h, now.minute);
+          block_clock(400, 168, 10, h, now.minute);
           it.printf(73, 70, id(side_weekday_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%s", now.strftime("%A").c_str());
           it.printf(73, 112, id(side_date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%s %d", now.strftime("%b").c_str(), now.day_of_month);
         } else {
           // Clock area: x 214-586, y 10-176 (left blank by the card).
-          it.printf(400, 116, id(clock_font), Color::BLACK, TextAlign::BASELINE_CENTER,
-                    "%d:%02d", h, now.minute);
+          block_clock(400, 116, 7, h, now.minute);
           it.printf(400, 160, id(date_font), Color::BLACK, TextAlign::BASELINE_CENTER,
                     "%s %d", now.strftime("%A, %B").c_str(), now.day_of_month);
         }
