@@ -418,13 +418,16 @@ in
           entities = perimeterDoors;
         }
       ];
-      # Push a dashboard refresh to the e1001-clock panel (Puppet re-render +
+      # Push dashboard refreshes to the e1001-clock panel (Puppet re-render +
       # download) when something it shows changes, instead of waiting for its
-      # 15-minute poll: banner message, perimeter doors, weather updates (state
-      # or attributes), the dishwasher starting/stopping and every 10% of its
-      # progress (shown in the banner), and HA start (deploys restart HA and
-      # Puppet; wait until entities have loaded). `restart` + a short delay
-      # coalesces bursts.
+      # 15-minute poll. Routine changes go out as flash-free partial updates:
+      # weather updates (state or attributes), the dishwasher starting/stopping
+      # and every 10% of its progress (shown in the banner), and HA start
+      # (deploys restart HA and Puppet; wait until entities have loaded). The
+      # banner message and perimeter doors ask for a full refresh, whose flash
+      # draws attention; they're a separate automation so a routine trigger
+      # can't restart (and so drop) one. `restart` + a short delay coalesces
+      # bursts.
       # Nix-managed alongside the UI's automations.yaml.
       "automation eink" = [
         {
@@ -432,10 +435,6 @@ in
           alias = "E-ink panel: push dashboard refresh";
           mode = "restart";
           triggers = [
-            {
-              trigger = "state";
-              entity_id = perimeterDoors ++ [ "input_text.eink_banner" ];
-            }
             {
               # NWS (the panel's primary source) and met.no (its fallback).
               trigger = "state";
@@ -471,6 +470,27 @@ in
             {
               action = "esphome.e1001_clock_refresh_dashboard";
               data.full = false;
+              continue_on_error = true;
+            }
+          ];
+        }
+        {
+          id = "eink_panel_alert";
+          alias = "E-ink panel: push attention refresh";
+          mode = "restart";
+          triggers = [
+            {
+              # State changes only, not attribute updates.
+              trigger = "state";
+              entity_id = perimeterDoors ++ [ "input_text.eink_banner" ];
+              to = null;
+            }
+          ];
+          actions = [
+            { delay = "00:00:05"; }
+            {
+              action = "esphome.e1001_clock_refresh_dashboard";
+              data.full = true;
               continue_on_error = true;
             }
           ];

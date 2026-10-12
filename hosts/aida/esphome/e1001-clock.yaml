@@ -17,9 +17,12 @@
 # epaperSpiG4 in nixos/modules/home-automation.nix). Backgrounds are 4-gray;
 # the clock, date and battery are drawn 1-bit, so the per-minute update stays a
 # flash-free differential partial that leaves the grays alone. A background
-# whose content changed (Puppet sends ETags; unchanged ones come back 304)
-# gets a full 4-gray refresh when it's on screen, as do page switches and the
-# hourly refresh.
+# whose content changed (Puppet sends ETags; unchanged ones come back 304) also
+# goes out as a partial when it's on screen, so routine changes don't flash:
+# only pixels whose black/white value flips are driven, and they show 1-bit
+# until the next full refresh restores their grays. Full 4-gray refreshes are
+# kept for the hourly refresh, page switches, the first background after
+# boot, and HA pushes that ask for one (open doors, the banner message).
 #
 # The firmware also draws the battery level (MDI icon + percentage) into a
 # blank spot the card reserves at the right end of the footer (x 718-790), from
@@ -187,7 +190,7 @@ globals:
     type: int
     restore_value: true
     initial_value: "0"
-  # A full 4-gray refresh is wanted (hourly, page switch, changed background,
+  # A full 4-gray refresh is wanted (hourly, page switch, first background,
   # HA asking); consumed by the next redraw.
   - id: pending_full
     type: bool
@@ -197,6 +200,12 @@ globals:
   - id: battery_shown
     type: int
     initial_value: "-2"
+  # HA asked for a full refresh (refresh_dashboard with full): applied once
+  # the visible page's background has been re-fetched, so the flash shows the
+  # new content.
+  - id: full_after_fetch
+    type: bool
+    initial_value: "false"
 
 script:
   # Every display update goes through here. epaper_spi rejects an update while
@@ -256,6 +265,23 @@ script:
     then:
       - delay: 2s
       - lambda: "global_preferences->sync();"
+  # A page's background finished downloading (changed: not a 304; first: its
+  # first download since boot). Redraw if it's on screen: a partial, except
+  # for the first background (a partial can't draw its grays) or when HA
+  # asked for a full, which is applied even if the render didn't change.
+  - id: background_ready
+    parameters:
+      p: int
+      changed: bool
+      first: bool
+    then:
+      - lambda: |-
+          if (p != id(page)) return;
+          bool full = first || id(full_after_fetch);
+          id(full_after_fetch) = false;
+          if (!changed && !full) return;
+          if (full) id(pending_full) = true;
+          id(redraw).execute();
   # Re-fetch every page's background (HA pushes, the HA button, Wi-Fi up).
   - id: refresh_backgrounds
     then:
@@ -270,13 +296,10 @@ online_image:
     type: GRAYSCALE
     update_interval: 15min
     on_download_finished:
-      # Unchanged renders come back 304 (cached): nothing to redraw.
-      - if:
-          condition:
-            lambda: "return id(page) == 0 && !cached;"
-          then:
-            - lambda: "id(pending_full) = true;"
-            - script.execute: redraw
+      - lambda: |-
+          static bool first = true;
+          id(background_ready).execute(0, !cached, first);
+          first = false;
     # The first scheduled fetch runs at boot, before Wi-Fi is up; without a
     # retry the panel would show only the clock until the next interval.
     on_error:
@@ -288,13 +311,10 @@ online_image:
     type: GRAYSCALE
     update_interval: 15min
     on_download_finished:
-      # Unchanged renders come back 304 (cached): nothing to redraw.
-      - if:
-          condition:
-            lambda: "return id(page) == 1 && !cached;"
-          then:
-            - lambda: "id(pending_full) = true;"
-            - script.execute: redraw
+      - lambda: |-
+          static bool first = true;
+          id(background_ready).execute(1, !cached, first);
+          first = false;
     on_error:
       - delay: 30s
       - component.update: focus_image
@@ -304,13 +324,10 @@ online_image:
     type: GRAYSCALE
     update_interval: 15min
     on_download_finished:
-      # Unchanged renders come back 304 (cached): nothing to redraw.
-      - if:
-          condition:
-            lambda: "return id(page) == 2 && !cached;"
-          then:
-            - lambda: "id(pending_full) = true;"
-            - script.execute: redraw
+      - lambda: |-
+          static bool first = true;
+          id(background_ready).execute(2, !cached, first);
+          first = false;
     on_error:
       - delay: 30s
       - component.update: far_image
@@ -321,11 +338,14 @@ wifi:
   on_connect:
     - script.execute: refresh_backgrounds
 
-# Let HA push refreshes instead of waiting for the 15-minute poll: the
-# "E-ink panel: push dashboard refresh" automation (home-automation.nix) calls
-# esphome.e1001_clock_refresh_dashboard when the banner, perimeter doors or
-# weather change; the button is the manual equivalent in HA's UI. A refresh
-# re-fetches the Puppet renders, and the visible page redraws when its image lands.
+# Let HA push refreshes instead of waiting for the 15-minute poll: the "E-ink
+# panel" automations (home-automation.nix) call
+# esphome.e1001_clock_refresh_dashboard when something shown changes, with
+# full: true for the banner message and perimeter doors (worth a flash to draw
+# attention) and false for routine changes (weather, dishwasher), which go out
+# as partials. The button is the manual equivalent in HA's UI. A refresh
+# re-fetches the Puppet renders, and the visible page redraws when its image
+# lands.
 # Merges with the api: block from common/base.yaml.
 api:
   actions:
@@ -337,9 +357,8 @@ api:
             condition:
               lambda: "return full;"
             then:
-              # Applied by the next redraw (a changed background, or the
-              # minute tick if nothing changed).
-              - lambda: "id(pending_full) = true;"
+              # Applied once the visible page's background is re-fetched.
+              - lambda: "id(full_after_fetch) = true;"
         - script.execute: refresh_backgrounds
 
 button:
