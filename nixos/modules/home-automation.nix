@@ -427,75 +427,88 @@ in
       # banner message and perimeter doors ask for a full refresh, whose flash
       # draws attention; they're a separate automation so a routine trigger
       # can't restart (and so drop) one. `restart` + a short delay coalesces
-      # bursts.
+      # bursts. The call is skipped while the panel is disconnected (its
+      # entities go unavailable, e.g. after an HA restart or during a flash):
+      # its action isn't registered then, so the call would fail and raise an
+      # "unknown action" repair, and the panel re-fetches everything itself
+      # when it reconnects.
       # Nix-managed alongside the UI's automations.yaml.
-      "automation eink" = [
-        {
-          id = "eink_panel_refresh";
-          alias = "E-ink panel: push dashboard refresh";
-          mode = "restart";
-          triggers = [
-            {
-              # NWS (the panel's primary source) and met.no (its fallback).
-              trigger = "state";
-              entity_id = [
-                "weather.nws_khpn"
-                "weather.forecast_home"
-              ];
-            }
-            {
-              trigger = "state";
-              entity_id = "sensor.dishwasher_operation_state";
-            }
-            {
-              trigger = "state";
-              entity_id = "sensor.dishwasher_program_progress";
-              id = "dishwasher_progress";
-            }
-            {
-              trigger = "homeassistant";
-              event = "start";
-              id = "start";
-            }
-          ];
-          # Progress only refreshes when it crosses a 10% step.
-          conditions = [
-            {
-              condition = "template";
-              value_template = "{{ trigger.id != 'dishwasher_progress' or trigger.from_state is none or trigger.to_state is none or (trigger.to_state.state | int(0)) // 10 != (trigger.from_state.state | int(0)) // 10 }}";
-            }
-          ];
-          actions = [
-            { delay = "{{ '00:01:30' if trigger.id == 'start' else '00:00:05' }}"; }
-            {
-              action = "esphome.e1001_clock_refresh_dashboard";
-              data.full = false;
-              continue_on_error = true;
-            }
-          ];
-        }
-        {
-          id = "eink_panel_alert";
-          alias = "E-ink panel: push attention refresh";
-          mode = "restart";
-          triggers = [
-            {
-              # State changes only, not attribute updates.
-              trigger = "state";
-              entity_id = perimeterDoors ++ [ "input_text.eink_banner" ];
-              to = null;
-            }
-          ];
-          actions = [
-            { delay = "00:00:05"; }
-            {
-              action = "esphome.e1001_clock_refresh_dashboard";
-              data.full = true;
-              continue_on_error = true;
-            }
-          ];
-        }
-      ];
+      "automation eink" =
+        let
+          panelConnected = {
+            condition = "template";
+            value_template = "{{ not is_state('button.e1001_clock_refresh_dashboard', 'unavailable') }}";
+          };
+        in
+        [
+          {
+            id = "eink_panel_refresh";
+            alias = "E-ink panel: push dashboard refresh";
+            mode = "restart";
+            triggers = [
+              {
+                # NWS (the panel's primary source) and met.no (its fallback).
+                trigger = "state";
+                entity_id = [
+                  "weather.nws_khpn"
+                  "weather.forecast_home"
+                ];
+              }
+              {
+                trigger = "state";
+                entity_id = "sensor.dishwasher_operation_state";
+              }
+              {
+                trigger = "state";
+                entity_id = "sensor.dishwasher_program_progress";
+                id = "dishwasher_progress";
+              }
+              {
+                trigger = "homeassistant";
+                event = "start";
+                id = "start";
+              }
+            ];
+            # Progress only refreshes when it crosses a 10% step.
+            conditions = [
+              {
+                condition = "template";
+                value_template = "{{ trigger.id != 'dishwasher_progress' or trigger.from_state is none or trigger.to_state is none or (trigger.to_state.state | int(0)) // 10 != (trigger.from_state.state | int(0)) // 10 }}";
+              }
+            ];
+            actions = [
+              { delay = "{{ '00:01:30' if trigger.id == 'start' else '00:00:05' }}"; }
+              panelConnected
+              {
+                action = "esphome.e1001_clock_refresh_dashboard";
+                data.full = false;
+                continue_on_error = true;
+              }
+            ];
+          }
+          {
+            id = "eink_panel_alert";
+            alias = "E-ink panel: push attention refresh";
+            mode = "restart";
+            triggers = [
+              {
+                # State changes only, not attribute updates.
+                trigger = "state";
+                entity_id = perimeterDoors ++ [ "input_text.eink_banner" ];
+                to = null;
+              }
+            ];
+            actions = [
+              { delay = "00:00:05"; }
+              panelConnected
+              {
+                action = "esphome.e1001_clock_refresh_dashboard";
+                data.full = true;
+                continue_on_error = true;
+              }
+            ];
+          }
+        ];
       http = {
         server_host = "127.0.0.1";
         trusted_proxies = [ "127.0.0.1" ];
