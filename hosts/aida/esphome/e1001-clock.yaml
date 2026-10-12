@@ -4,8 +4,9 @@
 # (eink-dashboard-card, rendered by Puppet on aida and fetched from
 # eink.home.malloc47.com), and the firmware draws the time and date into the
 # card's blank clock area itself, so the clock keeps its per-minute partial
-# refresh. Two pages, switched with the left/right buttons; both backgrounds
-# are prefetched, so switching needs no network:
+# refresh. Three pages, switched with the left/right buttons (the green
+# button forces a full refresh); all backgrounds are prefetched, so switching
+# needs no network:
 #   0  /eink-panel/clock  dashboard, clock in x 214-586, y 10-176
 #   1  /eink-panel/focus  big clock in x 146-654, y 8-184, weekday/date in the
 #                         left column; today/tomorrow outlook below
@@ -143,8 +144,9 @@ sensor:
       - script.execute: battery_check
 
 binary_sensor:
-  # Top-edge buttons: left = previous page, right = next page (GPIO5/GPIO4,
-  # active low; per Seeed's E1001 ESPHome guide).
+  # Top-edge buttons: left = previous page, right = next page, green = full
+  # refresh now (GPIO5/GPIO4/GPIO3, active low; per Seeed's E1001 ESPHome
+  # guide).
   - platform: gpio
     id: button_left
     pin:
@@ -165,6 +167,21 @@ binary_sensor:
       - script.execute:
           id: show_page
           p: !lambda "return (id(page) + 1) % 3;"
+  # Redraws the current content with a full 4-gray refresh: clears ghosting
+  # and restores grays that partial updates left 1-bit, without waiting for
+  # the hourly one.
+  - platform: gpio
+    id: button_refresh
+    pin:
+      number: GPIO3
+      mode: INPUT_PULLUP
+      inverted: true
+      # A strapping pin, but on the S3 only for JTAG source selection, which
+      # needs an eFuse that isn't burned; Seeed wires the button here.
+      ignore_strapping_warning: true
+    on_press:
+      - lambda: "id(pending_full) = true;"
+      - script.execute: redraw
 
   - platform: template
     id: external_power
