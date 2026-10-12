@@ -306,8 +306,9 @@ script:
       - component.update: focus_image
       - component.update: far_image
 
-online_image:
-  - id: dashboard_image
+image:
+  - platform: online_image
+    id: dashboard_image
     url: "https://eink.home.malloc47.com/eink-panel/clock?viewport=800x480&colors=000000,555555,AAAAAA,FFFFFF&format=png&wait=1500"
     format: PNG
     type: GRAYSCALE
@@ -322,7 +323,8 @@ online_image:
     on_error:
       - delay: 30s
       - component.update: dashboard_image
-  - id: focus_image
+  - platform: online_image
+    id: focus_image
     url: "https://eink.home.malloc47.com/eink-panel/focus?viewport=800x480&colors=000000,555555,AAAAAA,FFFFFF&format=png&wait=1500"
     format: PNG
     type: GRAYSCALE
@@ -335,7 +337,8 @@ online_image:
     on_error:
       - delay: 30s
       - component.update: focus_image
-  - id: far_image
+  - platform: online_image
+    id: far_image
     url: "https://eink.home.malloc47.com/eink-panel/far?viewport=800x480&colors=000000,555555,AAAAAA,FFFFFF&format=png&wait=1500"
     format: PNG
     type: GRAYSCALE
