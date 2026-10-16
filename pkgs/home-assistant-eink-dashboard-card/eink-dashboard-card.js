@@ -692,7 +692,9 @@ class EinkDashboardCard extends HTMLElement {
     }
     const first = hours[0].h;
     const lastH = hours[hours.length - 1].h + 1;
-    let text;
+    // Wordings from most to least detailed; the render uses the first that
+    // fits its row (see _fitText).
+    let texts;
     if (spans.length) {
       const kindWord = conds.some((c) => c === "snowy")
         ? "Snow"
@@ -701,14 +703,20 @@ class EinkDashboardCard extends HTMLElement {
           : conds.some((c) => c.startsWith("lightning"))
             ? "Storms"
             : "Rain";
-      const describe = (sp, lead) => {
-        const w = lead ? kindWord : "again";
+      // terse: "till" for "until", and a later span without "again".
+      const describe = (sp, lead, terse) => {
+        const w = lead ? `${kindWord} ` : terse ? "" : "again ";
         if (sp.start <= first && sp.end >= lastH) return lead ? `${kindWord} ${tonight ? "all night" : "all day"}` : "";
-        if (sp.start <= first) return `${w} until ${this._hourLabel(sp.end)}`;
-        if (sp.end >= lastH) return `${w} from ${this._hourLabel(sp.start)}`;
-        return `${w} ${this._hourRange(sp.start, sp.end)}`;
+        if (sp.start <= first) return `${w}${terse ? "till" : "until"} ${this._hourLabel(sp.end)}`;
+        if (sp.end >= lastH) return `${w}from ${this._hourLabel(sp.start)}`;
+        return `${w}${this._hourRange(sp.start, sp.end)}`;
       };
-      const parts = spans.slice(0, 2).map((sp, i) => describe(sp, i === 0)).filter(Boolean);
+      const phrase = (terse) =>
+        spans
+          .slice(0, 2)
+          .map((sp, i) => describe(sp, i === 0, terse))
+          .filter(Boolean)
+          .join(", ") + (spans.length > 2 ? ", …" : "");
       const total = wet.reduce((sum, f) => sum + (num(f.precipitation) || 0), 0);
       const probs = wet.map((f) => f.precipitation_probability).filter((v) => v != null);
       const amount = probs.length
@@ -716,7 +724,7 @@ class EinkDashboardCard extends HTMLElement {
         : total >= 0.005
           ? ` (${precip(total, unit)})`
           : "";
-      text = `${parts.join(", ")}${spans.length > 2 ? ", …" : ""}${amount}`;
+      texts = [`${phrase(false)}${amount}`, phrase(false), phrase(true)];
     } else {
       const sky = {
         sunny: tonight ? "clear" : "sunny",
@@ -729,9 +737,9 @@ class EinkDashboardCard extends HTMLElement {
       }[usual];
       if (maxPop !== null && maxPop >= 20) {
         const Sky = sky ? sky[0].toUpperCase() + sky.slice(1) : "Mostly dry";
-        text = `${Sky}, ${maxPop}% chance of rain`;
+        texts = [`${Sky}, ${maxPop}% chance of rain`, `${Sky}, ${maxPop}% rain`];
       } else {
-        text = sky ? `Dry, ${sky}` : "Dry";
+        texts = [sky ? `Dry, ${sky}` : "Dry"];
       }
     }
 
@@ -758,7 +766,8 @@ class EinkDashboardCard extends HTMLElement {
     return {
       label,
       icon: this._conditionIcon(spans.length ? worst : usual, nightish),
-      text,
+      text: texts[0],
+      texts: [...new Set(texts)],
       range: Math.round(lo) === Math.round(hi) ? temp(lo) : `${Math.round(lo)}–${temp(hi)}`,
       wear,
     };
@@ -773,6 +782,34 @@ class EinkDashboardCard extends HTMLElement {
     const banner = this.shadowRoot.querySelector(".banner");
     if (banner && banner.scrollWidth > banner.clientWidth + 1 && this._openDoors().length > 1) {
       this._renderScreen(true);
+    }
+    this._fitText();
+    // The first layout can use a fallback font; measure again with DejaVu.
+    document.fonts.ready.then(() => this._fitText());
+  }
+
+  // Outlook rows ([data-fit]) whose forecast text doesn't fit, in order: hide
+  // the what-to-wear hint (nice to have; on the focus layout it shares the
+  // line), then let the text wrap onto two lines at full size, then try the
+  // shorter wordings listed in data-fit, then shrink the last one down to 80%
+  // of its CSS size (still legible across the room on the far layout) before
+  // leaving the rest to the ellipsis.
+  _fitText() {
+    for (const row of this.shadowRoot.querySelectorAll("[data-fit]")) {
+      const txt = row.querySelector(".txt");
+      const alts = JSON.parse(row.dataset.fit);
+      const over = () => txt.scrollWidth > txt.clientWidth + 1 || txt.scrollHeight > txt.clientHeight + 1;
+      row.classList.remove("nowear", "wrap");
+      txt.style.fontSize = "";
+      txt.textContent = alts[0];
+      if (!over()) continue;
+      row.classList.add("nowear");
+      if (!over()) continue;
+      row.classList.add("wrap");
+      let i = 0;
+      while (over() && i < alts.length - 1) txt.textContent = alts[++i];
+      const full = parseFloat(getComputedStyle(txt).fontSize);
+      for (let size = full - 1; over() && size >= Math.ceil(full * 0.8); size--) txt.style.fontSize = `${size}px`;
     }
   }
 
@@ -879,7 +916,7 @@ class EinkDashboardCard extends HTMLElement {
           .map(
             (o) => `
         <div class="rule"></div>
-        <section class="xrow">
+        <section class="xrow" data-fit="${esc(JSON.stringify(o.texts || [o.text]))}">
           ${icon(o.icon, 76)}
           <div class="lr"><div class="lbl">${esc(o.label)}</div><div class="rng">${esc(o.range)}</div></div>
           <div class="lr">
@@ -912,7 +949,7 @@ class EinkDashboardCard extends HTMLElement {
           ${outlook
             .map(
               (o) => `
-            <div class="orow">
+            <div class="orow" data-fit="${esc(JSON.stringify(o.texts || [o.text]))}">
               ${icon(o.icon, 38)}
               <div class="lbl">${esc(o.label)}</div>
               <div class="rng">${esc(o.range)}</div>
@@ -1044,7 +1081,7 @@ class EinkDashboardCard extends HTMLElement {
         .xright .v { font-size: 64px; font-weight: 700; line-height: 1; }
         .xright .in { display: flex; align-items: center; gap: 4px; font-size: 30px; font-weight: 700; margin-top: 4px; }
         .xrow { display: grid; grid-template-columns: 84px 216px 1fr; align-items: center; column-gap: 14px; padding: 0 16px; }
-        .xrow .lr { display: flex; flex-direction: column; }
+        .xrow .lr { display: flex; flex-direction: column; min-width: 0; }
         .xrow .lbl { font-size: 26px; font-weight: 700; }
         .xrow .rng { font-size: 56px; font-weight: 700; line-height: 1.05; white-space: nowrap; }
         .xrow .txt { font-family: "EinkSansCondensed", sans-serif; font-size: 34px; font-weight: 700;
@@ -1052,6 +1089,12 @@ class EinkDashboardCard extends HTMLElement {
         .xrow .wear { display: flex; align-items: center; gap: 8px; font-family: "EinkSansCondensed", sans-serif;
           font-size: 28px; font-weight: 600; color: var(--muted);
           white-space: nowrap; overflow: hidden; margin-top: 6px; }
+
+        /* _fitText: hide the what-to-wear hint, then wrap the forecast text
+           onto (at most) two lines. */
+        .nowear .wear { display: none; }
+        .wrap .txt { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2; line-height: 1.1; }
       </style>
       <div class="screen ${["focus", "far"].includes(c.layout) ? c.layout : "standard"}">
 ${c.layout === "focus" ? focusBody : c.layout === "far" ? farBody : standardBody}
