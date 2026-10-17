@@ -507,12 +507,15 @@ for `Successfully configured` before moving it.
   debug shows the ZDO status). **Reconfigure both devices afterwards.**
 - **SNZB-06P24 can silently stop sending occupancy reports** while illuminance keeps
   flowing. Fix: z2m Reconfigure. Diagnose with a direct `get` of `occupancy`.
+- **Newer device models raise `NWK_DECRYPTION_FAILURE` by ~270–380 an hour each**
+  (Third Reality Gen3 plug, SONOFF S61; older models joined the same way stay at 0).
+  Functionally harmless so far; cause open — §11 OPEN 2.
 - **RESET_SOFTWARE / ACK-timeout on network-attached coordinators** — widely reported
   for serial-over-TCP; strongly favors going **USB**.
 
 ---
 
-## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10)
+## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10; OPEN 2 updated 2026-10-16)
 
 ### Network
 - USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN `0x1a62`,
@@ -537,6 +540,17 @@ for `Successfully configured` before moving it.
   - All three have been joined before, so pair them via the coordinator or a specific
     router, not "All". To tell them apart, match the IEEE on the label (…69fc /
     …b48716 / …7201), or pair one and read the address in z2m.
+- **SONOFF S61SZBTPB `0xa4c1381f2ed8ffff`** (bought as a Gen3 replacement, 2026-10-16):
+  paired (joined via "All", parent coordinator, so brand-new devices pair fine with
+  "All"), unnamed. On/off and power reporting work (0 W off, ~8.4 W with the lamp,
+  ~121.7 V; current reads 0 A at small loads). "Failed to configure" is cosmetic
+  (`genOnOff` reporting `UNSUPPORTED_ATTRIBUTE`). Adds NWK decryption failures like the
+  Gen3 plugs (OPEN 2).
+- **As of 2026-10-16 evening, plug #2 and the S61 are both unplugged** (counter tests).
+  The Play Room Lamp automation still targets plug #2.
+- **Dining Room Night Light (`3RSNL02043Z`):** removed and re-paired via the
+  coordinator 2026-10-16 21:00 (new short address 2747), renamed back; HA entities
+  unchanged.
 - **Play Room Light Switch (ZBMINIR2) → Play Room Lamp:** a Zigbee binding can't do
   this. The ZBMINIR2 only sends commands (`toggle`) to bound devices in
   detach-relay mode. In normal mode it just reports state. So the HA automation
@@ -662,26 +676,73 @@ they joined).
   to fail for them. Possible extra workarounds, untested: power-cycle the old parent
   first, or wait well past a pairing window before re-pairing.
 
-### OPEN 2: about 400 undecryptable frames an hour since 2026-10-03
-- `NWK_DECRYPTION_FAILURE` (NCP counter 25, §9) was 0–5 a day for weeks: through the
-  Sep 24 migration, the Sep 25 breaker cycle, and up to Oct 2.
-- It went to 26 in the Oct 3 20:48–21:48 hour (plug #1's first join, 21:18), then
-  about 230–540 an hour continuously after the 22:47 re-restore. It reached about
-  860–1,170 an hour during the 2026-10-04 join and leave testing, so join and leave
-  churn also produces them.
-- The NCP drops these frames internally; no callback says which device sent them.
-- **Ruled out:** plug #1 (unplugged; counts continued). No active device went silent.
-  A 75-second debug survey showed nothing unusual.
-- **Network map 2026-10-04 13:25:** three routers that hear the coordinator at
-  255/254 were missing from its full 26-entry table: Front porch light (Third
-  Reality bulb), and Living room overhead lights 2 and 4 (Hue). That's a sign the
-  coordinator couldn't decode them. After air-gapping the living-room bulbs (14:19)
-  all three were listed, **but** the porch light also recovered without being
-  power-cycled, so the cause isn't proven.
-- **Next:** check the counter in a quiet hour (no testing) to see whether the
-  14:19 power-cycle lowered the baseline. If it's still about 400 an hour: eliminate
-  by power-cycling candidate routers one at a time for 2 counter-hours each (the
-  porch light first), or use the sniffer (it shows the source address even when
-  the content can't be decrypted).
-- A neighbor network on the same z2m-default PAN and channel is also a candidate.
-  The sniffer would show it.
+### OPEN 2: undecryptable frames from newer device models (since 2026-10-03)
+**Status (2026-10-16): attributed to the newer device models themselves, not to network
+state. Functionally harmless so far. What those devices send is unknown; the sniffer
+(below) would show it.**
+
+**The symptom.** `NWK_DECRYPTION_FAILURE` (NCP counter 25, §9) was 0–5 a day for weeks:
+through the Sep 24 migration, the Sep 25 breaker cycle, and up to Oct 2. From Oct 3 it
+ran at about 230–540 an hour, and about 860–1,170 an hour during the 2026-10-04 join
+and leave testing. The NCP drops these frames internally; no callback says which
+device sent them, so attribution is by elimination over hourly counter rows.
+
+**Attribution by elimination (hourly rows):**
+
+| Powered (beyond the ~46 older devices) | NWK decryption failures / hour |
+|---|---|
+| none (weeks before Oct 3) | ~0 |
+| Third Reality Gen3 plug ×1 (#2, overnight) | ~230–415, average ~375 |
+| Gen3 plugs ×2 | 723 |
+| Gen3 plugs ×4 | up to 1,166 |
+| Gen3 plug #1 unplugged, #2 left | 421 |
+| **SONOFF S61SZBTPB** only (2026-10-16 16:09–17:09) | **274** |
+| S61 unplugged ~40 s into the hour | 14 |
+| nothing joined after Oct 3 | 0, 0 |
+
+- **Every device that joined on or after 2026-10-03 adds roughly 270–380 an hour,
+  regardless of vendor:** Third Reality Gen3 plug (fw 1.00.47 and 1.00.63, stack
+  revision R22) and SONOFF S61 (fw 1.0.3, R21). Newer Gen3 firmware doesn't fix it.
+  The ~46 devices that joined earlier add about 0.
+- **Ruled out:** the MG24 dongle itself (9 clean days before Oct 3); z2m, herdsman,
+  or NCP firmware changes (2.14.0 / 10.9.1 / EmberZNet 7.4.5 throughout); Zigbee R23;
+  the coordinator's own address mapping (the 2026-10-04 network map listed the failing
+  plugs by IEEE in the coordinator's neighbor table).
+
+**Network state vs. device model: settled by re-pairing an OLD model (2026-10-16).**
+Joiner: Dining Room Night Light (Third Reality `3RSNL02043Z`, `0xb40ecfd7ff8b0000`,
+originally joined long before the migration), with every post-Oct 3 device unplugged.
+
+| Test | Coordinator state for the device | Short address | Failures |
+|---|---|---|---|
+| a. factory reset + permit-join "Coordinator" only, no z2m remove (18:29) | possibly remembered | 52335 (same as before) | 0, 0 (two full hours) |
+| b. z2m normal remove (leave acked) → unplugged 18 min → permit-join "Coordinator" only (21:00:57) | forgotten | **2747 (new)** | 0 (first 8 min), **0** (first full hour, 81 messages) |
+
+Test b makes the night light exactly as new to the coordinator as the S61 or the Gen3
+plugs, yet it stays clean. So **joining after the Oct 3 re-restore doesn't cause it;
+the newer device models do.** (Test a alone wasn't conclusive: getting the same short
+address back shows the coordinator still remembered the device.)
+
+Note: a normal z2m remove also drops the friendly name. Rename back with
+`bridge/request/device/rename` `{"from":"<ieee>","to":"<name>","homeassistant_rename":true}`
+and HA re-creates the same entity ids.
+
+**Possible causes (each visible with a sniffer):**
+- frames sent with a key sequence number the coordinator doesn't hold (for example a
+  missed or mishandled key-switch);
+- frames sent without the extended nonce (sender IEEE), so the coordinator can't
+  build the nonce for an unknown short address;
+- broadcasts or link-status frames the coordinator can't match to a sender;
+- a neighbor network on the same z2m-default PAN and channel (less likely now: the
+  count follows our devices being powered).
+
+**Next (when wanted): sniffer.** Any 802.15.4 sniffer on channel 11 near the
+coordinator, Wireshark with the network key (from `coordinator_backup.json` on aida;
+keep captures and keys private) plus ZigBeeAlliance09. Capture an hour with only the
+S61 (or one Gen3 plug) powered and look for frames from its short address that
+Wireshark can't decrypt either, then compare their NWK security header (key sequence,
+extended nonce, frame counter) with frames that do decrypt. Hardware options:
+- Nordic nRF52840 dongle (PCA10059) + nRF Sniffer for 802.15.4, on cesare;
+- a spare EFR32 radio running stock Zigbee NCP firmware, via `ember-zli sniff`
+  (SMLIGHT documents this for its MRx radios over TCP). It must not be the live
+  coordinator.
