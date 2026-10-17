@@ -737,7 +737,9 @@ class EinkDashboardCard extends HTMLElement {
       }[usual];
       if (maxPop !== null && maxPop >= 20) {
         const Sky = sky ? sky[0].toUpperCase() + sky.slice(1) : "Mostly dry";
-        texts = [`${Sky}, ${maxPop}% chance of rain`, `${Sky}, ${maxPop}% rain`];
+        // A bare percentage reads as the chance of precipitation, as in the
+        // rain spans' "(73%)".
+        texts = [`${Sky} (${maxPop}%)`];
       } else {
         texts = [sky ? `Dry, ${sky}` : "Dry"];
       }

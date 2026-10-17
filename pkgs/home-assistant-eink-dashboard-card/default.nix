@@ -18,7 +18,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "eink-dashboard-card";
-  version = "0.12.0";
+  version = "0.12.1";
 
   src = ./eink-dashboard-card.js;
   dontUnpack = true;
