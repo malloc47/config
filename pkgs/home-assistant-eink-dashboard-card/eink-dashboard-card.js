@@ -738,8 +738,23 @@ class EinkDashboardCard extends HTMLElement {
       if (maxPop !== null && maxPop >= 20) {
         const Sky = sky ? sky[0].toUpperCase() + sky.slice(1) : "Mostly dry";
         // A bare percentage reads as the chance of precipitation, as in the
-        // rain spans' "(73%)".
-        texts = [`${Sky} (${maxPop}%)`];
+        // rain spans' "(73%)". When the peak chance is confined to one stretch
+        // of at most half the window, say when: "Cloudy (39% until 11 PM)".
+        // Hours within 5 points of the peak count toward it (NWS steps its
+        // probabilities in blocks).
+        const peak = hours.filter((f) => (f.precipitation_probability ?? 0) >= maxPop - 5);
+        const start = peak[0].h;
+        const end = peak[peak.length - 1].h + 1;
+        let when = "";
+        if (peak.length === end - start && end - start <= (lastH - first) / 2) {
+          when =
+            start <= first
+              ? ` until ${this._hourLabel(end)}`
+              : end >= lastH
+                ? ` from ${this._hourLabel(start)}`
+                : ` ${this._hourRange(start, end)}`;
+        }
+        texts = [`${Sky} (${maxPop}%${when})`, `${Sky} (${maxPop}%)`];
       } else {
         texts = [sky ? `Dry, ${sky}` : "Dry"];
       }
