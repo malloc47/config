@@ -260,6 +260,25 @@ in
     ];
   };
 
+  # Local speech for HA's Assist pipeline (voice satellites such as the
+  # living-room Fire tablet running Kiosk Satellite): speech-to-text and Piper
+  # text-to-speech as Wyoming servers on loopback, wired into HA through the
+  # wyoming integration. The STT model is left to wyoming-faster-whisper's
+  # per-language default; models and voices download into each service's
+  # state directory on first start.
+  services.wyoming.faster-whisper.servers.main = {
+    enable = true;
+    language = "en";
+    uri = "tcp://127.0.0.1:10300";
+    zeroconf.enable = false;
+  };
+  services.wyoming.piper.servers.main = {
+    enable = true;
+    voice = "en_US-lessac-medium";
+    uri = "tcp://127.0.0.1:10200";
+    zeroconf.enable = false;
+  };
+
   # Home Assistant — its own auth (no Authelia forward_auth, which would break
   # the companion app and long-lived API tokens). Listens on loopback; Caddy
   # terminates TLS and forwards.
@@ -339,6 +358,11 @@ in
       "reolink" # Reolink doorbell/cameras (packages reolink-aio)
       "zwave_js" # Z-Wave; connects to the zwave-js server below (added via UI)
       "esphome" # ESPHome devices added via UI (packages aioesphomeapi)
+      # Wyoming protocol: connects HA's Assist pipeline to the local
+      # speech-to-text and text-to-speech servers below (services.wyoming).
+      # Added via the UI config flow, one entry per server (127.0.0.1:10300
+      # and :10200).
+      "wyoming"
       # Matter controller integration — added via the UI, connects to the
       # matter-server below on ws://127.0.0.1:5580. This is HA commissioning and
       # controlling real Matter devices (inbound), distinct from the matter-hub
@@ -388,6 +412,12 @@ in
       default_config = { };
       # Home/installation display name (Settings -> System -> General -> Name).
       homeassistant.name = "Berry Patch";
+      # HA's own address, for URLs it hands to devices (e.g. Assist reply
+      # audio for voice satellites, /api/tts_proxy/...). Unset, HA falls back
+      # to http://<LAN IP>:8123, but it only listens on loopback behind Caddy,
+      # so devices couldn't fetch them.
+      homeassistant.internal_url = "https://home.malloc47.com";
+      homeassistant.external_url = "https://home.malloc47.com";
       # Point the UI automation/scene/script editors at writable include files.
       # The module unquotes leading-bang strings, so these become real YAML
       # `!include` tags. Without them, the UI saves the file but HA never loads
