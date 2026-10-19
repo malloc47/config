@@ -418,6 +418,20 @@ in
       # so devices couldn't fetch them.
       homeassistant.internal_url = "https://home.malloc47.com";
       homeassistant.external_url = "https://home.malloc47.com";
+      # "Kiosk": layout tweaks for small wall tablets, applied per view (the
+      # living-room Fire HD 8 dashboard, hosts/aida/home-assistant/
+      # living-room-dashboard.yaml). Its WebView is 960x600 CSS px, where the
+      # sections view's default 320px minimum column width and 32px gaps fit
+      # only two columns. Empty light/dark modes keep HA's default colours and
+      # the device's light/dark switching.
+      frontend.themes.Kiosk = {
+        ha-view-sections-column-min-width = "260px";
+        ha-view-sections-column-gap = "16px";
+        modes = {
+          light = { };
+          dark = { };
+        };
+      };
       # Point the UI automation/scene/script editors at writable include files.
       # The module unquotes leading-bang strings, so these become real YAML
       # `!include` tags. Without them, the UI saves the file but HA never loads

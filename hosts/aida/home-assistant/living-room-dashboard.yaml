@@ -1,0 +1,167 @@
+# Dashboard for the living-room Fire HD 8 (Kiosk Satellite, logged in as the
+# non-admin `kiosk` user; 1280x800 landscape, which the WebView lays out at
+# 960x600 CSS px). HA dashboards are UI-managed (.storage), so this is the
+# reference copy: the dashboard's URL is `dashboard-living-room` (not
+# admin-only), and this is its raw configuration. The tablet's default
+# dashboard (select.fire_8_default_dashboard) is dashboard-living-room/home.
+#
+# One sections view, three columns that fit the screen without scrolling:
+# lights | media | house; the Kiosk theme (frontend.themes in
+# home-automation.nix) narrows the columns so three fit. Built-in cards only
+# (the 2018 Fire has 1.5 GB of RAM). Tiles with a slider are two grid rows
+# tall for an easy touch target.
+title: Living Room
+views:
+  - title: Living Room
+    path: home
+    type: sections
+    max_columns: 3
+    theme: Kiosk
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lights
+            icon: mdi:lightbulb-group
+          - type: tile
+            entity: light.living_room_lights
+            name: All living room
+            features_position: bottom
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: full
+          - type: tile
+            entity: light.living_room_overhead_lights
+            name: Overhead
+            features_position: bottom
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: full
+          - type: tile
+            entity: light.living_room_floor_lamp
+            name: Floor lamp
+            features_position: bottom
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: full
+          - type: tile
+            entity: light.dining_room_night_light
+            name: Notification
+            tap_action:
+              action: toggle
+          - type: tile
+            entity: switch.adaptive_lighting_sleep_mode_downstairs
+            name: Sleep mode
+            icon: mdi:weather-night
+            tap_action:
+              action: toggle
+      - type: grid
+        cards:
+          - type: heading
+            heading: Media
+            icon: mdi:television-play
+          # Cast entity: now playing, artwork and playback controls.
+          - type: media-control
+            entity: media_player.living_room_tv
+            grid_options:
+              columns: full
+          # Android TV Remote entity: power works with the TV idle, unlike
+          # Cast. No volume slider: tile features hide while the player is
+          # off, which would leave a blank second row.
+          - type: tile
+            entity: media_player.living_room_tv_2
+            name: TV
+            tap_action:
+              action: toggle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: media_player.living_room_speaker
+            name: Speaker
+            features_position: bottom
+            features:
+              - type: media-player-volume-slider
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: House
+            icon: mdi:home
+          - type: tile
+            entity: binary_sensor.perimeter_doors
+            name: Doors
+            icon: mdi:door
+            grid_options:
+              columns: full
+          # Which doors are open, only while any is.
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.perimeter_doors
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+                {{ expand('binary_sensor.perimeter_doors')
+                   | selectattr('state', 'eq', 'on')
+                   | map(attribute='name') | map('replace', ' Contact', '')
+                   | join(' · ') }}
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.smoke_co_alarm_smoke_detected
+            name: Smoke
+            icon: mdi:smoke-detector
+          - type: tile
+            entity: binary_sensor.smoke_co_alarm_carbon_monoxide_detected
+            name: CO
+            icon: mdi:molecule-co
+          - type: tile
+            entity: sensor.dishwasher_operation_state
+            name: Dishwasher
+            icon: mdi:dishwasher
+          - type: tile
+            entity: sensor.washer_dryer_current_status
+            name: Laundry
+            icon: mdi:washing-machine
+          # Progress, only while a program is running.
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.dishwasher_operation_state
+                state: run
+            card:
+              type: tile
+              entity: sensor.dishwasher_program_progress
+              name: Dishwasher progress
+              icon: mdi:progress-clock
+            grid_options:
+              columns: full
+          - type: tile
+            entity: script.turn_off_first_floor_lights
+            name: Floor 1 off
+            hide_state: true
+            icon: mdi:home-floor-1
+            color: amber
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.turn_off_first_floor_lights
+          - type: tile
+            entity: script.turn_off_all_lights
+            name: All lights off
+            hide_state: true
+            icon: mdi:lightbulb-group-off
+            color: amber
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.turn_off_all_lights
+              confirmation:
+                text: Turn off every light in the house?
