@@ -318,7 +318,7 @@
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = specialArgs;
                 home-manager.users.${config.settings.username} =
-                  { config, ... }:
+                  { config, pkgs, ... }:
                   {
                     imports = [
                       self.homeManagerModules.osconfig-bridge
@@ -330,6 +330,7 @@
                     ];
                     stylix.targets.emacs.enable = false;
                     programs.dev-toolchain.enable = true;
+                    home.packages = [ pkgs.sqlit-tui ]; # terminal SQL client
                     programs.ai-session = {
                       enable = true;
                       webServer.enable = true;

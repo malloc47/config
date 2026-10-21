@@ -19,6 +19,7 @@
 
   environment.systemPackages = [
     pkgs.adguardian
+    pkgs.sqlit-tui # terminal SQL client
     pkgs.smartmontools # smartctl: read NVMe health / "Unsafe Shutdowns" counter
   ];
 
