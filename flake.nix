@@ -232,7 +232,9 @@
                     self.homeManagerModules.osconfig-bridge
                     self.homeManagerModules.home
                     self.homeManagerModules.home-agenix
+                    self.homeManagerModules.home-sqlit
                   ];
+                  programs.sqlit.enable = true;
                 };
               }
             )
@@ -318,7 +320,7 @@
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = specialArgs;
                 home-manager.users.${config.settings.username} =
-                  { config, pkgs, ... }:
+                  { config, ... }:
                   {
                     imports = [
                       self.homeManagerModules.osconfig-bridge
@@ -327,10 +329,11 @@
                       self.homeManagerModules.home-ai
                       self.homeManagerModules.home-agenix
                       self.homeManagerModules.home-gh
+                      self.homeManagerModules.home-sqlit
                     ];
                     stylix.targets.emacs.enable = false;
                     programs.dev-toolchain.enable = true;
-                    home.packages = [ pkgs.sqlit-tui ]; # terminal SQL client
+                    programs.sqlit.enable = true;
                     programs.ai-session = {
                       enable = true;
                       webServer.enable = true;
@@ -444,6 +447,7 @@
         home-ai = import ./home/modules/ai-session.nix { inherit inputs; };
         home-agenix = import ./home/agenix.nix { inherit inputs; };
         home-gh = ./home/modules/gh.nix;
+        home-sqlit = ./home/modules/sqlit.nix;
         home-drift-check = ./home/modules/drift-check.nix;
       };
 
