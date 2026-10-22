@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   pkgs-unstable,
   config,
@@ -114,6 +115,10 @@
         expose-animation-duration = 0.0;
         mineffect = "scale";
       };
+
+      # OmniWM pauses window management unless "Displays have separate
+      # Spaces" is on. Takes effect after logging out and back in.
+      spaces.spans-displays = lib.mkIf (config.settings.darwinWindowManager == "omniwm") false;
 
     };
 

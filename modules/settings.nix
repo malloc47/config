@@ -65,6 +65,18 @@ with lib;
           must be present in the xkb directory.
         '';
       };
+      darwinWindowManager = mkOption {
+        default = "omniwm";
+        type = types.enum [
+          "aerospace"
+          "omniwm"
+        ];
+        description = ''
+          Tiling window manager for macOS hosts. Only one may run at a
+          time (OmniWM refuses to manage windows while AeroSpace is
+          running). Ignored on NixOS.
+        '';
+      };
       extraGroups = mkOption {
         default = [ ];
         type = with types; listOf str;

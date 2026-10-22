@@ -95,6 +95,7 @@ A custom options module that normalizes per-host differences, avoiding host-name
 - `settings.fontSize` / `settings.dpi` / `settings.fontName` — display scaling for Retina vs non-Retina
 - `settings.xkbFile` — selects a keyboard layout from `xkb/`
 - `settings.profile` — groups machines by identity (e.g., `malloc47`) to load the right SSH keys from `config.settings.sshKeys + "/<profile>/"`
+- `settings.darwinWindowManager` — `"omniwm"` (default) or `"aerospace"`; selects which of `darwin/omniwm.nix` / `darwin/aerospace.nix` is active
 
 ### Userspace (Home-Manager)
 
@@ -107,7 +108,8 @@ A custom options module that normalizes per-host differences, avoiding host-name
 ### macOS-Specific (`darwin/`)
 
 - Homebrew managed declaratively via `nix-homebrew` (`darwin/homebrew.nix`)
-- macOS system defaults, keyboard (Karabiner), and window manager config in `darwin/configuration.nix`
+- macOS system defaults and keyboard (Karabiner) in `darwin/configuration.nix`
+- Window manager in `darwin/wm.nix` (Albert, flameshot, Karabiner) plus `darwin/omniwm.nix` (OmniWM + skhd) or `darwin/aerospace.nix` (AeroSpace + AutoRaise + SwipeAeroSpace + JankyBorders)
 - Custom packages in `pkgs/` (albert, autoraise, etc.)
 
 ### OpenWRT Router (`hosts/openwrt/`)
