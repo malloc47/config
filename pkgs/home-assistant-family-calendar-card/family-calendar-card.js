@@ -26,6 +26,18 @@
 //   dedupe: true                       # hide an event a calendar earlier in the
 //                                      # list (and shown) already has: same title
 //                                      # ignoring case/punctuation, same times
+//   regular_schedule:                  # optional: timed events that repeat on several
+//     min_days: 3                      # weekdays of the visible days (same calendar,
+//     weekdays: [1, 2, 3, 4, 5]        # title and times) move out of the day columns
+//     title: Regular schedule          # into a strip: a row per calendar on a shared
+//     pickup_match: "^pick-?up\\b"     # time axis, with the weekdays where any of it
+//     pickup: "18:00"                  # is missing at the row's end. Pickup events
+//                                      # (title matching pickup_match) that are the
+//                                      # same for every row show once, between the
+//                                      # rows; otherwise each is named ("Bastian
+//                                      # pickup"). pickup: a fixed pickup time instead,
+//                                      # when the calendars have none.
+//                                      # weekdays: 0 = Sunday … 6 = Saturday
 //   title_rewrites:                    # shorten titles in the grid, in order (the
 //     - match: "Discovery Village "    # popup keeps the full title); match is a
 //       replace: ""                    # JS regex, replace may use $1 etc.
@@ -66,6 +78,23 @@ const addDays = (date, n) => {
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
+};
+
+// Weekday sets as short labels, Monday first: runs of three or more collapse
+// to a range ("M–F", "M–W F"), others are listed ("M T Th F").
+const DAY_LETTERS = ["Su", "M", "T", "W", "Th", "F", "Sa"];
+const dayLabel = (set) => {
+  const order = [1, 2, 3, 4, 5, 6, 0].filter((d) => set.has(d));
+  const pos = (x) => (x + 6) % 7; // Monday = 0 … Sunday = 6
+  const runs = [];
+  for (const d of order) {
+    const run = runs[runs.length - 1];
+    if (run && pos(d) === pos(run[run.length - 1]) + 1) run.push(d);
+    else runs.push([d]);
+  }
+  return runs
+    .map((r) => (r.length >= 3 ? `${DAY_LETTERS[r[0]]}–${DAY_LETTERS[r[r.length - 1]]}` : r.map((d) => DAY_LETTERS[d]).join(" ")))
+    .join(" ");
 };
 
 // Black or white text for a solid background colour.
@@ -313,14 +342,21 @@ class FamilyCalendarCard extends HTMLElement {
     const perDay = days.map(() => []);
     // Calendars in list order, so with dedupe the first shown calendar that
     // has an event keeps it and later copies are dropped.
-    const seen = new Set();
+    // dupes: kept event -> the calendars whose copies were dropped.
+    const seen = new Map();
+    const dupes = new Map();
     for (const cal of this._calendars) {
       if (this._hidden.has(cal.entity)) continue;
       for (const ev of this._events[cal.entity] || []) {
         if (ev.endDay < first || ev.startDay > last) continue;
         if (this._config.dedupe) {
-          if (seen.has(ev.key)) continue;
-          seen.add(ev.key);
+          const kept = seen.get(ev.key);
+          if (kept) {
+            if (!dupes.has(kept)) dupes.set(kept, []);
+            dupes.get(kept).push(ev.cal);
+            continue;
+          }
+          seen.set(ev.key, ev);
         }
         if (ev.allDay || ev.startDay !== ev.endDay) {
           bars.push({ ev, from: Math.max(0, idx(ev.startDay)), to: Math.min(days.length - 1, idx(ev.endDay)) });
@@ -338,7 +374,110 @@ class FamilyCalendarCard extends HTMLElement {
       bar.lane = lane;
     }
     for (const list of perDay) list.sort((a, b) => a.start - b.start || a.end - b.end);
-    return { bars, perDay, lanes: laneEnds.length };
+    return { bars, perDay, lanes: laneEnds.length, regular: this._regular(days, perDay, dupes) };
+  }
+
+  // regular_schedule: timed events that recur on at least min_days of the
+  // visible weekdays with the same calendar, title and start/end times are
+  // taken out of the day columns (perDay, in place) and returned as a row
+  // per calendar (in list order): its events in time order (each the
+  // occurrence today, else the next, else the first) and the visible weekdays
+  // where any of them is missing. Times are minutes after local midnight; the
+  // shared axis runs from the earliest start's hour to the last end (a short
+  // event's start). When every row has a pickup at the same time (the same
+  // event, or copies dropped as duplicates) it becomes `shared`; otherwise
+  // each row's pickup is labelled with the calendar's name.
+  _regular(days, perDay, dupes) {
+    const cfg = this._config.regular_schedule;
+    if (!cfg) return null;
+    const weekdays = new Set(cfg.weekdays || [1, 2, 3, 4, 5]);
+    const minDays = cfg.min_days ?? 3;
+    const pickupRe = new RegExp(cfg.pickup_match ?? "^pick-?up\\b", "i");
+    const today = this._today();
+    const now = Date.now();
+    // Minutes after midnight in HA's time zone, for the key and the axis.
+    const hm = new Intl.DateTimeFormat("en-US", {
+      timeZone: this._hass.config?.time_zone,
+      hour: "numeric",
+      minute: "numeric",
+      hourCycle: "h23",
+    });
+    const tod = (ts) => {
+      const p = Object.fromEntries(hm.formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+      return Number(p.hour) * 60 + Number(p.minute);
+    };
+    const visible = new Set();
+    const series = new Map();
+    days.forEach((d, i) => {
+      const dow = new Date(`${d}T12:00:00Z`).getUTCDay();
+      if (!weekdays.has(dow)) return;
+      visible.add(dow);
+      for (const ev of perDay[i]) {
+        // A duplicate dropped from a later calendar still counts toward that
+        // calendar's routine (dedupe works per occurrence, so on days the
+        // copies differ the later calendar keeps its own).
+        for (const cal of [ev.cal, ...(dupes.get(ev) || [])]) {
+          const key = `${cal.entity}|${ev.key.split("|")[0]}|${tod(ev.start)}|${ev.end - ev.start}`;
+          if (!series.has(key)) series.set(key, { cal, evs: [], dows: new Set() });
+          const s = series.get(key);
+          if (s.dows.has(dow)) continue; // one per weekday (a longer view repeats them)
+          s.dows.add(dow);
+          s.evs.push(ev);
+        }
+      }
+    });
+    const rows = new Map();
+    for (const { cal, evs, dows } of series.values()) {
+      if (dows.size < minDays) continue;
+      const drop = new Set(evs);
+      perDay.forEach((list, i) => {
+        perDay[i] = list.filter((ev) => !drop.has(ev));
+      });
+      const pick = evs.find((ev) => ev.startDay === today) || evs.find((ev) => ev.start > now) || evs[0];
+      const start = tod(pick.start);
+      if (!rows.has(cal.entity)) rows.set(cal.entity, { cal, items: [], missing: new Set() });
+      const row = rows.get(cal.entity);
+      row.items.push({
+        ev: { ...pick, regularDays: dayLabel(dows) },
+        start,
+        end: start + (pick.end - pick.start) / 60000,
+        pickup: pickupRe.test(pick.summary),
+        dows,
+      });
+      for (const d of visible) if (!dows.has(d)) row.missing.add(d);
+    }
+    if (!rows.size) return null;
+    const list = this._calendars
+      .map((c) => rows.get(c.entity))
+      .filter(Boolean)
+      .map((r) => ({ ...r, items: r.items.sort((a, b) => a.start - b.start), exceptions: r.missing.size ? dayLabel(r.missing) : "" }));
+    // Pickups: one shared pin when they agree for every row, else named ones.
+    const pickups = list.flatMap((r) => r.items.filter((it) => it.pickup).map((it) => ({ r, it })));
+    const covered = new Set(pickups.map(({ r }) => r.cal.entity));
+    let shared = null;
+    if (pickups.length && new Set(pickups.map(({ it }) => it.start)).size === 1 && list.every((r) => covered.has(r.cal.entity))) {
+      const days = new Set(pickups.flatMap(({ it }) => [...it.dows]));
+      shared = { minutes: pickups[0].it.start, ev: { ...pickups[0].it.ev, regularDays: dayLabel(days) } };
+      for (const { r, it } of pickups) r.items = r.items.filter((x) => x !== it);
+    } else {
+      for (const { r, it } of pickups) {
+        const name = r.cal.name || this._hass.states[r.cal.entity]?.attributes?.friendly_name || r.cal.entity;
+        const t = it.ev.title;
+        it.label = `${name} ${t[0].toLowerCase()}${t.slice(1)}`;
+      }
+      if (!pickups.length && cfg.pickup) {
+        const [ph, pm] = String(cfg.pickup).split(":").map(Number);
+        shared = { minutes: ph * 60 + (pm || 0), ev: null };
+      }
+    }
+    // The axis: from the earliest start's hour to the hour of the last end
+    // (a short event's start).
+    const starts = list.flatMap((r) => r.items.map((it) => it.start));
+    const tails = list.flatMap((r) => r.items.map((it) => (it.end - it.start < 30 ? it.start : it.end)));
+    if (shared) tails.push(shared.minutes);
+    const from = Math.floor(Math.min(...starts, ...(shared ? [shared.minutes] : [])) / 60) * 60;
+    const to = Math.ceil(Math.max(...tails) / 60) * 60;
+    return { rows: list, from, to, shared, label: dayLabel(visible) };
   }
 
   // ---- controls strip -----------------------------------------------------
@@ -413,6 +552,7 @@ class FamilyCalendarCard extends HTMLElement {
             </div>
           </div>
           <div class="chips"></div>
+          <div class="regular"></div>
           <div class="heads"></div>
           <div class="week"></div>
         </section>
@@ -434,10 +574,12 @@ class FamilyCalendarCard extends HTMLElement {
       this._saveHidden();
       this._schedule();
     });
-    root.querySelector(".week").addEventListener("click", (e) => {
-      const el = e.target.closest("[data-ev]");
-      if (el) this._showDetail(this._shown[Number(el.dataset.ev)]);
-    });
+    for (const sel of [".week", ".regular"]) {
+      root.querySelector(sel).addEventListener("click", (e) => {
+        const el = e.target.closest("[data-ev]");
+        if (el) this._showDetail(this._shown[Number(el.dataset.ev)]);
+      });
+    }
     root.querySelector(".detail").addEventListener("click", (e) => {
       if (e.target.closest(".close") || !e.target.closest(".sheet")) this._hideDetail();
     });
@@ -445,7 +587,10 @@ class FamilyCalendarCard extends HTMLElement {
     this._bannerHtml = null;
     this._mountCards();
     if (!this._onResize) {
-      this._onResize = () => this._schedule();
+      this._onResize = () => {
+        this._pinsDirty = true;
+        this._schedule();
+      };
       window.addEventListener("resize", this._onResize);
     }
   }
@@ -570,7 +715,7 @@ class FamilyCalendarCard extends HTMLElement {
         .join(""),
     );
 
-    const { bars, perDay, lanes } = this._layout(days);
+    const { bars, perDay, lanes, regular } = this._layout(days);
     const shown = [];
     const ref = (ev) => shown.push(ev) - 1;
     const time = (ts) => this._wx.clockTime(ts).replace(/\s/g, " ");
@@ -596,7 +741,13 @@ class FamilyCalendarCard extends HTMLElement {
           .join("")}</div>`,
       )
       .join("");
+    const regularHtml = regular ? this._regularHtml(regular, ref) : "";
     this._shown = shown;
+    if (this._html[".regular"] !== regularHtml) {
+      this._set(".regular", regularHtml);
+      this._pinsDirty = true;
+    }
+    if (this._pinsDirty) this._layoutPins();
     this._set(
       ".week",
       `${lanes ? `<div class="bars" style="grid-template-rows: repeat(${lanes}, auto)">${barHtml}</div>` : ""}<div class="cols">${cols}</div>`,
@@ -628,6 +779,95 @@ class FamilyCalendarCard extends HTMLElement {
     }
   }
 
+  // The regular-schedule strip: an hour axis ending at pickup, then a row per
+  // calendar. Events of 30+ minutes are blocks sized by their times (a block
+  // starts no earlier than the previous one ends, so overlaps don't stack),
+  // clipped at pickup; shorter ones (a bus stop) are pins under the track.
+  _regularHtml(rg, ref) {
+    const span = rg.to - rg.from;
+    const pct = (m) => (((Math.min(Math.max(m, rg.from), rg.to) - rg.from) / span) * 100).toFixed(2);
+    const clock = (m) => {
+      const h = Math.floor(m / 60) % 24;
+      const mm = String(m % 60).padStart(2, "0");
+      return `${h % 12 || 12}:${mm}`;
+    };
+    const ticks = [];
+    for (let m = rg.from; m <= rg.to; m += 60) {
+      const h = (m / 60) % 24;
+      const label = m === rg.from || h === 12 ? `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}` : `${h % 12 || 12}`;
+      ticks.push(`<span class="tick" style="left: ${pct(m)}%">${esc(label)}</span>`);
+    }
+    // A shared pickup: a pin like the bus stops under the first row (so
+    // between the rows when there are two); at the axis end its label sits
+    // left of the end line.
+    const sh = rg.shared;
+    const atEnd = sh && sh.minutes === rg.to;
+    const pickup = !sh
+      ? ""
+      : sh.ev
+        ? `<button class="rg-pin flip pickup" data-ev="${ref(sh.ev)}" style="left: ${pct(sh.minutes)}%"><span class="t">${esc(clock(sh.minutes))}</span>${esc(sh.ev.title)}</button>`
+        : `<span class="rg-pin flip pickup" style="left: ${pct(sh.minutes)}%"><span class="t">${esc(clock(sh.minutes))}</span>Pickup</span>`;
+    const rows = rg.rows
+      .map((row, r) => {
+        let edge = rg.from;
+        const blocks = [];
+        const pins = [];
+        for (const it of row.items) {
+          if (it.end - it.start < 30) {
+            pins.push(it);
+            continue;
+          }
+          const a = Math.max(it.start, edge);
+          const b = Math.min(it.end, rg.to);
+          if (b - a < 5) continue;
+          edge = b;
+          blocks.push(`<button class="rg-block" data-ev="${ref(it.ev)}" style="left: ${pct(a)}%; width: calc(${pct(b)}% - ${pct(a)}%); --c: ${esc(row.cal.color)}">
+            <span class="s">${esc(it.ev.title)}</span><span class="t">${esc(clock(it.start))}</span></button>`);
+        }
+        // Pins sit on lines under the blocks; _layoutPins() moves any that
+        // collide onto further lines once their labels can be measured.
+        const pinHtml =
+          pins
+            .map((it) => {
+              const left = Number(pct(it.start));
+              return `<button class="rg-pin${left > 70 ? " flip" : ""}" data-ev="${ref(it.ev)}" style="left: ${left}%; --c: ${esc(row.cal.color)}">
+              <span class="t">${esc(clock(it.start))}</span>${esc(it.label ?? it.ev.title)}</button>`;
+            })
+            .join("") + (r === 0 ? pickup : "");
+        const name = row.cal.name || this._hass.states[row.cal.entity]?.attributes?.friendly_name || row.cal.entity;
+        return `<div class="rg-row">
+          <div class="rg-name" style="--c: ${esc(row.cal.color)}"><span class="dot"></span>${esc(name)}</div>
+          <div class="rg-track${atEnd ? " to-pickup" : ""}">${blocks.join("")}${pinHtml}</div>
+          <div class="rg-exc">${row.exceptions ? `<span>except <b>${esc(row.exceptions)}</b></span>` : ""}</div>
+        </div>`;
+      })
+      .join("");
+    const title = this._config.regular_schedule?.title ?? "Regular schedule";
+    return `<div class="rg-wrap" style="--rg-hours: ${span / 60}">
+      <div class="rg-title">${esc(title)} · ${esc(rg.label)}</div>
+      <div class="rg-row rg-axis"><div></div><div class="rg-ticks">${ticks.join("")}</div><div></div></div>
+      ${rows}</div>`;
+  }
+
+  // Lay out each track's pins: greedily onto the first line (under the
+  // blocks) where the label doesn't overlap another, then size the track.
+  _layoutPins() {
+    for (const track of this.shadowRoot.querySelectorAll(".rg-track")) {
+      const pins = [...track.querySelectorAll(".rg-pin")]
+        .map((el) => ({ el, rect: el.getBoundingClientRect() }))
+        .sort((a, b) => a.rect.left - b.rect.left);
+      const lineEnds = [];
+      for (const { el, rect } of pins) {
+        let line = lineEnds.findIndex((end) => rect.left >= end + 8);
+        if (line < 0) line = lineEnds.push(0) - 1;
+        lineEnds[line] = rect.right;
+        el.style.top = `${30 + line * 20}px`;
+      }
+      track.style.height = `${30 + lineEnds.length * 20}px`;
+    }
+    this._pinsDirty = false;
+  }
+
   _showDetail(ev) {
     if (!ev) return;
     const tz = this._hass.config?.time_zone;
@@ -656,6 +896,7 @@ class FamilyCalendarCard extends HTMLElement {
         <div class="d-cal"><span class="dot"></span>${esc(name)}</div>
         <h2>${esc(ev.summary)}</h2>
         <div class="d-row"><ha-icon icon="mdi:clock-outline"></ha-icon><span>${esc(when)}</span></div>
+        ${ev.regularDays ? `<div class="d-row"><ha-icon icon="mdi:calendar-sync-outline"></ha-icon><span>Regular schedule this week: ${esc(ev.regularDays)}</span></div>` : ""}
         ${ev.location ? `<div class="d-row"><ha-icon icon="mdi:map-marker-outline"></ha-icon><span>${esc(ev.location)}</span></div>` : ""}
         ${desc ? `<div class="d-desc">${esc(desc)}</div>` : ""}
       </div>`;
@@ -749,6 +990,40 @@ const STYLE = `
   .chip .dot, .d-cal .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--c); box-sizing: border-box; }
   .chip.off { background: none; border-color: var(--divider-color); color: var(--secondary-text-color); }
   .chip.off .dot { background: none; border: 2px solid var(--c); }
+
+  /* Regular schedule: an hour axis, then a row per calendar (name | time
+     track | exception days). */
+  .regular { flex: none; padding: 0 12px 10px; }
+  .rg-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .regular:empty { display: none; }
+  .rg-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--secondary-text-color); margin-bottom: 2px; }
+  .rg-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) 84px; column-gap: 8px; align-items: start; }
+  .rg-ticks { position: relative; height: 16px; }
+  .tick { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--secondary-text-color);
+    white-space: nowrap; }
+  .tick:first-child { transform: none; }
+  .rg-name { display: flex; align-items: center; gap: 6px; height: 30px; font-size: 15px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; }
+  .rg-name .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+  .rg-track { position: relative; height: 30px;
+    background: repeating-linear-gradient(90deg, var(--divider-color) 0 1px, transparent 1px calc(100% / var(--rg-hours, 11))); }
+  .rg-track.to-pickup { border-right: 2px solid var(--primary-text-color); }
+  .rg-block { position: absolute; top: 0; height: 30px; box-sizing: border-box; padding: 0 6px; border-radius: 6px;
+    display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap;
+    background: color-mix(in srgb, var(--c) 30%, var(--card-background-color)); border-left: 3px solid var(--c);
+    box-shadow: 0 0 0 1px var(--card-background-color); }
+  .rg-block .s { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+  .rg-block .t { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); }
+  .rg-pin { position: absolute; top: 30px; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; white-space: nowrap;
+    padding-left: 6px; border-left: 2px solid var(--c); height: 18px; }
+  .rg-pin.flip { transform: translateX(-100%); padding: 0 6px 0 0; border-left: 0; border-right: 2px solid var(--c); }
+  .rg-pin .t { font-weight: 600; color: var(--secondary-text-color); }
+  /* Ends flush with the axis-end line, which carries on as its tick. */
+  .rg-pin.pickup { --c: var(--primary-text-color); font-weight: 600; margin-left: 2px; }
+  .rg-exc { height: 30px; display: flex; align-items: center; font-size: 13px; line-height: 1.15;
+    color: var(--secondary-text-color); }
+  .rg-exc b { color: var(--primary-text-color); margin-left: 3px; white-space: nowrap; }
 
   .heads, .bars, .cols { display: grid; grid-template-columns: repeat(var(--days), minmax(0, 1fr)); }
   .heads { border-bottom: 1px solid var(--divider-color); padding: 0 2px; }

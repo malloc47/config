@@ -53,6 +53,16 @@ views:
         # A rolling week starting today.
         days: 7
         first_day: today
+        # The kids' weekday routine (daycare, bus, kindergarten, after-care,
+        # pickup) moves out of the day columns into a "Regular schedule"
+        # strip: a row per kid on a shared time axis, with the weekdays where
+        # any of it is missing (e.g. early dismissal) at the row's end. An
+        # event needs the same calendar, title and times on at least 3 of the
+        # visible weekdays. Each kid's calendar has a "Pickup" event; when
+        # they're the same (6 PM) it shows once, between the rows, otherwise
+        # each row names its own.
+        regular_schedule:
+          min_days: 3
         # Same sources and outlook settings as the e-ink panel's focus page.
         weather_entity: weather.nws_khpn
         fallback_weather_entity: weather.forecast_home
