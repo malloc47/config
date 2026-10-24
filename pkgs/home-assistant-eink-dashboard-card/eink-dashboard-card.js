@@ -45,6 +45,10 @@
 // Icons are Material Design Icons (https://pictogrammers.com/library/mdi/,
 // Apache-2.0), embedded as SVG paths so the card has no runtime dependencies.
 
+const { CONDITION_ICON, CONDITION_TEXT, CONDITION_RANK, Weather, num, temp } = await import(
+  new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
+);
+
 const ICONS = {
   "weather-sunny": "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z",
   "weather-night": "M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.64 6.35,17.66C9.37,20.67 14.19,20.78 17.33,17.97Z",
@@ -126,61 +130,6 @@ if (!document.getElementById("eink-dashboard-card-font")) {
   document.head.appendChild(style);
 }
 
-const CONDITION_ICON = {
-  "clear-night": "weather-night",
-  cloudy: "weather-cloudy",
-  exceptional: "alert-circle-outline",
-  fog: "weather-fog",
-  hail: "weather-hail",
-  lightning: "weather-lightning",
-  "lightning-rainy": "weather-lightning-rainy",
-  partlycloudy: "weather-partly-cloudy",
-  pouring: "weather-pouring",
-  rainy: "weather-rainy",
-  snowy: "weather-snowy",
-  "snowy-rainy": "weather-snowy-rainy",
-  sunny: "weather-sunny",
-  windy: "weather-windy",
-  "windy-variant": "weather-windy-variant",
-};
-
-const CONDITION_TEXT = {
-  "clear-night": "Clear",
-  cloudy: "Cloudy",
-  exceptional: "Severe weather",
-  fog: "Fog",
-  hail: "Hail",
-  lightning: "Lightning",
-  "lightning-rainy": "Thunderstorms",
-  partlycloudy: "Partly cloudy",
-  pouring: "Heavy rain",
-  rainy: "Rain",
-  snowy: "Snow",
-  "snowy-rainy": "Sleet",
-  sunny: "Sunny",
-  windy: "Windy",
-  "windy-variant": "Windy & cloudy",
-};
-
-// Which condition "wins" when summarising several forecast hours.
-const CONDITION_RANK = {
-  exceptional: 100,
-  "lightning-rainy": 90,
-  lightning: 85,
-  hail: 80,
-  "snowy-rainy": 75,
-  snowy: 70,
-  pouring: 65,
-  rainy: 60,
-  fog: 50,
-  "windy-variant": 45,
-  windy: 40,
-  cloudy: 30,
-  partlycloudy: 20,
-  sunny: 10,
-  "clear-night": 10,
-};
-
 // Forecast buckets by local start hour; "night" runs 18:00-06:00, so hours
 // before 06:00 belong to the previous day's night.
 const BUCKETS = [
@@ -202,34 +151,15 @@ const icon = (name, size) =>
     ICONS[name] || ICONS["alert-circle-outline"]
   }"/></svg>`;
 
-const num = (v) => {
-  const n = parseFloat(v);
-  return Number.isFinite(n) ? n : null;
-};
-
-const temp = (v) => (num(v) === null ? "–" : `${Math.round(num(v))}°`);
-
-const precip = (v, unit) => {
-  const n = num(v);
-  if (n === null) return "–";
-  if (n < 0.005) return `0 ${unit}`;
-  const s = n < 1 ? n.toFixed(2).replace(/0+$/, "").replace(/\.$/, "") : n.toFixed(1);
-  return `${s} ${unit}`;
-};
-
 class EinkDashboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    // Forecast subscriptions' latest data, keyed "<entity_id>|<forecast_type>".
-    this._fc = {};
+    this._wx = new Weather(() => this._schedule());
     this._banner = "";
-    // Active subscriptions by key ("hourly", "daily", "banner"): a promise of
-    // the unsubscribe function, or a retry deadline after a failed subscribe.
-    this._subs = {};
-    this._subscribedFor = null;
     this._raf = null;
   }
+
 
   setConfig(config) {
     if (!config.weather_entity) throw new Error("weather_entity is required");
@@ -250,13 +180,13 @@ class EinkDashboardCard extends HTMLElement {
       hot: 85,
       ...config,
     };
-    this._unsubscribe();
+    this._wx.configure(this._config);
     this._ensureSubscriptions();
     this._schedule();
   }
 
   set hass(hass) {
-    if (this._subscribedFor && this._subscribedFor !== hass.connection) this._unsubscribe();
+    this._wx.setHass(hass);
     this._hass = hass;
     this._ensureSubscriptions();
     this._schedule();
@@ -317,66 +247,26 @@ class EinkDashboardCard extends HTMLElement {
   }
 
   _unsubscribe() {
-    for (const sub of Object.values(this._subs)) {
-      if (sub.unsub) sub.unsub.then((f) => f && f()).catch(() => {});
-    }
-    this._subs = {};
-    this._subscribedFor = null;
+    this._wx.unsubscribe();
   }
 
-  // (Re)subscribe anything not currently subscribed. Called on every hass
-  // update, so a subscription that failed (e.g. the weather entity not loaded
-  // yet right after an HA restart) is retried instead of leaving the card
-  // permanently without forecasts; Puppet keeps one long-lived page, so the
-  // card has to heal itself.
+  // (Re)subscribe the forecasts (weather.js) plus the banner template; called
+  // on every hass update so failed subscriptions are retried.
   _ensureSubscriptions() {
     if (!this._hass || !this._config || !this.isConnected) return;
-    const conn = this._hass.connection;
-    this._subscribedFor = conn;
-    // Hourly plus daily forecasts for the primary and fallback weather entities,
-    // using twice_daily (day/night periods, e.g. NWS) where daily isn't offered.
-    // Entities not loaded yet are picked up on a later update.
-    const wanted = {};
-    for (const entity of [this._config.weather_entity, this._config.fallback_weather_entity].filter(Boolean)) {
-      const sf = this._hass.states[entity]?.attributes?.supported_features;
-      if (sf === undefined) continue;
-      const types = [];
-      if (sf & 2) types.push("hourly");
-      if (sf & 1) types.push("daily");
-      else if (sf & 4) types.push("twice_daily");
-      for (const type of types) {
-        wanted[`${entity}|${type}`] = { type: "weather/subscribe_forecast", forecast_type: type, entity_id: entity };
-      }
-    }
+    this._wx.setHass(this._hass);
+    const extra = {};
     if (this._config.banner_template) {
-      wanted.banner = {
-        type: "render_template",
-        template: this._config.banner_template,
-        strict: false,
-        report_errors: false,
+      extra.banner = {
+        msg: { type: "render_template", template: this._config.banner_template, strict: false, report_errors: false },
+        onMessage: (m) => {
+          if ("result" in m) this._banner = String(m.result ?? "").trim();
+        },
       };
     }
-    const now = Date.now();
-    for (const [key, msg] of Object.entries(wanted)) {
-      const sub = this._subs[key];
-      if (sub && (sub.unsub || now < sub.retryAt)) continue;
-      const onMessage = (m) => {
-        if (key === "banner") {
-          if (!("result" in m)) return;
-          this._banner = String(m.result ?? "").trim();
-        } else {
-          this._fc[key] = m.forecast || [];
-        }
-        this._schedule();
-      };
-      const unsub = conn.subscribeMessage(onMessage, msg);
-      this._subs[key] = { unsub };
-      unsub.catch((err) => {
-        console.warn(`eink-dashboard-card: ${key} subscription failed, retrying`, err);
-        if (this._subs[key]?.unsub === unsub) this._subs[key] = { retryAt: Date.now() + 15000 };
-      });
-    }
+    this._wx.ensureSubscriptions(extra);
   }
+
 
   _schedule() {
     if (this._raf) return;
@@ -386,104 +276,39 @@ class EinkDashboardCard extends HTMLElement {
     });
   }
 
-  // Local date ("YYYY-MM-DD") and hour for a timestamp in HA's time zone, so the
-  // render doesn't depend on the screenshot browser's own TZ.
+  // Forecast handling and the outlook live in the shared weather.js.
   _local(ts) {
-    const tz = this._hass?.config?.time_zone;
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat("en-CA", {
-        timeZone: tz,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        hourCycle: "h23",
-      })
-        .formatToParts(new Date(ts))
-        .map((p) => [p.type, p.value]),
-    );
-    return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: parseInt(parts.hour, 10) };
+    return this._wx.local(ts);
   }
 
   _weekday(ts, style = "short") {
-    return new Intl.DateTimeFormat("en-US", { timeZone: this._hass?.config?.time_zone, weekday: style }).format(
-      new Date(ts),
-    );
+    return this._wx.weekday(ts, style);
   }
 
   _clockTime(ts) {
-    return new Intl.DateTimeFormat("en-US", {
-      timeZone: this._hass?.config?.time_zone,
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(ts));
+    return this._wx.clockTime(ts);
   }
 
   _nightIcon(condition) {
-    if (condition === "sunny") return "weather-night";
-    if (condition === "partlycloudy") return "weather-night-partly-cloudy";
-    return CONDITION_ICON[condition] || "alert-circle-outline";
+    return this._wx.nightIcon(condition);
   }
 
   _conditionIcon(condition, night) {
-    return night ? this._nightIcon(condition) : CONDITION_ICON[condition] || "alert-circle-outline";
+    return this._wx.conditionIcon(condition, night);
   }
 
-  // The weather source for this render: the primary entity, or the fallback
-  // while the primary is unavailable or has no forecasts yet. Daily forecasts
-  // are normalized to one entry per day (twice_daily periods paired up).
   _src() {
-    if (this._srcCache) return this._srcCache;
-    const pick = (entity) => {
-      const state = entity && this._hass.states[entity];
-      if (!state) return null;
-      const hourly = this._fc[`${entity}|hourly`] || [];
-      const daily = this._fc[`${entity}|daily`] || this._pairTwiceDaily(this._fc[`${entity}|twice_daily`] || []);
-      const ok = !["unavailable", "unknown"].includes(state.state) && hourly.length > 0 && daily.length > 0;
-      return { entity, state, hourly, daily, ok };
-    };
-    const primary = pick(this._config.weather_entity);
-    const fallback = pick(this._config.fallback_weather_entity);
-    this._srcCache = (primary?.ok ? primary : fallback?.ok ? fallback : primary) || {
-      entity: this._config.weather_entity,
-      state: undefined,
-      hourly: [],
-      daily: [],
-      ok: false,
-    };
-    return this._srcCache;
+    return this._wx.src();
   }
 
-  // Day/night periods -> daily entries: the day period's high and condition,
-  // the following night's low, and the higher precipitation probability.
-  _pairTwiceDaily(periods) {
-    const days = new Map();
-    for (const p of periods) {
-      const date = this._local(p.datetime).date;
-      if (!days.has(date)) days.set(date, { datetime: p.datetime });
-      const d = days.get(date);
-      if (p.is_daytime) {
-        Object.assign(d, { datetime: p.datetime, condition: p.condition, temperature: p.temperature });
-      } else {
-        d.templow = p.temperature;
-        d.condition = d.condition || p.condition;
-      }
-      if (p.precipitation_probability != null) {
-        d.precipitation_probability = Math.max(d.precipitation_probability ?? 0, p.precipitation_probability);
-      }
-    }
-    return [...days.values()];
-  }
-
-  // A day's / bucket's precipitation: probability when the source gives one,
-  // else the amount.
   _precipText(prob, amount) {
-    if (prob != null) return `${Math.round(prob)}%`;
-    return precip(amount, this._src().state?.attributes?.precipitation_unit || "");
+    return this._wx.precipText(prob, amount);
   }
 
-  // Next three morning/afternoon/night buckets from the hourly forecast,
-  // starting with whatever is left of the current one (if 2+ hours remain).
+  _outlookRow(kind) {
+    return this._wx.outlookRow(kind);
+  }
+
   _buckets() {
     const hourly = this._src().hourly;
     const today = this._local(Date.now()).date;
@@ -600,199 +425,10 @@ class EinkDashboardCard extends HTMLElement {
       : { icon: "weather-sunset-down", time: this._clockTime(set), label: "Sunset" };
   }
 
-  // ---- focus layout: "what to wear" outlook ------------------------------
-
-  _hourLabel(h) {
-    const hh = ((h % 24) + 24) % 24;
-    if (hh === 0) return "midnight";
-    if (hh === 12) return "noon";
-    return `${hh % 12 || 12} ${hh < 12 ? "AM" : "PM"}`;
-  }
-
-  // "1–3 PM" rather than "1 PM–3 PM" when both ends share AM/PM.
-  _hourRange(a, b) {
-    const la = this._hourLabel(a);
-    const lb = this._hourLabel(b);
-    const [na, sa] = la.split(" ");
-    const sb = lb.split(" ")[1];
-    return sa && sa === sb ? `${na}–${lb}` : `${la}–${lb}`;
-  }
-
-  // °F for classification, whatever the weather entity reports in.
-  _toF(t) {
-    const unit = this._src().state?.attributes?.temperature_unit;
-    return unit === "°C" ? (t * 9) / 5 + 32 : t;
-  }
-
-  _isWet(f) {
-    // With a probability (e.g. NWS), it's rainy when likely enough; otherwise
-    // go by amount or a wet condition.
-    if (f.precipitation_probability != null) return f.precipitation_probability >= this._config.rain_probability;
-    const unit = this._src().state?.attributes?.precipitation_unit;
-    const min = unit === "mm" ? 0.25 : 0.01;
-    return (
-      (num(f.precipitation) || 0) >= min ||
-      ["rainy", "pouring", "lightning-rainy", "snowy", "snowy-rainy", "hail"].includes(f.condition)
-    );
-  }
-
-  // Hourly forecast entries for one outlook window, tagged with a continuous
-  // hour number (hours after midnight run past 24 for "tonight").
-  _window(kind) {
-    const [start, end] = this._config.outdoor_hours;
-    const now = this._local(Date.now());
-    const d = new Date(`${now.date}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 1);
-    const tomorrow = d.toISOString().slice(0, 10);
-    const hours = this._src().hourly.map((f) => {
-      const l = this._local(f.datetime);
-      return { ...f, h: l.date === now.date ? l.hour : l.date === tomorrow ? l.hour + 24 : 99 };
-    });
-    if (kind === "tomorrow") return hours.filter((f) => f.h >= 24 + start && f.h < 24 + end);
-    if (now.hour < end - 1) return hours.filter((f) => f.h >= Math.max(now.hour, start) && f.h < end);
-    // Late evening: describe the night instead (until 6 AM).
-    return hours.filter((f) => f.h >= now.hour && f.h < 30);
-  }
-
-  _outlookRow(kind) {
-    const hours = this._window(kind);
-    const now = this._local(Date.now());
-    const [, end] = this._config.outdoor_hours;
-    const tonight = kind === "today" && now.hour >= end - 1;
-    const label = kind === "tomorrow" ? "Tomorrow" : tonight ? "Tonight" : "Today";
-    if (!hours.length) return { label, icon: "alert-circle-outline", text: "No forecast", range: "", wear: null };
-
-    const unit = this._src().state?.attributes?.precipitation_unit || "";
-    const temps = hours.map((f) => num(f.temperature)).filter((t) => t !== null);
-    const lo = Math.min(...temps);
-    const hi = Math.max(...temps);
-    const conds = hours.map((f) => f.condition);
-    const worst = conds.reduce((a, b) => ((CONDITION_RANK[b] || 0) > (CONDITION_RANK[a] || 0) ? b : a));
-    // Most common condition, with "wet" conditions read as cloudy: for a dry
-    // window it's a better icon/description than the single worst hour (NWS
-    // tags slight-chance hours as rainy).
-    const WET = ["rainy", "pouring", "lightning-rainy", "lightning", "snowy", "snowy-rainy", "hail", "exceptional"];
-    const counts = {};
-    for (const c of conds) {
-      const k = WET.includes(c) ? "cloudy" : c;
-      counts[k] = (counts[k] || 0) + 1;
-    }
-    const usual = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-    const pops = hours.map((f) => f.precipitation_probability).filter((v) => v != null);
-    const maxPop = pops.length ? Math.max(...pops) : null;
-    const nightish = tonight;
-
-    // Rain spans: consecutive wet hours, bridging single dry hours.
-    const wet = hours.filter((f) => this._isWet(f));
-    const spans = [];
-    for (const f of wet) {
-      const last = spans[spans.length - 1];
-      if (last && f.h - last.end <= 1) last.end = f.h + 1;
-      else spans.push({ start: f.h, end: f.h + 1 });
-    }
-    const first = hours[0].h;
-    const lastH = hours[hours.length - 1].h + 1;
-    // Wordings from most to least detailed; the render uses the first that
-    // fits its row (see _fitText).
-    let texts;
-    if (spans.length) {
-      const kindWord = conds.some((c) => c === "snowy")
-        ? "Snow"
-        : conds.some((c) => c === "snowy-rainy" || c === "hail")
-          ? "Sleet"
-          : conds.some((c) => c.startsWith("lightning"))
-            ? "Storms"
-            : "Rain";
-      // terse: "till" for "until", and a later span without "again".
-      const describe = (sp, lead, terse) => {
-        const w = lead ? `${kindWord} ` : terse ? "" : "again ";
-        if (sp.start <= first && sp.end >= lastH) return lead ? `${kindWord} ${tonight ? "all night" : "all day"}` : "";
-        if (sp.start <= first) return `${w}${terse ? "till" : "until"} ${this._hourLabel(sp.end)}`;
-        if (sp.end >= lastH) return `${w}from ${this._hourLabel(sp.start)}`;
-        return `${w}${this._hourRange(sp.start, sp.end)}`;
-      };
-      const phrase = (terse) =>
-        spans
-          .slice(0, 2)
-          .map((sp, i) => describe(sp, i === 0, terse))
-          .filter(Boolean)
-          .join(", ") + (spans.length > 2 ? ", …" : "");
-      const total = wet.reduce((sum, f) => sum + (num(f.precipitation) || 0), 0);
-      const probs = wet.map((f) => f.precipitation_probability).filter((v) => v != null);
-      const amount = probs.length
-        ? ` (${Math.max(...probs)}%)`
-        : total >= 0.005
-          ? ` (${precip(total, unit)})`
-          : "";
-      texts = [`${phrase(false)}${amount}`, phrase(false), phrase(true)];
-    } else {
-      const sky = {
-        sunny: tonight ? "clear" : "sunny",
-        "clear-night": "clear",
-        partlycloudy: "partly cloudy",
-        cloudy: "cloudy",
-        fog: "foggy",
-        windy: "windy",
-        "windy-variant": "windy",
-      }[usual];
-      if (maxPop !== null && maxPop >= 20) {
-        const Sky = sky ? sky[0].toUpperCase() + sky.slice(1) : "Mostly dry";
-        // A bare percentage reads as the chance of precipitation, as in the
-        // rain spans' "(73%)". When the peak chance is confined to one stretch
-        // of at most half the window, say when: "Cloudy (39% until 11 PM)".
-        // Hours within 5 points of the peak count toward it (NWS steps its
-        // probabilities in blocks).
-        const peak = hours.filter((f) => (f.precipitation_probability ?? 0) >= maxPop - 5);
-        const start = peak[0].h;
-        const end = peak[peak.length - 1].h + 1;
-        let when = "";
-        if (peak.length === end - start && end - start <= (lastH - first) / 2) {
-          when =
-            start <= first
-              ? ` until ${this._hourLabel(end)}`
-              : end >= lastH
-                ? ` from ${this._hourLabel(start)}`
-                : ` ${this._hourRange(start, end)}`;
-        }
-        texts = [`${Sky} (${maxPop}%${when})`, `${Sky} (${maxPop}%)`];
-      } else {
-        texts = [sky ? `Dry, ${sky}` : "Dry"];
-      }
-    }
-
-    // Dress for the coldest outdoor hour; flag heat separately.
-    const loF = this._toF(lo);
-    const hiF = this._toF(hi);
-    const { cold, hot } = this._config;
-    let wear =
-      loF < 32
-        ? { icon: "snowflake", text: "Heavy coat" }
-        : loF < cold
-          ? { icon: "tshirt-crew-outline", text: "Coat" }
-          : loF < 58
-            ? { icon: "tshirt-crew-outline", text: "Jacket" }
-            : loF < 68
-              ? { icon: "tshirt-crew-outline", text: "Light layer" }
-              : { icon: "tshirt-crew-outline", text: "T-shirt" };
-    if (hiF >= hot) wear = { icon: "thermometer-high", text: `${wear.text === "T-shirt" ? "Hot" : `${wear.text}, hot`}` };
-    if (spans.length) {
-      const snow = conds.some((c) => c === "snowy" || c === "snowy-rainy");
-      wear = { icon: snow ? "snowflake" : "umbrella-outline", text: `${snow ? "Boots" : "Umbrella"}, ${wear.text.toLowerCase()}` };
-    }
-
-    return {
-      label,
-      icon: this._conditionIcon(spans.length ? worst : usual, nightish),
-      text: texts[0],
-      texts: [...new Set(texts)],
-      range: Math.round(lo) === Math.round(hi) ? temp(lo) : `${Math.round(lo)}–${temp(hi)}`,
-      wear,
-    };
-  }
 
   _render() {
     if (!this._hass || !this._config) return;
-    this._srcCache = null;
+    this._wx.invalidate();
     // Try the full door list first; if it overflows the banner, re-render once
     // with the doors collapsed into a single summary item.
     this._renderScreen(false);

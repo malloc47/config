@@ -32,4 +32,7 @@
   home-assistant-eink-dashboard-card =
     prev.callPackage home-assistant-eink-dashboard-card/default.nix
       { };
+  home-assistant-family-calendar-card =
+    prev.callPackage home-assistant-family-calendar-card/default.nix
+      { };
 })

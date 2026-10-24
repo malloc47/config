@@ -1,0 +1,119 @@
+# Dashboard for the kitchen's family calendar: an Apolosign 15.6" touchscreen
+# (portrait, 1080x1920, laid out at 720x1280 CSS px) running Kiosk Satellite.
+# HA dashboards are UI-managed (.storage), so this is the reference copy: the
+# dashboard's URL is `dashboard-kitchen` (not admin-only), and this is its raw
+# configuration. The tablet's default dashboard
+# (select.family_calendar_default_dashboard) is dashboard-kitchen/home.
+#
+# One panel view holding family-calendar-card
+# (pkgs/home-assistant-family-calendar-card), which lays out the whole screen:
+# clock and weather outlook on top, the week calendar with a show/hide chip per
+# calendar, and the kitchen controls (ordinary tiles, under `cards`) at the
+# bottom.
+title: Kitchen
+views:
+  - title: Kitchen
+    path: home
+    panel: true
+    cards:
+      - type: custom:family-calendar-card
+        # Chips in this order; colours roughly follow Google Calendar's. The
+        # hidden ones start switched off (each chip's state is then remembered
+        # on the device).
+        calendars:
+          - entity: calendar.family
+            name: Family
+            color: "#039be5"
+          - entity: calendar.kids_school
+            name: Kids
+            color: "#33b679"
+          - entity: calendar.jarrell
+            name: Jarrell
+            color: "#3f51b5"
+          - entity: calendar.charisrebecca_gmail_com
+            name: Charis
+            color: "#8e24aa"
+          - entity: calendar.birthdays
+            name: Birthdays
+            color: "#f4511e"
+          - entity: calendar.financial
+            name: Financial
+            color: "#616161"
+            hidden: true
+          - entity: calendar.prospective_events
+            name: Maybe
+            color: "#e67c73"
+            hidden: true
+          - entity: calendar.episodecalendar_com
+            name: TV
+            color: "#f6bf26"
+            hidden: true
+          - entity: calendar.chicago_summer_calendar
+            name: Chicago
+            color: "#0b8043"
+            hidden: true
+        # A rolling week starting today.
+        days: 7
+        first_day: today
+        # Same sources and outlook settings as the e-ink panel's focus page.
+        weather_entity: weather.nws_khpn
+        fallback_weather_entity: weather.forecast_home
+        inside_entity: sensor.stairs_lower_presence_sensor_temperature
+        outdoor_hours: [7, 22]
+        cold: 45
+        hot: 85
+        controls_columns: 3
+        cards:
+          - type: tile
+            entity: light.kitchen_overhead_lights
+            name: Kitchen
+            features_position: bottom
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.kitchen_counter_lights
+            name: Counter
+            features_position: bottom
+            features:
+              - type: light-brightness
+          # Dining room ceiling fixture (light and fan together, one switch).
+          - type: tile
+            entity: light.dining_room_light_fan
+            name: Dining light + fan
+            icon: mdi:ceiling-fan-light
+          # Relay L2 of the "Dining Room Relay" (its entity is named Kitchen Fan).
+          - type: tile
+            entity: fan.kitchen_fan
+            name: Dining room fan
+          # Dishwasher: its state, or the finish time while a program runs.
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.dishwasher_operation_state
+                state_not: run
+            card:
+              type: tile
+              entity: sensor.dishwasher_operation_state
+              name: Dishwasher
+              icon: mdi:dishwasher
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.dishwasher_operation_state
+                state: run
+            card:
+              type: tile
+              entity: sensor.dishwasher_program_finish_time
+              name: Dishwasher done
+              icon: mdi:dishwasher
+          # Front doorbell: opens the camera's live view.
+          - type: tile
+            entity: camera.front_door_fluent
+            name: Doorbell
+            icon: mdi:doorbell-video
+            hide_state: true
+            color: blue
+            tap_action:
+              action: more-info
+            icon_tap_action:
+              action: more-info

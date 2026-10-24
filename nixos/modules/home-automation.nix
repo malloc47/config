@@ -345,6 +345,11 @@ in
       # The whole 800x480 screen of the e1001-clock panel, rendered by Puppet
       # (services.ha-puppet below); used as the only card of a panel view.
       pkgs.home-assistant-eink-dashboard-card
+      # family-calendar-card — packaged in-repo (pkgs/home-assistant-family-calendar-card).
+      # The kitchen touchscreen's whole screen (clock, weather outlook, week
+      # calendar with per-calendar chips, controls); the only card of a panel
+      # view (hosts/aida/home-assistant/family-calendar-dashboard.yaml).
+      pkgs.home-assistant-family-calendar-card
     ];
     extraComponents = [
       "analytics"
