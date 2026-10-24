@@ -14,11 +14,15 @@
 //
 // Config:
 //   type: custom:family-calendar-card
-//   calendars:                         # chips, in this order
+//   calendars:                         # chips, in this order, which is also the
+//                                      # precedence for dedupe
 //     - entity: calendar.family
 //       name: Family                   # default: friendly name
 //       color: "#039be5"               # default: from a built-in palette
 //       hidden: false                  # start with the chip off (until tapped)
+//   dedupe: true                       # hide an event a calendar earlier in the
+//                                      # list (and shown) already has: same title
+//                                      # ignoring case/punctuation, same times
 //   title_rewrites:                    # shorten titles in the grid, in order (the
 //     - match: "Discovery Village "    # popup keeps the full title); match is a
 //       replace: ""                    # JS regex, replace may use $1 etc.
@@ -99,6 +103,7 @@ class FamilyCalendarCard extends HTMLElement {
       sun_entity: "sun.sun",
       controls_columns: 3,
       height: "auto",
+      dedupe: true,
       cards: [],
       ...config,
     };
@@ -257,6 +262,15 @@ class FamilyCalendarCard extends HTMLElement {
       ev.startDay = this._wx.local(ev.start).date;
       ev.endDay = this._wx.local(Math.max(ev.start, ev.end - 1)).date;
     }
+    // Duplicate detection across calendars: the title folded to lowercase
+    // letters and digits (accents dropped), plus the exact span.
+    const folded = summary
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+    ev.key = `${folded}|${allDay ? `${ev.startDay}/${ev.endDay}` : `${ev.start}/${ev.end}`}`;
     return ev;
   }
 
@@ -278,10 +292,17 @@ class FamilyCalendarCard extends HTMLElement {
     const idx = (d) => Math.round((Date.parse(`${d}T12:00:00Z`) - Date.parse(`${first}T12:00:00Z`)) / 864e5);
     const bars = [];
     const perDay = days.map(() => []);
+    // Calendars in list order, so with dedupe the first shown calendar that
+    // has an event keeps it and later copies are dropped.
+    const seen = new Set();
     for (const cal of this._calendars) {
       if (this._hidden.has(cal.entity)) continue;
       for (const ev of this._events[cal.entity] || []) {
         if (ev.endDay < first || ev.startDay > last) continue;
+        if (this._config.dedupe) {
+          if (seen.has(ev.key)) continue;
+          seen.add(ev.key);
+        }
         if (ev.allDay || ev.startDay !== ev.endDay) {
           bars.push({ ev, from: Math.max(0, idx(ev.startDay)), to: Math.min(days.length - 1, idx(ev.endDay)) });
         } else {
