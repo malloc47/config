@@ -26,6 +26,11 @@
 //   days_include_today: false                    # start the daily columns with today
 //   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
 //   doors_entity: binary_sensor.perimeter_doors  # group whose open members join the banner
+//   calendar_alerts:                             # banner items all day while a calendar has a
+//     - entity: calendar.<name>                  # matching event today (all-day or timed)
+//       match: "^Humira$"                        # regex on the event title (case-insensitive)
+//       icon: needle                             # default bell-outline
+//       text: Humira                             # default: the event's title
 //   appliances:                                  # banner items while an appliance is running
 //     - name: Dishwasher
 //       icon: dishwasher                         # dishwasher / washing-machine / tumble-dryer
@@ -98,6 +103,8 @@ const ICONS = {
   "dishwasher": "M18,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V4A2,2 0 0,0 18,2M10,4A1,1 0 0,1 11,5A1,1 0 0,1 10,6A1,1 0 0,1 9,5A1,1 0 0,1 10,4M7,4A1,1 0 0,1 8,5A1,1 0 0,1 7,6A1,1 0 0,1 6,5A1,1 0 0,1 7,4M18,20H6V8H18V20M14.67,15.33C14.69,16.03 14.41,16.71 13.91,17.21C12.86,18.26 11.15,18.27 10.09,17.21C9.59,16.71 9.31,16.03 9.33,15.33C9.4,14.62 9.63,13.94 10,13.33C10.37,12.5 10.81,11.73 11.33,11L12,10C13.79,12.59 14.67,14.36 14.67,15.33",
   "washing-machine": "M14.83,11.17C16.39,12.73 16.39,15.27 14.83,16.83C13.27,18.39 10.73,18.39 9.17,16.83L14.83,11.17M6,2H18A2,2 0 0,1 20,4V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2M7,4A1,1 0 0,0 6,5A1,1 0 0,0 7,6A1,1 0 0,0 8,5A1,1 0 0,0 7,4M10,4A1,1 0 0,0 9,5A1,1 0 0,0 10,6A1,1 0 0,0 11,5A1,1 0 0,0 10,4M12,8A6,6 0 0,0 6,14A6,6 0 0,0 12,20A6,6 0 0,0 18,14A6,6 0 0,0 12,8Z",
   "tumble-dryer": "M6,2H18A2,2 0 0,1 20,4V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2M7,4A1,1 0 0,0 6,5A1,1 0 0,0 7,6A1,1 0 0,0 8,5A1,1 0 0,0 7,4M10,4A1,1 0 0,0 9,5A1,1 0 0,0 10,6A1,1 0 0,0 11,5A1,1 0 0,0 10,4M12,8A6,6 0 0,0 6,14A6,6 0 0,0 12,20A6,6 0 0,0 18,14A6,6 0 0,0 12,8M8.11,10.5H10C9.76,11.88 10,12.67 10.58,13.29C11.68,14.36 12.16,15.71 11.89,17.5H10C10.24,16.12 10,15.33 9.42,14.71C8.32,13.64 7.85,12.29 8.11,10.5M12.11,10.5H14C13.76,11.88 14,12.67 14.58,13.29C15.68,14.36 16.16,15.71 15.89,17.5H14C14.24,16.12 14,15.33 13.42,14.71C12.32,13.64 11.85,12.29 12.11,10.5Z",
+  needle:
+    "M11.15,15.18L9.73,13.77L11.15,12.35L12.56,13.77L13.97,12.35L12.56,10.94L13.97,9.53L15.39,10.94L16.8,9.53L13.97,6.7L6.9,13.77L9.73,16.6L11.15,15.18M3.08,19L6.2,15.89L4.08,13.77L13.97,3.87L16.1,6L17.5,4.58L16.1,3.16L17.5,1.75L21.75,6L20.34,7.4L18.92,6L17.5,7.4L19.63,9.53L9.73,19.42L7.61,17.3L3.08,21.84V19Z",
   "bell-outline": "M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z",
 };
 
@@ -172,6 +179,7 @@ class EinkDashboardCard extends HTMLElement {
       layout: "standard",
       rain_probability: 50,
       appliances: [],
+      calendar_alerts: [],
       gray: false,
       show_updated: true,
       battery_slot: false,
@@ -181,6 +189,15 @@ class EinkDashboardCard extends HTMLElement {
       ...config,
     };
     this._wx.configure(this._config);
+    this._calAlerts = this._config.calendar_alerts.map((a) => {
+      try {
+        return { ...a, re: new RegExp(a.match ?? "", "i") };
+      } catch (err) {
+        throw new Error(`calendar_alerts: bad match ${JSON.stringify(a.match)}: ${err.message}`);
+      }
+    });
+    this._calItems = [];
+    this._calFetched = null;
     this._ensureSubscriptions();
     this._schedule();
   }
@@ -414,6 +431,57 @@ class EinkDashboardCard extends HTMLElement {
       .filter(Boolean);
   }
 
+  // Calendar events today that match a calendar_alerts rule, fetched from HA's
+  // calendar API and refreshed every 15 minutes and when the day changes; the
+  // item stays up for the whole day of the event.
+  _refreshCalendarAlerts() {
+    if (!this._calAlerts.length) return;
+    const today = this._local(Date.now()).date;
+    const f = this._calFetched;
+    if (f && (f.pending || (f.day === today && Date.now() - f.at < 15 * 60000))) return;
+    this._calFetched = { day: today, at: Date.now(), pending: true };
+    const shift = (date, n) => {
+      const d = new Date(`${date}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + n);
+      return d.toISOString().slice(0, 10);
+    };
+    // Pad a day either side (UTC) and decide "today" in HA's time zone.
+    const q = `?start=${encodeURIComponent(`${shift(today, -1)}T00:00:00Z`)}&end=${encodeURIComponent(`${shift(today, 2)}T00:00:00Z`)}`;
+    const entities = [...new Set(this._calAlerts.map((a) => a.entity))];
+    Promise.all(
+      entities.map((e) =>
+        this._hass.callApi("GET", `calendars/${e}${q}`).then(
+          (evs) => [e, evs],
+          (err) => {
+            console.warn(`eink-dashboard-card: fetching ${e} failed`, err);
+            return [e, null];
+          },
+        ),
+      ),
+    ).then((results) => {
+      const byEntity = Object.fromEntries(results);
+      const failed = results.some(([, evs]) => evs === null);
+      const items = [];
+      for (const a of this._calAlerts) {
+        for (const ev of byEntity[a.entity] || []) {
+          const allDay = !!ev.start?.date;
+          const first = allDay ? ev.start.date : this._local(Date.parse(ev.start.dateTime)).date;
+          const last = allDay
+            ? shift(ev.end?.date || shift(ev.start.date, 1), -1)
+            : this._local(Math.max(Date.parse(ev.start.dateTime), Date.parse(ev.end?.dateTime) - 1 || 0)).date;
+          if (first > today || last < today || !a.re.test(ev.summary || "")) continue;
+          const text = a.text || ev.summary;
+          if (!items.some((it) => it.text === text)) items.push({ icon: a.icon || "bell-outline", text, shrink: true });
+        }
+      }
+      this._calItems = items;
+      this._calItemsDay = today;
+      // Retry a failed fetch (e.g. HA still starting) after a minute.
+      this._calFetched = { day: today, at: failed ? Date.now() - 14 * 60000 : Date.now() };
+      this._schedule();
+    });
+  }
+
   _sunEvent() {
     const sun = this._hass.states[this._config.sun_entity];
     if (!sun) return null;
@@ -429,6 +497,7 @@ class EinkDashboardCard extends HTMLElement {
   _render() {
     if (!this._hass || !this._config) return;
     this._wx.invalidate();
+    this._refreshCalendarAlerts();
     // Try the full door list first; if it overflows the banner, re-render once
     // with the doors collapsed into a single summary item.
     this._renderScreen(false);
@@ -482,6 +551,7 @@ class EinkDashboardCard extends HTMLElement {
     const doors = this._openDoors();
     const bannerItems = [
       ...(this._banner ? [{ icon: "bell-outline", text: this._banner, shrink: true }] : []),
+      ...(this._calItemsDay === this._local(Date.now()).date ? this._calItems : []),
       ...this._appliances(),
       ...(compactDoors
         ? [{ icon: "door-open", text: `${doors.length} open: ${doors.map((d) => d.text).join(", ")}`, shrink: true }]

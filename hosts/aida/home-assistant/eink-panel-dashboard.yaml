@@ -29,6 +29,14 @@ views:
         # home-automation.nix) are listed in the banner with a door icon.
         doors_entity: binary_sensor.perimeter_doors
         # Shown in the banner (icon + progress) only while running/paused.
+        # Banner item for the whole day of a matching calendar event (also
+        # stacked with the message, appliances and doors): Charis's Humira
+        # injection day, an all-day event every 10 days. "^...$" so the
+        # separate "Order Humira" reminder doesn't match.
+        calendar_alerts:
+          - entity: calendar.charisrebecca_gmail_com
+            match: "^Humira$"
+            icon: needle
         appliances:
           - name: Dishwasher
             icon: dishwasher
@@ -60,6 +68,10 @@ views:
         battery_slot: true
         doors_entity: binary_sensor.perimeter_doors
         # Shown in the banner (icon + progress) only while running/paused.
+        calendar_alerts:
+          - entity: calendar.charisrebecca_gmail_com
+            match: "^Humira$"
+            icon: needle
         appliances:
           - name: Dishwasher
             icon: dishwasher
@@ -89,8 +101,13 @@ views:
         weather_entity: weather.nws_khpn
         fallback_weather_entity: weather.forecast_home
         inside_entity: sensor.bedroom_climate_sensor_temperature
+        sun_entity: sun.sun
         battery_slot: true
         doors_entity: binary_sensor.perimeter_doors
+        calendar_alerts:
+          - entity: calendar.charisrebecca_gmail_com
+            match: "^Humira$"
+            icon: needle
         appliances:
           - name: Dishwasher
             icon: dishwasher
