@@ -47,7 +47,9 @@
 //                                      # through the weekend shows Monday). The day shown leaves
 //                                      # the grid, and a row whose day matches its
 //                                      # routine exactly takes its routine out of the
-//                                      # whole week, as in regular mode.
+//                                      # whole week, as in regular mode. A chevron
+//                                      # collapses the strip to its title (also per
+//                                      # device), putting its events back in the grid.
 //   title_rewrites:                    # shorten titles in the grid, in order (the
 //     - match: "Discovery Village "    # popup keeps the full title); match is a
 //       replace: ""                    # JS regex, replace may use $1 etc.
@@ -171,6 +173,7 @@ class FamilyCalendarCard extends HTMLElement {
     });
     this._loadHidden();
     this._mode = null;
+    this._collapsed = null;
     this._wx.configure(this._config);
     this._bn.configure(this._config);
     this._built = false;
@@ -269,6 +272,32 @@ class FamilyCalendarCard extends HTMLElement {
       this._mode = saved === "day" || saved === "regular" ? saved : this._config.regular_schedule?.mode === "day" ? "day" : "regular";
     }
     return this._mode;
+  }
+
+  _collapseKey() {
+    return `family-calendar-card:strip-collapsed:${location.pathname}`;
+  }
+
+  // Whether the strip is collapsed to its title (the device's last choice).
+  _stripCollapsed() {
+    if (this._collapsed === null) {
+      try {
+        this._collapsed = localStorage.getItem(this._collapseKey()) === "1";
+      } catch (_) {
+        this._collapsed = false;
+      }
+    }
+    return this._collapsed;
+  }
+
+  _toggleStripCollapsed() {
+    this._collapsed = !this._stripCollapsed();
+    try {
+      localStorage.setItem(this._collapseKey(), this._collapsed ? "1" : "0");
+    } catch (_) {
+      // Private mode or blocked storage: the choice just doesn't persist.
+    }
+    this._schedule();
   }
 
   _setStripMode(mode) {
@@ -434,7 +463,12 @@ class FamilyCalendarCard extends HTMLElement {
       bar.lane = lane;
     }
     for (const list of perDay) list.sort((a, b) => a.start - b.start || a.end - b.end);
-    return { bars, perDay, lanes: laneEnds.length, regular: this._regular(days, perDay, dupes) };
+    // Collapsed, the strip still works out its title but leaves the grid
+    // whole (it gets copies of the day lists).
+    const collapsed = this._config.regular_schedule && this._stripCollapsed();
+    const regular = this._regular(days, collapsed ? perDay.map((l) => [...l]) : perDay, dupes);
+    if (regular) regular.collapsed = collapsed;
+    return { bars, perDay, lanes: laneEnds.length, regular };
   }
 
   // regular_schedule: the strip above the grid, a row per calendar on a
@@ -717,6 +751,7 @@ class FamilyCalendarCard extends HTMLElement {
       root.querySelector(sel).addEventListener("click", (e) => {
         const mode = e.target.closest("[data-mode]");
         if (mode) return this._setStripMode(mode.dataset.mode);
+        if (e.target.closest("[data-collapse]")) return this._toggleStripCollapsed();
         const el = e.target.closest("[data-ev]");
         if (el) this._showDetail(this._shown[Number(el.dataset.ev)]);
       });
@@ -934,7 +969,9 @@ class FamilyCalendarCard extends HTMLElement {
           `<button data-mode="${m}" class="${rg.mode === m ? "on" : ""}" aria-label="${label}" aria-pressed="${rg.mode === m}"><ha-icon icon="${ic}"></ha-icon></button>`,
       )
       .join("")}</div>`;
-    const head = `<div class="rg-head"><div class="rg-title">${esc(rg.title)}</div>${toggle}</div>`;
+    const chevron = `<button class="rg-collapse" data-collapse aria-label="${rg.collapsed ? "Show" : "Hide"} the schedule" aria-expanded="${!rg.collapsed}"><ha-icon icon="mdi:chevron-${rg.collapsed ? "down" : "up"}"></ha-icon></button>`;
+    const head = `<div class="rg-head"><div class="rg-title">${esc(rg.title)}</div><div class="rg-tools">${rg.collapsed ? "" : toggle}${chevron}</div></div>`;
+    if (rg.collapsed) return `<div class="rg-wrap">${head}</div>`;
     if (!rg.rows.length) {
       return `<div class="rg-wrap">${head}<div class="rg-none">${rg.mode === "day" ? "Nothing scheduled" : "No regular schedule this week"}</div></div>`;
     }
@@ -1157,6 +1194,9 @@ const STYLE = `
   .rg-toggle button { width: 34px; height: 26px; border-radius: 13px; display: grid; place-items: center;
     --mdc-icon-size: 18px; color: var(--secondary-text-color); }
   .rg-toggle button.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .rg-tools { display: flex; align-items: center; gap: 6px; }
+  .rg-collapse { width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center;
+    border: 1px solid var(--divider-color); --mdc-icon-size: 20px; color: var(--secondary-text-color); }
   .rg-none { font-size: 15px; color: var(--secondary-text-color); padding: 4px 0 2px; }
   .rg-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) 84px; column-gap: 8px; align-items: start; }
   .rg-ticks { position: relative; height: 16px; }
