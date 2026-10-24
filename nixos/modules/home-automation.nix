@@ -372,6 +372,12 @@ in
       # gassist-text). OAuth is set up in the UI via Application Credentials;
       # without this component the config flow 500s with "Invalid handler".
       "google_assistant_sdk"
+      # Google Calendar (packages gcal-sync): a calendar.* entity per calendar
+      # with upcoming events, for the family-calendar kiosk dashboard. Same
+      # Application Credentials OAuth flow as google_assistant_sdk above; the
+      # Google Cloud project needs the Google Calendar API enabled. Calendars
+      # are picked via the UI config flow.
+      "google"
       # MTA New York City Transit — real-time NYC subway/bus arrivals via the
       # MTA's GTFS-RT feeds (core since 2026.3; packages py-nymta). Added via the
       # UI config flow: subway needs no key; bus tracking needs an MTA Bus Time
