@@ -60,9 +60,15 @@ views:
         # event needs the same calendar, title and times on at least 3 of the
         # visible weekdays. Each kid's calendar has a "Pickup" event; when
         # they're the same (6 PM) it shows once, between the rows, otherwise
-        # each row names its own.
+        # each row names its own. The strip's glyph toggle switches to the
+        # day's actual schedule instead: today, or tomorrow from 6:30 PM, and
+        # Monday from Friday 6:30 PM through the weekend.
         regular_schedule:
           min_days: 3
+          calendars:
+            - calendar.kids_school
+            - calendar.bastian
+          day_switch: "18:30"
         # Same sources and outlook settings as the e-ink panel's focus page.
         weather_entity: weather.nws_khpn
         fallback_weather_entity: weather.forecast_home

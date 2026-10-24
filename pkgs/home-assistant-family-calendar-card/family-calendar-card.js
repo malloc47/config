@@ -32,12 +32,22 @@
 //     title: Regular schedule          # into a strip: a row per calendar on a shared
 //     pickup_match: "^pick-?up\\b"     # time axis, with the weekdays where any of it
 //     pickup: "18:00"                  # is missing at the row's end. Pickup events
-//                                      # (title matching pickup_match) that are the
-//                                      # same for every row show once, between the
-//                                      # rows; otherwise each is named ("Bastian
+//     calendars: [calendar.<kid>, …]   # (title matching pickup_match) that are the
+//     day_switch: "18:30"              # same for every row show once, between the
+//     mode: regular                    # rows; otherwise each is named ("Bastian
 //                                      # pickup"). pickup: a fixed pickup time instead,
-//                                      # when the calendars have none.
+//                                      # when the calendars have none. calendars: the
+//                                      # rows (default: any calendar with a routine).
 //                                      # weekdays: 0 = Sunday … 6 = Saturday
+//                                      # A glyph toggle switches the strip (remembered
+//                                      # per device; mode is the default) between the
+//                                      # routine and the day's schedule: today, or
+//                                      # tomorrow from day_switch, rolled forward to
+//                                      # the next of the weekdays (so Friday evening
+//                                      # through the weekend shows Monday). The day shown leaves
+//                                      # the grid, and a row whose day matches its
+//                                      # routine exactly takes its routine out of the
+//                                      # whole week, as in regular mode.
 //   title_rewrites:                    # shorten titles in the grid, in order (the
 //     - match: "Discovery Village "    # popup keeps the full title); match is a
 //       replace: ""                    # JS regex, replace may use $1 etc.
@@ -160,6 +170,7 @@ class FamilyCalendarCard extends HTMLElement {
       }
     });
     this._loadHidden();
+    this._mode = null;
     this._wx.configure(this._config);
     this._bn.configure(this._config);
     this._built = false;
@@ -241,6 +252,51 @@ class FamilyCalendarCard extends HTMLElement {
     return this._wx.local(Date.now()).date;
   }
 
+  _modeKey() {
+    return `family-calendar-card:strip:${location.pathname}`;
+  }
+
+  // The strip's mode, "regular" or "day": the device's last choice, else the
+  // configured default.
+  _stripMode() {
+    if (!this._mode) {
+      let saved = null;
+      try {
+        saved = localStorage.getItem(this._modeKey());
+      } catch (_) {
+        saved = null;
+      }
+      this._mode = saved === "day" || saved === "regular" ? saved : this._config.regular_schedule?.mode === "day" ? "day" : "regular";
+    }
+    return this._mode;
+  }
+
+  _setStripMode(mode) {
+    this._mode = mode;
+    try {
+      localStorage.setItem(this._modeKey(), mode);
+    } catch (_) {
+      // Private mode or blocked storage: the choice just doesn't persist.
+    }
+    this._schedule();
+  }
+
+  // The day mode's date: today, or tomorrow from day_switch (local time),
+  // rolled forward to the next of the schedule's weekdays.
+  _stripDate() {
+    const [h, m] = String(this._config.regular_schedule?.day_switch ?? "18:30").split(":").map(Number);
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", { timeZone: this._hass.config?.time_zone, hour: "numeric", minute: "numeric", hourCycle: "h23" })
+        .formatToParts(new Date())
+        .map((x) => [x.type, x.value]),
+    );
+    const today = this._today();
+    let date = Number(p.hour) * 60 + Number(p.minute) >= h * 60 + (m || 0) ? addDays(today, 1) : today;
+    const weekdays = new Set(this._config.regular_schedule?.weekdays || [1, 2, 3, 4, 5]);
+    for (let i = 0; i < 7 && !weekdays.has(new Date(`${date}T12:00:00Z`).getUTCDay()); i++) date = addDays(date, 1);
+    return date;
+  }
+
   // The visible days ("YYYY-MM-DD"), starting today or at the week's start.
   _range() {
     const today = this._today();
@@ -276,8 +332,12 @@ class FamilyCalendarCard extends HTMLElement {
     const key = `${days[0]}|${days[days.length - 1]}`;
     this._fetchedRange = key;
     // Pad a day either side (in UTC) and bucket by HA's time zone client-side.
-    const start = `${addDays(days[0], -1)}T00:00:00Z`;
-    const end = `${addDays(days[days.length - 1], 2)}T00:00:00Z`;
+    // Always include today and tomorrow, for the strip's day mode.
+    const today = this._today();
+    const first = days[0] < today ? days[0] : today;
+    const last = days[days.length - 1] > addDays(today, 1) ? days[days.length - 1] : addDays(today, 1);
+    const start = `${addDays(first, -1)}T00:00:00Z`;
+    const end = `${addDays(last, 2)}T00:00:00Z`;
     await Promise.all(
       this._calendars.map(async (cal) => {
         try {
@@ -377,25 +437,35 @@ class FamilyCalendarCard extends HTMLElement {
     return { bars, perDay, lanes: laneEnds.length, regular: this._regular(days, perDay, dupes) };
   }
 
-  // regular_schedule: timed events that recur on at least min_days of the
-  // visible weekdays with the same calendar, title and start/end times are
-  // taken out of the day columns (perDay, in place) and returned as a row
-  // per calendar (in list order): its events in time order (each the
-  // occurrence today, else the next, else the first) and the visible weekdays
-  // where any of them is missing. Times are minutes after local midnight; the
-  // shared axis runs from the earliest start's hour to the last end (a short
-  // event's start). When every row has a pickup at the same time (the same
-  // event, or copies dropped as duplicates) it becomes `shared`; otherwise
-  // each row's pickup is labelled with the calendar's name.
+  // regular_schedule: the strip above the grid, a row per calendar on a
+  // shared time axis (times are minutes after local midnight).
+  //
+  // The routine: timed events that recur on at least min_days of the visible
+  // weekdays with the same calendar, title and start/end times. A duplicate
+  // dropped from a later calendar still counts toward that calendar's routine
+  // (dedupe works per occurrence, so on days the copies differ the later
+  // calendar keeps its own).
+  //
+  // Regular mode shows the routine (each event's occurrence today, else the
+  // next, else the first), with the visible weekdays where any of it is
+  // missing at the row's end, and takes it out of the grid (perDay, in
+  // place). Day mode shows the actual timed events of today (or tomorrow,
+  // after day_switch) and takes them out of that day's column; a row whose
+  // day is exactly its routine also takes the routine out of the whole week.
+  //
+  // When every row has a pickup at the same time it becomes `shared` (one
+  // pin between the rows); otherwise each row's pickup is labelled with the
+  // calendar's name.
   _regular(days, perDay, dupes) {
     const cfg = this._config.regular_schedule;
     if (!cfg) return null;
     const weekdays = new Set(cfg.weekdays || [1, 2, 3, 4, 5]);
     const minDays = cfg.min_days ?? 3;
     const pickupRe = new RegExp(cfg.pickup_match ?? "^pick-?up\\b", "i");
+    const only = cfg.calendars ? new Set(cfg.calendars) : null;
+    const mode = this._stripMode();
     const today = this._today();
     const now = Date.now();
-    // Minutes after midnight in HA's time zone, for the key and the axis.
     const hm = new Intl.DateTimeFormat("en-US", {
       timeZone: this._hass.config?.time_zone,
       hour: "numeric",
@@ -406,6 +476,19 @@ class FamilyCalendarCard extends HTMLElement {
       const p = Object.fromEntries(hm.formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
       return Number(p.hour) * 60 + Number(p.minute);
     };
+    const keyOf = (cal, ev) => `${cal.entity}|${ev.key.split("|")[0]}|${tod(ev.start)}|${ev.end - ev.start}`;
+    const item = (ev) => {
+      const start = tod(ev.start);
+      return { ev, start, end: start + (ev.end - ev.start) / 60000, pickup: pickupRe.test(ev.summary) };
+    };
+    const dropFromGrid = (evs) => {
+      const drop = new Set(evs);
+      perDay.forEach((list, i) => {
+        perDay[i] = list.filter((ev) => !drop.has(ev));
+      });
+    };
+
+    // The routine, by calendar.
     const visible = new Set();
     const series = new Map();
     days.forEach((d, i) => {
@@ -413,12 +496,10 @@ class FamilyCalendarCard extends HTMLElement {
       if (!weekdays.has(dow)) return;
       visible.add(dow);
       for (const ev of perDay[i]) {
-        // A duplicate dropped from a later calendar still counts toward that
-        // calendar's routine (dedupe works per occurrence, so on days the
-        // copies differ the later calendar keeps its own).
         for (const cal of [ev.cal, ...(dupes.get(ev) || [])]) {
-          const key = `${cal.entity}|${ev.key.split("|")[0]}|${tod(ev.start)}|${ev.end - ev.start}`;
-          if (!series.has(key)) series.set(key, { cal, evs: [], dows: new Set() });
+          if (only && !only.has(cal.entity)) continue;
+          const key = keyOf(cal, ev);
+          if (!series.has(key)) series.set(key, { key, cal, evs: [], dows: new Set() });
           const s = series.get(key);
           if (s.dows.has(dow)) continue; // one per weekday (a longer view repeats them)
           s.dows.add(dow);
@@ -426,38 +507,92 @@ class FamilyCalendarCard extends HTMLElement {
         }
       }
     });
-    const rows = new Map();
-    for (const { cal, evs, dows } of series.values()) {
-      if (dows.size < minDays) continue;
-      const drop = new Set(evs);
-      perDay.forEach((list, i) => {
-        perDay[i] = list.filter((ev) => !drop.has(ev));
-      });
-      const pick = evs.find((ev) => ev.startDay === today) || evs.find((ev) => ev.start > now) || evs[0];
-      const start = tod(pick.start);
-      if (!rows.has(cal.entity)) rows.set(cal.entity, { cal, items: [], missing: new Set() });
-      const row = rows.get(cal.entity);
-      row.items.push({
-        ev: { ...pick, regularDays: dayLabel(dows) },
-        start,
-        end: start + (pick.end - pick.start) / 60000,
-        pickup: pickupRe.test(pick.summary),
-        dows,
-      });
-      for (const d of visible) if (!dows.has(d)) row.missing.add(d);
+    const routine = new Map();
+    for (const s of series.values()) {
+      if (s.dows.size < minDays) continue;
+      if (!routine.has(s.cal.entity)) routine.set(s.cal.entity, []);
+      routine.get(s.cal.entity).push(s);
     }
-    if (!rows.size) return null;
-    const list = this._calendars
-      .map((c) => rows.get(c.entity))
-      .filter(Boolean)
-      .map((r) => ({ ...r, items: r.items.sort((a, b) => a.start - b.start), exceptions: r.missing.size ? dayLabel(r.missing) : "" }));
+    const rowCals = this._calendars.filter(
+      (c) => !this._hidden.has(c.entity) && (only ? only.has(c.entity) : routine.has(c.entity)),
+    );
+
+    let list;
+    let title;
+    if (mode === "day") {
+      const date = this._stripDate();
+      // The day's timed events of the row calendars, deduped in list order; a
+      // dropped copy still appears in its own calendar's row.
+      const seen = new Map();
+      const byRow = new Map(rowCals.map((c) => [c.entity, []]));
+      for (const cal of rowCals) {
+        for (const ev of this._events[cal.entity] || []) {
+          if (ev.allDay || ev.startDay !== date || ev.endDay !== date) continue;
+          const kept = this._config.dedupe ? seen.get(ev.key) : null;
+          if (kept) {
+            byRow.get(cal.entity).push(kept);
+            continue;
+          }
+          seen.set(ev.key, ev);
+          byRow.get(cal.entity).push(ev);
+        }
+      }
+      const shownKeys = new Set(seen.keys());
+      const idx = days.indexOf(date);
+      if (idx >= 0) perDay[idx] = perDay[idx].filter((ev) => !shownKeys.has(ev.key));
+      // Rows whose day is exactly their routine take it out of the week; an
+      // event shared with another row (a dropped duplicate) only goes when
+      // that row matches too.
+      const normal = new Set(
+        rowCals
+          .filter((cal) => {
+            const ss = routine.get(cal.entity) || [];
+            const dayKeys = new Set(byRow.get(cal.entity).map((ev) => keyOf(cal, ev)));
+            return ss.length && dayKeys.size === ss.length && ss.every((s) => dayKeys.has(s.key));
+          })
+          .map((cal) => cal.entity),
+      );
+      const rowSet = new Set(rowCals.map((c) => c.entity));
+      dropFromGrid(
+        [...normal]
+          .flatMap((e) => routine.get(e).flatMap((s) => s.evs))
+          .filter((ev) => [ev.cal, ...(dupes.get(ev) || [])].every((c) => !rowSet.has(c.entity) || normal.has(c.entity))),
+      );
+      list = rowCals
+        .map((cal) => ({ cal, exceptions: "", items: byRow.get(cal.entity).map(item) }))
+        .filter((r) => r.items.length);
+      const fmt = (opts) => new Intl.DateTimeFormat("en-US", { timeZone: "UTC", ...opts }).format(new Date(`${date}T12:00:00Z`));
+      title =
+        date === today
+          ? `Today · ${fmt({ weekday: "short", month: "short", day: "numeric" })}`
+          : date === addDays(today, 1)
+            ? `Tomorrow · ${fmt({ weekday: "short", month: "short", day: "numeric" })}`
+            : `${fmt({ weekday: "long" })} · ${fmt({ month: "short", day: "numeric" })}`;
+    } else {
+      dropFromGrid([...routine.values()].flat().flatMap((s) => s.evs));
+      list = rowCals
+        .filter((c) => routine.has(c.entity))
+        .map((cal) => {
+          const missing = new Set();
+          const items = routine.get(cal.entity).map(({ evs, dows }) => {
+            for (const d of visible) if (!dows.has(d)) missing.add(d);
+            const pick = evs.find((ev) => ev.startDay === today) || evs.find((ev) => ev.start > now) || evs[0];
+            return { ...item({ ...pick, regularDays: dayLabel(dows) }), dows };
+          });
+          return { cal, items, exceptions: missing.size ? dayLabel(missing) : "" };
+        });
+      title = `${cfg.title ?? "Regular schedule"}${visible.size ? ` · ${dayLabel(visible)}` : ""}`;
+    }
+    for (const r of list) r.items.sort((a, b) => a.start - b.start);
+
     // Pickups: one shared pin when they agree for every row, else named ones.
     const pickups = list.flatMap((r) => r.items.filter((it) => it.pickup).map((it) => ({ r, it })));
     const covered = new Set(pickups.map(({ r }) => r.cal.entity));
     let shared = null;
     if (pickups.length && new Set(pickups.map(({ it }) => it.start)).size === 1 && list.every((r) => covered.has(r.cal.entity))) {
-      const days = new Set(pickups.flatMap(({ it }) => [...it.dows]));
-      shared = { minutes: pickups[0].it.start, ev: { ...pickups[0].it.ev, regularDays: dayLabel(days) } };
+      const ev = pickups[0].it.ev;
+      const dows = pickups.flatMap(({ it }) => [...(it.dows || [])]);
+      shared = { minutes: pickups[0].it.start, ev: dows.length ? { ...ev, regularDays: dayLabel(new Set(dows)) } : ev };
       for (const { r, it } of pickups) r.items = r.items.filter((x) => x !== it);
     } else {
       for (const { r, it } of pickups) {
@@ -465,19 +600,23 @@ class FamilyCalendarCard extends HTMLElement {
         const t = it.ev.title;
         it.label = `${name} ${t[0].toLowerCase()}${t.slice(1)}`;
       }
-      if (!pickups.length && cfg.pickup) {
+      if (!pickups.length && cfg.pickup && mode !== "day" && list.length) {
         const [ph, pm] = String(cfg.pickup).split(":").map(Number);
         shared = { minutes: ph * 60 + (pm || 0), ev: null };
       }
     }
+    if (!list.some((r) => r.items.length) && !shared) return { mode, title, rows: [] };
     // The axis: from the earliest start's hour to the hour of the last end
     // (a short event's start).
     const starts = list.flatMap((r) => r.items.map((it) => it.start));
     const tails = list.flatMap((r) => r.items.map((it) => (it.end - it.start < 30 ? it.start : it.end)));
-    if (shared) tails.push(shared.minutes);
-    const from = Math.floor(Math.min(...starts, ...(shared ? [shared.minutes] : [])) / 60) * 60;
-    const to = Math.ceil(Math.max(...tails) / 60) * 60;
-    return { rows: list, from, to, shared, label: dayLabel(visible) };
+    if (shared) {
+      starts.push(shared.minutes);
+      tails.push(shared.minutes);
+    }
+    const from = Math.floor(Math.min(...starts) / 60) * 60;
+    const to = Math.max(from + 60, Math.ceil(Math.max(...tails) / 60) * 60);
+    return { mode, title, rows: list, from, to, shared };
   }
 
   // ---- controls strip -----------------------------------------------------
@@ -576,6 +715,8 @@ class FamilyCalendarCard extends HTMLElement {
     });
     for (const sel of [".week", ".regular"]) {
       root.querySelector(sel).addEventListener("click", (e) => {
+        const mode = e.target.closest("[data-mode]");
+        if (mode) return this._setStripMode(mode.dataset.mode);
         const el = e.target.closest("[data-ev]");
         if (el) this._showDetail(this._shown[Number(el.dataset.ev)]);
       });
@@ -784,6 +925,19 @@ class FamilyCalendarCard extends HTMLElement {
   // starts no earlier than the previous one ends, so overlaps don't stack),
   // clipped at pickup; shorter ones (a bus stop) are pins under the track.
   _regularHtml(rg, ref) {
+    const toggle = `<div class="rg-toggle" role="group" aria-label="Schedule">${[
+      ["regular", "mdi:calendar-sync-outline", "Regular schedule"],
+      ["day", "mdi:calendar-today-outline", "Today's schedule"],
+    ]
+      .map(
+        ([m, ic, label]) =>
+          `<button data-mode="${m}" class="${rg.mode === m ? "on" : ""}" aria-label="${label}" aria-pressed="${rg.mode === m}"><ha-icon icon="${ic}"></ha-icon></button>`,
+      )
+      .join("")}</div>`;
+    const head = `<div class="rg-head"><div class="rg-title">${esc(rg.title)}</div>${toggle}</div>`;
+    if (!rg.rows.length) {
+      return `<div class="rg-wrap">${head}<div class="rg-none">${rg.mode === "day" ? "Nothing scheduled" : "No regular schedule this week"}</div></div>`;
+    }
     const span = rg.to - rg.from;
     const pct = (m) => (((Math.min(Math.max(m, rg.from), rg.to) - rg.from) / span) * 100).toFixed(2);
     const clock = (m) => {
@@ -842,9 +996,8 @@ class FamilyCalendarCard extends HTMLElement {
         </div>`;
       })
       .join("");
-    const title = this._config.regular_schedule?.title ?? "Regular schedule";
     return `<div class="rg-wrap" style="--rg-hours: ${span / 60}">
-      <div class="rg-title">${esc(title)} · ${esc(rg.label)}</div>
+      ${head}
       <div class="rg-row rg-axis"><div></div><div class="rg-ticks">${ticks.join("")}</div><div></div></div>
       ${rows}</div>`;
   }
@@ -996,8 +1149,15 @@ const STYLE = `
   .regular { flex: none; padding: 0 12px 10px; }
   .rg-wrap { display: flex; flex-direction: column; gap: 4px; }
   .regular:empty { display: none; }
+  .rg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .rg-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--secondary-text-color); margin-bottom: 2px; }
+    color: var(--secondary-text-color); }
+  /* Mode toggle: two small glyphs, the active one filled. */
+  .rg-toggle { display: flex; gap: 2px; padding: 2px; border-radius: 16px; border: 1px solid var(--divider-color); }
+  .rg-toggle button { width: 34px; height: 26px; border-radius: 13px; display: grid; place-items: center;
+    --mdc-icon-size: 18px; color: var(--secondary-text-color); }
+  .rg-toggle button.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .rg-none { font-size: 15px; color: var(--secondary-text-color); padding: 4px 0 2px; }
   .rg-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) 84px; column-gap: 8px; align-items: start; }
   .rg-ticks { position: relative; height: 16px; }
   .tick { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--secondary-text-color);
