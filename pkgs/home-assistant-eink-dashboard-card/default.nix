@@ -5,8 +5,9 @@
 # clock area itself; see the header of eink-dashboard-card.js for the config.
 #
 # Plain JS with no build step. The forecast handling and today/tomorrow
-# outlook live in ../lovelace-weather/weather.js (shared with
-# family-calendar-card), installed alongside and imported relative to the card.
+# outlook, and the banner's notices, live in ../lovelace-common/weather.js and
+# banner.js (shared with family-calendar-card), installed alongside and
+# imported relative to the card.
 # Ships DejaVu Sans (regular, bold and condensed) next to the card, which
 # loads it relative to its own URL. DejaVu's
 # hand-tuned TrueType hinting gives the cleanest small text on the panel: with
@@ -21,7 +22,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "eink-dashboard-card";
-  version = "0.14.0";
+  version = "0.15.0";
 
   src = ./eink-dashboard-card.js;
   dontUnpack = true;
@@ -30,7 +31,8 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     mkdir $out
     install -m0644 $src $out/eink-dashboard-card.js
-    install -m0644 ${../lovelace-weather/weather.js} $out/weather.js
+    install -m0644 ${../lovelace-common/weather.js} $out/weather.js
+    install -m0644 ${../lovelace-common/banner.js} $out/banner.js
     for f in DejaVuSans DejaVuSans-Bold DejaVuSansCondensed DejaVuSansCondensed-Bold; do
       install -m0644 ${dejavu_fonts}/share/fonts/truetype/$f.ttf $out/$f.ttf
     done

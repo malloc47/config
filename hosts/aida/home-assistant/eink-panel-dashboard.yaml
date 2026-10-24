@@ -32,7 +32,9 @@ views:
         # Banner item for the whole day of a matching calendar event (also
         # stacked with the message, appliances and doors): Charis's Humira
         # injection day, an all-day event every 10 days. "^...$" so the
-        # separate "Order Humira" reminder doesn't match.
+        # separate "Order Humira" reminder doesn't match. The kitchen
+        # calendar's notification bar mirrors this banner; keep
+        # family-calendar-dashboard.yaml's notice options in step.
         calendar_alerts:
           - entity: calendar.charisrebecca_gmail_com
             match: "^Humira$"

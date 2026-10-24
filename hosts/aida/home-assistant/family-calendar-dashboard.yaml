@@ -8,8 +8,8 @@
 # One panel view holding family-calendar-card
 # (pkgs/home-assistant-family-calendar-card), which lays out the whole screen:
 # clock and weather outlook on top, the week calendar with a show/hide chip per
-# calendar, and the kitchen controls (ordinary tiles, under `cards`) at the
-# bottom.
+# calendar, the kitchen controls (ordinary tiles, under `cards`) and, when
+# there are notices, a notification bar along the bottom edge.
 title: Kitchen
 views:
   - title: Kitchen
@@ -60,6 +60,22 @@ views:
         outdoor_hours: [7, 22]
         cold: 45
         hot: 85
+        # Notification bar along the bottom edge, with the same notices as the
+        # living room e-ink panel's banner (keep these in step with
+        # eink-panel-dashboard.yaml): the banner message (default template,
+        # input_text.eink_banner), Humira days, a running dishwasher and open
+        # perimeter doors. Hidden while empty; it never wakes the tablet.
+        banner: true
+        calendar_alerts:
+          - entity: calendar.charisrebecca_gmail_com
+            match: "^Humira$"
+            icon: needle
+        appliances:
+          - name: Dishwasher
+            icon: dishwasher
+            state_entity: sensor.dishwasher_operation_state
+            progress_entity: sensor.dishwasher_program_progress
+        doors_entity: binary_sensor.perimeter_doors
         controls_columns: 3
         cards:
           - type: tile

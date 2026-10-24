@@ -24,19 +24,9 @@
 //                                                # panel to draw (replaces battery_entity)
 //   days: 5                                      # daily forecast columns
 //   days_include_today: false                    # start the daily columns with today
-//   banner_template: "{{ ... }}"                 # Jinja message; default: input_text.eink_banner
-//   doors_entity: binary_sensor.perimeter_doors  # group whose open members join the banner
-//   calendar_alerts:                             # banner items all day while a calendar has a
-//     - entity: calendar.<name>                  # matching event today (all-day or timed)
-//       match: "^Humira$"                        # regex on the event title (case-insensitive)
-//       icon: needle                             # default bell-outline
-//       text: Humira                             # default: the event's title
-//   appliances:                                  # banner items while an appliance is running
-//     - name: Dishwasher
-//       icon: dishwasher                         # dishwasher / washing-machine / tumble-dryer
-//       state_entity: sensor.dishwasher_operation_state
-//       running_states: [run]                    # default [run]; "pause" shows as paused
-//       progress_entity: sensor.dishwasher_program_progress   # optional "N%"
+//   banner_template, calendar_alerts,            # the footer banner's notices (message,
+//   appliances, doors_entity                     # calendar alerts, appliances, open doors);
+//                                                # see ../lovelace-common/banner.js
 //   layout: standard                             # "standard", "focus" (big clock + outlook) or
 //                                                # "far" (focus info, larger, for 6-9 ft away)
 //   outdoor_hours: [7, 22]                       # focus: local hours "outside" for the outlook
@@ -53,6 +43,7 @@
 const { CONDITION_ICON, CONDITION_TEXT, CONDITION_RANK, Weather, num, temp } = await import(
   new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
+const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
 
 const ICONS = {
   "weather-sunny": "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z",
@@ -145,11 +136,6 @@ const BUCKETS = [
   { id: "night", start: 18, end: 30, label: "Night" },
 ];
 
-// Free-text message shown first in the banner (empty hides it). Open doors from
-// doors_entity are listed after it natively, with an icon and a short name.
-const DEFAULT_BANNER = `{%- set msg = states('input_text.eink_banner') -%}
-{{ msg if msg not in ['', 'unknown', 'unavailable'] else '' }}`;
-
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -163,7 +149,10 @@ class EinkDashboardCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._wx = new Weather(() => this._schedule());
-    this._banner = "";
+    this._bn = new Banner(
+      () => this._schedule(),
+      (ts) => this._wx.local(ts).date,
+    );
     this._raf = null;
   }
 
@@ -173,13 +162,10 @@ class EinkDashboardCard extends HTMLElement {
     this._config = {
       days: 5,
       sun_entity: "sun.sun",
-      banner_template: DEFAULT_BANNER,
       show_clock_area: false,
       hide_toasts: true,
       layout: "standard",
       rain_probability: 50,
-      appliances: [],
-      calendar_alerts: [],
       gray: false,
       show_updated: true,
       battery_slot: false,
@@ -189,21 +175,14 @@ class EinkDashboardCard extends HTMLElement {
       ...config,
     };
     this._wx.configure(this._config);
-    this._calAlerts = this._config.calendar_alerts.map((a) => {
-      try {
-        return { ...a, re: new RegExp(a.match ?? "", "i") };
-      } catch (err) {
-        throw new Error(`calendar_alerts: bad match ${JSON.stringify(a.match)}: ${err.message}`);
-      }
-    });
-    this._calItems = [];
-    this._calFetched = null;
+    this._bn.configure(this._config);
     this._ensureSubscriptions();
     this._schedule();
   }
 
   set hass(hass) {
     this._wx.setHass(hass);
+    this._bn.setHass(hass);
     this._hass = hass;
     this._ensureSubscriptions();
     this._schedule();
@@ -267,21 +246,14 @@ class EinkDashboardCard extends HTMLElement {
     this._wx.unsubscribe();
   }
 
-  // (Re)subscribe the forecasts (weather.js) plus the banner template; called
-  // on every hass update so failed subscriptions are retried.
+  // (Re)subscribe the forecasts (weather.js) plus the banner template
+  // (banner.js); called on every hass update so failed subscriptions are
+  // retried.
   _ensureSubscriptions() {
     if (!this._hass || !this._config || !this.isConnected) return;
     this._wx.setHass(this._hass);
-    const extra = {};
-    if (this._config.banner_template) {
-      extra.banner = {
-        msg: { type: "render_template", template: this._config.banner_template, strict: false, report_errors: false },
-        onMessage: (m) => {
-          if ("result" in m) this._banner = String(m.result ?? "").trim();
-        },
-      };
-    }
-    this._wx.ensureSubscriptions(extra);
+    this._bn.setHass(this._hass);
+    this._wx.ensureSubscriptions(this._bn.subscriptions());
   }
 
 
@@ -398,90 +370,6 @@ class EinkDashboardCard extends HTMLElement {
     return { level: Math.round(level), icon: name };
   }
 
-  // Open members of doors_entity (a group), as banner items: an open-door icon
-  // (garage/window by device class) and the name without a trailing "Door".
-  // Gates use the door icon too: MDI's gate glyph breaks up at 22px in 1-bit.
-  _openDoors() {
-    const group = this._config.doors_entity && this._hass.states[this._config.doors_entity];
-    const members = group?.attributes?.entity_id || [];
-    return members
-      .map((id) => this._hass.states[id])
-      .filter((st) => st && st.state === "on")
-      .map((st) => {
-        const name = st.attributes.friendly_name || st.entity_id;
-        const dc = st.attributes.device_class;
-        const ic = dc === "garage_door" ? "garage-open-variant" : dc === "window" ? "window-open-variant" : "door-open";
-        return { icon: ic, text: name.replace(/\s+door$/i, "") };
-      });
-  }
-
-  // Running appliances as banner items: icon + "<name> <progress>%" (with
-  // "paused" mid-cycle). Nothing when idle, finished or unavailable.
-  _appliances() {
-    return (this._config.appliances || [])
-      .map((a) => {
-        const st = this._hass.states[a.state_entity]?.state;
-        const running = (a.running_states || ["run"]).includes(st);
-        const paused = st === "pause";
-        if (!running && !paused) return null;
-        const pct = a.progress_entity ? num(this._hass.states[a.progress_entity]?.state) : null;
-        const parts = [a.name, paused ? "paused" : null, pct !== null ? `${Math.round(pct)}%` : null];
-        return { icon: a.icon || "dishwasher", text: parts.filter(Boolean).join(" ") };
-      })
-      .filter(Boolean);
-  }
-
-  // Calendar events today that match a calendar_alerts rule, fetched from HA's
-  // calendar API and refreshed every 15 minutes and when the day changes; the
-  // item stays up for the whole day of the event.
-  _refreshCalendarAlerts() {
-    if (!this._calAlerts.length) return;
-    const today = this._local(Date.now()).date;
-    const f = this._calFetched;
-    if (f && (f.pending || (f.day === today && Date.now() - f.at < 15 * 60000))) return;
-    this._calFetched = { day: today, at: Date.now(), pending: true };
-    const shift = (date, n) => {
-      const d = new Date(`${date}T12:00:00Z`);
-      d.setUTCDate(d.getUTCDate() + n);
-      return d.toISOString().slice(0, 10);
-    };
-    // Pad a day either side (UTC) and decide "today" in HA's time zone.
-    const q = `?start=${encodeURIComponent(`${shift(today, -1)}T00:00:00Z`)}&end=${encodeURIComponent(`${shift(today, 2)}T00:00:00Z`)}`;
-    const entities = [...new Set(this._calAlerts.map((a) => a.entity))];
-    Promise.all(
-      entities.map((e) =>
-        this._hass.callApi("GET", `calendars/${e}${q}`).then(
-          (evs) => [e, evs],
-          (err) => {
-            console.warn(`eink-dashboard-card: fetching ${e} failed`, err);
-            return [e, null];
-          },
-        ),
-      ),
-    ).then((results) => {
-      const byEntity = Object.fromEntries(results);
-      const failed = results.some(([, evs]) => evs === null);
-      const items = [];
-      for (const a of this._calAlerts) {
-        for (const ev of byEntity[a.entity] || []) {
-          const allDay = !!ev.start?.date;
-          const first = allDay ? ev.start.date : this._local(Date.parse(ev.start.dateTime)).date;
-          const last = allDay
-            ? shift(ev.end?.date || shift(ev.start.date, 1), -1)
-            : this._local(Math.max(Date.parse(ev.start.dateTime), Date.parse(ev.end?.dateTime) - 1 || 0)).date;
-          if (first > today || last < today || !a.re.test(ev.summary || "")) continue;
-          const text = a.text || ev.summary;
-          if (!items.some((it) => it.text === text)) items.push({ icon: a.icon || "bell-outline", text, shrink: true });
-        }
-      }
-      this._calItems = items;
-      this._calItemsDay = today;
-      // Retry a failed fetch (e.g. HA still starting) after a minute.
-      this._calFetched = { day: today, at: failed ? Date.now() - 14 * 60000 : Date.now() };
-      this._schedule();
-    });
-  }
-
   _sunEvent() {
     const sun = this._hass.states[this._config.sun_entity];
     if (!sun) return null;
@@ -497,12 +385,11 @@ class EinkDashboardCard extends HTMLElement {
   _render() {
     if (!this._hass || !this._config) return;
     this._wx.invalidate();
-    this._refreshCalendarAlerts();
     // Try the full door list first; if it overflows the banner, re-render once
     // with the doors collapsed into a single summary item.
     this._renderScreen(false);
     const banner = this.shadowRoot.querySelector(".banner");
-    if (banner && banner.scrollWidth > banner.clientWidth + 1 && this._openDoors().length > 1) {
+    if (banner && banner.scrollWidth > banner.clientWidth + 1 && this._bn.openDoors().length > 1) {
       this._renderScreen(true);
     }
     this._fitText();
@@ -548,15 +435,7 @@ class EinkDashboardCard extends HTMLElement {
     const battery = this._battery();
     const buckets = this._buckets();
     const days = this._days();
-    const doors = this._openDoors();
-    const bannerItems = [
-      ...(this._banner ? [{ icon: "bell-outline", text: this._banner, shrink: true }] : []),
-      ...(this._calItemsDay === this._local(Date.now()).date ? this._calItems : []),
-      ...this._appliances(),
-      ...(compactDoors
-        ? [{ icon: "door-open", text: `${doors.length} open: ${doors.map((d) => d.text).join(", ")}`, shrink: true }]
-        : doors),
-    ];
+    const bannerItems = this._bn.items(compactDoors);
 
     const stat = (ic, value, label) => `
       <div class="stat">

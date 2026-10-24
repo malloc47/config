@@ -5,12 +5,15 @@
 //
 //   - a clock and date,
 //   - current conditions and today/tomorrow outlook lines, worded exactly as
-//     on the E1001 e-ink panel (shared ../lovelace-weather/weather.js),
+//     on the E1001 e-ink panel (shared ../lovelace-common/weather.js),
 //   - chips that show/hide each configured calendar (remembered per device),
 //   - a multi-day week grid: all-day and multi-day events as bars across the
 //     days, timed events listed under each day; tap an event for details,
 //     page with the arrows (it returns to the current week when left idle),
-//   - a strip of ordinary Lovelace cards (`cards`) for room controls.
+//   - a strip of ordinary Lovelace cards (`cards`) for room controls,
+//   - optionally (banner: true) a notification bar along the bottom edge
+//     with the E1001's banner notices (shared ../lovelace-common/banner.js),
+//     shown only while there is something in it.
 //
 // Config:
 //   type: custom:family-calendar-card
@@ -37,6 +40,10 @@
 //   sun_entity: sun.sun                # night icons for the current conditions
 //   cards: [...]                       # Lovelace cards for the controls strip
 //   controls_columns: 3                # grid columns for those cards (portrait)
+//   banner: false                      # bottom notification bar; its notices are
+//                                      # configured as on eink-dashboard-card:
+//                                      # banner_template, calendar_alerts,
+//                                      # appliances, doors_entity (see banner.js)
 //   height: auto                       # card height (CSS); auto fills the window
 //                                      # below the card's top edge
 //
@@ -46,6 +53,7 @@
 const { Weather, CONDITION_TEXT, num, temp } = await import(
   new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
+const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
 
 // Google Calendar's event colours, for calendars without a configured colour.
 const PALETTE = ["#039be5", "#33b679", "#e67c73", "#f6bf26", "#8e24aa", "#f4511e", "#3f51b5", "#0b8043", "#d50000", "#616161"];
@@ -83,6 +91,10 @@ class FamilyCalendarCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._wx = new Weather(() => this._schedule());
+    this._bn = new Banner(
+      () => this._schedule(),
+      (ts) => this._wx.local(ts).date,
+    );
     this._events = {}; // entity -> normalized events
     this._fetchedRange = null;
     this._offset = 0; // pages away from the current week
@@ -120,6 +132,7 @@ class FamilyCalendarCard extends HTMLElement {
     });
     this._loadHidden();
     this._wx.configure(this._config);
+    this._bn.configure(this._config);
     this._built = false;
     this._html = {};
     this._fetchedRange = null;
@@ -129,9 +142,10 @@ class FamilyCalendarCard extends HTMLElement {
 
   set hass(hass) {
     this._wx.setHass(hass);
+    this._bn.setHass(hass);
     this._hass = hass;
     for (const card of this._cards) card.hass = hass;
-    if (this.isConnected) this._wx.ensureSubscriptions();
+    if (this.isConnected) this._subscribe();
     // A calendar entity's state changes as its next event comes and goes (and
     // after HA re-syncs it); refetch soon after.
     const stamp = this._calendars.map((c) => hass.states[c.entity]?.last_updated).join("|");
@@ -144,7 +158,7 @@ class FamilyCalendarCard extends HTMLElement {
   }
 
   connectedCallback() {
-    if (this._hass) this._wx.ensureSubscriptions();
+    if (this._hass) this._subscribe();
     this._tick();
     this._fetchedRange = null;
     this._schedule();
@@ -163,6 +177,11 @@ class FamilyCalendarCard extends HTMLElement {
 
   getCardSize() {
     return 20;
+  }
+
+  // Forecasts, plus the banner message's template when the bar is on.
+  _subscribe() {
+    this._wx.ensureSubscriptions(this._config.banner ? this._bn.subscriptions() : {});
   }
 
   // ---- state ------------------------------------------------------------
@@ -398,6 +417,7 @@ class FamilyCalendarCard extends HTMLElement {
           <div class="week"></div>
         </section>
         <section class="controls"></section>
+        <footer class="banner" hidden></footer>
         <div class="detail" hidden></div>
       </div>`;
     const root = this.shadowRoot;
@@ -422,6 +442,7 @@ class FamilyCalendarCard extends HTMLElement {
       if (e.target.closest(".close") || !e.target.closest(".sheet")) this._hideDetail();
     });
     this._built = true;
+    this._bannerHtml = null;
     this._mountCards();
     if (!this._onResize) {
       this._onResize = () => this._schedule();
@@ -460,6 +481,7 @@ class FamilyCalendarCard extends HTMLElement {
     this._renderClock();
     this._renderWeather();
     this._renderCalendar(days);
+    this._renderBanner();
   }
 
   _renderClock() {
@@ -581,6 +603,31 @@ class FamilyCalendarCard extends HTMLElement {
     );
   }
 
+  // The notification bar: the E1001 banner's items, or nothing (and no bar).
+  // If they overflow, the open doors fold into one summary item. It's plain
+  // page content, so it never wakes the tablet from its screensaver.
+  _renderBanner() {
+    const bar = this.shadowRoot.querySelector(".banner");
+    const html = (items) =>
+      items
+        .map(
+          (it) =>
+            `<span class="item${it.shrink ? " shrink" : ""}"><ha-icon icon="mdi:${esc(it.icon)}"></ha-icon><span>${esc(it.text)}</span></span>`,
+        )
+        .join("");
+    const items = this._config.banner ? this._bn.items() : [];
+    const full = html(items);
+    if (full === this._bannerHtml) return;
+    this._bannerHtml = full;
+    // Show it first, so the overflow check measures the laid-out bar.
+    bar.hidden = !items.length;
+    this.shadowRoot.querySelector(".screen").classList.toggle("has-banner", items.length > 0);
+    bar.innerHTML = full;
+    if (items.length && bar.scrollWidth > bar.clientWidth + 1 && this._bn.openDoors().length > 1) {
+      bar.innerHTML = html(this._bn.items(true));
+    }
+  }
+
   _showDetail(ev) {
     if (!ev) return;
     const tz = this._hass.config?.time_zone;
@@ -639,6 +686,12 @@ const STYLE = `
     color: var(--primary-text-color); font-family: var(--ha-font-family-body, Roboto, sans-serif);
     font-variant-numeric: tabular-nums;
   }
+  /* With notices, the bar takes a last row and sits flush with the bottom. */
+  .screen.has-banner {
+    padding-bottom: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "top" "calendar" "controls" "banner";
+  }
   /* Landscape: calendar on the left, clock/weather/controls in a side column. */
   @media (orientation: landscape) {
     .screen {
@@ -646,6 +699,10 @@ const STYLE = `
       grid-template-rows: auto minmax(0, 1fr);
       grid-template-areas: "calendar top" "calendar controls";
       --controls-columns: 2 !important;
+    }
+    .screen.has-banner {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-areas: "calendar top" "calendar controls" "banner banner";
     }
     .top { flex-direction: column; align-items: stretch !important; }
     .controls { align-content: start; overflow-y: auto; }
@@ -725,6 +782,20 @@ const STYLE = `
 
   /* ---- controls ---- */
   .controls { grid-area: controls; display: grid; gap: 8px; grid-template-columns: repeat(var(--controls-columns), minmax(0, 1fr)); }
+
+  /* ---- notification bar ----
+     Full-bleed along the bottom edge, inverted against the page (dark on a
+     light theme, light on a dark one) so it stands out, like the E1001's
+     black banner. */
+  .banner { grid-area: banner; margin: 0 -12px; min-height: 56px; box-sizing: border-box;
+    display: flex; align-items: center; gap: 28px; padding: 8px 20px; overflow: hidden;
+    background: var(--primary-text-color); color: var(--card-background-color, #fff);
+    --mdc-icon-size: 28px; }
+  .banner[hidden] { display: none; }
+  .banner .item { display: inline-flex; align-items: center; gap: 8px; flex: none;
+    font-size: 21px; font-weight: 500; white-space: nowrap; }
+  .banner .item.shrink { flex: 0 1 auto; min-width: 0; }
+  .banner .item > span { overflow: hidden; text-overflow: ellipsis; }
 
   /* ---- event detail ---- */
   .detail { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 24px;
