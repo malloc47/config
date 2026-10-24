@@ -19,6 +19,10 @@
 //       name: Family                   # default: friendly name
 //       color: "#039be5"               # default: from a built-in palette
 //       hidden: false                  # start with the chip off (until tapped)
+//   title_rewrites:                    # shorten titles in the grid, in order (the
+//     - match: "Discovery Village "    # popup keeps the full title); match is a
+//       replace: ""                    # JS regex, replace may use $1 etc.
+//       flags: g                       # default "g"; add "i" to ignore case
 //   days: 7                            # columns in the week grid
 //   first_day: today                   # today | sunday | monday
 //   reset_after: 300                   # s idle before paging back to today (0: never)
@@ -102,6 +106,13 @@ class FamilyCalendarCard extends HTMLElement {
       color: PALETTE[i % PALETTE.length],
       ...(typeof c === "string" ? { entity: c } : c),
     }));
+    this._rewrites = (this._config.title_rewrites || []).map((r) => {
+      try {
+        return { re: new RegExp(r.match, r.flags ?? "g"), replace: r.replace ?? "" };
+      } catch (err) {
+        throw new Error(`title_rewrites: bad match ${JSON.stringify(r.match)}: ${err.message}`);
+      }
+    });
     this._loadHidden();
     this._wx.configure(this._config);
     this._built = false;
@@ -235,7 +246,8 @@ class FamilyCalendarCard extends HTMLElement {
 
   _normalize(e, cal) {
     const allDay = !!e.start?.date;
-    const ev = { summary: e.summary || "(No title)", location: e.location, description: e.description, cal, allDay };
+    const summary = e.summary || "(No title)";
+    const ev = { summary, title: this._shorten(summary), location: e.location, description: e.description, cal, allDay };
     if (allDay) {
       ev.startDay = e.start.date;
       ev.endDay = addDays(e.end?.date || addDays(e.start.date, 1), -1); // inclusive
@@ -246,6 +258,16 @@ class FamilyCalendarCard extends HTMLElement {
       ev.endDay = this._wx.local(Math.max(ev.start, ev.end - 1)).date;
     }
     return ev;
+  }
+
+  // The grid's title: title_rewrites applied in order, whitespace tidied, and
+  // the first letter capitalized (a rewrite may drop a leading word).
+  _shorten(summary) {
+    let t = summary;
+    for (const { re, replace } of this._rewrites) t = t.replace(re, replace);
+    t = t.replace(/\s{2,}/g, " ").trim();
+    if (!t) return summary;
+    return t[0].toUpperCase() + t.slice(1);
   }
 
   // Visible events split into bars (all-day or spanning days, packed into
@@ -517,7 +539,7 @@ class FamilyCalendarCard extends HTMLElement {
         const done = ev.allDay ? ev.endDay < today : ev.end <= now;
         return `<button class="ev-bar${clipL ? " clip-l" : ""}${clipR ? " clip-r" : ""}${done ? " done" : ""}" data-ev="${ref(ev)}"
           style="grid-column: ${from + 1} / ${to + 2}; grid-row: ${lane + 1}; --c: ${esc(ev.cal.color)}; --ink: ${ink(ev.cal.color)}">
-          <span class="bt">${when ? `<span class="t">${esc(when)}</span>` : ""}${esc(ev.summary)}</span></button>`;
+          <span class="bt">${when ? `<span class="t">${esc(when)}</span>` : ""}${esc(ev.title)}</span></button>`;
       })
       .join("");
     const cols = perDay
@@ -526,7 +548,7 @@ class FamilyCalendarCard extends HTMLElement {
           .map(
             (ev) => `<button class="ev${ev.end <= now ? " done" : ""}${ev.start <= now && now < ev.end ? " live" : ""}"
               data-ev="${ref(ev)}" style="--c: ${esc(ev.cal.color)}">
-              <span class="t">${esc(time(ev.start))}</span><span class="s">${esc(ev.summary)}</span></button>`,
+              <span class="t">${esc(time(ev.start))}</span><span class="s">${esc(ev.title)}</span></button>`,
           )
           .join("")}</div>`,
       )

@@ -17,9 +17,8 @@ views:
     panel: true
     cards:
       - type: custom:family-calendar-card
-        # Chips in this order; colours roughly follow Google Calendar's. The
-        # hidden ones start switched off (each chip's state is then remembered
-        # on the device).
+        # Chips in this order; colours roughly follow Google Calendar's. Each
+        # chip's on/off state is remembered on the device.
         calendars:
           - entity: calendar.family
             name: Family
@@ -36,22 +35,15 @@ views:
           - entity: calendar.birthdays
             name: Birthdays
             color: "#f4511e"
-          - entity: calendar.financial
-            name: Financial
-            color: "#616161"
-            hidden: true
-          - entity: calendar.prospective_events
-            name: Maybe
-            color: "#e67c73"
-            hidden: true
-          - entity: calendar.episodecalendar_com
-            name: TV
-            color: "#f6bf26"
-            hidden: true
-          - entity: calendar.chicago_summer_calendar
-            name: Chicago
-            color: "#0b8043"
-            hidden: true
+        # Shorter titles in the narrow day columns (the event popup shows the
+        # full title): drop the daycare's and the after-care's names, e.g.
+        # "Bastian — Discovery Village daycare" -> "Bastian — daycare", and the
+        # school bus's route code, "Priscilla — Bus pickup (JPTH 003 AM)" ->
+        # "Priscilla — Bus pickup".
+        title_rewrites:
+          - match: "Discovery Village "
+          - match: "Transfiguration "
+          - match: ' \([A-Z]+ \d+ [AP]M\)'
         # A rolling week starting today.
         days: 7
         first_day: today
@@ -81,10 +73,10 @@ views:
             entity: light.dining_room_light_fan
             name: Dining light + fan
             icon: mdi:ceiling-fan-light
-          # Relay L2 of the "Dining Room Relay" (its entity is named Kitchen Fan).
+          # Relay L2 of the "Dining Room Relay".
           - type: tile
             entity: fan.kitchen_fan
-            name: Dining room fan
+            name: Kitchen fan
           # Dishwasher: its state, or the finish time while a program runs.
           - type: conditional
             conditions:
