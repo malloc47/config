@@ -17,16 +17,22 @@ views:
     panel: true
     cards:
       - type: custom:family-calendar-card
-        # Chips in this order; colours match each calendar's in Google
-        # Calendar (as its dark theme draws them). Each chip's on/off state is
-        # remembered on the device.
+        # Chips in this order, which is also the precedence for hiding
+        # duplicate events; colours match each calendar's in Google Calendar
+        # (as its dark theme draws them). Each chip's on/off state is
+        # remembered on the device. The kids' own calendars (Priscilla is the
+        # renamed Kids School, so its entity id is still kids_school) title
+        # events without the child's name; the colour says whose they are.
         calendars:
           - entity: calendar.family
             name: Family
             color: "#ca5f77"
           - entity: calendar.kids_school
-            name: Kids
+            name: Priscilla
             color: "#7e508e"
+          - entity: calendar.bastian
+            name: Bastian
+            color: "#668be1"
           - entity: calendar.jarrell
             name: Jarrell
             color: "#d2994f"
@@ -38,9 +44,8 @@ views:
             color: "#838bc0"
         # Shorter titles in the narrow day columns (the event popup shows the
         # full title): drop the daycare's and the after-care's names, e.g.
-        # "Bastian — Discovery Village daycare" -> "Bastian — daycare", and the
-        # school bus's route code, "Priscilla — Bus pickup (JPTH 003 AM)" ->
-        # "Priscilla — Bus pickup".
+        # "Discovery Village daycare" -> "Daycare", and the school bus's route
+        # code, "Bus pickup (JPTH 003 AM)" -> "Bus pickup".
         title_rewrites:
           - match: "Discovery Village "
           - match: "Transfiguration "
