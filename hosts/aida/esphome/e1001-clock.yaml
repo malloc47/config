@@ -22,8 +22,8 @@
 # goes out as a partial when it's on screen, so routine changes don't flash:
 # only pixels whose black/white value flips are driven, and they show 1-bit
 # until the next full refresh restores their grays. Full 4-gray refreshes are
-# kept for the hourly refresh, page switches, the first background after
-# boot, and HA pushes that ask for one (open doors, the banner message).
+# kept for the hourly refresh, page switches, the green button and the first
+# background after boot (and an HA push that asks for one; none do now).
 #
 # The firmware also draws the battery level (MDI icon + percentage) into a
 # blank spot the card reserves at the right end of the footer (x 718-790), from
@@ -359,11 +359,11 @@ wifi:
     - script.execute: refresh_backgrounds
 
 # Let HA push refreshes instead of waiting for the 15-minute poll: the "E-ink
-# panel" automations (home-automation.nix) call
-# esphome.e1001_clock_refresh_dashboard when something shown changes, with
-# full: true for the banner message and perimeter doors (worth a flash to draw
-# attention) and false for routine changes (weather, dishwasher), which go out
-# as partials. The button is the manual equivalent in HA's UI. A refresh
+# panel" automation (home-automation.nix) calls
+# esphome.e1001_clock_refresh_dashboard when something shown changes (weather,
+# dishwasher, banner message, perimeter doors) with full: false, so they go
+# out as partials; full: true would flash a full refresh once the new image
+# lands. The button is the manual equivalent in HA's UI. A refresh
 # re-fetches the Puppet renders, and the visible page redraws when its image
 # lands.
 # Merges with the api: block from common/base.yaml.
