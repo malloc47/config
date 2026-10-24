@@ -17,24 +17,25 @@ views:
     panel: true
     cards:
       - type: custom:family-calendar-card
-        # Chips in this order; colours roughly follow Google Calendar's. Each
-        # chip's on/off state is remembered on the device.
+        # Chips in this order; colours match each calendar's in Google
+        # Calendar (as its dark theme draws them). Each chip's on/off state is
+        # remembered on the device.
         calendars:
           - entity: calendar.family
             name: Family
-            color: "#039be5"
+            color: "#ca5f77"
           - entity: calendar.kids_school
             name: Kids
-            color: "#33b679"
+            color: "#7e508e"
           - entity: calendar.jarrell
             name: Jarrell
-            color: "#3f51b5"
+            color: "#d2994f"
           - entity: calendar.charisrebecca_gmail_com
             name: Charis
-            color: "#8e24aa"
+            color: "#6cae84"
           - entity: calendar.birthdays
             name: Birthdays
-            color: "#f4511e"
+            color: "#838bc0"
         # Shorter titles in the narrow day columns (the event popup shows the
         # full title): drop the daycare's and the after-care's names, e.g.
         # "Bastian — Discovery Village daycare" -> "Bastian — daycare", and the
