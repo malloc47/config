@@ -72,6 +72,11 @@ export class Banner {
     this.hass = hass;
   }
 
+  // Refetch the calendar alerts on the next items() (e.g. after a resync).
+  refresh() {
+    if (!this._calFetched?.pending) this._calFetched = null;
+  }
+
   // The message template's subscription, in Weather.ensureSubscriptions()'s
   // `extra` format, so it shares the forecasts' retries.
   subscriptions() {

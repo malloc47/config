@@ -73,6 +73,9 @@
 //
 // Events come from HA's calendar REST API (GET /api/calendars/<entity>) for
 // every configured calendar, hidden or not, so toggling a chip is instant.
+// HA syncs Google calendars every 15 minutes; the refresh glyph by the week
+// arrows asks it to sync them now (homeassistant.update_entity runs each
+// calendar's sync coordinator) and then refetches.
 
 const { Weather, CONDITION_TEXT, num, temp } = await import(
   new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
@@ -349,6 +352,33 @@ class FamilyCalendarCard extends HTMLElement {
   }
 
   // ---- data -------------------------------------------------------------
+
+  // Ask HA to sync every calendar shown (and any the banner's alerts read)
+  // with Google now, then refetch. The glyph spins meanwhile and shows an
+  // alert icon for a few seconds if the sync fails.
+  async _sync() {
+    const btn = this.shadowRoot.querySelector(".sync");
+    if (!this._hass || btn.classList.contains("busy")) return;
+    const icon = btn.querySelector("ha-icon");
+    btn.classList.add("busy");
+    const entities = [
+      ...new Set([...this._calendars.map((c) => c.entity), ...(this._config.calendar_alerts || []).map((a) => a.entity)]),
+    ];
+    let ok = true;
+    try {
+      await this._hass.callService("homeassistant", "update_entity", { entity_id: entities });
+      this._bn.refresh();
+      await this._fetch();
+    } catch (err) {
+      ok = false;
+      console.warn("family-calendar-card: calendar sync failed", err);
+    }
+    btn.classList.remove("busy");
+    if (!ok) {
+      icon.setAttribute("icon", "mdi:alert-circle-outline");
+      setTimeout(() => icon.setAttribute("icon", "mdi:refresh"), 4000);
+    }
+  }
 
   _fetchSoon(ms) {
     clearTimeout(this._fetchTimer);
@@ -719,6 +749,7 @@ class FamilyCalendarCard extends HTMLElement {
           <div class="bar">
             <div class="range"></div>
             <div class="nav">
+              <button class="sync" aria-label="Sync calendars"><ha-icon icon="mdi:refresh"></ha-icon></button>
               <button class="today-btn" data-page="0">Today</button>
               <button class="arrow" data-page="-1" aria-label="Previous"><ha-icon icon="mdi:chevron-left"></ha-icon></button>
               <button class="arrow" data-page="1" aria-label="Next"><ha-icon icon="mdi:chevron-right"></ha-icon></button>
@@ -734,6 +765,7 @@ class FamilyCalendarCard extends HTMLElement {
         <div class="detail" hidden></div>
       </div>`;
     const root = this.shadowRoot;
+    root.querySelector(".sync").addEventListener("click", () => this._sync());
     root.querySelector(".nav").addEventListener("click", (e) => {
       const b = e.target.closest("[data-page]");
       if (b) this._page(Number(b.dataset.page));
@@ -1172,7 +1204,12 @@ const STYLE = `
     border: 1px solid var(--divider-color); }
   .today-btn[disabled] { opacity: 0.4; cursor: default; }
   .arrow { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; --mdc-icon-size: 30px; }
-  .arrow:active, .today-btn:active, .chip:active { background: var(--secondary-background-color); }
+  .arrow:active, .today-btn:active, .chip:active, .sync:active { background: var(--secondary-background-color); }
+  /* Discreet: a small muted glyph that spins while syncing. */
+  .sync { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; margin-right: 4px;
+    --mdc-icon-size: 20px; color: var(--secondary-text-color); }
+  .sync.busy ha-icon { animation: fcc-spin 0.9s linear infinite; }
+  @keyframes fcc-spin { to { transform: rotate(360deg); } }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 12px 10px; flex: none; }
   .chip { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px 0 10px;
     border-radius: 19px; font-size: 16px; font-weight: 500; white-space: nowrap;
