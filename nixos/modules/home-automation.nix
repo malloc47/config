@@ -383,6 +383,12 @@ in
       # Google Cloud project needs the Google Calendar API enabled. Calendars
       # are picked via the UI config flow.
       "google"
+      # Holidays as a calendar (packages holidays): computed locally, no
+      # account, for the family-calendar kiosk dashboard. Added via the UI
+      # config flow (country US, subdivision NY; options: the "unofficial"
+      # category too, e.g. Halloween, Mother's Day), giving
+      # calendar.united_states_ny.
+      "holiday"
       # MTA New York City Transit — real-time NYC subway/bus arrivals via the
       # MTA's GTFS-RT feeds (core since 2026.3; packages py-nymta). Added via the
       # UI config flow: subway needs no key; bus tracking needs an MTA Bus Time

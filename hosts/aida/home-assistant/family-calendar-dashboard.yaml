@@ -39,9 +39,11 @@ views:
           - entity: calendar.charisrebecca_gmail_com
             name: Charis
             color: "#6cae84"
-          - entity: calendar.birthdays
-            name: Birthdays
-            color: "#838bc0"
+          # Public holidays (US, NY) from HA's local Holiday integration, not
+          # Google, so a neutral grey rather than a Google calendar colour.
+          - entity: calendar.united_states_ny
+            name: Holidays
+            color: "#9e9e9e"
         # Shorter titles in the narrow day columns (the event popup shows the
         # full title): drop the daycare's and the after-care's names, e.g.
         # "Discovery Village daycare" -> "Daycare", and the school bus's route
