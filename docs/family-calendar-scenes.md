@@ -160,7 +160,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   lightning (rates from config).
 - [x] **9. Snow, sleet, hail.** Gentle snow, flurries, snow cap building on
   the edge, lamp-lit snow, quiet snow, sleet, hail bounces, frost.
-- [ ] **10. Wind.** Racing clouds, blown leaves/petals by season, swaying
+- [x] **10. Wind.** Racing clouds, blown leaves/petals by season, swaying
   props.
 - [ ] **11. Dawn/day/golden/dusk extras.** First light band, pastel cirrus,
   lens shimmer, long light rays, gilded edges, birds (rare), blue hour,
@@ -275,3 +275,9 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   Old `snow` layer name aliases `snowfall`. Scenes: snow-day-gentle/
   flurries/cap, snow-night-lamps/quiet, sleet-mix (snowy-rainy),
   hail-bounce (hail); 49 scenes. Frost (<32°F) is task 12.
+- 2026-10-26: task 10 done. Context `season` (meteorological, from the
+  date). Layer `leaves` (seasonal: autumn leaves, spring petals, summer
+  leaves, winter snow dust; tumbling across, a third in front of the
+  glass; count, season). `.screen.gusty` (wind group or wind ≥ 15 mph)
+  makes the sitting props sway. Scenes: wind-day-racing/leaves/sway,
+  wind-night-racing (51 scenes).

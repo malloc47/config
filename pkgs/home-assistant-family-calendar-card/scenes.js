@@ -77,6 +77,10 @@ export function contextOf({ elevation, rising, hour, condition, date, wind, temp
     condition: condition || "sunny",
     group: GROUPS[condition] || "clear",
     date,
+    // Meteorological season (northern hemisphere) from the date.
+    season: ["winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "autumn", "autumn", "autumn", "winter"][
+      Number(String(date || "").slice(5, 7)) - 1
+    ] || "autumn",
     wind: Number.isFinite(wind) ? wind : 0,
     temperature: Number.isFinite(temperature) ? temperature : null,
   };
@@ -582,6 +586,44 @@ export const LAYERS = {
 };
 
 
+// Leaves (or petals, or snow dust) by season, tumbling across on the wind.
+const LEAVES = {
+  autumn: { colors: ["#d9682b", "#e8a23a", "#b8442c", "#c98a2e"], shape: "leaf" },
+  spring: { colors: ["#f6c6d6", "#fbe2ea", "#f0a9c0"], shape: "petal" },
+  summer: { colors: ["#5f9e4a", "#7cb35a", "#4c8a3e"], shape: "leaf" },
+  winter: { colors: ["rgba(255, 255, 255, 0.9)"], shape: "dust" },
+};
+LAYERS.leaves = {
+  css: `.ly-leaves { position: absolute; left: 0; right: 0; top: 0; height: var(--h, var(--edge-y, 220px)); overflow: hidden; }
+    .ly-leaves i { position: absolute; left: -40px; top: var(--y); animation: ly-blow var(--dur) linear infinite; animation-delay: var(--d); }
+    .ly-leaves svg { display: block; width: var(--s); overflow: visible; animation: ly-tumble var(--tu) ease-in-out infinite alternate; }
+    @keyframes ly-blow { to { transform: translate(calc(100vw + 80px), var(--dy)); } }
+    @keyframes ly-tumble { from { transform: translateY(-10px) rotate(0deg) scaleX(1); } 50% { transform: translateY(8px) rotate(160deg) scaleX(0.4); }
+      to { transform: translateY(-6px) rotate(320deg) scaleX(1); } }`,
+  render: (ctx, p) => {
+    const kind = LEAVES[p.season || ctx.season];
+    const n = p.count ?? 9;
+    const r = rng(2468 + n);
+    const shapes = {
+      leaf: (c) => `<svg viewBox="-7 -4 14 8"><path d="M-7 0 C-3 -5 3 -5 7 0 C3 5 -3 5 -7 0 Z" fill="${c}"></path><path d="M-6 0 L6 0" stroke="rgba(0,0,0,0.25)" stroke-width="0.6"></path></svg>`,
+      petal: (c) => `<svg viewBox="-5 -3 10 6"><ellipse rx="5" ry="2.6" fill="${c}"></ellipse></svg>`,
+      dust: (c) => `<svg viewBox="-2 -2 4 4"><circle r="2" fill="${c}"></circle></svg>`,
+    };
+    const one = () => {
+      const c = kind.colors[Math.floor(r() * kind.colors.length)];
+      const s = kind.shape === "dust" ? 3 + r() * 3 : 12 + r() * 10;
+      return `<i style="--y: ${(10 + r() * 190).toFixed(0)}px; --dy: ${((r() - 0.3) * 120).toFixed(0)}px; --dur: ${(5 + r() * 6).toFixed(1)}s; --d: ${(-r() * 11).toFixed(1)}s; --s: ${s.toFixed(0)}px; --tu: ${(0.9 + r() * 1.4).toFixed(1)}s">${shapes[kind.shape](c)}</i>`;
+    };
+    const back = Array.from({ length: n }, one).join("");
+    // A few cross in front of the glass, lower down.
+    const front = Array.from({ length: Math.round(n / 3) }, one).join("");
+    return {
+      back: `<div class="ly-leaves">${back}</div>`,
+      front: `<div class="ly-leaves" style="--h: calc(var(--edge-y, 220px) + 260px)">${front}</div>`,
+    };
+  },
+};
+
 // The old static rain layer's name, for any user-defined scenes using it.
 LAYERS.rain = LAYERS.rainfall;
 LAYERS.snow = LAYERS.snowfall;
@@ -734,8 +776,13 @@ export const SCENES = {
     layers: [["snowfall", { density: 22, size: 4, speed: 5 }], ["rainfall", { density: 30, opacity: 0.6 }], ["splashes", { count: 8 }]],
   },
   "hail-bounce": { when: { condition: "hail" }, layers: [["deck", { tone: "brooding" }], ["hail", {}], ["splashes", { count: 6, beads: 4 }]] },
-  "wind-day": { when: { group: "wind", phase: LIGHT }, layers: [] },
-  "wind-night": { when: { group: "wind", phase: DARK }, layers: [["stars", { density: 40 }], ["moon", {}]] },
+  "wind-day-racing": { when: { group: "wind", phase: LIGHT }, layers: [["cumulus", { count: 5, speed: 38 }]] },
+  "wind-day-leaves": { when: { group: "wind", phase: LIGHT }, layers: [["cumulus", { count: 3, speed: 55 }], ["leaves", {}]] },
+  "wind-day-sway": { when: { group: "wind", phase: LIGHT }, layers: [["cumulus", { count: 4, speed: 48 }], ["leaves", { count: 5 }]] },
+  "wind-night-racing": {
+    when: { group: "wind", phase: DARK },
+    layers: [["stars", { density: 35 }], ["moon", { glow: true }], ["cumulus", { count: 5, tint: "night", speed: 42 }]],
+  },
 };
 
 const listOf = (v) => (v === undefined ? null : [].concat(v));

@@ -957,6 +957,7 @@ class FamilyCalendarCard extends HTMLElement {
     const accents = activeAccents(ctx, c.sky_accents, (cal) => this._events[cal] || []);
     const items = [...renderScene(scene, ctx), ...renderAccents(accents, ctx)];
     if (screen.dataset.wx !== ctx.group) screen.dataset.wx = ctx.group;
+    screen.classList.toggle("gusty", ctx.group === "wind" || ctx.wind >= 15);
     const flick = `${Math.max(0.5, 2.4 - ctx.wind / 10).toFixed(2)}s`;
     if (screen.style.getPropertyValue("--flick") !== flick) screen.style.setProperty("--flick", flick);
     screen.dataset.scene = scene.id;

@@ -170,7 +170,13 @@ export const PROPS = {
   },
 };
 
-export const PROP_CSS = Object.values(PROPS)
+// In windy weather (or strong gusts) the sitting props sway.
+const SWAY_CSS = `
+  .screen.gusty .p-pk svg, .screen.gusty .p-crow svg { transform-origin: 50% 100%; animation: p-sway 1.6s ease-in-out infinite alternate; }
+  .screen.gusty .p-pk:nth-child(2) svg { animation-duration: 1.3s; }
+  @keyframes p-sway { from { transform: rotate(-3deg); } to { transform: rotate(3.5deg); } }`;
+
+export const PROP_CSS = SWAY_CSS + Object.values(PROPS)
   .map((p) => p.css || "")
   .join("\n");
 
