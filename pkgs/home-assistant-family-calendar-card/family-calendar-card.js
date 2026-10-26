@@ -846,11 +846,21 @@ class FamilyCalendarCard extends HTMLElement {
       .map((p) => p.value)
       .join("");
     const ampm = parts.find((p) => p.type === "dayPeriod")?.value || "";
-    this._set(".time", `${esc(hm)}<span class="ampm">${esc(ampm)}</span>`);
-    this._set(
-      ".date",
-      esc(new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric" }).format(now)),
-    );
+    const time = `${esc(hm)}<span class="ampm">${esc(ampm)}</span>`;
+    const date = esc(new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric" }).format(now));
+    if (this._html[".time"] === time && this._html[".date"] === date) return;
+    this._set(".time", time);
+    this._set(".date", date);
+    // The clock's column has a fixed width (sized for "12:59 PM" and the
+    // longest date), so the weather beside it doesn't shift as the hour
+    // gains a digit; should a line still overflow (another font, say), it
+    // shrinks to fit.
+    const box = this.shadowRoot.querySelector(".clock");
+    for (const el of box.children) {
+      el.style.fontSize = "";
+      const over = el.scrollWidth / box.clientWidth;
+      if (over > 1) el.style.fontSize = `${Math.floor(parseFloat(getComputedStyle(el).fontSize) / over)}px`;
+    }
   }
 
   _renderWeather() {
@@ -1173,7 +1183,7 @@ const STYLE = `
 
   /* ---- clock + weather ---- */
   .top { grid-area: top; display: flex; align-items: center; gap: 24px; padding: 0 4px; }
-  .clock { flex: none; }
+  .clock { flex: none; width: 290px; white-space: nowrap; }
   .time { font-size: 96px; font-weight: 500; line-height: 0.95; letter-spacing: -0.03em; }
   .ampm { font-size: 30px; font-weight: 500; letter-spacing: 0; margin-left: 6px; color: var(--secondary-text-color); }
   .date { font-size: 24px; font-weight: 500; margin-top: 6px; color: var(--secondary-text-color); }
