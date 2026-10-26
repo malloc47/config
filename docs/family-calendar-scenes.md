@@ -142,7 +142,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   week: jack-o'-lanterns (lit by darkness, flicker in wind, sputter in
   rain, snow cap), Headless Horseman (silhouette riding past, rare),
   bats, crow, ghost.
-- [ ] **3. Moon + stars.** Moon phase/illumination/position (in-card),
+- [x] **3. Moon + stars.** Moon phase/illumination/position (in-card),
   phase-shaded disc, star density by moon and clouds, twinkle, Milky Way,
   shooting stars.
 - [ ] **4. Planets.** Real positions (simplified orbital elements →
@@ -211,3 +211,17 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   10-29..10-31 after dark; bats after dark. Card `_fireEvent(name)` fires
   an event on demand (testing). Tablet CPU read 40% right after a reload
   with props + stars: measure steady state in task 14.
+- 2026-10-25: task 3 done. `astro.js` (moon position/phase/illumination,
+  low-precision formulas; reusable for planets). Layers `stars` (fixed
+  pseudo-random field of 140, count by `density` × moonlight, fade in
+  through twilight, a third twinkle), `moon` (real alt/az → screen: east
+  right, altitude 0 at the sheet's top edge; phase-shaded disc, earthshine,
+  halo by illumination; `glow`, `size`), `milkyway`; event
+  `shooting_star`. Scenes: `clear-dusk`, `clear-night-moonlit`,
+  `clear-night-starfield`, `clear-late-milkyway` (when `moon: dark`),
+  `clear-late-moon`; moon added to partly/wind nights. Scene `when` gains
+  `moon: dark|bright|up`; `sky_override.time` places the moon for previews.
+  The card now updates scene/prop markup per item (`_renderItems`), so
+  animations aren't restarted by small changes. Night header text got a
+  dark halo for legibility over the moon. Tablet CPU ~30% with
+  stars/moon/props/bats (task 14).

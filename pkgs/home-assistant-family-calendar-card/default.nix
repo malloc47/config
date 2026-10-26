@@ -20,7 +20,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "family-calendar-card";
-  version = "0.14.2";
+  version = "0.15.1";
 
   src = ./family-calendar-card.js;
   dontUnpack = true;
@@ -34,6 +34,7 @@ stdenvNoCC.mkDerivation {
     install -m0644 ${./sky.js} $out/sky.js
     install -m0644 ${./scenes.js} $out/scenes.js
     install -m0644 ${./props.js} $out/props.js
+    install -m0644 ${./astro.js} $out/astro.js
     for w in Light Regular Medium SemiBold Bold; do
       install -m0644 ${figtree}/share/fonts/opentype/Figtree-$w.otf $out/Figtree-$w.otf
     done

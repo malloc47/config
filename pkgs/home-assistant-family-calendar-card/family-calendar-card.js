@@ -79,8 +79,8 @@
 //     define, rates}                   # (scenes.js, docs/family-calendar-scenes.md)
 //   sky_accents: {disable, define}     # sky: holiday/seasonal props (props.js)
 //   sky_override: {elevation, rising,  # sky: fixed inputs instead of sun.sun, the
-//     condition, hour, date, wind,     # weather and the clock (for previews)
-//     temperature}
+//     condition, hour, date, wind,     # weather and the clock (for previews);
+//     temperature, time}               # time (ISO) also places the moon
 //   height: auto                       # card height (CSS); auto fills the window
 //                                      # below the card's top edge
 //
@@ -101,6 +101,7 @@ const { contextOf, pickScene, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = 
 const { activeAccents, renderAccents, PROP_CSS, PROP_EVENTS, PROP_RATES } = await import(
   new URL(`./props.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
+const { moon } = await import(new URL(`./astro.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const ALL_EVENTS = { ...EVENTS, ...PROP_EVENTS };
 const ALL_RATES = { ...DEFAULT_RATES, ...PROP_RATES };
 
@@ -932,26 +933,28 @@ class FamilyCalendarCard extends HTMLElement {
       screen.classList.toggle("dark", theme.dark);
     }
 
-    const ctx = contextOf({ ...inputs, dark: theme.dark, late: theme.late });
+    // The moon (astro.js), at the override's time when previewing; position
+    // rounded so it only re-renders when it has visibly moved.
+    const at = o.time ? Date.parse(o.time) : Date.now();
+    const m = moon(at, this._hass.config?.latitude ?? 0, this._hass.config?.longitude ?? 0);
+    const round = (v, step) => Math.round(v / step) * step;
+    const ctx = contextOf({
+      ...inputs,
+      dark: theme.dark,
+      late: theme.late,
+      moon: { alt: round(m.alt, 0.5), az: round(m.az, 0.5), illum: round(m.illum, 0.01), phase: round(m.phase, 0.005) },
+    });
     this._skyCtx = ctx;
     const scene = pickScene(ctx, c.sky_scenes);
-    const parts = renderScene(scene, ctx);
     // Holiday/seasonal props (props.js), drawn with the scene and reacting
     // to it through data-wx (weather group), --lit and --flick (wind).
     const accents = activeAccents(ctx, c.sky_accents, (cal) => this._events[cal] || []);
-    const props = renderAccents(accents, ctx);
-    for (const k of Object.keys(parts)) parts[k] += props[k];
+    const items = [...renderScene(scene, ctx), ...renderAccents(accents, ctx)];
     if (screen.dataset.wx !== ctx.group) screen.dataset.wx = ctx.group;
     const flick = `${Math.max(0.5, 2.4 - ctx.wind / 10).toFixed(2)}s`;
     if (screen.style.getPropertyValue("--flick") !== flick) screen.style.setProperty("--flick", flick);
-    const sceneKey = JSON.stringify(parts);
-    if (sceneKey !== this._sceneKey) {
-      this._sceneKey = sceneKey;
-      screen.dataset.scene = scene.id;
-      this.shadowRoot.querySelector(".scene").innerHTML = parts.back;
-      this.shadowRoot.querySelector(".scene-edge").innerHTML = parts.edge;
-      this.shadowRoot.querySelector(".scene-front").innerHTML = parts.front;
-    }
+    screen.dataset.scene = scene.id;
+    this._renderItems(items);
     this._scheduleEvents([...scene.events, ...accents.filter((a) => a.event).map((a) => a.event)]);
 
     const saver = c.screensaver_entity && this._hass.states[c.screensaver_entity]?.state === "on";
@@ -962,6 +965,30 @@ class FamilyCalendarCard extends HTMLElement {
     // The edge host follows the calendar sheet's top.
     const edgeY = `${this.shadowRoot.querySelector(".calendar").offsetTop}px`;
     if (screen.style.getPropertyValue("--edge-y") !== edgeY) screen.style.setProperty("--edge-y", edgeY);
+  }
+
+  // Scene and prop markup, one wrapper per item ({key, host, html}): a host
+  // is rebuilt when its set of items changes, otherwise only the items whose
+  // markup changed are replaced, so running animations (twinkling stars,
+  // flickering pumpkins) aren't restarted by, say, the moon creeping along.
+  _renderItems(items) {
+    this._items = this._items || {};
+    for (const host of ["back", "edge", "front"]) {
+      const el = this.shadowRoot.querySelector(host === "back" ? ".scene" : `.scene-${host}`);
+      const mine = items.filter((it) => it.host === host);
+      const prev = this._items[host] || [];
+      const sameKeys = prev.length === mine.length && prev.every((p, i) => p.key === mine[i].key);
+      if (!sameKeys) {
+        el.querySelectorAll(":scope > .si").forEach((n) => n.remove());
+        el.insertAdjacentHTML("afterbegin", mine.map((it) => `<div class="si" data-k="${it.key}">${it.html}</div>`).join(""));
+      } else {
+        const nodes = el.querySelectorAll(":scope > .si");
+        mine.forEach((it, i) => {
+          if (prev[i].html !== it.html) nodes[i].innerHTML = it.html;
+        });
+      }
+      this._items[host] = mine;
+    }
   }
 
   // Rare events the scene lists (scenes.js EVENTS) fire at random intervals

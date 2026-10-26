@@ -220,16 +220,16 @@ export function activeAccents(ctx, cfg = {}, eventsOn = () => []) {
     .map(([id, a]) => ({ id, ...a }));
 }
 
-// Accent markup per host; props with an event are left to the scheduler.
+// Accent markup as items { key, host, html } (like scenes.js renderScene);
+// props with an event are left to the scheduler.
 export function renderAccents(accents, ctx) {
-  const out = { back: "", edge: "", front: "" };
-  for (const a of accents) {
-    if (a.event) continue;
-    const html = PROPS[a.prop].render(ctx, a.params || {});
-    if (a.place === "ledge") out.back += `<div class="p-ledge">${html}</div>`;
-    else out[a.place === "sky" ? "back" : a.place === "front" ? "front" : "edge"] += html;
-  }
-  return out;
+  return accents
+    .filter((a) => !a.event)
+    .map((a) => {
+      const html = PROPS[a.prop].render(ctx, a.params || {});
+      if (a.place === "ledge") return { key: `acc:${a.id}`, host: "back", html: `<div class="p-ledge">${html}</div>` };
+      return { key: `acc:${a.id}`, host: a.place === "sky" ? "back" : a.place === "front" ? "front" : "edge", html };
+    });
 }
 
 // Timed prop appearances, fired like scene events: add the prop to its host

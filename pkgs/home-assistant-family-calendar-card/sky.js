@@ -113,7 +113,8 @@ export function skyTheme({ elevation = 30, rising = true, condition = "sunny", h
         onBanner: `hsl(${hh}, 34%, 12%)`,
         onSky: warm ? "#efe2cd" : "#e9eef7",
         onSky2: warm ? "rgba(225, 210, 188, 0.74)" : "rgba(214, 224, 240, 0.78)",
-        skyShadow: "none",
+        // A soft dark halo keeps the clock and weather legible over the moon.
+        skyShadow: "0 0 10px rgba(0, 0, 0, 0.6), 0 0 3px rgba(0, 0, 0, 0.5)",
       }
     : {
         paper: `hsl(${hh}, ${s(38)}%, 97%)`,
