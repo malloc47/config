@@ -150,7 +150,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   star variants.
 - [x] **5. Aurora.** NOAA SWPC planetary Kp (REST sensor in HA, polled
   hourly), low threshold (default Kp ≥ 4), slow curtains.
-- [ ] **6. Clouds + fog.** Cumulus parade, decks (soft/bright/brooding),
+- [x] **6. Clouds + fog.** Cumulus parade, decks (soft/bright/brooding),
   wisps, contrails, cloud shadows, lit undersides, crepuscular rays, moon
   through clouds / halo, city glow, rolling fog, burn-off, lamp haze.
 - [ ] **7. Rain.** Animated rain by intensity, splashes and beads on the
@@ -242,3 +242,13 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   `clear-night-aurora` (night/late, `when.aurora`) with `priority: 1`:
   scenes now carry an optional `priority`, and only the highest-priority
   matches compete in the daily pick.
+- 2026-10-25: task 6 done. Layers `cumulus` (masked puff shape over a
+  tint gradient: day / lit (pink rising, golden setting) / night / dark;
+  count, speed, opacity, y, spread), `deck` (soft / bright with sun /
+  brooding / night), `shadows` (front host, multiply), `rays` (from
+  ctx.sun), `sunpeek`, `fog` (banks, burn, night), `fogedge` (edge host),
+  `lamps`, `cityglow`; moon `blur`. Context gains `sun` {x%, y%} matching
+  sky.js's glow. Scenes: partly-day-parade/peek/shadows,
+  partly-twilight-lit/rays, partly-night-patchy/moonclouds,
+  cloudy-day-soft/bright/brooding, cloudy-night-cityglow/halo,
+  fog-day-rolling/burnoff/edge, fog-night-lamps/moon (34 scenes total).
