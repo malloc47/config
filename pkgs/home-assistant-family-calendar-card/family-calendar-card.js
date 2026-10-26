@@ -72,9 +72,14 @@
 //                                      # a sky that follows the sun and weather, the
 //                                      # calendar and tiles frosted glass, the colours
 //                                      # tones of the sky's hue (sky.js), Figtree type
-//   glass_opacity: 0.84                # sky: opacity of the light glass panels
+//   glass_opacity: 0.8                 # sky: opacity of the light glass panels
+//   glass_blur: 8                      # sky: px of blur behind the glass
+//   screensaver_entity: switch.<...>   # sky: animations pause while it's on
+//   sky_scenes: {disable, map,         # sky: scene selection and rare-event rates
+//     define, rates}                   # (scenes.js, docs/family-calendar-scenes.md)
 //   sky_override: {elevation, rising,  # sky: fixed inputs instead of sun.sun, the
-//     condition, hour}                 # weather and the clock (for previews)
+//     condition, hour, date, wind,     # weather and the clock (for previews)
+//     temperature}
 //   height: auto                       # card height (CSS); auto fills the window
 //                                      # below the card's top edge
 //
@@ -89,6 +94,9 @@ const { Weather, CONDITION_TEXT, num, temp } = await import(
 );
 const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const { skyTheme } = await import(new URL(`./sky.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { contextOf, pickScene, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = await import(
+  new URL(`./scenes.js${new URL(import.meta.url).search}`, import.meta.url).href
+);
 
 // Figtree for the sky theme, shipped next to the card. @font-face has no
 // effect inside a shadow root, so register it on the document.
@@ -194,7 +202,8 @@ class FamilyCalendarCard extends HTMLElement {
       dedupe: true,
       cards: [],
       theme: "ha",
-      glass_opacity: 0.84,
+      glass_opacity: 0.8,
+      glass_blur: 8,
       ...config,
     };
     this._calendars = this._config.calendars.map((c, i) => ({
@@ -251,6 +260,8 @@ class FamilyCalendarCard extends HTMLElement {
     clearTimeout(this._resetTimer);
     clearInterval(this._refreshTimer);
     this._refreshTimer = null;
+    for (const t of Object.values(this._evTimers || {})) clearTimeout(t);
+    this._evTimers = {};
     if (this._onResize) window.removeEventListener("resize", this._onResize);
     this._onResize = null;
   }
@@ -784,11 +795,8 @@ class FamilyCalendarCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
       <div class="screen${c.theme === "sky" ? " sky" : ""}" lang="en" style="--controls-columns: ${Number(c.controls_columns) || 3}; --days: ${Number(c.days) || 7}">
-        <div class="fx fx-stars" aria-hidden="true"></div>
-        <div class="fx fx-clouds" aria-hidden="true"></div>
-        <div class="fx fx-rain" aria-hidden="true"></div>
-        <div class="fx fx-snow" aria-hidden="true"></div>
-        <div class="fx fx-fog" aria-hidden="true"></div>
+        <div class="scene" aria-hidden="true"></div>
+        <div class="scene-edge" aria-hidden="true"></div>
         <header class="top">
           <div class="clock"><div class="time"></div><div class="date"></div></div>
           <div class="weather"></div>
@@ -810,6 +818,7 @@ class FamilyCalendarCard extends HTMLElement {
         </section>
         <section class="controls"></section>
         <footer class="banner" hidden></footer>
+        <div class="scene-front" aria-hidden="true"></div>
         <div class="detail" hidden></div>
       </div>`;
     const root = this.shadowRoot;
@@ -886,27 +895,95 @@ class FamilyCalendarCard extends HTMLElement {
     this._renderBanner();
   }
 
-  // The sky theme's inputs: the sun's elevation and direction, the weather and
-  // the local hour (or sky_override's), turned into CSS custom properties and
-  // overlay flags on .screen (sky.js); only touched when they change.
+  // The sky theme: its inputs (the sun's elevation and direction, the
+  // weather, the local hour and date, or sky_override's) give the palette
+  // (sky.js, as custom properties on .screen) and the scene (scenes.js,
+  // rendered into the .scene hosts); both are only touched when they change.
+  // Animations pause while the screensaver entity is on.
   _applySky() {
-    const o = this._config.sky_override || {};
-    const sun = this._hass.states[this._config.sun_entity]?.attributes || {};
-    const theme = skyTheme({
+    const c = this._config;
+    const o = c.sky_override || {};
+    const sun = this._hass.states[c.sun_entity]?.attributes || {};
+    const weather = this._wx.src().state;
+    const now = this._wx.local(Date.now());
+    const inputs = {
       elevation: o.elevation ?? Number(sun.elevation),
       rising: o.rising ?? sun.rising !== false,
-      condition: o.condition ?? this._wx.src().state?.state,
-      hour: o.hour ?? this._wx.local(Date.now()).hour,
-      glass: Number(this._config.glass_opacity) || 0.84,
-    });
-    const key = JSON.stringify(theme);
-    if (key === this._skyKey) return;
-    this._skyKey = key;
+      condition: o.condition ?? weather?.state,
+      hour: o.hour ?? now.hour,
+      date: o.date ?? now.date,
+      wind: o.wind ?? Number(weather?.attributes?.wind_speed),
+      temperature: o.temperature ?? Number(weather?.attributes?.temperature),
+    };
+    const theme = skyTheme({ ...inputs, glass: Number(c.glass_opacity) || 0.8 });
     const screen = this.shadowRoot.querySelector(".screen");
-    const dash = (k) => `--${k.replace(/[A-Z]/g, (ch) => `-${ch.toLowerCase()}`)}`;
-    for (const [k, v] of Object.entries(theme.vars)) screen.style.setProperty(dash(k), v);
-    screen.dataset.fx = theme.fx.join(" ");
-    screen.classList.toggle("dark", theme.dark);
+    const key = JSON.stringify(theme.vars);
+    if (key !== this._skyKey) {
+      this._skyKey = key;
+      const dash = (k) => `--${k.replace(/[A-Z]/g, (ch) => `-${ch.toLowerCase()}`)}`;
+      for (const [k, v] of Object.entries(theme.vars)) screen.style.setProperty(dash(k), v);
+      screen.style.setProperty("--glass-blur", `${Number(c.glass_blur ?? 8)}px`);
+      screen.classList.toggle("dark", theme.dark);
+    }
+
+    const ctx = contextOf({ ...inputs, dark: theme.dark, late: theme.late });
+    this._skyCtx = ctx;
+    const scene = pickScene(ctx, c.sky_scenes);
+    const parts = renderScene(scene, ctx);
+    const sceneKey = JSON.stringify(parts);
+    if (sceneKey !== this._sceneKey) {
+      this._sceneKey = sceneKey;
+      screen.dataset.scene = scene.id;
+      this.shadowRoot.querySelector(".scene").innerHTML = parts.back;
+      this.shadowRoot.querySelector(".scene-edge").innerHTML = parts.edge;
+      this.shadowRoot.querySelector(".scene-front").innerHTML = parts.front;
+    }
+    this._scheduleEvents(scene.events);
+
+    const saver = c.screensaver_entity && this._hass.states[c.screensaver_entity]?.state === "on";
+    if (saver !== this._paused) {
+      this._paused = saver;
+      screen.classList.toggle("paused", saver);
+    }
+    // The edge host follows the calendar sheet's top.
+    const edgeY = `${this.shadowRoot.querySelector(".calendar").offsetTop}px`;
+    if (screen.style.getPropertyValue("--edge-y") !== edgeY) screen.style.setProperty("--edge-y", edgeY);
+  }
+
+  // Rare events the scene lists (scenes.js EVENTS) fire at random intervals
+  // within sky_scenes.rates, skipped while paused, until the scene drops them.
+  _scheduleEvents(events) {
+    this._evTimers = this._evTimers || {};
+    this._sceneEvents = events.filter((name) => EVENTS[name]);
+    for (const name of Object.keys(this._evTimers)) {
+      if (!this._sceneEvents.includes(name)) {
+        clearTimeout(this._evTimers[name]);
+        delete this._evTimers[name];
+      }
+    }
+    for (const name of this._sceneEvents) if (!this._evTimers[name]) this._armEvent(name);
+  }
+
+  _armEvent(name) {
+    const [lo, hi] = { ...DEFAULT_RATES, ...(this._config.sky_scenes?.rates || {}) }[name] || [60, 120];
+    this._evTimers[name] = setTimeout(
+      () => {
+        delete this._evTimers[name];
+        if (!this.isConnected || !this._sceneEvents.includes(name)) return;
+        if (!this._paused) {
+          const hosts = {
+            back: this.shadowRoot.querySelector(".scene"),
+            edge: this.shadowRoot.querySelector(".scene-edge"),
+            front: this.shadowRoot.querySelector(".scene-front"),
+          };
+          const fired = EVENTS[name].fire(hosts, this._skyCtx) || [];
+          const [nodes, ms] = Array.isArray(fired) ? fired : [[], 0];
+          setTimeout(() => nodes.forEach((n) => n.remove()), ms);
+        }
+        this._armEvent(name);
+      },
+      (lo + Math.random() * (hi - lo)) * 1000,
+    );
   }
 
   _renderClock() {
@@ -1408,7 +1485,6 @@ const STYLE = `
     overflow-wrap: anywhere; }
 
   /* ---- overlays, avatar initials and tile wrappers: shown by the sky theme ---- */
-  .fx { display: none; }
   .chip .ini { display: none; }
   .tile { display: grid; min-width: 0; }
   /* A card that hides itself (a conditional card whose conditions fail)
@@ -1430,26 +1506,15 @@ const STYLE = `
   }
   .screen.sky > .top, .screen.sky > .calendar, .screen.sky > .controls, .screen.sky > .banner { position: relative; z-index: 1; }
 
-  /* Sky overlays, behind everything, in the top of the page. */
-  .screen.sky .fx { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; z-index: 0; }
-  .screen.sky[data-fx~="stars"] .fx-stars { display: block; bottom: 55%; opacity: 0.8;
-    background: radial-gradient(1.2px 1.2px at 8% 12%, #fff 98%, transparent), radial-gradient(1px 1px at 22% 6%, #fff 98%, transparent),
-      radial-gradient(1.4px 1.4px at 37% 15%, #fff 98%, transparent), radial-gradient(1px 1px at 51% 8%, #fff 98%, transparent),
-      radial-gradient(1.2px 1.2px at 66% 4%, #fff 98%, transparent), radial-gradient(1px 1px at 78% 13%, #fff 98%, transparent),
-      radial-gradient(1.3px 1.3px at 91% 7%, #fff 98%, transparent), radial-gradient(1px 1px at 14% 22%, #fff 98%, transparent),
-      radial-gradient(1px 1px at 58% 19%, #fff 98%, transparent), radial-gradient(1.1px 1.1px at 84% 21%, #fff 98%, transparent); }
-  .screen.sky[data-fx~="clouds"] .fx-clouds { display: block; height: 240px; }
-  .fx-clouds::before, .fx-clouds::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.5); filter: blur(22px); }
-  .fx-clouds::before { left: 46%; top: 40px; width: 300px; height: 90px; }
-  .fx-clouds::after { left: 65%; top: 95px; width: 260px; height: 70px; background: rgba(255, 255, 255, 0.42); }
-  .screen.sky[data-fx~="rain"] .fx-rain { display: block; bottom: 60%; opacity: var(--rain-opacity);
-    background: repeating-linear-gradient(104deg, transparent 0 11px, rgba(255, 255, 255, 0.22) 11px 12px, transparent 12px 23px),
-      repeating-linear-gradient(104deg, transparent 0 17px, rgba(255, 255, 255, 0.14) 17px 18px, transparent 18px 31px); }
-  .screen.sky[data-fx~="snow"] .fx-snow { display: block; bottom: 60%; opacity: 0.85; background-size: 140px 120px;
-    background-image: radial-gradient(2px 2px at 20px 30px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 90px 70px, #fff 98%, transparent),
-      radial-gradient(2.5px 2.5px at 60px 100px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 120px 15px, #fff 98%, transparent); }
-  .screen.sky[data-fx~="fog"] .fx-fog { display: block; bottom: 45%;
-    background: linear-gradient(180deg, transparent, rgba(236, 240, 245, 0.35) 60%, transparent); }
+  /* Scene hosts (scenes.js): behind everything, pinned to the calendar
+     sheet's top edge, and above the content. Paused with the screensaver. */
+  .scene, .scene-edge, .scene-front { display: none; }
+  .screen.sky .scene, .screen.sky .scene-edge, .screen.sky .scene-front { display: block; position: absolute; pointer-events: none; }
+  .screen.sky .scene { inset: 0; z-index: 0; overflow: hidden; }
+  .screen.sky .scene-edge { left: 12px; right: 12px; top: var(--edge-y, 0); height: 0; z-index: 2; }
+  .screen.sky .scene-front { inset: 0; z-index: 3; overflow: hidden; }
+  .screen.sky.paused .scene *, .screen.sky.paused .scene-edge *, .screen.sky.paused .scene-front * { animation-play-state: paused !important; }
+  ${LAYER_CSS}
 
   /* Clock and weather straight on the sky. */
   .screen.sky .top { color: var(--on-sky); text-shadow: var(--sky-shadow); padding: 6px 8px 4px; }
@@ -1461,7 +1526,7 @@ const STYLE = `
 
   /* The calendar: one frosted-glass sheet. */
   .screen.sky .calendar { background: var(--glass); border: 0; border-radius: 22px;
-    -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
+    -webkit-backdrop-filter: blur(var(--glass-blur, 8px)) saturate(1.2); backdrop-filter: blur(var(--glass-blur, 8px)) saturate(1.2);
     box-shadow: var(--shadow), inset 0 1px 0 var(--edge); }
   .screen.sky .range { letter-spacing: -0.01em; }
   .screen.sky .today-btn { border: 0; background: var(--glass2); color: var(--ink2); font-weight: 600; }
@@ -1494,10 +1559,10 @@ const STYLE = `
 
   /* Tiles: glass panels around HA's tile cards (made transparent above). */
   .screen.sky .tile { border-radius: 18px; background: var(--glass);
-    -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 1px 0 var(--edge); }
+    -webkit-backdrop-filter: blur(var(--glass-blur, 8px)) saturate(1.2); backdrop-filter: blur(var(--glass-blur, 8px)) saturate(1.2); box-shadow: inset 0 1px 0 var(--edge); }
 
   /* Notification bar: a darker (by night, lighter) band of glass. */
-  .screen.sky .banner { background: var(--banner); color: var(--on-banner); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); }
+  .screen.sky .banner { background: var(--banner); color: var(--on-banner); -webkit-backdrop-filter: blur(var(--glass-blur, 8px)); backdrop-filter: blur(var(--glass-blur, 8px)); }
 `;
 
 customElements.define("family-calendar-card", FamilyCalendarCard);

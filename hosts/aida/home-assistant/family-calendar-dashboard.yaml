@@ -22,6 +22,11 @@ views:
         # tiles are frosted glass, and the interface colours are tones of the
         # sky's hue, dark from dusk and warmer late at night (sky.js).
         theme: sky
+        # Less blur so the scenery (docs/family-calendar-scenes.md) reads
+        # through the glass; animations pause while the screensaver is on.
+        glass_blur: 8
+        glass_opacity: 0.8
+        screensaver_entity: switch.family_calendar_screensaver_active
         # Chips in this order, which is also the precedence for hiding
         # duplicate events; colours match each calendar's in Google Calendar
         # (as its dark theme draws them). Each chip's on/off state is

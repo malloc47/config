@@ -9,7 +9,8 @@
 # notices come from ../lovelace-common/weather.js and banner.js (shared with
 # eink-dashboard-card, so both word the forecast and show the same notices),
 # installed alongside and imported relative to the card. The "sky & glass"
-# theme's sky and palette are sky.js; it ships Figtree (OFL) for its type.
+# theme's sky and palette are sky.js, its animated scenery scenes.js
+# (docs/family-calendar-scenes.md); it ships Figtree (OFL) for its type.
 {
   lib,
   stdenvNoCC,
@@ -18,7 +19,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "family-calendar-card";
-  version = "0.12.1";
+  version = "0.13.0";
 
   src = ./family-calendar-card.js;
   dontUnpack = true;
@@ -30,6 +31,7 @@ stdenvNoCC.mkDerivation {
     install -m0644 ${../lovelace-common/weather.js} $out/weather.js
     install -m0644 ${../lovelace-common/banner.js} $out/banner.js
     install -m0644 ${./sky.js} $out/sky.js
+    install -m0644 ${./scenes.js} $out/scenes.js
     for w in Light Regular Medium SemiBold Bold; do
       install -m0644 ${figtree}/share/fonts/opentype/Figtree-$w.otf $out/Figtree-$w.otf
     done

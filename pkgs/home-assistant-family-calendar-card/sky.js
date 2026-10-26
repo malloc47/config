@@ -6,12 +6,12 @@
 //     elevation (separate morning and evening keyframes: dawn pinks, golden
 //     hour ambers), greyed by the weather, plus a soft sun glow near the
 //     horizon;
-//   - overlays to show (stars, clouds, rain, snow, fog);
 //   - a palette in the spirit of Material dynamic colour: the glass panels,
 //     ink, rules and accent are tones of one seed hue taken from the sky,
 //     light by day and dark from dusk, warmed late at night. Calendar colours
 //     are not touched.
-// All values are CSS strings, applied as custom properties by the card.
+// All values are CSS strings, applied as custom properties by the card. The
+// scenery drawn over the sky (stars, clouds, rain, ...) is scenes.js.
 
 const MORNING = [
   { e: -18, h: 235, stops: ["#05070d", "#080c18", "#0b1222", "#10172a"] },
@@ -32,18 +32,18 @@ const EVENING = [
 // Late at night (22:00-05:00, sun well down): a deeper, star-lit navy.
 const LATE = { h: 248, stops: ["#05070d", "#080c18", "#0b1222", "#10172a"] };
 
-// How each condition greys the sky (0-1), darkens it, and what it overlays.
+// How each condition greys the sky (0-1) and darkens or lightens it.
 const WEATHER = {
-  partlycloudy: { grey: 0.15, fx: ["clouds"] },
-  cloudy: { grey: 0.6, dark: 0.05, fx: ["clouds"] },
-  fog: { grey: 0.65, fx: ["fog"] },
-  rainy: { grey: 0.7, dark: 0.12, fx: ["rain"] },
-  pouring: { grey: 0.8, dark: 0.2, fx: ["rain"] },
-  lightning: { grey: 0.7, dark: 0.2, fx: [] },
-  "lightning-rainy": { grey: 0.75, dark: 0.2, fx: ["rain"] },
-  snowy: { grey: 0.6, light: 0.1, fx: ["snow"] },
-  "snowy-rainy": { grey: 0.65, fx: ["snow", "rain"] },
-  hail: { grey: 0.65, fx: ["snow"] },
+  partlycloudy: { grey: 0.15 },
+  cloudy: { grey: 0.6, dark: 0.05 },
+  fog: { grey: 0.65 },
+  rainy: { grey: 0.7, dark: 0.12 },
+  pouring: { grey: 0.8, dark: 0.2 },
+  lightning: { grey: 0.7, dark: 0.2 },
+  "lightning-rainy": { grey: 0.75, dark: 0.2 },
+  snowy: { grey: 0.6, light: 0.1 },
+  "snowy-rainy": { grey: 0.65 },
+  hail: { grey: 0.65 },
 };
 
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
@@ -71,7 +71,7 @@ export function skyTheme({ elevation = 30, rising = true, condition = "sunny", h
   let { h, stops } = late ? { h: LATE.h, stops: LATE.stops.map(rgb) } : sky(rising ? MORNING : EVENING, e);
 
   // Weather: grey each stop toward its own luminance, darken or lighten.
-  const w = WEATHER[condition] || { grey: 0, fx: [] };
+  const w = WEATHER[condition] || { grey: 0 };
   stops = stops.map((c) => {
     const y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
     let out = mix(c, [y, y, y], w.grey || 0);
@@ -83,9 +83,6 @@ export function skyTheme({ elevation = 30, rising = true, condition = "sunny", h
 
   const dark = e < -4;
   const warm = dark && late;
-  const fx = new Set(w.fx);
-  if (dark && (condition === "clear-night" || condition === "sunny")) fx.add("stars");
-  if (dark) fx.delete("clouds");
 
   // A soft sun glow near the horizon: right in the morning, left in the evening.
   let glow = "";
@@ -137,6 +134,5 @@ export function skyTheme({ elevation = 30, rising = true, condition = "sunny", h
         skyShadow: "0 1px 12px rgba(20, 30, 60, 0.35)",
       };
   t.sky = `${glow}linear-gradient(180deg, ${css(stops[0])} 0%, ${css(stops[1])} 30%, ${css(stops[2])} 62%, ${css(stops[3])} 100%)`;
-  t.rainOpacity = dark ? "0.45" : "0.9";
-  return { vars: t, fx: [...fx], dark };
+  return { vars: t, dark, late };
 }
