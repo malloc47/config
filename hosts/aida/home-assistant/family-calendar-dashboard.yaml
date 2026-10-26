@@ -27,6 +27,10 @@ views:
         glass_blur: 8
         glass_opacity: 0.8
         screensaver_entity: switch.family_calendar_screensaver_active
+        # Aurora on geomagnetically active nights (NOAA planetary Kp, the REST
+        # sensor in home-automation.nix), far below what's visible here.
+        aurora_entity: sensor.planetary_k_index
+        aurora_kp: 4
         # Chips in this order, which is also the precedence for hiding
         # duplicate events; colours match each calendar's in Google Calendar
         # (as its dark theme draws them). Each chip's on/off state is

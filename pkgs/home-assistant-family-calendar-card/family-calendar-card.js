@@ -78,9 +78,11 @@
 //   sky_scenes: {disable, map,         # sky: scene selection and rare-event rates
 //     define, rates}                   # (scenes.js, docs/family-calendar-scenes.md)
 //   sky_accents: {disable, define}     # sky: holiday/seasonal props (props.js)
+//   aurora_entity: sensor.<kp>         # sky: planetary K-index for the aurora scene
+//   aurora_kp: 4                       # sky: Kp at which the aurora shows
 //   sky_override: {elevation, rising,  # sky: fixed inputs instead of sun.sun, the
 //     condition, hour, date, wind,     # weather and the clock (for previews);
-//     temperature, time}               # time (ISO) also places the moon
+//     temperature, time, kp}           # time (ISO) also places the moon
 //   height: auto                       # card height (CSS); auto fills the window
 //                                      # below the card's top edge
 //
@@ -945,6 +947,8 @@ class FamilyCalendarCard extends HTMLElement {
       late: theme.late,
       moon: { alt: round(m.alt, 0.5), az: round(m.az, 0.5), illum: round(m.illum, 0.01), phase: round(m.phase, 0.005) },
       planets: planets(at, lat, lng).map((p) => ({ ...p, alt: round(p.alt, 0.5), az: round(p.az, 0.5), mag: round(p.mag, 0.1) })),
+      kp: o.kp ?? (c.aurora_entity ? Number(this._hass.states[c.aurora_entity]?.state) : NaN),
+      auroraKp: Number(c.aurora_kp ?? 4),
     });
     this._skyCtx = ctx;
     const scene = pickScene(ctx, c.sky_scenes);

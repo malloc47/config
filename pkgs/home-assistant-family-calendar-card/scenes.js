@@ -44,7 +44,7 @@ export function phaseOf(elevation, rising, hour) {
   return elevation >= 0 ? "golden" : "dusk";
 }
 
-export function contextOf({ elevation, rising, hour, condition, date, wind, temperature, dark, late, moon, planets }) {
+export function contextOf({ elevation, rising, hour, condition, date, wind, temperature, dark, late, moon, planets, kp, auroraKp = 4 }) {
   const e = Number.isFinite(elevation) ? elevation : 30;
   const darkness = Math.max(0, Math.min(1, (6 - e) / 18));
   const m = moon || { alt: -90, az: 180, illum: 0, phase: 0 };
@@ -65,6 +65,10 @@ export function contextOf({ elevation, rising, hour, condition, date, wind, temp
     phase: phaseOf(e, rising, hour),
     // 0 in daylight, 1 by full night, ramping through twilight.
     darkness,
+    // Geomagnetic activity (planetary Kp) and whether it reaches the aurora
+    // threshold.
+    kp: Number.isFinite(kp) ? kp : 0,
+    aurora: Number.isFinite(kp) && kp >= auroraKp,
     dark: !!dark,
     late: !!late,
     condition: condition || "sunny",
@@ -198,6 +202,37 @@ export const LAYERS = {
       };
     },
   },
+  // Aurora curtains: slow, swaying green-to-violet bands across the top of
+  // the sky, brighter with more geomagnetic activity. params: opacity.
+  aurora: {
+    css: `.ly-aurora { position: absolute; left: 0; right: 0; top: 0; height: 240px; overflow: hidden; mix-blend-mode: screen; filter: blur(2.5px); }
+      .ly-aurora i { position: absolute; top: var(--t); left: var(--x); width: var(--w); height: var(--h); border-radius: 50% 50% 40% 40%;
+        -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 2px, rgba(0, 0, 0, 0.45) 2px 5px, #000 5px 6px, rgba(0, 0, 0, 0.6) 6px 9px),
+          linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+        -webkit-mask-composite: source-in; mask-composite: intersect;
+        background: linear-gradient(180deg, rgba(190, 120, 255, 0) 0%, rgba(175, 110, 255, 0.32) 22%, rgba(90, 255, 170, 0.5) 58%, rgba(60, 230, 150, 0) 100%);
+        transform-origin: 50% 100%; animation: ly-aurora var(--dur) ease-in-out infinite alternate; animation-delay: var(--d); }
+      @keyframes ly-aurora { 0% { transform: translateX(-14px) skewX(-9deg) scaleY(0.82); opacity: 0.55; } 50% { opacity: 1; }
+        100% { transform: translateX(18px) skewX(11deg) scaleY(1.12); opacity: 0.75; } }`,
+    render: (ctx, p) => {
+      const fade = Math.max(0, Math.min(1, (ctx.darkness - 0.6) / 0.4));
+      const o = Math.max(0.35, Math.min(1, (ctx.kp - 3) / 4)) * fade * (p.opacity ?? 1);
+      if (o <= 0.05) return {};
+      const bands = [
+        [-4, 18, 22, 150, 14, 0],
+        [12, 6, 18, 175, 18, -5],
+        [27, 22, 24, 140, 12, -9],
+        [46, 4, 20, 185, 21, -3],
+        [63, 16, 22, 150, 15, -12],
+        [80, 8, 24, 170, 19, -7],
+      ];
+      return {
+        back: `<div class="ly-aurora" style="opacity: ${o.toFixed(2)}">${bands
+          .map(([x, t, w, h, dur, d]) => `<i style="--x: ${x}%; --t: ${t}px; --w: ${w}%; --h: ${h}px; --dur: ${dur}s; --d: ${d}s"></i>`)
+          .join("")}</div>`,
+      };
+    },
+  },
   // The Milky Way: a soft diagonal band with a dark lane, for dark-moon
   // nights. params: opacity.
   milkyway: {
@@ -277,6 +312,12 @@ export const SCENES = {
     layers: [["stars", { density: 70 }], ["planets", { labels: true }], ["moon", {}]],
     events: ["shooting_star"],
   },
+  "clear-night-aurora": {
+    when: { group: "clear", phase: ["night", "late"], aurora: true },
+    priority: 1,
+    layers: [["aurora", {}], ["stars", { density: 70 }], ["planets", {}], ["moon", {}]],
+    events: ["shooting_star"],
+  },
   "clear-late-milkyway": {
     when: { group: "clear", phase: "late", moon: "dark" },
     layers: [["milkyway", {}], ["stars", { density: 120 }], ["planets", {}], ["moon", {}]],
@@ -314,6 +355,7 @@ function matches(when = {}, ctx) {
   if (when.moon === "dark" && ctx.moonlight >= 0.25) return false;
   if (when.moon === "bright" && ctx.moonlight < 0.25) return false;
   if (when.moon === "up" && !ctx.moon.up) return false;
+  if (when.aurora === true && !ctx.aurora) return false;
   // planets: true (any visible) or a list of names (one of them visible).
   if (when.planets === true && !ctx.planets.length) return false;
   if (Array.isArray(when.planets) && !ctx.planets.some((p) => when.planets.includes(p.name))) return false;
@@ -331,6 +373,10 @@ export function pickScene(ctx, cfg = {}) {
   let ids = mapped ? mapped.filter((id) => usable(id) && matches({ phase: all[id].when?.phase }, ctx)) : [];
   if (!ids.length) ids = Object.keys(all).filter((id) => usable(id) && matches(all[id].when, ctx));
   if (!ids.length) return { id: "none", layers: [], events: [] };
+  // Only the highest-priority matches compete (the aurora on an active night
+  // beats the everyday variations).
+  const top = Math.max(...ids.map((id) => all[id].priority || 0));
+  ids = ids.filter((id) => (all[id].priority || 0) === top);
   const id = ids[hash(`${ctx.date}|${ctx.phase}|${ctx.group}`) % ids.length];
   return { id, layers: all[id].layers || [], events: all[id].events || [] };
 }

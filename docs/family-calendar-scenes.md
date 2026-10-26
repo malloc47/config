@@ -148,7 +148,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **4. Planets.** Real positions (simplified orbital elements →
   alt/az), bright planets above the horizon, labels; Venus morning/evening
   star variants.
-- [ ] **5. Aurora.** NOAA SWPC planetary Kp (REST sensor in HA, polled
+- [x] **5. Aurora.** NOAA SWPC planetary Kp (REST sensor in HA, polled
   hourly), low threshold (default Kp ≥ 4), slow curtains.
 - [ ] **6. Clouds + fog.** Cumulus parade, decks (soft/bright/brooding),
   wisps, contrails, cloud shadows, lit undersides, crepuscular rays, moon
@@ -234,3 +234,11 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   `clear-night-planets` (labels, when `planets: true`),
   `clear-dawn-morning-star` / `clear-dusk-evening-star` (Venus/Jupiter).
   Scene `when` gains `planets: true | [names]`.
+- 2026-10-25: task 5 done. HA REST sensor `sensor.planetary_k_index`
+  (NOAA SWPC noaa-planetary-k-index.json, latest Kp, hourly; `rest` added
+  to extraComponents). Card `aurora_entity` / `aurora_kp` (default 4),
+  `sky_override.kp`. Layer `aurora` (six swaying ray-textured curtains,
+  green to violet, screen-blended; opacity by Kp and darkness). Scene
+  `clear-night-aurora` (night/late, `when.aurora`) with `priority: 1`:
+  scenes now carry an optional `priority`, and only the highest-priority
+  matches compete in the daily pick.

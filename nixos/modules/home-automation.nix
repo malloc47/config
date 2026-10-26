@@ -389,6 +389,9 @@ in
       # category too, e.g. Halloween, Mother's Day), giving
       # calendar.united_states_ny.
       "holiday"
+      # RESTful sensors (packages jsonpath, xmltodict): the planetary K-index
+      # below, for the family-calendar kiosk's aurora scene.
+      "rest"
       # MTA New York City Transit — real-time NYC subway/bus arrivals via the
       # MTA's GTFS-RT feeds (core since 2026.3; packages py-nymta). Added via the
       # UI config flow: subway needs no key; bus tracking needs an MTA Bus Time
@@ -427,6 +430,22 @@ in
     ];
     config = {
       default_config = { };
+      # Planetary K-index (geomagnetic activity, 0-9) from NOAA SWPC, the
+      # latest 3-hour value, polled hourly: drives the family-calendar
+      # kiosk's aurora scene (docs/family-calendar-scenes.md), which shows
+      # on active days (default Kp >= 4) rather than only when an aurora
+      # would actually be visible at our latitude (Kp ~7+).
+      sensor = [
+        {
+          platform = "rest";
+          name = "Planetary K-index";
+          unique_id = "planetary_k_index";
+          resource = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json";
+          value_template = "{{ value_json[-1].Kp | float(0) }}";
+          state_class = "measurement";
+          scan_interval = 3600;
+        }
+      ];
       # Home/installation display name (Settings -> System -> General -> Name).
       homeassistant.name = "Berry Patch";
       # HA's own address, for URLs it hands to devices (e.g. Assist reply
