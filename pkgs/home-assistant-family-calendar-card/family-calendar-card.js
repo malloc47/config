@@ -68,6 +68,13 @@
 //                                      # configured as on eink-dashboard-card:
 //                                      # banner_template, calendar_alerts,
 //                                      # appliances, doors_entity (see banner.js)
+//   theme: ha                          # ha (HA's theme) or sky: "sky & glass", the page
+//                                      # a sky that follows the sun and weather, the
+//                                      # calendar and tiles frosted glass, the colours
+//                                      # tones of the sky's hue (sky.js), Figtree type
+//   glass_opacity: 0.84                # sky: opacity of the light glass panels
+//   sky_override: {elevation, rising,  # sky: fixed inputs instead of sun.sun, the
+//     condition, hour}                 # weather and the clock (for previews)
 //   height: auto                       # card height (CSS); auto fills the window
 //                                      # below the card's top edge
 //
@@ -81,6 +88,31 @@ const { Weather, CONDITION_TEXT, num, temp } = await import(
   new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
 const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { skyTheme } = await import(new URL(`./sky.js${new URL(import.meta.url).search}`, import.meta.url).href);
+
+// Figtree for the sky theme, shipped next to the card. @font-face has no
+// effect inside a shadow root, so register it on the document.
+if (!document.getElementById("family-calendar-card-font")) {
+  const style = document.createElement("style");
+  style.id = "family-calendar-card-font";
+  style.textContent = [
+    [300, "Light"],
+    [400, "Regular"],
+    [500, "Medium"],
+    [600, "SemiBold"],
+    [700, "Bold"],
+  ]
+    .map(
+      ([w, file]) => `@font-face {
+    font-family: "FCC Figtree";
+    src: url("${new URL(`./Figtree-${file}.otf`, import.meta.url).href}") format("opentype");
+    font-weight: ${w};
+    font-display: swap;
+  }`,
+    )
+    .join("\n");
+  document.head.appendChild(style);
+}
 
 // Google Calendar's event colours, for calendars without a configured colour.
 const PALETTE = ["#039be5", "#33b679", "#e67c73", "#f6bf26", "#8e24aa", "#f4511e", "#3f51b5", "#0b8043", "#d50000", "#616161"];
@@ -161,6 +193,8 @@ class FamilyCalendarCard extends HTMLElement {
       height: "auto",
       dedupe: true,
       cards: [],
+      theme: "ha",
+      glass_opacity: 0.84,
       ...config,
     };
     this._calendars = this._config.calendars.map((c, i) => ({
@@ -710,10 +744,19 @@ class FamilyCalendarCard extends HTMLElement {
     this._mountCards();
   }
 
+  // Each card sits in a .tile wrapper, which the sky theme turns into glass
+  // (a card's own background can't take a backdrop filter from out here).
   _mountCards() {
     const box = this.shadowRoot.querySelector(".controls");
     if (!box) return;
-    box.replaceChildren(...this._cards);
+    box.replaceChildren(
+      ...this._cards.map((card) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.append(card);
+        return tile;
+      }),
+    );
   }
 
   // ---- rendering ----------------------------------------------------------
@@ -740,7 +783,12 @@ class FamilyCalendarCard extends HTMLElement {
     const c = this._config;
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
-      <div class="screen" lang="en" style="--controls-columns: ${Number(c.controls_columns) || 3}; --days: ${Number(c.days) || 7}">
+      <div class="screen${c.theme === "sky" ? " sky" : ""}" lang="en" style="--controls-columns: ${Number(c.controls_columns) || 3}; --days: ${Number(c.days) || 7}">
+        <div class="fx fx-stars" aria-hidden="true"></div>
+        <div class="fx fx-clouds" aria-hidden="true"></div>
+        <div class="fx fx-rain" aria-hidden="true"></div>
+        <div class="fx fx-snow" aria-hidden="true"></div>
+        <div class="fx fx-fog" aria-hidden="true"></div>
         <header class="top">
           <div class="clock"><div class="time"></div><div class="date"></div></div>
           <div class="weather"></div>
@@ -829,12 +877,36 @@ class FamilyCalendarCard extends HTMLElement {
     if (!this._built) this._build();
     this._fitHeight();
     this._wx.invalidate();
+    if (this._config.theme === "sky") this._applySky();
     const days = this._range();
     if (this._fetchedRange !== `${days[0]}|${days[days.length - 1]}`) this._fetch();
     this._renderClock();
     this._renderWeather();
     this._renderCalendar(days);
     this._renderBanner();
+  }
+
+  // The sky theme's inputs: the sun's elevation and direction, the weather and
+  // the local hour (or sky_override's), turned into CSS custom properties and
+  // overlay flags on .screen (sky.js); only touched when they change.
+  _applySky() {
+    const o = this._config.sky_override || {};
+    const sun = this._hass.states[this._config.sun_entity]?.attributes || {};
+    const theme = skyTheme({
+      elevation: o.elevation ?? Number(sun.elevation),
+      rising: o.rising ?? sun.rising !== false,
+      condition: o.condition ?? this._wx.src().state?.state,
+      hour: o.hour ?? this._wx.local(Date.now()).hour,
+      glass: Number(this._config.glass_opacity) || 0.84,
+    });
+    const key = JSON.stringify(theme);
+    if (key === this._skyKey) return;
+    this._skyKey = key;
+    const screen = this.shadowRoot.querySelector(".screen");
+    const dash = (k) => `--${k.replace(/[A-Z]/g, (ch) => `-${ch.toLowerCase()}`)}`;
+    for (const [k, v] of Object.entries(theme.vars)) screen.style.setProperty(dash(k), v);
+    screen.dataset.fx = theme.fx.join(" ");
+    screen.classList.toggle("dark", theme.dark);
   }
 
   _renderClock() {
@@ -917,8 +989,8 @@ class FamilyCalendarCard extends HTMLElement {
         .map((cal) => {
           const off = this._hidden.has(cal.entity);
           const name = cal.name || this._hass.states[cal.entity]?.attributes?.friendly_name || cal.entity;
-          return `<button class="chip${off ? " off" : ""}" data-entity="${esc(cal.entity)}" style="--c: ${esc(cal.color)}" aria-pressed="${!off}">
-            <span class="dot"></span>${esc(name)}</button>`;
+          return `<button class="chip${off ? " off" : ""}" data-entity="${esc(cal.entity)}" style="--c: ${esc(cal.color)}; --on-c: ${ink(cal.color)}" aria-pressed="${!off}">
+            <span class="dot"><span class="ini">${esc(name.trim()[0] || "")}</span></span><span class="name">${esc(name)}</span></button>`;
         })
         .join(""),
     );
@@ -1334,6 +1406,98 @@ const STYLE = `
   .d-row ha-icon { color: var(--secondary-text-color); margin-top: 1px; }
   .d-desc { margin-top: 12px; font-size: 16px; line-height: 1.45; white-space: pre-line; color: var(--secondary-text-color);
     overflow-wrap: anywhere; }
+
+  /* ---- overlays, avatar initials and tile wrappers: shown by the sky theme ---- */
+  .fx { display: none; }
+  .chip .ini { display: none; }
+  .tile { display: grid; min-width: 0; }
+  /* A card that hides itself (a conditional card whose conditions fail)
+     takes its wrapper with it, as it would take its grid cell. */
+  .tile:has(> [hidden]), .tile:has(> [style*="display: none"]) { display: none; }
+
+  /* ==== sky & glass (theme: sky). Colours are custom properties set by
+     _applySky() from sky.js; HA's own variables are pointed at them so the
+     embedded tiles and dialogs match. ==== */
+  .screen.sky {
+    background: var(--sky); color: var(--ink);
+    font-family: "FCC Figtree", var(--ha-font-family-body, Roboto, sans-serif);
+    --primary-text-color: var(--ink); --secondary-text-color: var(--ink2); --divider-color: var(--rule);
+    --primary-color: var(--accent); --text-primary-color: var(--on-accent);
+    --secondary-background-color: var(--glass2); --card-background-color: var(--paper);
+    --ha-card-background: transparent; --ha-card-border-width: 0; --ha-card-box-shadow: none;
+    --ha-card-border-radius: 18px; --ha-font-family-body: "FCC Figtree", Roboto, sans-serif;
+    --state-icon-color: var(--ink2);
+  }
+  .screen.sky > .top, .screen.sky > .calendar, .screen.sky > .controls, .screen.sky > .banner { position: relative; z-index: 1; }
+
+  /* Sky overlays, behind everything, in the top of the page. */
+  .screen.sky .fx { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; z-index: 0; }
+  .screen.sky[data-fx~="stars"] .fx-stars { display: block; bottom: 55%; opacity: 0.8;
+    background: radial-gradient(1.2px 1.2px at 8% 12%, #fff 98%, transparent), radial-gradient(1px 1px at 22% 6%, #fff 98%, transparent),
+      radial-gradient(1.4px 1.4px at 37% 15%, #fff 98%, transparent), radial-gradient(1px 1px at 51% 8%, #fff 98%, transparent),
+      radial-gradient(1.2px 1.2px at 66% 4%, #fff 98%, transparent), radial-gradient(1px 1px at 78% 13%, #fff 98%, transparent),
+      radial-gradient(1.3px 1.3px at 91% 7%, #fff 98%, transparent), radial-gradient(1px 1px at 14% 22%, #fff 98%, transparent),
+      radial-gradient(1px 1px at 58% 19%, #fff 98%, transparent), radial-gradient(1.1px 1.1px at 84% 21%, #fff 98%, transparent); }
+  .screen.sky[data-fx~="clouds"] .fx-clouds { display: block; height: 240px; }
+  .fx-clouds::before, .fx-clouds::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.5); filter: blur(22px); }
+  .fx-clouds::before { left: 46%; top: 40px; width: 300px; height: 90px; }
+  .fx-clouds::after { left: 65%; top: 95px; width: 260px; height: 70px; background: rgba(255, 255, 255, 0.42); }
+  .screen.sky[data-fx~="rain"] .fx-rain { display: block; bottom: 60%; opacity: var(--rain-opacity);
+    background: repeating-linear-gradient(104deg, transparent 0 11px, rgba(255, 255, 255, 0.22) 11px 12px, transparent 12px 23px),
+      repeating-linear-gradient(104deg, transparent 0 17px, rgba(255, 255, 255, 0.14) 17px 18px, transparent 18px 31px); }
+  .screen.sky[data-fx~="snow"] .fx-snow { display: block; bottom: 60%; opacity: 0.85; background-size: 140px 120px;
+    background-image: radial-gradient(2px 2px at 20px 30px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 90px 70px, #fff 98%, transparent),
+      radial-gradient(2.5px 2.5px at 60px 100px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 120px 15px, #fff 98%, transparent); }
+  .screen.sky[data-fx~="fog"] .fx-fog { display: block; bottom: 45%;
+    background: linear-gradient(180deg, transparent, rgba(236, 240, 245, 0.35) 60%, transparent); }
+
+  /* Clock and weather straight on the sky. */
+  .screen.sky .top { color: var(--on-sky); text-shadow: var(--sky-shadow); padding: 6px 8px 4px; }
+  .screen.sky .clock { width: 300px; }
+  .screen.sky .time { font-size: 92px; font-weight: 300; letter-spacing: -0.04em; line-height: 0.92; }
+  .screen.sky .ampm { letter-spacing: 0; }
+  .screen.sky .ampm, .screen.sky .date, .screen.sky .now-cond, .screen.sky .inside, .screen.sky .otext { color: var(--on-sky2); }
+  .screen.sky .orow ha-icon { color: var(--on-sky); }
+
+  /* The calendar: one frosted-glass sheet. */
+  .screen.sky .calendar { background: var(--glass); border: 0; border-radius: 22px;
+    -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
+    box-shadow: var(--shadow), inset 0 1px 0 var(--edge); }
+  .screen.sky .range { letter-spacing: -0.01em; }
+  .screen.sky .today-btn { border: 0; background: var(--glass2); color: var(--ink2); font-weight: 600; }
+
+  /* Chips: an avatar (initial in the calendar's colour) and the name, one row. */
+  .screen.sky .chips { flex-wrap: nowrap; gap: 6px; }
+  .screen.sky .chip { flex: 0 1 auto; min-width: 0; height: 32px; gap: 5px; padding: 0 9px 0 4px; border: 0;
+    border-radius: 16px; background: var(--glass2); color: var(--ink); font-size: 13px; font-weight: 600; }
+  .screen.sky .chip .dot { width: 22px; height: 22px; flex: none; display: grid; place-items: center; }
+  .screen.sky .chip .ini { display: block; font-size: 11px; font-weight: 700; color: var(--on-c); }
+  .screen.sky .chip .name { overflow: hidden; text-overflow: ellipsis; }
+  .screen.sky .chip.off { background: transparent; color: var(--ink2); }
+  .screen.sky .chip.off .dot { background: none; border: 2px solid var(--c); }
+  .screen.sky .chip.off .ini { color: var(--c); }
+
+  /* Regular-schedule strip: a tinted inset; blocks tinted with a dot. */
+  .screen.sky .regular { margin: 0 10px 4px; padding: 10px 10px 12px; border-radius: 16px; background: var(--glass2); }
+  .screen.sky .rg-title { font-weight: 700; letter-spacing: 0.07em; }
+  .screen.sky .rg-toggle, .screen.sky .rg-collapse { border: 0; background: var(--rule); }
+  .screen.sky .rg-block { border-left: 0; border-radius: 8px; padding: 0 8px; background: color-mix(in srgb, var(--c) 24%, var(--paper));
+    box-shadow: 0 0 0 1.5px var(--paper); }
+  .screen.sky .rg-block::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+
+  /* Events: a tint of the calendar colour with a dot, no stripe. */
+  .screen.sky .ev { border-left: 0; border-radius: 10px; padding: 6px 6px 7px; background: color-mix(in srgb, var(--c) 24%, var(--paper)); }
+  .screen.sky .ev .t { display: flex; align-items: center; gap: 4px; }
+  .screen.sky .ev .t::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+  .screen.sky .ev-bar { border-radius: 8px; }
+  .screen.sky.dark .rg-block, .screen.sky.dark .ev { background: color-mix(in srgb, var(--c) 30%, var(--paper)); }
+
+  /* Tiles: glass panels around HA's tile cards (made transparent above). */
+  .screen.sky .tile { border-radius: 18px; background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 1px 0 var(--edge); }
+
+  /* Notification bar: a darker (by night, lighter) band of glass. */
+  .screen.sky .banner { background: var(--banner); color: var(--on-banner); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); }
 `;
 
 customElements.define("family-calendar-card", FamilyCalendarCard);

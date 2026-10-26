@@ -17,6 +17,11 @@ views:
     panel: true
     cards:
       - type: custom:family-calendar-card
+        # "Sky & glass": the page is a sky that follows the sun (sun.sun's
+        # elevation, rising or setting) and the weather, the calendar and the
+        # tiles are frosted glass, and the interface colours are tones of the
+        # sky's hue, dark from dusk and warmer late at night (sky.js).
+        theme: sky
         # Chips in this order, which is also the precedence for hiding
         # duplicate events; colours match each calendar's in Google Calendar
         # (as its dark theme draws them). Each chip's on/off state is
@@ -39,6 +44,10 @@ views:
           - entity: calendar.charisrebecca_gmail_com
             name: Charis
             color: "#6cae84"
+          # Colour is a placeholder until Village's Google colour is known.
+          - entity: calendar.village
+            name: Village
+            color: "#3fa7a0"
           # Public holidays (US, NY) from HA's local Holiday integration, not
           # Google, so a neutral grey rather than a Google calendar colour.
           - entity: calendar.united_states_ny
