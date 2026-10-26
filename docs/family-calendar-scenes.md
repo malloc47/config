@@ -162,7 +162,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   the edge, lamp-lit snow, quiet snow, sleet, hail bounces, frost.
 - [x] **10. Wind.** Racing clouds, blown leaves/petals by season, swaying
   props.
-- [ ] **11. Dawn/day/golden/dusk extras.** First light band, pastel cirrus,
+- [x] **11. Dawn/day/golden/dusk extras.** First light band, pastel cirrus,
   lens shimmer, long light rays, gilded edges, birds (rare), blue hour,
   afterglow.
 - [ ] **12. Seasonal modifiers + rainbow.** Petals, heat shimmer, autumn
@@ -281,3 +281,8 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   glass; count, season). `.screen.gusty` (wind group or wind ≥ 15 mph)
   makes the sitting props sway. Scenes: wind-day-racing/leaves/sway,
   wind-night-racing (51 scenes).
+- 2026-10-26: task 11 done. Layers `horizonband` (first light / afterglow),
+  `wisps` (day / pastel), `contrails`, `lensflare`, `gilded` (edge glint);
+  event `birds` (V of flapping birds, 3000–4200 s). Clear scenes per phase:
+  dawn firstlight/cirrus/morning-star, day crisp/contrails/wisps, golden
+  rays/gilded/flock, dusk blue-hour/afterglow/evening-star (59 scenes).

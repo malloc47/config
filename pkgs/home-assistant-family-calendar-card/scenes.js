@@ -624,6 +624,86 @@ LAYERS.leaves = {
   },
 };
 
+// A glowing band along the horizon (the calendar's top edge): first light
+// before sunrise, or the afterglow after sunset. params: kind.
+LAYERS.horizonband = {
+  css: `.ly-hband { position: absolute; left: -5%; right: -5%; top: calc(var(--edge-y, 220px) - 80px); height: 100px;
+    background: linear-gradient(180deg, transparent, var(--c) 72%, var(--c2) 92%, transparent); filter: blur(4px);
+    animation: ly-hband 12s ease-in-out infinite alternate; }
+    @keyframes ly-hband { from { opacity: 0.8; } to { opacity: 1; } }`,
+  render: (ctx, p) => {
+    const [c, c2] =
+      (p.kind || (ctx.rising ? "first" : "after")) === "first"
+        ? ["rgba(255, 228, 190, 0.55)", "rgba(255, 248, 225, 0.85)"]
+        : ["rgba(255, 140, 90, 0.45)", "rgba(255, 110, 70, 0.6)"];
+    return { back: `<div class="ly-hband" style="--c: ${c}; --c2: ${c2}"></div>` };
+  },
+};
+// High cirrus wisps, drifting slowly. params: tint (day, pastel).
+LAYERS.wisps = {
+  css: `.ly-wisps i { position: absolute; top: var(--y); left: var(--x); width: var(--w); height: 10px; border-radius: 50%;
+    background: radial-gradient(closest-side, var(--c), transparent); filter: blur(2.5px); transform: rotate(var(--r));
+    animation: ly-wisp 90s ease-in-out infinite alternate; animation-delay: var(--d); }
+    @keyframes ly-wisp { from { translate: -30px 0; } to { translate: 40px -6px; } }`,
+  render: (ctx, p) => {
+    const c = p.tint === "pastel" ? (ctx.rising ? "rgba(255, 200, 215, 0.7)" : "rgba(255, 205, 170, 0.7)") : "rgba(255, 255, 255, 0.7)";
+    const r = rng(1357);
+    return {
+      back: `<div class="ly-wisps" style="--c: ${c}">${Array.from({ length: 6 }, () => {
+        const [x, y, w, rot, d] = [r() * 80, 20 + r() * 150, 140 + r() * 220, -14 + r() * 10, -r() * 90];
+        return `<i style="--x: ${x.toFixed(0)}%; --y: ${y.toFixed(0)}px; --w: ${w.toFixed(0)}px; --r: ${rot.toFixed(0)}deg; --d: ${d.toFixed(0)}s"></i>`;
+      }).join("")}</div>`,
+    };
+  },
+};
+// High contrails: thin white lines slowly drifting and spreading.
+LAYERS.contrails = {
+  css: `.ly-contrails i { position: absolute; top: var(--y); left: var(--x); width: var(--w); height: 2px; transform: rotate(var(--r));
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85) 30%, rgba(255, 255, 255, 0.9) 85%, transparent);
+    animation: ly-trail 240s linear infinite; animation-delay: var(--d); }
+    @keyframes ly-trail { from { translate: -40px 0; scale: 1 1; opacity: 0.95; filter: blur(0.3px); }
+      to { translate: 80px 10px; scale: 1.05 4; opacity: 0.35; filter: blur(1.5px); } }`,
+  render: () => ({
+    back: `<div class="ly-contrails"><i style="--x: 8%; --y: 60px; --w: 62%; --r: -9deg; --d: -60s"></i>
+      <i style="--x: 40%; --y: 130px; --w: 48%; --r: 7deg; --d: -150s"></i></div>`,
+  }),
+};
+// A faint lens shimmer: soft discs strung away from the sun, gently pulsing.
+LAYERS.lensflare = {
+  css: `.ly-flare { position: absolute; inset: 0; pointer-events: none; }
+    .ly-flare i { position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
+      background: radial-gradient(closest-side, rgba(255, 255, 255, var(--a)), transparent); animation: ly-flare 9s ease-in-out infinite alternate; }
+    @keyframes ly-flare { from { opacity: 0.6; } to { opacity: 1; } }`,
+  render: (ctx) => {
+    const sx = ctx.sun.x;
+    const sy = Math.min(ctx.sun.y, 12);
+    const at = (k) => [sx + (50 - sx) * k, sy + (22 - sy) * k];
+    return {
+      back: `<div class="ly-flare">${[
+        [0, 180, 0.35],
+        [0.45, 40, 0.18],
+        [0.7, 22, 0.22],
+        [1, 60, 0.12],
+      ]
+        .map(([k, size, a]) => {
+          const [x, y] = at(k);
+          return `<i style="left: ${x.toFixed(1)}%; top: ${y.toFixed(1)}%; width: ${size}px; height: ${size}px; --a: ${a}"></i>`;
+        })
+        .join("")}</div>`,
+    };
+  },
+};
+// A gilded glint along the calendar's top edge in the low golden light.
+LAYERS.gilded = {
+  css: `.ly-gilded { position: absolute; left: 8px; right: 8px; top: -1px; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 205, 120, 0.9) 20%, rgba(255, 236, 190, 1) 50%, rgba(255, 205, 120, 0.9) 80%, transparent);
+    box-shadow: 0 0 8px 1px rgba(255, 190, 100, 0.65); }
+    .ly-gilded::after { content: ""; position: absolute; top: -2px; width: 90px; height: 6px; border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(255, 250, 230, 0.95), transparent); animation: ly-glint 7s ease-in-out infinite; }
+    @keyframes ly-glint { from { left: -10%; } to { left: 100%; } }`,
+  render: () => ({ edge: `<div class="ly-gilded"></div>` }),
+};
+
 // The old static rain layer's name, for any user-defined scenes using it.
 LAYERS.rain = LAYERS.rainfall;
 LAYERS.snow = LAYERS.snowfall;
@@ -633,7 +713,18 @@ LAYERS.snow = LAYERS.snowfall;
 // Today's looks, one scene per combination; later tasks add variations
 // (more scenes with the same `when`).
 export const SCENES = {
-  "clear-day": { when: { group: "clear", phase: LIGHT }, layers: [] },
+  "clear-dawn-firstlight": { when: { group: "clear", phase: "dawn" }, layers: [["horizonband", { kind: "first" }]] },
+  "clear-dawn-cirrus": { when: { group: "clear", phase: "dawn" }, layers: [["wisps", { tint: "pastel" }]] },
+  "clear-day-crisp": { when: { group: "clear", phase: "day" }, layers: [["lensflare", {}]], events: ["birds"] },
+  "clear-day-contrails": { when: { group: "clear", phase: "day" }, layers: [["contrails", {}]], events: ["birds"] },
+  "clear-day-wisps": { when: { group: "clear", phase: "day" }, layers: [["wisps", {}]], events: ["birds"] },
+  "clear-golden-rays": { when: { group: "clear", phase: "golden" }, layers: [["rays", {}]], events: ["birds"] },
+  "clear-golden-gilded": { when: { group: "clear", phase: "golden" }, layers: [["gilded", {}]], events: ["birds"] },
+  "clear-golden-flock": { when: { group: "clear", phase: "golden" }, layers: [["rays", { opacity: 0.5 }], ["gilded", {}]], events: ["birds"] },
+  "clear-dusk-afterglow": {
+    when: { group: "clear", phase: "dusk" },
+    layers: [["horizonband", { kind: "after" }], ["stars", { density: 30 }], ["planets", {}], ["moon", {}]],
+  },
   "clear-dawn-morning-star": {
     when: { group: "clear", phase: "dawn", planets: ["venus", "jupiter"] },
     layers: [["planets", { only: ["venus", "jupiter"], labels: true }]],
@@ -904,6 +995,35 @@ export const EVENTS = {
       const bolt = wrap.firstElementChild;
       hosts.back.append(bolt);
       return [[bolt, flash(hosts, ctx.dark ? 0.2 : 0.3)], 900];
+    },
+  },
+  // A flock of birds flapping across the sky in a loose V.
+  birds: {
+    css: `.ly-birds { position: absolute; left: -160px; top: var(--y); width: 150px; color: var(--c); animation: ly-birds 16s linear forwards; }
+      .ly-birds svg { display: block; width: 100%; overflow: visible; }
+      .ly-birds path { transform-box: fill-box; transform-origin: 50% 70%; animation: ly-flap 0.42s ease-in-out infinite alternate; }
+      @keyframes ly-birds { to { transform: translate(calc(100vw + 320px), -40px); } }
+      @keyframes ly-flap { from { transform: scaleY(1); } to { transform: scaleY(0.25); } }`,
+    fire(hosts, ctx) {
+      const node = document.createElement("div");
+      node.className = "ly-birds";
+      node.style.setProperty("--y", `${50 + Math.random() * 90}px`);
+      node.style.setProperty("--c", ctx.dark ? "#1b1a24" : "#2b2a34");
+      const bird = (x, y, d) =>
+        `<path d="M${x - 7} ${y} q3.5 -4 7 0 q3.5 -4 7 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" style="animation-delay: ${d}s"></path>`;
+      node.innerHTML = `<svg viewBox="0 0 150 60">${[
+        [120, 30, 0],
+        [100, 22, -0.1],
+        [100, 38, -0.2],
+        [80, 14, -0.15],
+        [80, 46, -0.3],
+        [60, 8, -0.05],
+        [58, 52, -0.25],
+      ]
+        .map(([x, y, d]) => bird(x, y, d))
+        .join("")}</svg>`;
+      hosts.back.append(node);
+      return [[node], 17000];
     },
   },
   // Heat lightning: silent glows pulsing along the horizon.
