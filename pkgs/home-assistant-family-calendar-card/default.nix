@@ -20,7 +20,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "family-calendar-card";
-  version = "0.25.1";
+  version = "0.26.3";
 
   src = ./family-calendar-card.js;
   dontUnpack = true;

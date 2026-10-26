@@ -183,7 +183,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **13. Other holidays.** Thanksgiving, Christmas/winter (string
   lights), New Year's Eve (fireworks), Valentine's Day, 4th of July
   (fireworks), Fiestas Patrias (Peruvian flag).
-- [ ] **14. Tuning.** Device performance pass, density/opacity tuning,
+- [x] **14. Tuning.** Device performance pass, density/opacity tuning,
   docs.
 
 ## Testing
@@ -322,3 +322,35 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   july4-fireworks 07-04 dark (red/white/blue), fiestas-patrias-flag
   07-28..07-29, fiestas-patrias-bunting 07-27..07-29 (red/white). Fixed
   single-day `dates` ("07-04") being read as open-ended.
+- 2026-10-26: task 14 done. On-device CPU (sensor.family_calendar_cpu_usage,
+  time-weighted over 4 min per view; views shown via
+  select.family_calendar_dashboard_view on a scratch dashboard, the tablet
+  reloaded after each deploy since in-app navigation doesn't refetch the
+  card):
+
+  | View | CPU |
+  |---|---|
+  | classic theme (`ha`) | 9% |
+  | sky theme, empty scene | 9% |
+  | night: moon + stars (+ Halloween props) | 28% (28%) |
+  | light rain (15 drops) | 29% |
+  | rain-day-splash (~75 animated elements) | 35% |
+  | night, glass_blur 0 (saturate kept) | 32% |
+  | night / rain, no backdrop filter at all | 35% / 39% |
+  | night, script-driven 20 fps cap | 31% |
+  | screensaver on (animations paused) | ~12% |
+
+  Conclusion: on this tablet any continuous animation costs a roughly fixed
+  ~20 points over a static page, nearly independent of content, element
+  count, blur or frame rate; the screensaver pause (already in place) is
+  what bounds it. Tried and dropped: a JS frame-rate cap (pausing CSS
+  animations and setting currentTime at N fps: main-thread commits cost as
+  much as the frames saved), and dropping the backdrop filter (worse).
+  Kept: every animation now runs on transform/opacity only (puddle shimmer,
+  gilded glint, horseman ride, bulb twinkle, flag shading, contrails no
+  longer animate background-position/left/filter), and moving parts of prop
+  drawings (pumpkin face, crow head, bat wings, turkey tail/head, tree star
+  and ornaments) are separate stacked <svg> layers animated as elements
+  instead of shapes inside one SVG (which repaints every frame). Further
+  option if wanted: also pause on kitchen vacancy (presence sensor) the way
+  screensaver_entity pauses now.

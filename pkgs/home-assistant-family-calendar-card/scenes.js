@@ -478,11 +478,13 @@ export const LAYERS = {
   // A wet shimmer along the top of the controls: lamplight in the puddles.
   puddle: {
     css: `.ly-puddle { position: absolute; left: 12px; right: 12px; top: calc(var(--controls-y, 1080px) - 8px); height: 10px; filter: blur(2.5px);
-        background: repeating-linear-gradient(90deg, transparent 0 31px, rgba(255, 214, 160, 0.26) 31px 44px, transparent 44px 97px),
-          repeating-linear-gradient(90deg, transparent 0 13px, rgba(255, 226, 185, 0.18) 13px 18px, transparent 18px 59px);
-        background-size: 291px 100%, 177px 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-        animation: ly-puddle 9s linear infinite; }
-      @keyframes ly-puddle { to { background-position: 291px 0, -177px 0; } }`,
+        overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+      .ly-puddle::before, .ly-puddle::after { content: ""; position: absolute; top: 0; bottom: 0; animation: ly-puddle 9s linear infinite; }
+      .ly-puddle::before { left: -291px; right: 0; --to: 291px;
+        background: repeating-linear-gradient(90deg, transparent 0 31px, rgba(255, 214, 160, 0.26) 31px 44px, transparent 44px 97px) 0 0 / 291px 100%; }
+      .ly-puddle::after { left: 0; right: -177px; --to: -177px;
+        background: repeating-linear-gradient(90deg, transparent 0 13px, rgba(255, 226, 185, 0.18) 13px 18px, transparent 18px 59px) 0 0 / 177px 100%; }
+      @keyframes ly-puddle { to { transform: translateX(var(--to)); } }`,
     render: () => ({ front: `<div class="ly-puddle"></div>` }),
   },
   // Gusts: pale sheets of rain sweeping across now and then.
@@ -662,9 +664,9 @@ LAYERS.wisps = {
 LAYERS.contrails = {
   css: `.ly-contrails i { position: absolute; top: var(--y); left: var(--x); width: var(--w); height: 2px; transform: rotate(var(--r));
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85) 30%, rgba(255, 255, 255, 0.9) 85%, transparent);
-    animation: ly-trail 240s linear infinite; animation-delay: var(--d); }
-    @keyframes ly-trail { from { translate: -40px 0; scale: 1 1; opacity: 0.95; filter: blur(0.3px); }
-      to { translate: 80px 10px; scale: 1.05 4; opacity: 0.35; filter: blur(1.5px); } }`,
+    filter: blur(0.6px); animation: ly-trail 240s linear infinite; animation-delay: var(--d); }
+    @keyframes ly-trail { from { translate: -40px 0; scale: 1 1; opacity: 0.95; }
+      to { translate: 80px 10px; scale: 1.05 4; opacity: 0.35; } }`,
   render: () => ({
     back: `<div class="ly-contrails"><i style="--x: 8%; --y: 60px; --w: 62%; --r: -9deg; --d: -60s"></i>
       <i style="--x: 40%; --y: 130px; --w: 48%; --r: 7deg; --d: -150s"></i></div>`,
@@ -700,9 +702,9 @@ LAYERS.gilded = {
   css: `.ly-gilded { position: absolute; left: 8px; right: 8px; top: -1px; height: 2px; border-radius: 2px;
     background: linear-gradient(90deg, transparent, rgba(255, 205, 120, 0.9) 20%, rgba(255, 236, 190, 1) 50%, rgba(255, 205, 120, 0.9) 80%, transparent);
     box-shadow: 0 0 8px 1px rgba(255, 190, 100, 0.65); }
-    .ly-gilded::after { content: ""; position: absolute; top: -2px; width: 90px; height: 6px; border-radius: 50%;
+    .ly-gilded::after { content: ""; position: absolute; top: -2px; left: -90px; width: 90px; height: 6px; border-radius: 50%;
       background: radial-gradient(closest-side, rgba(255, 250, 230, 0.95), transparent); animation: ly-glint 7s ease-in-out infinite; }
-    @keyframes ly-glint { from { left: -10%; } to { left: 100%; } }`,
+    @keyframes ly-glint { from { transform: translateX(0); } to { transform: translateX(calc(100vw + 60px)); } }`,
   render: () => ({ edge: `<div class="ly-gilded"></div>` }),
 };
 
