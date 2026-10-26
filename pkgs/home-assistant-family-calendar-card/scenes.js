@@ -505,17 +505,86 @@ export const LAYERS = {
       };
     },
   },
-  snow: {
-    css: `.ly-snow { position: absolute; left: 0; right: 0; top: 0; bottom: 60%; background-size: 140px 120px;
-      background-image: radial-gradient(2px 2px at 20px 30px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 90px 70px, #fff 98%, transparent),
-        radial-gradient(2.5px 2.5px at 60px 100px, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 120px 15px, #fff 98%, transparent); }`,
-    render: (ctx, p) => ({ back: `<div class="ly-snow" style="opacity: ${p.opacity ?? 0.85}"></div>` }),
+  // Snow drifting down to the calendar sheet's top edge, each flake swaying.
+  // params: density (≤70), size (px, largest flakes), speed (s to fall),
+  // opacity, gust (sideways drift, for flurries), tint (day, night, lamp).
+  snowfall: {
+    css: `.ly-snowfall { position: absolute; left: -10%; right: -10%; top: 0; height: var(--edge-y, 220px); overflow: hidden; }
+      .ly-snowfall i { position: absolute; top: -12px; left: var(--x); animation: ly-snowfall var(--dur) linear infinite; animation-delay: var(--d); }
+      .ly-snowfall i::before { content: ""; display: block; width: var(--s); height: var(--s); border-radius: 50%;
+        background: radial-gradient(circle, var(--c) 0 45%, transparent 70%); animation: ly-sway var(--sw) ease-in-out infinite alternate; }
+      @keyframes ly-snowfall { to { transform: translate(var(--gx), calc(var(--edge-y, 220px) + 12px)); } }
+      @keyframes ly-sway { from { transform: translateX(-9px); } to { transform: translateX(9px); } }`,
+    render: (ctx, p) => {
+      const n = Math.min(70, p.density ?? 40);
+      const tint = { day: "rgba(255, 255, 255, 0.95)", night: "rgba(225, 233, 250, 0.85)", lamp: "rgba(255, 228, 190, 0.92)" }[
+        p.tint || (ctx.dark ? "night" : "day")
+      ];
+      const r = rng(523 + n);
+      const flakes = Array.from({ length: n }, () => {
+        const s = 2 + r() * ((p.size ?? 6) - 2);
+        return {
+          x: r() * 100,
+          s,
+          // Bigger flakes fall a little faster.
+          dur: (p.speed ?? 9) * (1.2 - s / 20) * (0.75 + r() * 0.5),
+          d: -r() * 12,
+          sw: 2 + r() * 2.5,
+          gx: p.gust ? 60 + r() * 80 : (r() - 0.5) * 30,
+        };
+      });
+      return {
+        back: `<div class="ly-snowfall" style="--c: ${tint}; opacity: ${p.opacity ?? 1}">${flakes
+          .map(
+            (f) =>
+              `<i style="--x: ${f.x.toFixed(1)}%; --s: ${f.s.toFixed(1)}px; --dur: ${f.dur.toFixed(1)}s; --d: ${f.d.toFixed(1)}s; --sw: ${f.sw.toFixed(1)}s; --gx: ${f.gx.toFixed(0)}px"></i>`,
+          )
+          .join("")}</div>`,
+      };
+    },
+  },
+  // A snow ridge on the calendar sheet's top edge; with `grow`, it builds
+  // through the day (thin in the morning, deepest by evening). params:
+  // depth (px), grow.
+  snowcap: {
+    css: `.ly-snowcap { position: absolute; left: 6px; right: 6px; bottom: -3px; height: var(--h); border-radius: 12px 12px 3px 3px;
+        background: linear-gradient(180deg, #ffffff, #e6edf6); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), inset 0 -2px 3px rgba(150, 170, 200, 0.35);
+        -webkit-mask-image: radial-gradient(ellipse 34px var(--h) at 6% 100%, #000 98%, transparent), radial-gradient(ellipse 60px var(--h) at 26% 100%, #000 98%, transparent),
+          radial-gradient(ellipse 48px var(--h) at 46% 100%, #000 98%, transparent), radial-gradient(ellipse 70px var(--h) at 68% 100%, #000 98%, transparent),
+          radial-gradient(ellipse 52px var(--h) at 92% 100%, #000 98%, transparent), linear-gradient(#000, #000);
+        -webkit-mask-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 55%; -webkit-mask-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 100%;
+        -webkit-mask-repeat: no-repeat; }
+      .screen.dark .ly-snowcap { background: linear-gradient(180deg, #d9e2f1, #aab7cc); }`,
+    render: (ctx, p) => {
+      const grow = p.grow ? Math.max(0.25, Math.min(1, ((ctx.hour ?? 12) - 6) / 12)) : 1;
+      return { edge: `<div class="ly-snowcap" style="--h: ${((p.depth ?? 10) * grow).toFixed(1)}px"></div>` };
+    },
+  },
+  // Hail: pellets falling fast and bouncing off the calendar's edge.
+  hail: {
+    css: `.ly-hail { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--edge-y, 220px) + 40px); overflow: hidden; }
+      .ly-hail i { position: absolute; top: -10px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #ffffff, #dfe8f3 60%, #b9c8da); opacity: 0;
+        animation: ly-hail var(--dur) cubic-bezier(0.4, 0, 1, 1) infinite; animation-delay: var(--d); }
+      @keyframes ly-hail { 0% { opacity: 0.95; transform: translate(0, 0); } 62% { transform: translate(0, calc(var(--edge-y, 220px) + 4px)); }
+        78% { transform: translate(var(--bx), calc(var(--edge-y, 220px) - 16px)); opacity: 0.9; }
+        100% { transform: translate(calc(var(--bx) * 1.8), calc(var(--edge-y, 220px) + 2px)); opacity: 0; } }`,
+    render: (ctx, p) => {
+      const r = rng(6161);
+      return {
+        back: `<div class="ly-hail">${Array.from({ length: p.density ?? 30 }, () => {
+          const [x, s, dur, d, bx] = [r() * 100, 2.5 + r() * 3, 0.9 + r() * 0.6, -r() * 2, (r() - 0.5) * 30];
+          return `<i style="--x: ${x.toFixed(1)}%; --s: ${s.toFixed(1)}px; --dur: ${dur.toFixed(2)}s; --d: ${d.toFixed(2)}s; --bx: ${bx.toFixed(0)}px"></i>`;
+        }).join("")}</div>`,
+      };
+    },
   },
 };
 
 
 // The old static rain layer's name, for any user-defined scenes using it.
 LAYERS.rain = LAYERS.rainfall;
+LAYERS.snow = LAYERS.snowfall;
 
 // ---- scenes ----------------------------------------------------------------
 
@@ -652,8 +721,19 @@ export const SCENES = {
     layers: [["deck", { tone: "brooding" }]],
     events: ["heat_lightning", "lightning"],
   },
-  snow: { when: { group: "snow" }, layers: [["snow", {}]] },
-  sleet: { when: { group: "sleet" }, layers: [["snow", {}], ["rainfall", { density: 25, opacity: 0.6 }]] },
+  "snow-day-gentle": { when: { group: "snow", phase: LIGHT }, layers: [["snowfall", { density: 40, size: 8, speed: 11 }]] },
+  "snow-day-flurries": { when: { group: "snow", phase: LIGHT }, layers: [["snowfall", { density: 24, size: 5, speed: 6, gust: true }]] },
+  "snow-day-cap": { when: { group: "snow", phase: LIGHT }, layers: [["snowfall", { density: 34 }], ["snowcap", { grow: true }]] },
+  "snow-night-lamps": {
+    when: { group: "snow", phase: DARK },
+    layers: [["lamps", {}], ["snowfall", { density: 38, tint: "lamp" }], ["snowcap", {}]],
+  },
+  "snow-night-quiet": { when: { group: "snow", phase: DARK }, layers: [["snowfall", { density: 16, speed: 14, opacity: 0.85 }]] },
+  "sleet-mix": {
+    when: { condition: "snowy-rainy" },
+    layers: [["snowfall", { density: 22, size: 4, speed: 5 }], ["rainfall", { density: 30, opacity: 0.6 }], ["splashes", { count: 8 }]],
+  },
+  "hail-bounce": { when: { condition: "hail" }, layers: [["deck", { tone: "brooding" }], ["hail", {}], ["splashes", { count: 6, beads: 4 }]] },
   "wind-day": { when: { group: "wind", phase: LIGHT }, layers: [] },
   "wind-night": { when: { group: "wind", phase: DARK }, layers: [["stars", { density: 40 }], ["moon", {}]] },
 };

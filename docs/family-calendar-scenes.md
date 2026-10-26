@@ -158,7 +158,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   downpour, gusty sheets, edge drips.
 - [x] **8. Storms.** Sky flashes, forked bolts, night strikes, heat
   lightning (rates from config).
-- [ ] **9. Snow, sleet, hail.** Gentle snow, flurries, snow cap building on
+- [x] **9. Snow, sleet, hail.** Gentle snow, flurries, snow cap building on
   the edge, lamp-lit snow, quiet snow, sleet, hail bounces, frost.
 - [ ] **10. Wind.** Racing clouds, blown leaves/petals by season, swaying
   props.
@@ -268,3 +268,10 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   120–300 s, heat_lightning 15–45 s. Event hosts gain `screen`. Scenes:
   storm-day-distant/close, storm-night-strike/heat (lightning-rainy),
   storm-dry (lightning). Night flash peaks kept low so bolts stay visible.
+- 2026-10-26: task 9 done. Layers `snowfall` (flakes falling to the
+  sheet's edge with a sway; density ≤70, size, speed, gust, tint
+  day/night/lamp), `snowcap` (lumpy ridge on the edge; `grow` builds it
+  through the day by the hour), `hail` (pellets bouncing off the edge).
+  Old `snow` layer name aliases `snowfall`. Scenes: snow-day-gentle/
+  flurries/cap, snow-night-lamps/quiet, sleet-mix (snowy-rainy),
+  hail-bounce (hail); 49 scenes. Frost (<32°F) is task 12.
