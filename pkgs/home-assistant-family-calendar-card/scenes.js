@@ -44,20 +44,27 @@ export function phaseOf(elevation, rising, hour) {
   return elevation >= 0 ? "golden" : "dusk";
 }
 
-export function contextOf({ elevation, rising, hour, condition, date, wind, temperature, dark, late, moon }) {
+export function contextOf({ elevation, rising, hour, condition, date, wind, temperature, dark, late, moon, planets }) {
   const e = Number.isFinite(elevation) ? elevation : 30;
+  const darkness = Math.max(0, Math.min(1, (6 - e) / 18));
   const m = moon || { alt: -90, az: 180, illum: 0, phase: 0 };
   const up = m.alt > 0;
   return {
     // The moon (astro.js): up, and how much it brightens the sky (0-1).
     moon: { ...m, up },
     moonlight: up ? m.illum * Math.min(1, m.alt / 15 + 0.3) : 0,
+    // Planets visible now (astro.js): above the horizon, clear of the sun,
+    // and the sky dark enough for their brightness (Venus and Jupiter show
+    // in twilight).
+    planets: (planets || []).filter(
+      (p) => p.alt > 4 && p.elong > (p.name === "mercury" ? 18 : 15) && darkness >= (p.mag < -1.5 ? 0.3 : 0.6),
+    ),
     elevation: e,
     rising: !!rising,
     hour,
     phase: phaseOf(e, rising, hour),
     // 0 in daylight, 1 by full night, ramping through twilight.
-    darkness: Math.max(0, Math.min(1, (6 - e) / 18)),
+    darkness,
     dark: !!dark,
     late: !!late,
     condition: condition || "sunny",
@@ -167,6 +174,30 @@ export const LAYERS = {
       };
     },
   },
+  // The bright planets where they really are: steady (no twinkle), sized by
+  // brightness, tinted (Mars red, Saturn gold), optionally labelled.
+  // params: labels, only (names).
+  planets: {
+    css: `.ly-planet { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 6px; }
+      .ly-planet i { display: block; border-radius: 50%; background: var(--t); box-shadow: 0 0 6px 1px var(--t); }
+      .ly-planet span { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--on-sky2); white-space: nowrap;
+        text-shadow: var(--sky-shadow); transform: translateX(calc(50% + 8px)); position: absolute; left: 0; }`,
+    render: (ctx, p) => {
+      const list = ctx.planets.filter((pl) => !p.only || p.only.includes(pl.name));
+      if (!list.length) return {};
+      return {
+        back: list
+          .map((pl) => {
+            const { x, f } = skyPos(pl.alt, pl.az);
+            const size = Math.max(2.4, Math.min(6, 4 - pl.mag * 0.7));
+            const name = pl.name[0].toUpperCase() + pl.name.slice(1);
+            return `<div class="ly-planet" style="left: ${x.toFixed(1)}%; top: calc(var(--edge-y, 220px) * ${f.toFixed(3)}); --t: ${pl.tint}">
+              <i style="width: ${size.toFixed(1)}px; height: ${size.toFixed(1)}px"></i>${p.labels ? `<span>${name}</span>` : ""}</div>`;
+          })
+          .join(""),
+      };
+    },
+  },
   // The Milky Way: a soft diagonal band with a dark lane, for dark-moon
   // nights. params: opacity.
   milkyway: {
@@ -222,29 +253,42 @@ export const LAYERS = {
 // (more scenes with the same `when`).
 export const SCENES = {
   "clear-day": { when: { group: "clear", phase: LIGHT }, layers: [] },
-  "clear-dusk": { when: { group: "clear", phase: "dusk" }, layers: [["stars", { density: 45 }], ["moon", {}]] },
+  "clear-dawn-morning-star": {
+    when: { group: "clear", phase: "dawn", planets: ["venus", "jupiter"] },
+    layers: [["planets", { only: ["venus", "jupiter"], labels: true }]],
+  },
+  "clear-dusk": { when: { group: "clear", phase: "dusk" }, layers: [["stars", { density: 45 }], ["planets", {}], ["moon", {}]] },
+  "clear-dusk-evening-star": {
+    when: { group: "clear", phase: "dusk", planets: ["venus", "jupiter"] },
+    layers: [["stars", { density: 30 }], ["planets", { only: ["venus", "jupiter"], labels: true }], ["moon", {}]],
+  },
   "clear-night-moonlit": {
     when: { group: "clear", phase: "night" },
-    layers: [["stars", { density: 45 }], ["moon", { glow: true }]],
+    layers: [["stars", { density: 45 }], ["planets", {}], ["moon", { glow: true }]],
     events: ["shooting_star"],
   },
   "clear-night-starfield": {
     when: { group: "clear", phase: "night" },
-    layers: [["stars", { density: 110 }], ["moon", {}]],
+    layers: [["stars", { density: 110 }], ["planets", {}], ["moon", {}]],
+    events: ["shooting_star"],
+  },
+  "clear-night-planets": {
+    when: { group: "clear", phase: ["night", "late"], planets: true },
+    layers: [["stars", { density: 70 }], ["planets", { labels: true }], ["moon", {}]],
     events: ["shooting_star"],
   },
   "clear-late-milkyway": {
     when: { group: "clear", phase: "late", moon: "dark" },
-    layers: [["milkyway", {}], ["stars", { density: 120 }], ["moon", {}]],
+    layers: [["milkyway", {}], ["stars", { density: 120 }], ["planets", {}], ["moon", {}]],
     events: ["shooting_star"],
   },
   "clear-late-moon": {
     when: { group: "clear", phase: "late" },
-    layers: [["stars", { density: 60 }], ["moon", { glow: true, size: 44 }]],
+    layers: [["stars", { density: 60 }], ["planets", {}], ["moon", { glow: true, size: 44 }]],
     events: ["shooting_star"],
   },
   "partly-day": { when: { group: "partly", phase: LIGHT }, layers: [["clouds", {}]] },
-  "partly-night": { when: { group: "partly", phase: DARK }, layers: [["stars", { density: 30 }], ["moon", {}]] },
+  "partly-night": { when: { group: "partly", phase: DARK }, layers: [["stars", { density: 30 }], ["planets", {}], ["moon", {}]] },
   "cloudy-day": { when: { group: "cloudy", phase: LIGHT }, layers: [["clouds", { deck: true }]] },
   "cloudy-night": { when: { group: "cloudy", phase: DARK }, layers: [] },
   fog: { when: { group: "fog" }, layers: [["fog", {}]] },
@@ -270,6 +314,9 @@ function matches(when = {}, ctx) {
   if (when.moon === "dark" && ctx.moonlight >= 0.25) return false;
   if (when.moon === "bright" && ctx.moonlight < 0.25) return false;
   if (when.moon === "up" && !ctx.moon.up) return false;
+  // planets: true (any visible) or a list of names (one of them visible).
+  if (when.planets === true && !ctx.planets.length) return false;
+  if (Array.isArray(when.planets) && !ctx.planets.some((p) => when.planets.includes(p.name))) return false;
   return true;
 }
 

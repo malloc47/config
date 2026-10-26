@@ -145,7 +145,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **3. Moon + stars.** Moon phase/illumination/position (in-card),
   phase-shaded disc, star density by moon and clouds, twinkle, Milky Way,
   shooting stars.
-- [ ] **4. Planets.** Real positions (simplified orbital elements →
+- [x] **4. Planets.** Real positions (simplified orbital elements →
   alt/az), bright planets above the horizon, labels; Venus morning/evening
   star variants.
 - [ ] **5. Aurora.** NOAA SWPC planetary Kp (REST sensor in HA, polled
@@ -225,3 +225,12 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   animations aren't restarted by small changes. Night header text got a
   dark halo for legibility over the moon. Tablet CPU ~30% with
   stars/moon/props/bats (task 14).
+- 2026-10-25: task 4 done. `astro.js` `planets()` (JPL approximate
+  elements; checked: Saturn opposition 2026-10-04 at RA 0.75h, Jupiter
+  opposition 2026-01-10 at 7.4h). Context `planets` = visible ones (alt >
+  4°, elongation > 15°, Venus/Jupiter from darkness 0.3, others 0.6).
+  Layer `planets` (steady tinted dots sized by magnitude, `labels`,
+  `only`); in all clear dusk/night/late scenes; new variants
+  `clear-night-planets` (labels, when `planets: true`),
+  `clear-dawn-morning-star` / `clear-dusk-evening-star` (Venus/Jupiter).
+  Scene `when` gains `planets: true | [names]`.

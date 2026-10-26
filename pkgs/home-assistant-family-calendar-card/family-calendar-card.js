@@ -101,7 +101,7 @@ const { contextOf, pickScene, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = 
 const { activeAccents, renderAccents, PROP_CSS, PROP_EVENTS, PROP_RATES } = await import(
   new URL(`./props.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
-const { moon } = await import(new URL(`./astro.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { moon, planets } = await import(new URL(`./astro.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const ALL_EVENTS = { ...EVENTS, ...PROP_EVENTS };
 const ALL_RATES = { ...DEFAULT_RATES, ...PROP_RATES };
 
@@ -936,13 +936,15 @@ class FamilyCalendarCard extends HTMLElement {
     // The moon (astro.js), at the override's time when previewing; position
     // rounded so it only re-renders when it has visibly moved.
     const at = o.time ? Date.parse(o.time) : Date.now();
-    const m = moon(at, this._hass.config?.latitude ?? 0, this._hass.config?.longitude ?? 0);
+    const [lat, lng] = [this._hass.config?.latitude ?? 0, this._hass.config?.longitude ?? 0];
+    const m = moon(at, lat, lng);
     const round = (v, step) => Math.round(v / step) * step;
     const ctx = contextOf({
       ...inputs,
       dark: theme.dark,
       late: theme.late,
       moon: { alt: round(m.alt, 0.5), az: round(m.az, 0.5), illum: round(m.illum, 0.01), phase: round(m.phase, 0.005) },
+      planets: planets(at, lat, lng).map((p) => ({ ...p, alt: round(p.alt, 0.5), az: round(p.az, 0.5), mag: round(p.mag, 0.1) })),
     });
     this._skyCtx = ctx;
     const scene = pickScene(ctx, c.sky_scenes);
