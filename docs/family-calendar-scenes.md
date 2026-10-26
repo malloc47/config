@@ -76,10 +76,18 @@ sky_scenes:
     lightning: [30, 90]
     shooting_star: [180, 300]
     birds: [3000, 4200]
-accents:                      # props (holiday/seasonal), task 12+
-  - prop: jack-o-lantern
-    when: { dates: "10-24..10-31" }
-    place: bottom-left
+sky_accents:                  # props (props.js); built-in accents by id
+  disable: [halloween-ghost]
+  define:                     # extra or replacement accents
+    my-pumpkins:
+      prop: jack-o-lantern
+      when: { dates: "10-24..10-31" }   # MM-DD..MM-DD (may wrap the year)
+      # or: when: { calendar: calendar.united_states_ny, match: "^Thanksgiving",
+      #             days_before: 3, days_after: 0, dark: true }
+      place: edge             # edge (on the sheet's top edge) | ledge (same,
+                              # behind text and glass) | sky
+      params: { side: right, count: 3 }
+  # timed props (event:) fire at sky_scenes.rates[<event>], e.g. horseman
 ```
 
 ## Scene breakdown (reviewed)
@@ -129,7 +137,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   `.scene-edge`, `.scene-front`), rare-event scheduler, pause on
   screensaver, reduced/configurable blur. Port today's overlays (stars,
   clouds, rain, snow, fog) to layers at parity.
-- [ ] **2. Props framework + Halloween.** Anchors, context-reactive props,
+- [x] **2. Props framework + Halloween.** Anchors, context-reactive props,
   `accents` config (date ranges, calendar match, days before). Halloween
   week: jack-o'-lanterns (lit by darkness, flicker in wind, sputter in
   rain, snow cap), Headless Horseman (silhouette riding past, rare),
@@ -193,3 +201,13 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   lightning and birds. Verified on a scratch dashboard (each group's scene,
   `disable`/`map`/`define`) and the tablet. Next: task 2 (props +
   Halloween, it's Halloween week).
+- 2026-10-25: task 2 done. `props.js`: props (jack-o-lantern, crow, bats,
+  ghost, horseman), accents by id (`sky_accents` disable/define; triggers
+  by date range, calendar event match with days before/after, dark), anchors
+  edge / ledge / sky, timed props via the event scheduler (horseman rides
+  the ledge behind the header, default every 15–30 min, rate key
+  `horseman`). Props react via `data-wx` (sputter in rain, snow caps),
+  `--lit` (darkness) and `--flick` (wind). Halloween = 10-24..10-31; ghost
+  10-29..10-31 after dark; bats after dark. Card `_fireEvent(name)` fires
+  an event on demand (testing). Tablet CPU read 40% right after a reload
+  with props + stars: measure steady state in task 14.

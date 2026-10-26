@@ -77,6 +77,7 @@
 //   screensaver_entity: switch.<...>   # sky: animations pause while it's on
 //   sky_scenes: {disable, map,         # sky: scene selection and rare-event rates
 //     define, rates}                   # (scenes.js, docs/family-calendar-scenes.md)
+//   sky_accents: {disable, define}     # sky: holiday/seasonal props (props.js)
 //   sky_override: {elevation, rising,  # sky: fixed inputs instead of sun.sun, the
 //     condition, hour, date, wind,     # weather and the clock (for previews)
 //     temperature}
@@ -97,6 +98,11 @@ const { skyTheme } = await import(new URL(`./sky.js${new URL(import.meta.url).se
 const { contextOf, pickScene, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = await import(
   new URL(`./scenes.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
+const { activeAccents, renderAccents, PROP_CSS, PROP_EVENTS, PROP_RATES } = await import(
+  new URL(`./props.js${new URL(import.meta.url).search}`, import.meta.url).href
+);
+const ALL_EVENTS = { ...EVENTS, ...PROP_EVENTS };
+const ALL_RATES = { ...DEFAULT_RATES, ...PROP_RATES };
 
 // Figtree for the sky theme, shipped next to the card. @font-face has no
 // effect inside a shadow root, so register it on the document.
@@ -930,6 +936,14 @@ class FamilyCalendarCard extends HTMLElement {
     this._skyCtx = ctx;
     const scene = pickScene(ctx, c.sky_scenes);
     const parts = renderScene(scene, ctx);
+    // Holiday/seasonal props (props.js), drawn with the scene and reacting
+    // to it through data-wx (weather group), --lit and --flick (wind).
+    const accents = activeAccents(ctx, c.sky_accents, (cal) => this._events[cal] || []);
+    const props = renderAccents(accents, ctx);
+    for (const k of Object.keys(parts)) parts[k] += props[k];
+    if (screen.dataset.wx !== ctx.group) screen.dataset.wx = ctx.group;
+    const flick = `${Math.max(0.5, 2.4 - ctx.wind / 10).toFixed(2)}s`;
+    if (screen.style.getPropertyValue("--flick") !== flick) screen.style.setProperty("--flick", flick);
     const sceneKey = JSON.stringify(parts);
     if (sceneKey !== this._sceneKey) {
       this._sceneKey = sceneKey;
@@ -938,7 +952,7 @@ class FamilyCalendarCard extends HTMLElement {
       this.shadowRoot.querySelector(".scene-edge").innerHTML = parts.edge;
       this.shadowRoot.querySelector(".scene-front").innerHTML = parts.front;
     }
-    this._scheduleEvents(scene.events);
+    this._scheduleEvents([...scene.events, ...accents.filter((a) => a.event).map((a) => a.event)]);
 
     const saver = c.screensaver_entity && this._hass.states[c.screensaver_entity]?.state === "on";
     if (saver !== this._paused) {
@@ -954,7 +968,7 @@ class FamilyCalendarCard extends HTMLElement {
   // within sky_scenes.rates, skipped while paused, until the scene drops them.
   _scheduleEvents(events) {
     this._evTimers = this._evTimers || {};
-    this._sceneEvents = events.filter((name) => EVENTS[name]);
+    this._sceneEvents = events.filter((name) => ALL_EVENTS[name]);
     for (const name of Object.keys(this._evTimers)) {
       if (!this._sceneEvents.includes(name)) {
         clearTimeout(this._evTimers[name]);
@@ -965,25 +979,28 @@ class FamilyCalendarCard extends HTMLElement {
   }
 
   _armEvent(name) {
-    const [lo, hi] = { ...DEFAULT_RATES, ...(this._config.sky_scenes?.rates || {}) }[name] || [60, 120];
+    const [lo, hi] = { ...ALL_RATES, ...(this._config.sky_scenes?.rates || {}) }[name] || [60, 120];
     this._evTimers[name] = setTimeout(
       () => {
         delete this._evTimers[name];
         if (!this.isConnected || !this._sceneEvents.includes(name)) return;
-        if (!this._paused) {
-          const hosts = {
-            back: this.shadowRoot.querySelector(".scene"),
-            edge: this.shadowRoot.querySelector(".scene-edge"),
-            front: this.shadowRoot.querySelector(".scene-front"),
-          };
-          const fired = EVENTS[name].fire(hosts, this._skyCtx) || [];
-          const [nodes, ms] = Array.isArray(fired) ? fired : [[], 0];
-          setTimeout(() => nodes.forEach((n) => n.remove()), ms);
-        }
+        if (!this._paused) this._fireEvent(name);
         this._armEvent(name);
       },
       (lo + Math.random() * (hi - lo)) * 1000,
     );
+  }
+
+  // Fire one rare event now (also handy for testing from the console).
+  _fireEvent(name) {
+    const hosts = {
+      back: this.shadowRoot.querySelector(".scene"),
+      edge: this.shadowRoot.querySelector(".scene-edge"),
+      front: this.shadowRoot.querySelector(".scene-front"),
+    };
+    const fired = ALL_EVENTS[name]?.fire(hosts, this._skyCtx);
+    const [nodes, ms] = Array.isArray(fired) ? fired : [[], 0];
+    setTimeout(() => nodes.forEach((n) => n.remove()), ms);
   }
 
   _renderClock() {
@@ -1515,6 +1532,7 @@ const STYLE = `
   .screen.sky .scene-front { inset: 0; z-index: 3; overflow: hidden; }
   .screen.sky.paused .scene *, .screen.sky.paused .scene-edge *, .screen.sky.paused .scene-front * { animation-play-state: paused !important; }
   ${LAYER_CSS}
+  ${PROP_CSS}
 
   /* Clock and weather straight on the sky. */
   .screen.sky .top { color: var(--on-sky); text-shadow: var(--sky-shadow); padding: 6px 8px 4px; }
