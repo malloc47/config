@@ -153,7 +153,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **6. Clouds + fog.** Cumulus parade, decks (soft/bright/brooding),
   wisps, contrails, cloud shadows, lit undersides, crepuscular rays, moon
   through clouds / halo, city glow, rolling fog, burn-off, lamp haze.
-- [ ] **7. Rain.** Animated rain by intensity, splashes and beads on the
+- [x] **7. Rain.** Animated rain by intensity, splashes and beads on the
   sheet edge, drizzle, window drops, lamp-lit rain, puddle shimmer,
   downpour, gusty sheets, edge drips.
 - [ ] **8. Storms.** Sky flashes, forked bolts, night strikes, heat
@@ -252,3 +252,12 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   partly-twilight-lit/rays, partly-night-patchy/moonclouds,
   cloudy-day-soft/bright/brooding, cloudy-night-cityglow/halo,
   fog-day-rolling/burnoff/edge, fog-night-lamps/moon (34 scenes total).
+- 2026-10-26: task 7 done. Layers `rainfall` (animated drops in a skewed
+  container, falling to the sheet's top edge; density ≤90, speed, slant,
+  length, tint day/night/lamp), `splashes` (edge: rings + hopping droplet,
+  beads on the glass; heavy), `windowdrops` (front: beads trickling down
+  the sheet), `puddle` (front: shimmer at the controls' top,
+  `--controls-y`), `gusts`, `drips` (edge runoff). The old static `rain`
+  layer name aliases `rainfall`. Scenes: rain-day-splash/drizzle/window,
+  rain-night-lamps/puddles, pouring-downpour/gusty/runoff; storm and sleet
+  use rainfall + splashes (40 scenes). Card sets `--controls-y`.

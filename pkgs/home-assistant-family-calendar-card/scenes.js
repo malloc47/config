@@ -389,11 +389,121 @@ export const LAYERS = {
       return o > 0.05 ? { back: `<div class="ly-milkyway" style="opacity: ${o.toFixed(2)}"></div>` } : {};
     },
   },
-  rain: {
-    css: `.ly-rain { position: absolute; left: 0; right: 0; top: 0; bottom: 60%;
-      background: repeating-linear-gradient(104deg, transparent 0 11px, rgba(255, 255, 255, 0.22) 11px 12px, transparent 12px 23px),
-        repeating-linear-gradient(104deg, transparent 0 17px, rgba(255, 255, 255, 0.14) 17px 18px, transparent 18px 31px); }`,
-    render: (ctx, p) => ({ back: `<div class="ly-rain" style="opacity: ${p.opacity ?? (ctx.dark ? 0.45 : 0.9)}"></div>` }),
+  // Rain falling through the sky and landing on the calendar sheet's top
+  // edge (the drops stop there; `splashes` draws the landings). The slant
+  // comes from skewing the container. params: density (drops, capped at
+  // 90), speed (s to fall, ~0.6), slant (deg), opacity, tint (day, night,
+  // lamp: warm, lit by streetlamps), length (px).
+  rainfall: {
+    css: `.ly-rainfall { position: absolute; left: -12%; right: -12%; top: 0; height: var(--edge-y, 220px); overflow: hidden; transform: skewX(var(--sk)); }
+      .ly-rainfall i { position: absolute; top: -80px; left: var(--x); width: var(--w); height: var(--l); border-radius: 1px;
+        background: linear-gradient(180deg, transparent, var(--c)); animation: ly-fall var(--dur) linear infinite; animation-delay: var(--d); }
+      @keyframes ly-fall { to { transform: translateY(calc(var(--edge-y, 220px) + 80px)); } }`,
+    render: (ctx, p) => {
+      const n = Math.min(90, p.density ?? 45);
+      const tint = { day: "rgba(255, 255, 255, 0.6)", night: "rgba(196, 212, 240, 0.45)", lamp: "rgba(255, 214, 160, 0.55)" }[
+        p.tint || (ctx.dark ? "night" : "day")
+      ];
+      const speed = p.speed ?? 0.65;
+      const len = p.length ?? 34;
+      const r = rng(311 + n);
+      const drops = Array.from({ length: n }, () => ({
+        x: r() * 100,
+        w: 1 + r() * 0.8,
+        l: len * (0.6 + r() * 0.8),
+        dur: speed * (0.75 + r() * 0.5),
+        d: -r() * 2,
+      }));
+      return {
+        back: `<div class="ly-rainfall" style="--sk: ${-(p.slant ?? 12)}deg; --c: ${tint}; opacity: ${p.opacity ?? 1}">${drops
+          .map(
+            (d) =>
+              `<i style="--x: ${d.x.toFixed(1)}%; --w: ${d.w.toFixed(1)}px; --l: ${d.l.toFixed(0)}px; --dur: ${d.dur.toFixed(2)}s; --d: ${d.d.toFixed(2)}s"></i>`,
+          )
+          .join("")}</div>`,
+      };
+    },
+  },
+  // Splashes along the calendar sheet's top edge: little rings spreading
+  // with a droplet hopping up, and beads of water sitting on the glass.
+  // params: count, beads, heavy (bigger and more often).
+  splashes: {
+    css: `.ly-splash i { position: absolute; top: -3px; left: var(--x); width: 16px; height: 5px; margin-left: -8px; border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.8); opacity: 0; animation: ly-splash var(--dur) ease-out infinite; animation-delay: var(--d); }
+      .ly-splash i::after { content: ""; position: absolute; left: 50%; top: -2px; width: 2.5px; height: 2.5px; margin-left: -1.25px; border-radius: 50%;
+        background: rgba(255, 255, 255, 0.85); animation: inherit; animation-name: ly-hop; }
+      .screen.dark .ly-splash i { border-color: rgba(205, 218, 240, 0.6); }
+      .ly-splash b { position: absolute; top: 2px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.25) 45%, rgba(255, 255, 255, 0.05) 70%);
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12); }
+      @keyframes ly-splash { 0% { opacity: 0.95; transform: scale(0.2); } 30% { opacity: 0; transform: scale(var(--sc, 1.3)); } 100% { opacity: 0; } }
+      @keyframes ly-hop { 0% { transform: translateY(0); opacity: 1; } 15% { transform: translateY(-9px); opacity: 0.9; } 30% { transform: translateY(0); opacity: 0; } 100% { opacity: 0; } }`,
+    render: (ctx, p) => {
+      const n = p.count ?? (p.heavy ? 26 : 16);
+      const r = rng(907 + n);
+      const rings = Array.from({ length: n }, () => ({ x: 2 + r() * 96, dur: (p.heavy ? 0.7 : 1.1) + r() * 1.2, d: -r() * 3 }));
+      const beads = Array.from({ length: p.beads ?? 9 }, () => ({ x: 3 + r() * 94, s: 3 + r() * 4 }));
+      return {
+        edge: `<div class="ly-splash" style="--sc: ${p.heavy ? 1.7 : 1.3}">${rings
+          .map((g) => `<i style="--x: ${g.x.toFixed(1)}%; --dur: ${g.dur.toFixed(2)}s; --d: ${g.d.toFixed(2)}s"></i>`)
+          .join("")}${beads.map((b) => `<b style="--x: ${b.x.toFixed(1)}%; --s: ${b.s.toFixed(1)}px"></b>`).join("")}</div>`,
+      };
+    },
+  },
+  // Raindrops on the glass: a few beads trickling slowly down the calendar
+  // sheet, faint enough to read through.
+  windowdrops: {
+    css: `.ly-wdrops i { position: absolute; top: calc(var(--edge-y, 220px) + var(--y)); left: var(--x); width: var(--s); height: calc(var(--s) * 1.2);
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; opacity: 0;
+        background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.02) 75%);
+        box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.12); animation: ly-trickle var(--dur) ease-in infinite; animation-delay: var(--d); }
+      @keyframes ly-trickle { 0% { opacity: 0; transform: translateY(0); } 10% { opacity: 0.85; } 60% { transform: translateY(14px); }
+        85% { opacity: 0.6; transform: translateY(90px); } 100% { opacity: 0; transform: translateY(110px); } }`,
+    render: () => {
+      const r = rng(4242);
+      return {
+        front: `<div class="ly-wdrops">${Array.from({ length: 8 }, () => {
+          const [x, y, s, dur, d] = [3 + r() * 94, 30 + r() * 300, 4 + r() * 5, 14 + r() * 14, -r() * 28];
+          return `<i style="--x: ${x.toFixed(1)}%; --y: ${y.toFixed(0)}px; --s: ${s.toFixed(1)}px; --dur: ${dur.toFixed(0)}s; --d: ${d.toFixed(0)}s"></i>`;
+        }).join("")}</div>`,
+      };
+    },
+  },
+  // A wet shimmer along the top of the controls: lamplight in the puddles.
+  puddle: {
+    css: `.ly-puddle { position: absolute; left: 12px; right: 12px; top: calc(var(--controls-y, 1080px) - 8px); height: 10px; filter: blur(2.5px);
+        background: repeating-linear-gradient(90deg, transparent 0 31px, rgba(255, 214, 160, 0.26) 31px 44px, transparent 44px 97px),
+          repeating-linear-gradient(90deg, transparent 0 13px, rgba(255, 226, 185, 0.18) 13px 18px, transparent 18px 59px);
+        background-size: 291px 100%, 177px 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+        animation: ly-puddle 9s linear infinite; }
+      @keyframes ly-puddle { to { background-position: 291px 0, -177px 0; } }`,
+    render: () => ({ front: `<div class="ly-puddle"></div>` }),
+  },
+  // Gusts: pale sheets of rain sweeping across now and then.
+  gusts: {
+    css: `.ly-gusts i { position: absolute; top: 0; height: var(--edge-y, 220px); width: 55%; left: -70%; transform: skewX(-22deg);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent); animation: ly-gust var(--dur) ease-in infinite; animation-delay: var(--d); }
+      @keyframes ly-gust { 0% { transform: skewX(-22deg) translateX(0); opacity: 0; } 15% { opacity: 1; } 60% { opacity: 1; }
+        100% { transform: skewX(-22deg) translateX(330%); opacity: 0; } }`,
+    render: () => ({ back: `<div class="ly-gusts"><i style="--dur: 6.5s; --d: 0s"></i><i style="--dur: 9s; --d: -4s"></i></div>` }),
+  },
+  // Runoff: drops gathering on the sheet's top edge and dripping down the
+  // glass.
+  drips: {
+    css: `.ly-drips i { position: absolute; top: 0; left: var(--x); width: 5px; height: 7px; margin-left: -2.5px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+        background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3) 55%, rgba(255, 255, 255, 0.08));
+        transform-origin: 50% 0; opacity: 0; animation: ly-drip var(--dur) ease-in infinite; animation-delay: var(--d); }
+      @keyframes ly-drip { 0% { opacity: 0; transform: scale(0.2); } 50% { opacity: 0.9; transform: scale(1); } 70% { transform: scale(1, 1.3) translateY(0); }
+        100% { opacity: 0; transform: scale(0.8, 1.6) translateY(70px); } }`,
+    render: () => {
+      const r = rng(1717);
+      return {
+        edge: `<div class="ly-drips">${Array.from({ length: 10 }, () => {
+          const [x, dur, d] = [3 + r() * 94, 2.4 + r() * 2.6, -r() * 5];
+          return `<i style="--x: ${x.toFixed(1)}%; --dur: ${dur.toFixed(2)}s; --d: ${d.toFixed(2)}s"></i>`;
+        }).join("")}</div>`,
+      };
+    },
   },
   snow: {
     css: `.ly-snow { position: absolute; left: 0; right: 0; top: 0; bottom: 60%; background-size: 140px 120px;
@@ -403,6 +513,9 @@ export const LAYERS = {
   },
 };
 
+
+// The old static rain layer's name, for any user-defined scenes using it.
+LAYERS.rain = LAYERS.rainfall;
 
 // ---- scenes ----------------------------------------------------------------
 
@@ -485,11 +598,38 @@ export const SCENES = {
     when: { group: "fog", phase: DARK, moon: "up" },
     layers: [["moon", { blur: 3 }], ["fog", { banks: 3, night: true }]],
   },
-  rain: { when: { group: "rain" }, layers: [["rain", {}]] },
-  pouring: { when: { group: "pouring" }, layers: [["rain", { opacity: 1 }]] },
-  storm: { when: { group: "storm" }, layers: [["rain", {}]], events: ["lightning"] },
+  "rain-day-splash": { when: { group: "rain", phase: LIGHT }, layers: [["rainfall", { density: 45 }], ["splashes", {}]] },
+  "rain-day-drizzle": {
+    when: { group: "rain", phase: LIGHT },
+    layers: [["rainfall", { density: 30, speed: 1.1, length: 16, opacity: 0.7, slant: 6 }], ["splashes", { count: 8, beads: 14 }]],
+  },
+  "rain-day-window": {
+    when: { group: "rain", phase: LIGHT },
+    layers: [["rainfall", { density: 35 }], ["splashes", { count: 12 }], ["windowdrops", {}]],
+  },
+  "rain-night-lamps": {
+    when: { group: "rain", phase: DARK },
+    layers: [["lamps", {}], ["rainfall", { density: 45, tint: "lamp" }], ["splashes", {}]],
+  },
+  "rain-night-puddles": {
+    when: { group: "rain", phase: DARK },
+    layers: [["rainfall", { density: 40 }], ["splashes", {}], ["puddle", {}]],
+  },
+  "pouring-downpour": {
+    when: { group: "pouring" },
+    layers: [["rainfall", { density: 85, speed: 0.45, slant: 6, length: 44 }], ["splashes", { heavy: true }]],
+  },
+  "pouring-gusty": {
+    when: { group: "pouring" },
+    layers: [["rainfall", { density: 65, speed: 0.5, slant: 24, length: 40 }], ["gusts", {}], ["splashes", { heavy: true }]],
+  },
+  "pouring-runoff": {
+    when: { group: "pouring" },
+    layers: [["rainfall", { density: 70, speed: 0.5, length: 40 }], ["splashes", { heavy: true }], ["drips", {}]],
+  },
+  storm: { when: { group: "storm" }, layers: [["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]], events: ["lightning"] },
   snow: { when: { group: "snow" }, layers: [["snow", {}]] },
-  sleet: { when: { group: "sleet" }, layers: [["snow", {}], ["rain", { opacity: 0.6 }]] },
+  sleet: { when: { group: "sleet" }, layers: [["snow", {}], ["rainfall", { density: 25, opacity: 0.6 }]] },
   "wind-day": { when: { group: "wind", phase: LIGHT }, layers: [] },
   "wind-night": { when: { group: "wind", phase: DARK }, layers: [["stars", { density: 40 }], ["moon", {}]] },
 };

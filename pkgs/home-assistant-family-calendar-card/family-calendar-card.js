@@ -968,9 +968,12 @@ class FamilyCalendarCard extends HTMLElement {
       this._paused = saver;
       screen.classList.toggle("paused", saver);
     }
-    // The edge host follows the calendar sheet's top.
+    // The edge host follows the calendar sheet's top; scenery also knows
+    // where the controls start (--controls-y).
     const edgeY = `${this.shadowRoot.querySelector(".calendar").offsetTop}px`;
     if (screen.style.getPropertyValue("--edge-y") !== edgeY) screen.style.setProperty("--edge-y", edgeY);
+    const controlsY = `${this.shadowRoot.querySelector(".controls").offsetTop}px`;
+    if (screen.style.getPropertyValue("--controls-y") !== controlsY) screen.style.setProperty("--controls-y", controlsY);
   }
 
   // Scene and prop markup, one wrapper per item ({key, host, html}): a host
