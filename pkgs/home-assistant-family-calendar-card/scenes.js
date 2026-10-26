@@ -627,7 +627,31 @@ export const SCENES = {
     when: { group: "pouring" },
     layers: [["rainfall", { density: 70, speed: 0.5, length: 40 }], ["splashes", { heavy: true }], ["drips", {}]],
   },
-  storm: { when: { group: "storm" }, layers: [["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]], events: ["lightning"] },
+  "storm-day-distant": {
+    when: { condition: "lightning-rainy", phase: LIGHT },
+    layers: [["deck", { tone: "brooding" }], ["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]],
+    events: ["lightning"],
+  },
+  "storm-day-close": {
+    when: { condition: "lightning-rainy", phase: LIGHT },
+    layers: [["deck", { tone: "brooding" }], ["rainfall", { density: 60, speed: 0.48 }], ["splashes", { heavy: true }]],
+    events: ["lightning", "bolt"],
+  },
+  "storm-night-strike": {
+    when: { condition: "lightning-rainy", phase: DARK },
+    layers: [["deck", { tone: "night" }], ["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]],
+    events: ["lightning", "bolt"],
+  },
+  "storm-night-heat": {
+    when: { condition: "lightning-rainy", phase: DARK },
+    layers: [["deck", { tone: "night" }], ["rainfall", { density: 35 }], ["splashes", {}]],
+    events: ["heat_lightning", "lightning"],
+  },
+  "storm-dry": {
+    when: { condition: "lightning" },
+    layers: [["deck", { tone: "brooding" }]],
+    events: ["heat_lightning", "lightning"],
+  },
   snow: { when: { group: "snow" }, layers: [["snow", {}]] },
   sleet: { when: { group: "sleet" }, layers: [["snow", {}], ["rainfall", { density: 25, opacity: 0.6 }]] },
   "wind-day": { when: { group: "wind", phase: LIGHT }, layers: [] },
@@ -689,7 +713,86 @@ export function renderScene(scene, ctx) {
 // Rare events: when the scene lists one, the card fires it at random
 // intervals from sky_scenes.rates (seconds [min, max]). fire() adds
 // short-lived markup to a host and returns how long to keep it (ms).
+// Lightning: light up the sky (front host), and briefly mark the page with
+// .flash so props can catch the light.
+const flash = (hosts, peak, ms = 700) => {
+  const node = document.createElement("i");
+  node.className = "ly-flash";
+  node.style.setProperty("--pk", peak);
+  hosts.front.append(node);
+  hosts.screen?.classList.add("flash");
+  setTimeout(() => hosts.screen?.classList.remove("flash"), ms * 0.6);
+  return node;
+};
+// A forked bolt from the top of the sky down to the calendar's edge.
+const boltPath = (r, h) => {
+  let x = 0;
+  let y = 0;
+  let d = "M0 0";
+  const forks = [];
+  while (y < h) {
+    y += 14 + r() * 22;
+    x += (r() - 0.5) * 34;
+    d += ` L${x.toFixed(0)} ${Math.min(y, h).toFixed(0)}`;
+    if (r() < 0.28) {
+      let fx = x;
+      let fy = y;
+      let f = `M${fx.toFixed(0)} ${fy.toFixed(0)}`;
+      for (let k = 0; k < 3; k++) {
+        fy += 10 + r() * 16;
+        fx += (r() < 0.5 ? -1 : 1) * (8 + r() * 16);
+        f += ` L${fx.toFixed(0)} ${fy.toFixed(0)}`;
+      }
+      forks.push(f);
+    }
+  }
+  return { d, forks };
+};
+
 export const EVENTS = {
+  // Sheet lightning: the sky flickers bright, no bolt.
+  lightning: {
+    css: `.ly-flash { position: fixed; inset: 0; pointer-events: none; background: rgba(235, 240, 255, 1); mix-blend-mode: screen; opacity: 0;
+        animation: ly-flash 0.7s linear forwards; }
+      @keyframes ly-flash { 0% { opacity: 0; } 8% { opacity: var(--pk); } 16% { opacity: 0.04; } 26% { opacity: calc(var(--pk) * 0.7); }
+        44% { opacity: 0.02; } 52% { opacity: calc(var(--pk) * 0.35); } 100% { opacity: 0; } }
+      .screen.flash .p-hh svg, .screen.flash .p-crow svg, .screen.flash .p-pk svg, .screen.flash .p-bat { filter: brightness(1.8) drop-shadow(0 0 3px rgba(230, 235, 255, 0.9)); }`,
+    fire(hosts, ctx) {
+      return [[flash(hosts, ctx.dark ? 0.24 : 0.2)], 900];
+    },
+  },
+  // A forked bolt striking down to the calendar's edge, with a bright flash.
+  bolt: {
+    css: `.ly-bolt { position: absolute; top: 0; transform: translateX(-50%); overflow: visible; opacity: 0; animation: ly-bolt 0.6s linear forwards;
+        filter: drop-shadow(0 0 4px rgba(210, 220, 255, 0.95)) drop-shadow(0 0 12px rgba(170, 190, 255, 0.7)); }
+      .ly-bolt path { fill: none; stroke: #f6f8ff; stroke-linejoin: round; stroke-linecap: round; }
+      @keyframes ly-bolt { 0% { opacity: 0; } 6% { opacity: 1; } 18% { opacity: 0.15; } 28% { opacity: 1; } 60% { opacity: 0.6; } 100% { opacity: 0; } }`,
+    fire(hosts, ctx) {
+      const r = rng(Date.now() & 0xffff);
+      const h = (hosts.screen?.querySelector(".calendar")?.offsetTop || 220) - 6;
+      const { d, forks } = boltPath(r, h);
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `<svg class="ly-bolt" style="left: ${(15 + r() * 70).toFixed(0)}%" width="120" height="${h}" viewBox="-60 0 120 ${h}">
+        <path d="${d}" stroke-width="2.6"></path>${forks.map((f) => `<path d="${f}" stroke-width="1.4"></path>`).join("")}</svg>`;
+      const bolt = wrap.firstElementChild;
+      hosts.back.append(bolt);
+      return [[bolt, flash(hosts, ctx.dark ? 0.2 : 0.3)], 900];
+    },
+  },
+  // Heat lightning: silent glows pulsing along the horizon.
+  heat_lightning: {
+    css: `.ly-heat { position: absolute; top: calc(var(--edge-y, 220px) - 150px); width: 360px; height: 220px; transform: translateX(-50%); border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(255, 210, 230, 0.55), rgba(255, 170, 200, 0.18) 50%, transparent); opacity: 0;
+        animation: ly-heat 1.6s ease-in-out forwards; }
+      @keyframes ly-heat { 0% { opacity: 0; } 12% { opacity: 0.9; } 25% { opacity: 0.2; } 38% { opacity: 0.7; } 100% { opacity: 0; } }`,
+    fire(hosts) {
+      const node = document.createElement("i");
+      node.className = "ly-heat";
+      node.style.left = `${10 + Math.random() * 80}%`;
+      hosts.back.append(node);
+      return [[node], 1800];
+    },
+  },
   // A meteor streaking down across the upper sky.
   shooting_star: {
     css: `.ly-meteor { position: absolute; width: 130px; height: 2px; transform-origin: 0 50%; opacity: 0;
@@ -708,7 +811,13 @@ export const EVENTS = {
     },
   },
 };
-export const DEFAULT_RATES = { lightning: [30, 90], shooting_star: [180, 300], birds: [3000, 4200] };
+export const DEFAULT_RATES = {
+  lightning: [30, 90],
+  bolt: [120, 300],
+  heat_lightning: [15, 45],
+  shooting_star: [180, 300],
+  birds: [3000, 4200],
+};
 
 // All layer and event CSS, for the card's stylesheet.
 export const LAYER_CSS = [...Object.values(LAYERS), ...Object.values(EVENTS)]

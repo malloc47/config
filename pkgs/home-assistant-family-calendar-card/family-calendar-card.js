@@ -1030,6 +1030,7 @@ class FamilyCalendarCard extends HTMLElement {
   // Fire one rare event now (also handy for testing from the console).
   _fireEvent(name) {
     const hosts = {
+      screen: this.shadowRoot.querySelector(".screen"),
       back: this.shadowRoot.querySelector(".scene"),
       edge: this.shadowRoot.querySelector(".scene-edge"),
       front: this.shadowRoot.querySelector(".scene-front"),

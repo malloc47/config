@@ -156,7 +156,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **7. Rain.** Animated rain by intensity, splashes and beads on the
   sheet edge, drizzle, window drops, lamp-lit rain, puddle shimmer,
   downpour, gusty sheets, edge drips.
-- [ ] **8. Storms.** Sky flashes, forked bolts, night strikes, heat
+- [x] **8. Storms.** Sky flashes, forked bolts, night strikes, heat
   lightning (rates from config).
 - [ ] **9. Snow, sleet, hail.** Gentle snow, flurries, snow cap building on
   the edge, lamp-lit snow, quiet snow, sleet, hail bounces, frost.
@@ -261,3 +261,10 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   layer name aliases `rainfall`. Scenes: rain-day-splash/drizzle/window,
   rain-night-lamps/puddles, pouring-downpour/gusty/runoff; storm and sleet
   use rainfall + splashes (40 scenes). Card sets `--controls-y`.
+- 2026-10-26: task 8 done. Events `lightning` (sky flicker, front host,
+  screen-blended; marks `.screen.flash` so props catch the light), `bolt`
+  (random forked SVG bolt down to the sheet's edge + flash), and
+  `heat_lightning` (silent horizon pulses). Rates: lightning 30–90 s, bolt
+  120–300 s, heat_lightning 15–45 s. Event hosts gain `screen`. Scenes:
+  storm-day-distant/close, storm-night-strike/heat (lightning-rainy),
+  storm-dry (lightning). Night flash peaks kept low so bolts stay visible.
