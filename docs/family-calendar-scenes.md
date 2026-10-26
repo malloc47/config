@@ -82,6 +82,8 @@ sky_accents:                  # props (props.js); built-in accents by id
     my-pumpkins:
       prop: jack-o-lantern
       when: { dates: "10-24..10-31" }   # MM-DD..MM-DD (may wrap the year)
+      # or: when: { nth_weekday: [11, 4, 4], days_before: 3, days_after: 1 }
+      #   (month, weekday 0=Sun..6, n: here the 4th Thursday of November)
       # or: when: { calendar: calendar.united_states_ny, match: "^Thanksgiving",
       #             days_before: 3, days_after: 0, dark: true }
       place: edge             # edge (on the sheet's top edge) | ledge (same,
@@ -178,7 +180,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **12. Seasonal modifiers + rainbow.** Petals, heat shimmer, autumn
   leaves, frost; rainbow after rain (HA history of the weather entity,
   once a day).
-- [ ] **13. Other holidays.** Thanksgiving, Christmas/winter (string
+- [x] **13. Other holidays.** Thanksgiving, Christmas/winter (string
   lights), New Year's Eve (fireworks), Valentine's Day, 4th of July
   (fireworks), Fiestas Patrias (Peruvian flag).
 - [ ] **14. Tuning.** Device performance pass, density/opacity tuning,
@@ -308,3 +310,15 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   entity's 3 h history (`history/period`, minimal), re-read every 10 min.
   New `when` keys: season, not_group, temperature_below/above, wind_above,
   elevation_above/below, rain_ended_within. `sky_override.rain_ended`.
+- 2026-10-26: task 13 done. Props turkey, gourds, string-lights (scallops of
+  twinkling bulbs on the edge; glow follows darkness; snow caps), tree
+  (ornaments, glowing star, snow), fireworks (looping bursts, own cycle
+  each; colors), hearts (drifting up), bunting (pennants on the edge;
+  colors), flag (waving on a pole; bands, Peru's by default). Accents:
+  thanksgiving-turkey/gourds (4th Thu of Nov −3/+1 days, via new
+  `nth_weekday` rule; no calendar dependency), winter-lights 12-01..01-06,
+  christmas-tree 12-10..12-26, nye-fireworks 12-31..01-01 dark,
+  valentines-hearts 02-13..02-14, july4-bunting 07-01..07-04,
+  july4-fireworks 07-04 dark (red/white/blue), fiestas-patrias-flag
+  07-28..07-29, fiestas-patrias-bunting 07-27..07-29 (red/white). Fixed
+  single-day `dates` ("07-04") being read as open-ended.
