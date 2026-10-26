@@ -88,6 +88,16 @@ sky_accents:                  # props (props.js); built-in accents by id
                               # behind text and glass) | sky
       params: { side: right, count: 3 }
   # timed props (event:) fire at sky_scenes.rates[<event>], e.g. horseman
+sky_modifiers:                # layers over any scene; all that match apply
+  disable: [summer-heat]      # spring-petals, summer-heat, autumn-leaves,
+                              # winter-frost, rainbow
+  define:
+    my-mod:
+      when: { season: winter, temperature_below: 20 }   # also not_group,
+      # temperature_above, wind_above, elevation_above/below, rain_ended_within
+      layers: [[frost, {}]]
+      once_per_day: false     # true: one occasion a day per device
+sky_override:                 # testing: ... rain_ended: 20 (minutes ago)
 ```
 
 ## Scene breakdown (reviewed)
@@ -165,7 +175,7 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
 - [x] **11. Dawn/day/golden/dusk extras.** First light band, pastel cirrus,
   lens shimmer, long light rays, gilded edges, birds (rare), blue hour,
   afterglow.
-- [ ] **12. Seasonal modifiers + rainbow.** Petals, heat shimmer, autumn
+- [x] **12. Seasonal modifiers + rainbow.** Petals, heat shimmer, autumn
   leaves, frost; rainbow after rain (HA history of the weather entity,
   once a day).
 - [ ] **13. Other holidays.** Thanksgiving, Christmas/winter (string
@@ -286,3 +296,15 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   event `birds` (V of flapping birds, 3000–4200 s). Clear scenes per phase:
   dawn firstlight/cirrus/morning-star, day crisp/contrails/wisps, golden
   rays/gilded/flock, dusk blue-hour/afterglow/evening-star (59 scenes).
+- 2026-10-26: task 12 done. Modifiers (scenes.js `MODIFIERS`,
+  `pickModifiers`; card `sky_modifiers` disable/define) are layered over
+  whatever scene shows, all that match: spring-petals (spring, clear/partly,
+  light), summer-heat (summer day >85°F: warm haze + wavering bands),
+  autumn-leaves (autumn, wind >12 mph, dry), winter-frost (<32°F: fern-like
+  random ice strokes in the window's top corners + a rime of crystals on
+  the sheet's edge), rainbow (clear/partly, rain ended ≤60 min ago, sun
+  4–42° up; arc opposite the sun; `once_per_day`, remembered in the
+  tablet's localStorage by date + rain-end time). Rain end: the weather
+  entity's 3 h history (`history/period`, minimal), re-read every 10 min.
+  New `when` keys: season, not_group, temperature_below/above, wind_above,
+  elevation_above/below, rain_ended_within. `sky_override.rain_ended`.

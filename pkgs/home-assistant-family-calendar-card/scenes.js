@@ -44,7 +44,7 @@ export function phaseOf(elevation, rising, hour) {
   return elevation >= 0 ? "golden" : "dusk";
 }
 
-export function contextOf({ elevation, rising, hour, condition, date, wind, temperature, dark, late, moon, planets, kp, auroraKp = 4 }) {
+export function contextOf({ elevation, rising, hour, condition, date, wind, temperature, dark, late, moon, planets, kp, auroraKp = 4, rainEnded }) {
   const e = Number.isFinite(elevation) ? elevation : 30;
   const darkness = Math.max(0, Math.min(1, (6 - e) / 18));
   const m = moon || { alt: -90, az: 180, illum: 0, phase: 0 };
@@ -83,6 +83,8 @@ export function contextOf({ elevation, rising, hour, condition, date, wind, temp
     ] || "autumn",
     wind: Number.isFinite(wind) ? wind : 0,
     temperature: Number.isFinite(temperature) ? temperature : null,
+    // Minutes since the rain stopped (from the weather history), if lately.
+    rainEnded: Number.isFinite(rainEnded) ? rainEnded : null,
   };
 }
 
@@ -704,6 +706,91 @@ LAYERS.gilded = {
   render: () => ({ edge: `<div class="ly-gilded"></div>` }),
 };
 
+// Heat shimmer: a warm haze over the horizon with wavering bands in it.
+LAYERS.heat = {
+  css: `.ly-heat-band { position: absolute; left: 0; right: 0; top: calc(var(--edge-y, 220px) - 80px); height: 84px;
+    background: linear-gradient(180deg, transparent, rgba(255, 226, 170, 0.28) 70%, rgba(255, 214, 150, 0.36)); }
+    .ly-heat-band i { position: absolute; inset: 0; animation: ly-heat-waver var(--dur) ease-in-out infinite alternate; animation-delay: var(--d);
+      background: repeating-linear-gradient(180deg, transparent 0 var(--a), rgba(255, 255, 255, 0.2) var(--a) calc(var(--a) + 2px), transparent calc(var(--a) + 2px) var(--p));
+      -webkit-mask-image: linear-gradient(180deg, transparent, #000 60%, transparent), linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+      -webkit-mask-composite: source-in; filter: blur(0.8px); }
+    @keyframes ly-heat-waver { from { transform: skewX(-4deg) translateY(0) scaleY(1); } to { transform: skewX(4deg) translateY(-4px) scaleY(1.08); } }`,
+  render: () => ({
+    back: `<div class="ly-heat-band"><i style="--a: 6px; --p: 13px; --dur: 2.6s; --d: 0s"></i><i style="--a: 3px; --p: 17px; --dur: 3.4s; --d: -1.3s; opacity: 0.7"></i></div>`,
+  }),
+};
+// Frost creeping in from the window's top corners: fern-like ice crystals
+// (random branching strokes) over the sky, small enough to stay clear of
+// the text, and a rime of crystals along the calendar sheet's edge.
+function frostFern(r, w, h) {
+  const paths = [];
+  const branch = (x, y, ang, len, depth) => {
+    let [cx, cy] = [x, y];
+    const steps = 4 + Math.floor(r() * 3);
+    let d = `M${cx.toFixed(1)} ${cy.toFixed(1)}`;
+    for (let k = 0; k < steps; k++) {
+      ang += (r() - 0.5) * 0.35;
+      const seg = len / steps;
+      const [nx, ny] = [cx + Math.cos(ang) * seg, cy + Math.sin(ang) * seg];
+      d += ` L${nx.toFixed(1)} ${ny.toFixed(1)}`;
+      if (depth < 2 && r() < 0.8) {
+        const side = r() < 0.5 ? 1 : -1;
+        branch(nx, ny, ang + side * (0.9 + r() * 0.3), len * (0.35 + r() * 0.2), depth + 1);
+        if (r() < 0.5) branch(nx, ny, ang - side * (0.9 + r() * 0.3), len * (0.3 + r() * 0.2), depth + 1);
+      }
+      [cx, cy] = [nx, ny];
+    }
+    paths.push(`<path d="${d}" stroke-width="${(1.4 - depth * 0.4).toFixed(1)}" opacity="${(0.85 - depth * 0.2).toFixed(2)}"/>`);
+  };
+  for (let k = 0; k < 5; k++) {
+    const ang = (k / 4) * (Math.PI / 2) * 0.9 + 0.05 + (r() - 0.5) * 0.2;
+    branch(0, 0, ang, Math.min(w, h) * (0.55 + r() * 0.45), 0);
+  }
+  return paths.join("");
+}
+LAYERS.frost = {
+  css: `.ly-frost i { position: absolute; top: 0; width: 160px; height: 115px; opacity: 0.85;
+      background: radial-gradient(150px 110px at var(--ox) 0, rgba(240, 248, 255, 0.5), rgba(225, 238, 252, 0.15) 60%, transparent 85%); }
+    .ly-frost i.l { left: 0; --ox: 0; }
+    .ly-frost i.r { right: 0; --ox: 100%; width: 110px; height: 80px; }
+    .ly-frost i.r svg { transform: scaleX(-1); }
+    .ly-frost svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: #f4f9ff; stroke-linecap: round;
+      filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.7)); }
+    .ly-frost b { position: absolute; left: 14px; right: 14px; top: calc(var(--edge-y, 220px) - 4px); height: 8px;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+    .ly-frost b svg { filter: drop-shadow(0 0 2px rgba(230, 242, 255, 0.9)); }
+    .ly-frost b path { vector-effect: non-scaling-stroke; }`,
+  render: () => {
+    const r = rng(3131);
+    const corner = (w, h) => `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${frostFern(r, w, h)}</svg>`;
+    // The rime: short crystals standing at random angles along the edge.
+    const rime = Array.from({ length: 140 }, () => {
+      const x = r() * 1000;
+      const a = -Math.PI / 2 + (r() - 0.5) * 1.6;
+      const l = 2 + r() * 5;
+      return `M${x.toFixed(0)} 6 l${(Math.cos(a) * l).toFixed(1)} ${(Math.sin(a) * l).toFixed(1)}`;
+    }).join(" ");
+    return {
+      front: `<div class="ly-frost"><i class="l">${corner(160, 115)}</i><i class="r">${corner(110, 80)}</i>
+        <b><svg viewBox="0 0 1000 8" preserveAspectRatio="none"><path d="M0 6.5 H1000" stroke-width="1.5" opacity="0.7"/><path d="${rime}" stroke-width="1.1" opacity="0.85"/></svg></b></div>`,
+    };
+  },
+};
+// A rainbow arching opposite the sun, once the rain has passed.
+LAYERS.rainbow = {
+  css: `.ly-rainbow { position: absolute; width: 760px; height: 760px; transform: translate(-50%, -50%); border-radius: 50%;
+    background: radial-gradient(circle, transparent 0 60.5%, rgba(148, 0, 211, 0.5) 61%, rgba(75, 0, 130, 0.45) 62%, rgba(0, 0, 255, 0.45) 63%,
+      rgba(0, 200, 80, 0.45) 64.2%, rgba(255, 240, 0, 0.5) 65.4%, rgba(255, 127, 0, 0.5) 66.6%, rgba(255, 0, 0, 0.45) 67.8%, transparent 69%);
+    -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 52%); filter: blur(1.5px); opacity: var(--o);
+    animation: ly-rainbow-in 20s ease-out forwards; }
+    @keyframes ly-rainbow-in { from { opacity: 0; } to { opacity: var(--o); } }`,
+  render: (ctx, p) => {
+    // Centred on the antisolar side, below the horizon.
+    const x = 100 - ctx.sun.x;
+    return { back: `<div class="ly-rainbow" style="left: ${x}%; top: calc(var(--edge-y, 220px) + 160px); --o: ${p.opacity ?? 0.75}"></div>` };
+  },
+};
+
 // The old static rain layer's name, for any user-defined scenes using it.
 LAYERS.rain = LAYERS.rainfall;
 LAYERS.snow = LAYERS.snowfall;
@@ -890,10 +977,52 @@ function matches(when = {}, ctx) {
   if (when.moon === "bright" && ctx.moonlight < 0.25) return false;
   if (when.moon === "up" && !ctx.moon.up) return false;
   if (when.aurora === true && !ctx.aurora) return false;
+  const seasons = listOf(when.season);
+  if (seasons && !seasons.includes(ctx.season)) return false;
+  const notGroups = listOf(when.not_group);
+  if (notGroups && notGroups.includes(ctx.group)) return false;
+  if (when.temperature_below !== undefined && !(ctx.temperature !== null && ctx.temperature < when.temperature_below)) return false;
+  if (when.temperature_above !== undefined && !(ctx.temperature !== null && ctx.temperature > when.temperature_above)) return false;
+  if (when.wind_above !== undefined && !(ctx.wind > when.wind_above)) return false;
+  if (when.elevation_above !== undefined && !(ctx.elevation > when.elevation_above)) return false;
+  if (when.elevation_below !== undefined && !(ctx.elevation < when.elevation_below)) return false;
+  if (when.rain_ended_within !== undefined && !(ctx.rainEnded !== null && ctx.rainEnded <= when.rain_ended_within)) return false;
   // planets: true (any visible) or a list of names (one of them visible).
   if (when.planets === true && !ctx.planets.length) return false;
   if (Array.isArray(when.planets) && !ctx.planets.some((p) => when.planets.includes(p.name))) return false;
   return true;
+}
+
+// Modifiers: layers laid over whatever scene is showing when their `when`
+// matches (all that match apply, not one). sky_modifiers disables or
+// (re)defines them by id. `once_per_day` ones are limited by the card.
+export const MODIFIERS = {
+  "spring-petals": {
+    when: { season: "spring", group: ["clear", "partly"], phase: ["dawn", "day", "golden"] },
+    layers: [["leaves", { season: "spring", count: 4 }]],
+  },
+  "summer-heat": {
+    when: { season: "summer", temperature_above: 85, phase: "day", group: ["clear", "partly"] },
+    layers: [["heat", {}]],
+  },
+  "autumn-leaves": {
+    when: { season: "autumn", wind_above: 12, not_group: ["wind", "rain", "pouring", "storm", "snow", "sleet"] },
+    layers: [["leaves", { season: "autumn", count: 5 }]],
+  },
+  "winter-frost": { when: { temperature_below: 32 }, layers: [["frost", {}]] },
+  rainbow: {
+    when: { group: ["clear", "partly"], rain_ended_within: 60, elevation_above: 4, elevation_below: 42 },
+    layers: [["rainbow", {}]],
+    once_per_day: true,
+  },
+};
+
+export function pickModifiers(ctx, cfg = {}) {
+  const all = { ...MODIFIERS, ...(cfg.define || {}) };
+  const disabled = new Set(cfg.disable || []);
+  return Object.entries(all)
+    .filter(([id, m]) => !disabled.has(id) && matches(m.when, ctx))
+    .map(([id, m]) => ({ id, layers: m.layers || [], once_per_day: !!m.once_per_day }));
 }
 
 // The scene for a context. cfg is the card's sky_scenes: `disable` (ids),

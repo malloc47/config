@@ -78,11 +78,14 @@
 //   sky_scenes: {disable, map,         # sky: scene selection and rare-event rates
 //     define, rates}                   # (scenes.js, docs/family-calendar-scenes.md)
 //   sky_accents: {disable, define}     # sky: holiday/seasonal props (props.js)
+//   sky_modifiers: {disable, define}   # sky: layers over any scene (seasonal touches,
+//                                      # the rainbow after rain; scenes.js MODIFIERS)
 //   aurora_entity: sensor.<kp>         # sky: planetary K-index for the aurora scene
 //   aurora_kp: 4                       # sky: Kp at which the aurora shows
 //   sky_override: {elevation, rising,  # sky: fixed inputs instead of sun.sun, the
 //     condition, hour, date, wind,     # weather and the clock (for previews);
-//     temperature, time, kp}           # time (ISO) also places the moon
+//     temperature, time, kp,           # time (ISO) also places the moon
+//     rain_ended}                      # minutes since rain stopped
 //   height: auto                       # card height (CSS); auto fills the window
 //                                      # below the card's top edge
 //
@@ -97,7 +100,7 @@ const { Weather, CONDITION_TEXT, num, temp } = await import(
 );
 const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const { skyTheme } = await import(new URL(`./sky.js${new URL(import.meta.url).search}`, import.meta.url).href);
-const { contextOf, pickScene, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = await import(
+const { contextOf, pickScene, pickModifiers, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = await import(
   new URL(`./scenes.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
 const { activeAccents, renderAccents, PROP_CSS, PROP_EVENTS, PROP_RATES } = await import(
@@ -949,13 +952,19 @@ class FamilyCalendarCard extends HTMLElement {
       planets: planets(at, lat, lng).map((p) => ({ ...p, alt: round(p.alt, 0.5), az: round(p.az, 0.5), mag: round(p.mag, 0.1) })),
       kp: o.kp ?? (c.aurora_entity ? Number(this._hass.states[c.aurora_entity]?.state) : NaN),
       auroraKp: Number(c.aurora_kp ?? 4),
+      rainEnded: o.rain_ended ?? (this._rainEndedAt ? Math.round((Date.now() - this._rainEndedAt) / 60000) : NaN),
     });
+    if (o.rain_ended === undefined) this._checkRain();
     this._skyCtx = ctx;
     const scene = pickScene(ctx, c.sky_scenes);
     // Holiday/seasonal props (props.js), drawn with the scene and reacting
     // to it through data-wx (weather group), --lit and --flick (wind).
     const accents = activeAccents(ctx, c.sky_accents, (cal) => this._events[cal] || []);
-    const items = [...renderScene(scene, ctx), ...renderAccents(accents, ctx)];
+    // Modifiers (seasonal touches, the rainbow) over the scene; once-a-day
+    // ones are remembered per device by date and the rain they followed.
+    const mods = pickModifiers(ctx, c.sky_modifiers).filter((m) => !m.once_per_day || this._oncePerDay(m.id, ctx));
+    const modItems = renderScene({ layers: mods.flatMap((m) => m.layers) }, ctx).map((it) => ({ ...it, key: `mod:${it.key}` }));
+    const items = [...renderScene(scene, ctx), ...modItems, ...renderAccents(accents, ctx)];
     if (screen.dataset.wx !== ctx.group) screen.dataset.wx = ctx.group;
     screen.classList.toggle("gusty", ctx.group === "wind" || ctx.wind >= 15);
     const flick = `${Math.max(0.5, 2.4 - ctx.wind / 10).toFixed(2)}s`;
@@ -975,6 +984,54 @@ class FamilyCalendarCard extends HTMLElement {
     if (screen.style.getPropertyValue("--edge-y") !== edgeY) screen.style.setProperty("--edge-y", edgeY);
     const controlsY = `${this.shadowRoot.querySelector(".controls").offsetTop}px`;
     if (screen.style.getPropertyValue("--controls-y") !== controlsY) screen.style.setProperty("--controls-y", controlsY);
+  }
+
+  // When the rain stopped, from the weather entity's last three hours of
+  // history (minimal response: state and last_changed), re-checked every ten
+  // minutes; null while it's still wet or hasn't rained.
+  async _checkRain() {
+    const ent = this._config.weather_entity;
+    if (!ent || this._rainChecking || Date.now() - (this._rainCheckedAt || 0) < 600000) return;
+    this._rainChecking = true;
+    try {
+      const start = new Date(Date.now() - 3 * 3600e3).toISOString();
+      const res = await this._hass.callApi(
+        "GET",
+        `history/period/${encodeURIComponent(start)}?filter_entity_id=${ent}&minimal_response&no_attributes`,
+      );
+      const hist = res?.[0] || [];
+      const wet = (st) => /rain|pouring|lightning|snow|hail/.test(st || "");
+      let ended = null;
+      hist.forEach((h, i) => {
+        if (wet(h.state)) ended = hist[i + 1] ? Date.parse(hist[i + 1].last_changed) : null;
+      });
+      this._rainEndedAt = ended;
+    } catch (err) {
+      console.warn("family-calendar-card: weather history unavailable", err);
+    } finally {
+      this._rainChecking = false;
+      this._rainCheckedAt = Date.now();
+    }
+  }
+
+  // A once-a-day modifier may show for one occasion per day: the first
+  // (date, rain-ended time) it matched is stored on the device.
+  _oncePerDay(id, ctx) {
+    const stamp = `${ctx.date}|${ctx.rainEnded === null ? "" : Math.round(Date.now() / 60000) - ctx.rainEnded}`;
+    const key = `family-calendar-card:once:${id}`;
+    let seen = null;
+    try {
+      seen = localStorage.getItem(key);
+    } catch (_) {
+      seen = null;
+    }
+    if (seen && seen.split("|")[0] === ctx.date) return Math.abs(Number(seen.split("|")[1]) - Number(stamp.split("|")[1])) <= 2;
+    try {
+      localStorage.setItem(key, stamp);
+    } catch (_) {
+      // No storage: it may show again after a reload.
+    }
+    return true;
   }
 
   // Scene and prop markup, one wrapper per item ({key, host, html}): a host
