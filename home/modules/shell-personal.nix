@@ -238,6 +238,18 @@ in
           pg() { ps aux | grep $1 }
           ns() {NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell $(print ''${*/#/nixpkgs\#})}
           nr() { nix run "nixpkgs#$1" -- ''${@:2} }
+          # Fall back to ~/src/flakes for repos that don't ship their own flake
+          nd() {
+            local name=''${PWD:t}
+            if [[ -f flake.nix ]]; then
+              nix develop "$@"
+            elif [[ $(nix eval "$HOME/src/flakes#devShells" --apply "s: builtins.any (builtins.hasAttr \"$name\") (builtins.attrValues s)") == true ]]; then
+              nix develop "$HOME/src/flakes#$name" "$@"
+            else
+              echo "nd: no flake.nix here and no '$name' devShell in ~/src/flakes" >&2
+              return 1
+            fi
+          }
 
           materialize() {
             if [ -f "$1.link" ] ; then
@@ -401,6 +413,18 @@ in
 
         ns() { NIX_SHELL_PACKAGES="''${NIX_SHELL_PACKAGES:+$NIX_SHELL_PACKAGES }$*" nix shell "''${@/#/nixpkgs#}"; }
         nr() { nix run "nixpkgs#$1" -- ''${@:2}; }
+        # Fall back to ~/src/flakes for repos that don't ship their own flake
+        nd() {
+          local name=''${PWD##*/}
+          if [[ -f flake.nix ]]; then
+            nix develop "$@"
+          elif [[ $(nix eval "$HOME/src/flakes#devShells" --apply "s: builtins.any (builtins.hasAttr \"$name\") (builtins.attrValues s)") == true ]]; then
+            nix develop "$HOME/src/flakes#$name" "$@"
+          else
+            echo "nd: no flake.nix here and no '$name' devShell in ~/src/flakes" >&2
+            return 1
+          fi
+        }
 
         if [[ $TERM == "dumb" ]]; then
             export PS1="$ "
