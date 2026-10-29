@@ -27,8 +27,9 @@
 //                                      # list (and shown) already has: same title
 //                                      # ignoring case/punctuation, same times
 //   regular_schedule:                  # optional: timed events that repeat on several
-//     min_days: 3                      # weekdays of the visible days (same calendar,
-//     weekdays: [1, 2, 3, 4, 5]        # title and times) move out of the day columns
+//     min_days: 3                      # weekdays of a week (same calendar, title and
+//     lookaround: 14                   # times; any week within lookaround days of the
+//     weekdays: [1, 2, 3, 4, 5]        # visible ones) move out of the day columns
 //     title: Regular schedule          # into a strip: a row per calendar on a shared
 //     pickup_match: "^pick-?up\\b"     # time axis, with the weekdays where any of it
 //     pickup: "18:00"                  # is missing at the row's end. Pickup events
@@ -452,10 +453,16 @@ class FamilyCalendarCard extends HTMLElement {
     const today = this._today();
     const first = days[0] < today ? days[0] : today;
     const last = days[days.length - 1] > addDays(today, 1) ? days[days.length - 1] : addDays(today, 1);
-    const start = `${addDays(first, -1)}T00:00:00Z`;
-    const end = `${addDays(last, 2)}T00:00:00Z`;
+    // The regular schedule's calendars are fetched lookaround days further
+    // either side, to learn their routine from whole weeks (see _regular).
+    const rs = this._config.regular_schedule;
+    const pad = rs ? Number(rs.lookaround ?? 14) : 0;
+    const wide = rs?.calendars ? new Set(rs.calendars) : null;
     await Promise.all(
       this._calendars.map(async (cal) => {
+        const p = rs && (!wide || wide.has(cal.entity)) ? pad : 0;
+        const start = `${addDays(first, -1 - p)}T00:00:00Z`;
+        const end = `${addDays(last, 2 + p)}T00:00:00Z`;
         try {
           const evs = await this._hass.callApi(
             "GET",
@@ -561,8 +568,13 @@ class FamilyCalendarCard extends HTMLElement {
   // regular_schedule: the strip above the grid, a row per calendar on a
   // shared time axis (times are minutes after local midnight).
   //
-  // The routine: timed events that recur on at least min_days of the visible
-  // weekdays with the same calendar, title and start/end times. A duplicate
+  // The routine: timed events with the same calendar, title and start/end
+  // times that are on the visible days and recur on at least min_days
+  // weekdays, either among the visible days or within one week (Monday to
+  // Sunday) of the calendar's events lookaround days either side. The weeks
+  // around keep a short week (a holiday, half-days for conferences, and a
+  // view straddling two weeks) from hiding the routine: its odd days show as
+  // exceptions and stay in the grid. A duplicate
   // dropped from a later calendar still counts toward that calendar's routine
   // (dedupe works per occurrence, so on days the copies differ the later
   // calendar keeps its own).
@@ -628,9 +640,25 @@ class FamilyCalendarCard extends HTMLElement {
         }
       }
     });
+    // The weeks around: per calendar's own events, the weekdays each series
+    // falls on, week by week (keyed by the week's Monday).
+    const weekly = new Set();
+    const counts = new Map();
+    for (const cal of this._calendars) {
+      if (only && !only.has(cal.entity)) continue;
+      for (const ev of this._events[cal.entity] || []) {
+        if (ev.allDay || ev.startDay !== ev.endDay) continue;
+        const dow = new Date(`${ev.startDay}T12:00:00Z`).getUTCDay();
+        if (!weekdays.has(dow)) continue;
+        const k = `${keyOf(cal, ev)}|${addDays(ev.startDay, -((dow + 6) % 7))}`;
+        if (!counts.has(k)) counts.set(k, new Set());
+        counts.get(k).add(dow);
+        if (counts.get(k).size >= minDays) weekly.add(k.slice(0, k.lastIndexOf("|")));
+      }
+    }
     const routine = new Map();
     for (const s of series.values()) {
-      if (s.dows.size < minDays) continue;
+      if (s.dows.size < minDays && !weekly.has(s.key)) continue;
       if (!routine.has(s.cal.entity)) routine.set(s.cal.entity, []);
       routine.get(s.cal.entity).push(s);
     }
