@@ -225,7 +225,7 @@ in
             ) " $HOME/src/${config.settings.profile}";
         in
         ''
-          if [ $TERM = "dumb" ] || [ $TERM = "tramp" ] ; then
+          if [ "$TERM" = "dumb" ] || [ "$TERM" = "tramp" ] ; then
             unset RPROMPT
             unset RPS1
             PS1="$ "
