@@ -35,4 +35,7 @@
   home-assistant-family-calendar-card =
     prev.callPackage home-assistant-family-calendar-card/default.nix
       { };
+  home-assistant-kindle-weather-card =
+    prev.callPackage home-assistant-kindle-weather-card/default.nix
+      { };
 })

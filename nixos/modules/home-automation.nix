@@ -350,6 +350,11 @@ in
       # calendar with per-calendar chips, controls); the only card of a panel
       # view (hosts/aida/home-assistant/family-calendar-dashboard.yaml).
       pkgs.home-assistant-family-calendar-card
+      # kindle-weather-card — packaged in-repo (pkgs/home-assistant-kindle-weather-card).
+      # The whole 1072x1448 screen of the wall Kindle, rendered by Puppet;
+      # the only card of a panel view (hosts/aida/home-assistant/
+      # kindle-weather-dashboard.yaml, docs/kindle-weather.md).
+      pkgs.home-assistant-kindle-weather-card
     ];
     extraComponents = [
       "analytics"
@@ -444,6 +449,34 @@ in
           value_template = "{{ value_json[-1].Kp | float(0) }}";
           state_class = "measurement";
           scan_interval = 3600;
+        }
+      ];
+      # The wall Kindle's battery, POSTed by its dashboard loop on each wake
+      # ({"battery": 87, "charging": 0}; hosts/aida/kindle-weather). Nothing
+      # is drawn on the Kindle itself; this is for knowing when to charge it
+      # and how fast it drains. local_only: HA sees the Kindle's LAN address
+      # through Caddy (trusted_proxies), and the id isn't a secret.
+      template = [
+        {
+          trigger = [
+            {
+              trigger = "webhook";
+              webhook_id = "kindle-weather-battery";
+              allowed_methods = [ "POST" ];
+              local_only = true;
+            }
+          ];
+          sensor = [
+            {
+              name = "Kindle weather battery";
+              unique_id = "kindle_weather_battery";
+              device_class = "battery";
+              unit_of_measurement = "%";
+              state_class = "measurement";
+              state = "{{ trigger.json.battery | int(0) }}";
+              attributes.charging = "{{ trigger.json.charging | int(0) == 1 }}";
+            }
+          ];
         }
       ];
       # Home/installation display name (Settings -> System -> General -> Name).
@@ -1005,10 +1038,13 @@ in
   };
   # Puppet keeps one browser page open, which only loads Lovelace resources on
   # a full page load: restart it with HA (whose restarts otherwise leave the
-  # page on stale, failed subscriptions) and whenever the card changes.
+  # page on stale, failed subscriptions) and whenever a card it renders changes.
   systemd.services.ha-puppet = {
     partOf = [ "home-assistant.service" ];
-    restartTriggers = [ pkgs.home-assistant-eink-dashboard-card ];
+    restartTriggers = [
+      pkgs.home-assistant-eink-dashboard-card
+      pkgs.home-assistant-kindle-weather-card
+    ];
   };
 
   # mDNS for Matter device discovery/commissioning (not opened by openFirewall).
@@ -1054,14 +1090,15 @@ in
       '';
     };
 
-    # The e-ink panel's background image, from Puppet. No Authelia (the ESP32
-    # can't log in), so only the panel's dashboard path is reachable, and only
+    # The e-ink panels' images, from Puppet: the E1001's background and the
+    # wall Kindle's whole screen (docs/kindle-weather.md). No Authelia (neither
+    # device can log in), so only their dashboard paths are reachable, and only
     # from the LAN; everything else Puppet could render stays blocked.
     "eink.home.malloc47.com" = lib.mkIf config.services.ha-puppet.enable {
       useACMEHost = "home.malloc47.com";
       extraConfig = ''
         @panel {
-          path /eink-panel/*
+          path /eink-panel/* /kindle-weather/*
           remote_ip 192.168.1.0/24
         }
         handle @panel {

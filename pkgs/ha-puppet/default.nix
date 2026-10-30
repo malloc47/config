@@ -14,7 +14,11 @@
 #   - defaults the Chromium path to nixpkgs' chromium;
 #   - sends a content-hash ETag with each image and answers 304 to a matching
 #     If-None-Match, so a client (ESPHome online_image) can tell an unchanged
-#     render from a new one and skip work, e.g. a flashing full e-paper refresh.
+#     render from a new one and skip work, e.g. a flashing full e-paper refresh;
+#   - takes a `grayscale` query flag that encodes a PNG as single-channel 8-bit
+#     gray instead of RGBA, for clients that read PNG bytes as gray levels: the
+#     Kindle's stock `eips -g` (docs/kindle-weather.md) draws an RGBA PNG
+#     stretched 4x, and KOReader's bundled fbink is built without images.
 {
   lib,
   buildNpmPackage,
@@ -56,7 +60,16 @@ buildNpmPackage {
       --replace-fail '["./options-dev.json", "/data/options.json"].find(' \
                      '[process.env.PUPPET_OPTIONS_FILE, "./options-dev.json", "/data/options.json"].filter(Boolean).find(' \
       --replace-fail '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"' '"${lib.getExe chromium}"'
+    substituteInPlace screenshot.js \
+      --replace-fail 'async screenshotPage({ viewport, colors, paletteColors, dithering, invert, zoom,' \
+                     'async screenshotPage({ viewport, colors, paletteColors, dithering, invert, grayscale, zoom,' \
+      --replace-fail '        sharpInstance = sharpInstance.png();' \
+                     '        sharpInstance = grayscale ? sharpInstance.removeAlpha().toColourspace("b-w").png() : sharpInstance.png();'
     substituteInPlace http.js \
+      --replace-fail 'const invert = requestUrl.searchParams.has("invert");' \
+                     'const invert = requestUrl.searchParams.has("invert");
+      const grayscale = requestUrl.searchParams.has("grayscale");' \
+      --replace-fail '        autoHeight,' '        grayscale, autoHeight,' \
       --replace-fail 'server.listen(port);' 'server.listen(port, process.env.PUPPET_LISTEN_HOST || "127.0.0.1");' \
       --replace-fail 'import http from "node:http";' 'import http from "node:http";
     import { createHash } from "node:crypto";' \

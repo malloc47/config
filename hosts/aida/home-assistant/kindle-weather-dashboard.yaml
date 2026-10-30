@@ -1,0 +1,23 @@
+# Dashboard for the wall-mounted Kindle Paperwhite 3 (docs/kindle-weather.md).
+# HA dashboards are UI-managed (.storage), so this is the reference copy:
+# create a dashboard with URL `kindle-weather` (HA requires a hyphen), hide it
+# from the sidebar, make sure the non-admin `eink` user can see it, then paste
+# this into its raw configuration editor. Puppet renders /kindle-weather/weather
+# and the Kindle downloads it from
+# https://eink.home.malloc47.com/kindle-weather/weather (see
+# hosts/aida/kindle-weather/weatherdash.conf).
+title: Kindle weather
+views:
+  - title: Weather
+    path: weather
+    panel: true
+    cards:
+      - type: custom:kindle-weather-card
+        # NWS (official forecast, with precipitation probabilities); met.no takes
+        # over while it's unavailable.
+        weather_entity: weather.nws_khpn
+        fallback_weather_entity: weather.forecast_home
+        inside_entity: sensor.bedroom_climate_sensor_temperature
+        sun_entity: sun.sun
+        days: 5
+        hours: 24
