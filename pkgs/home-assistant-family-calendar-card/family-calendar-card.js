@@ -63,7 +63,9 @@
 //   fallback_weather_entity: ...       #   rain_probability, outdoor_hours, cold, hot
 //   inside_entity: sensor.<indoor temperature>   # optional, beside the outside temp
 //   sun_entity: sun.sun                # night icons for the current conditions
-//   cards: [...]                       # Lovelace cards for the controls strip
+//   cards: [...]                       # Lovelace cards for the controls strip; a
+//                                      # card with `button: true` is styled as a
+//                                      # button (raised, accent-tinted)
 //   controls_columns: 3                # grid columns for those cards (portrait)
 //   banner: false                      # bottom notification bar; its notices are
 //                                      # configured as on eink-dashboard-card:
@@ -779,14 +781,16 @@ class FamilyCalendarCard extends HTMLElement {
     }
     const helpers = await window.loadCardHelpers();
     if (token !== this._cardsToken) return;
-    this._cards = configs.map((cfg) => {
+    this._cards = configs.map(({ button, ...cfg }) => {
       const el = helpers.createCardElement(cfg);
+      el._fccButton = !!button;
       if (this._hass) el.hass = this._hass;
       // Cards re-create themselves on a rebuild request (e.g. after a lazy load).
       el.addEventListener("ll-rebuild", (ev) => {
         ev.stopPropagation();
         const fresh = helpers.createCardElement(cfg);
         fresh.hass = this._hass;
+        fresh._fccButton = el._fccButton;
         el.replaceWith(fresh);
         this._cards[this._cards.indexOf(el)] = fresh;
       });
@@ -803,7 +807,7 @@ class FamilyCalendarCard extends HTMLElement {
     box.replaceChildren(
       ...this._cards.map((card) => {
         const tile = document.createElement("div");
-        tile.className = "tile";
+        tile.className = card._fccButton ? "tile button" : "tile";
         tile.append(card);
         return tile;
       }),
@@ -1574,8 +1578,7 @@ const STYLE = `
   .bars { gap: 3px 0; padding: 6px 0 4px; border-bottom: 1px solid var(--divider-color); }
   .ev-bar { margin: 0 2px; padding: 3px 6px; border-radius: 6px; font-size: 14px; font-weight: 500; line-height: 1.25;
     background: var(--c); color: var(--ink); min-width: 0; }
-  .ev-bar .bt { overflow: hidden; overflow-wrap: break-word; hyphens: auto;
-    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .ev-bar .bt { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .ev-bar .t { font-weight: 400; opacity: 0.85; }
   .ev-bar.clip-l { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; }
   .ev-bar.clip-r { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 0; }
@@ -1630,6 +1633,11 @@ const STYLE = `
   /* A card that hides itself (a conditional card whose conditions fail)
      takes its wrapper with it, as it would take its grid cell. */
   .tile:has(> [hidden]), .tile:has(> [style*="display: none"]) { display: none; }
+  /* A control styled as a button: an accent outline and lift, pressed in on
+     touch, so it reads as an action rather than a status. */
+  .tile.button { border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--primary-color), 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.08s ease-out; }
+  .tile.button:active { transform: scale(0.97); }
 
   /* ==== sky & glass (theme: sky). Colours are custom properties set by
      _applySky() from sky.js; HA's own variables are pointed at them so the
@@ -1701,6 +1709,8 @@ const STYLE = `
   /* Tiles: glass panels around HA's tile cards (made transparent above). */
   .screen.sky .tile { border-radius: 18px; background: var(--glass);
     -webkit-backdrop-filter: blur(var(--glass-blur, 8px)) saturate(1.2); backdrop-filter: blur(var(--glass-blur, 8px)) saturate(1.2); box-shadow: inset 0 1px 0 var(--edge); }
+  .screen.sky .tile.button { border-radius: 18px; background: color-mix(in srgb, var(--accent) 30%, var(--glass));
+    box-shadow: inset 0 1px 0 var(--edge), inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 70%, transparent), 0 3px 8px rgba(0, 0, 0, 0.25); }
 
   /* Notification bar: a darker (by night, lighter) band of glass. */
   .screen.sky .banner { background: var(--banner); color: var(--on-banner); -webkit-backdrop-filter: blur(var(--glass-blur, 8px)); backdrop-filter: blur(var(--glass-blur, 8px)); }

@@ -193,7 +193,8 @@ export const LAYERS = {
   planets: {
     css: `.ly-planet { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 6px; }
       .ly-planet i { display: block; border-radius: 50%; background: var(--t); box-shadow: 0 0 6px 1px var(--t); }
-      .ly-planet span { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--on-sky2); white-space: nowrap;
+      .ly-planet span { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+        color: color-mix(in srgb, var(--t) 45%, #f2b65a);
         text-shadow: var(--sky-shadow); transform: translateX(calc(50% + 8px)); position: absolute; left: 0; }`,
     render: (ctx, p) => {
       const list = ctx.planets.filter((pl) => !p.only || p.only.includes(pl.name));

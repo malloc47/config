@@ -114,16 +114,18 @@ views:
         doors_entity: binary_sensor.perimeter_doors
         controls_columns: 3
         cards:
+          # Lights: one row each, the brightness slider beside the icon
+          # (which toggles them), so the row is as tall as the next.
           - type: tile
             entity: light.kitchen_overhead_lights
             name: Kitchen
-            features_position: bottom
+            features_position: inline
             features:
               - type: light-brightness
           - type: tile
             entity: light.kitchen_counter_lights
             name: Counter
-            features_position: bottom
+            features_position: inline
             features:
               - type: light-brightness
           # Dining room ceiling fixture (light and fan together, one switch).
@@ -156,14 +158,21 @@ views:
               entity: sensor.dishwasher_program_finish_time
               name: Dishwasher done
               icon: mdi:dishwasher
-          # Front doorbell: opens the camera's live view.
+          # Front door: toggles Kiosk Satellite's own full-screen camera view
+          # (its "Default" view is the front door camera) rather than HA's
+          # popup. Styled as a button (the card's `button` option).
           - type: tile
-            entity: camera.front_door_fluent
-            name: Doorbell
+            entity: select.family_calendar_camera_view
+            name: Front Door
             icon: mdi:doorbell-video
             hide_state: true
             color: blue
-            tap_action:
-              action: more-info
-            icon_tap_action:
-              action: more-info
+            button: true
+            tap_action: &front-door-toggle
+              action: perform-action
+              perform_action: select.select_next
+              target:
+                entity_id: select.family_calendar_camera_view
+              data:
+                cycle: true
+            icon_tap_action: *front-door-toggle
