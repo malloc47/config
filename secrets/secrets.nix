@@ -111,6 +111,14 @@ in
     cesare
   ];
 
+  # MQTT password of the wall Kindle's `kindle` user (mosquitto's LAN
+  # listener on aida); a plaintext copy lives on the Kindle in
+  # /mnt/us/weatherdash/mqtt.secret (docs/kindle-weather.md).
+  "kindle-mqtt-password.age".publicKeys = [
+    aida
+    malloc47
+  ];
+
   "deepseek-api-key.age".publicKeys = [
     malloc47
     malloc47-user

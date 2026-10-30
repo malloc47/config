@@ -242,7 +242,10 @@ let
   ];
 in
 {
-  imports = [ ./ha-puppet.nix ];
+  imports = [
+    ./ha-puppet.nix
+    ./kindle-weather.nix
+  ];
 
   # mosquitto — the MQTT hub. Loopback only, no anonymous access.
   services.mosquitto = {
@@ -449,34 +452,6 @@ in
           value_template = "{{ value_json[-1].Kp | float(0) }}";
           state_class = "measurement";
           scan_interval = 3600;
-        }
-      ];
-      # The wall Kindle's battery, POSTed by its dashboard loop on each wake
-      # ({"battery": 87, "charging": 0}; hosts/aida/kindle-weather). Nothing
-      # is drawn on the Kindle itself; this is for knowing when to charge it
-      # and how fast it drains. local_only: HA sees the Kindle's LAN address
-      # through Caddy (trusted_proxies), and the id isn't a secret.
-      template = [
-        {
-          trigger = [
-            {
-              trigger = "webhook";
-              webhook_id = "kindle-weather-battery";
-              allowed_methods = [ "POST" ];
-              local_only = true;
-            }
-          ];
-          sensor = [
-            {
-              name = "Kindle weather battery";
-              unique_id = "kindle_weather_battery";
-              device_class = "battery";
-              unit_of_measurement = "%";
-              state_class = "measurement";
-              state = "{{ trigger.json.battery | int(0) }}";
-              attributes.charging = "{{ trigger.json.charging | int(0) == 1 }}";
-            }
-          ];
         }
       ];
       # Home/installation display name (Settings -> System -> General -> Name).

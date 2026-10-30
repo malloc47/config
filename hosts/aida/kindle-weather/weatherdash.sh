@@ -3,9 +3,11 @@
 #
 # Stops the Kindle UI, then repeats: wait for Wi-Fi, download the Puppet
 # render of the kindle-weather dashboard (If-None-Match, so an unchanged image
-# isn't redrawn), draw it with a full refresh, report the battery, set an RTC
-# alarm for the next wake and suspend to RAM. E-ink keeps the picture without
-# power, so the device is only awake for the few seconds each update takes.
+# isn't redrawn), draw it with a full refresh, set an RTC alarm for the next
+# wake and suspend to RAM. E-ink keeps the picture without power, so the
+# device is only awake for the few seconds each update takes. On each wake it
+# also reads its settings from Home Assistant and reports its status, over
+# MQTT (nixos/modules/kindle-weather.nix).
 #
 # The power button (the only wake source besides the RTC; the touchscreen is
 # off in suspend): one press refreshes now, a second within DOUBLE_PRESS
@@ -25,6 +27,8 @@ RTC=/sys/class/rtc/$RTC_DEV
 RUN=/tmp/weatherdash
 LOG=$DIR/weatherdash.log
 PIDFILE=/tmp/weatherdash.pid
+BATT=/sys/class/power_supply/max77696-battery
+MQTT_PASSWORD=$(cat "$DIR/mqtt.secret" 2>/dev/null)
 
 log() {
 	echo "$(date '+%F %T') $*" >>"$LOG"
@@ -155,28 +159,99 @@ update() {
 		mv "$RUN/etag.new" "$RUN/etag"
 		draw
 		stale_shown=0
+		result=new
+		refreshed=$(date +%s)
 		log "drew new image"
 		;;
 	304)
 		rm -f "$RUN/new.png" "$RUN/etag.new"
 		# Redraw to clear the stale notice, if it's up.
 		[ "$stale_shown" = 1 ] && draw && stale_shown=0
+		result=unchanged
 		log "unchanged"
 		;;
 	*)
 		rm -f "$RUN/new.png" "$RUN/etag.new"
+		result=failed
 		log "fetch failed (HTTP $code)"
 		return 1
 		;;
 	esac
 }
 
-report_battery() {
-	[ -n "$BATTERY_WEBHOOK" ] || return 0
-	b=$(lipc-get-prop com.lab126.powerd battLevel 2>/dev/null)
+mqtt() {
+	[ -n "$MQTT_HOST" ] && [ -n "$MQTT_PASSWORD" ]
+}
+
+# Settings from Home Assistant, retained on kindle-weather/set/#. curl's MQTT
+# subscribe never ends on its own, so it reads for MQTT_READ_TIME (retained
+# messages arrive at once) and prints each message as a 2-byte topic length,
+# the topic and the payload, back to back; payloads are short text, so a NUL
+# (the length's high byte) starts the next message.
+read_settings() {
+	want_exit=0
+	mqtt || return 0
+	curl -s --max-time "$MQTT_READ_TIME" -u "kindle:$MQTT_PASSWORD" \
+		"mqtt://$MQTT_HOST:$MQTT_PORT/kindle-weather/set/%23" >"$RUN/set" 2>/dev/null
+	od -An -v -tu1 "$RUN/set" | awk '
+		{ for (i = 1; i <= NF; i++) b[++n] = $i }
+		END {
+			i = 1
+			while (i < n && b[i] == 0) {
+				t = ""
+				for (j = i + 2; j < i + 2 + b[i + 1] && j <= n; j++) t = t sprintf("%c", b[j])
+				p = ""
+				for (; j <= n && b[j] != 0; j++) p = p sprintf("%c", b[j])
+				sub(/.*\//, "", t)
+				print t "=" p
+				i = j
+			}
+		}' >"$RUN/set.txt"
+	while IFS='=' read -r key val; do
+		val=${val%%.*}
+		case "$key" in
+		interval) [ "$val" -ge 5 ] 2>/dev/null && [ "$val" -le 720 ] && INTERVAL=$((val * 60)) ;;
+		quiet_start) [ "$val" -ge 0 ] 2>/dev/null && [ "$val" -le 23 ] && QUIET_START=$val ;;
+		quiet_end) [ "$val" -ge 0 ] 2>/dev/null && [ "$val" -le 23 ] && QUIET_END=$val ;;
+		maintenance) [ "$val" = ON ] && maintenance=ON || maintenance=OFF ;;
+		exit) [ -n "$val" ] && want_exit=1 ;;
+		esac
+	done <"$RUN/set.txt"
+}
+
+# Status for Home Assistant (kindle-weather/state; aida keeps it retained).
+# $1 is the next scheduled wake.
+publish_status() {
+	mqtt || return 0
+	s=$(lipc-get-prop com.lab126.wifid signalStrength 2>/dev/null)
 	c=$(lipc-get-prop com.lab126.powerd isCharging 2>/dev/null)
-	curl -s -o /dev/null --max-time 15 -X POST -H 'Content-Type: application/json' \
-		-d "{\"battery\": ${b:-0}, \"charging\": ${c:-0}}" "$BATTERY_WEBHOOK"
+	json=$(printf '{"battery":%d,"charging":%s,"voltage":%d,"current":%d,"temperature":%d,"cycles":%d,"wifi":%d,"wake":%d,"next":%d,"refreshed":%d,"reason":"%s","result":"%s","awake":%d,"interval":%d,"quiet_start":%d,"quiet_end":%d,"maintenance":"%s","exit_seen":%s}' \
+		"$(cat $BATT/capacity)" "$([ "$c" = 1 ] && echo true || echo false)" \
+		"$(cat $BATT/voltage_now)" "$(cat $BATT/current_now)" "$(cat $BATT/temp)" \
+		"$(cat $BATT/cycle_count)" "${s%%/*}" "$wake_at" "$1" "$refreshed" "$reason" "$result" \
+		$(($(date +%s) - wake_at)) $((INTERVAL / 60)) "$QUIET_START" "$QUIET_END" "$maintenance" \
+		"$([ "$want_exit" = 1 ] && echo true || echo false)" 2>/dev/null)
+	curl -s -o /dev/null --max-time 5 -u "kindle:$MQTT_PASSWORD" -d "$json" \
+		"mqtt://$MQTT_HOST:$MQTT_PORT/kindle-weather/state" || log "status publish failed"
+}
+
+# Maintenance mode (switched on in HA): stay awake, reachable over SSH,
+# re-reading the settings every 30 s, until it's switched off, the next update
+# ($1) is due, the power button is pressed or HA asks to exit.
+maintenance_wait() {
+	log "maintenance mode: staying awake"
+	while [ "$maintenance" = ON ] && [ "$(date +%s)" -lt "$1" ]; do
+		i=0
+		while [ "$i" -lt 30 ]; do
+			sleep 1
+			[ "$(onkey)" = "$pressed" ] || return 0
+			i=$((i + 1))
+		done
+		read_settings
+		[ "$want_exit" = 1 ] && return 0
+		publish_status "$1"
+	done
+	log "maintenance mode: off"
 }
 
 show_stale() {
@@ -220,7 +295,10 @@ handle_press() {
 		usleep 100000
 		i=$((i + 1))
 	done
-	[ $(($(onkey) - $1)) -ge 2 ] && return 1
+	if [ $(($(onkey) - $1)) -ge 2 ]; then
+		log "power button pressed twice"
+		return 1
+	fi
 	pressed=$(onkey)
 	rm -f "$RUN/etag"
 	forced=1
@@ -249,31 +327,54 @@ main() {
 
 	pressed=$(onkey)
 	last_ok=$(date +%s)
+	refreshed=$last_ok
 	stale_shown=0
 	forced=0
+	maintenance=OFF
+	reason=start
 	while :; do
-		next=$(next_wake)
-		ok=0
+		wake_at=$(date +%s)
+		result=no_wifi
 		if wifi_up; then
-			update $((next - $(date +%s))) && ok=1 && last_ok=$(date +%s)
-			report_battery
+			read_settings
+			# An exit left over from before this start (e.g. pressed while the
+			# Kindle UI was up) is acknowledged but not acted on.
+			if [ "$want_exit" = 1 ] && [ "$reason" != start ]; then
+				result="exit"
+				publish_status 0
+				log "exit requested from Home Assistant"
+				break
+			fi
+			next=$(next_wake)
+			update $((next - $(date +%s))) && last_ok=$(date +%s)
 		else
+			next=$(next_wake)
 			log "no Wi-Fi after ${WIFI_TIMEOUT}s"
 		fi
 		# A failed refresh still has to clear the "Refreshing" line.
-		[ "$forced" = 1 ] && [ "$ok" = 0 ] && draw
+		[ "$forced" = 1 ] && [ "$result" != new ] && draw
 		forced=0
 		show_stale
+		publish_status "$next"
 		# Pressed while awake (e.g. during the fetch), or woke by the button.
 		if [ "$(onkey)" != "$pressed" ]; then
 			handle_press "$pressed" || break
+			reason=button
+			continue
+		fi
+		if [ "$maintenance" = ON ]; then
+			maintenance_wait "$next"
+			reason=maintenance
 			continue
 		fi
 		log "sleeping until $(date -d "@$next" '+%F %T')"
-		sleep_until "$next" && continue
+		if sleep_until "$next"; then
+			reason=timer
+			continue
+		fi
 		handle_press "$slept_at" || break
+		reason=button
 	done
-	log "power button pressed twice"
 }
 
 main "$@"

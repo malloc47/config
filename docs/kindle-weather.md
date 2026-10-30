@@ -13,7 +13,8 @@ it can sleep between hourly updates.
 | Device loop + settings | `hosts/aida/kindle-weather/weatherdash.sh`, `weatherdash.conf` → `/mnt/us/weatherdash/` |
 | Library launcher | `hosts/aida/kindle-weather/Weather Dashboard.sh` → `/mnt/us/documents/` |
 | Upload helper | `hosts/aida/kindle-weather/deploy.sh [--start] [user@host]` |
-| Battery in HA | `sensor.kindle_weather_battery` (webhook template sensor in `nixos/modules/home-automation.nix`) |
+| HA device "Kindle weather" (MQTT) | `nixos/modules/kindle-weather.nix`: discovery, status relay, mosquitto LAN listener `:1884` |
+| MQTT password | `secrets/kindle-mqtt-password.age` (aida) → `/mnt/us/weatherdash/mqtt.secret` (Kindle, not deployed) |
 | Device log | `/mnt/us/weatherdash/weatherdash.log` |
 
 ## How it works
@@ -21,7 +22,8 @@ it can sleep between hourly updates.
 `weatherdash.sh` stops the Kindle UI (`stop lab126_gui`), keeps powerd from
 suspending on its own (`preventScreenSaver 1`), and loops:
 
-1. wait for Wi-Fi to reassociate (`com.lab126.wifid cmState` = `CONNECTED`);
+1. wait for Wi-Fi to reassociate (`com.lab126.wifid cmState` = `CONNECTED`)
+   and read its settings from Home Assistant (see below);
 2. fetch the image with `If-None-Match`; Puppet answers 304 if the render is
    unchanged, and the Kindle then skips the redraw. `&next=<secs>` lets
    Puppet preload the page just before the next wake;
@@ -30,11 +32,11 @@ suspending on its own (`preventScreenSaver 1`), and loops:
    reads PNG bytes as gray levels (an RGBA PNG comes out stretched 4x), so
    the URL asks Puppet for a single-channel PNG with `&grayscale` (a patch in
    `pkgs/ha-puppet`);
-4. POST `{"battery": N, "charging": 0|1}` to the HA webhook;
+4. publish its status to Home Assistant;
 5. arm the RTC alarm (`/sys/class/rtc/rtc1/wakealarm`) and
    `echo mem > /sys/power/state`.
 
-A wake takes about 7 s (mostly Wi-Fi). Wakes are hourly at :02, with none
+A wake takes about 5–7 s (mostly Wi-Fi). Wakes are hourly at :02, with none
 from 23:00 to 05:00 (`INTERVAL`, `OFFSET`, `QUIET_*` in `weatherdash.conf`).
 Both PMIC RTCs (`rtc0`, `rtc1`) were tested to wake the PW3 from `mem`;
 `rtc1` is used so the system clock's alarm stays untouched.
@@ -72,6 +74,43 @@ current; the next good fetch redraws over it.
   loop at boot.
 - SSH only works while the device is awake, so to deploy or debug, stop the
   loop with a double press first.
+
+## Home Assistant
+
+The Kindle is an MQTT device, "Kindle weather", that only talks on its
+wakes: each one reads `kindle-weather/set/#` for `MQTT_READ_TIME` (0.5 s; curl's
+MQTT subscribe never returns on its own, and retained messages arrive at
+once) and publishes one JSON status to `kindle-weather/state` (~0.05 s).
+It connects to mosquitto's LAN listener (aida `:1884`, firewall open on
+`eno1` only) as user `kindle`, whose ACL allows just those two topics.
+
+Its curl can't publish retained messages, so `kindle-weather-mqtt.service` on
+aida publishes the 18 discovery configs (retained) and copies each status to
+the retained `kindle-weather/status` the entities read, so they keep their
+values across HA restarts.
+
+- **Sensors:** battery, charging, voltage, current, battery temperature,
+  charge cycles, Wi-Fi bars, last wake, next wake, last new image, wake
+  reason (`start`/`timer`/`button`/`maintenance`), last result
+  (`new`/`unchanged`/`failed`/`no_wifi`/`exit`), awake time.
+- **Controls** (retained, applied at the next wake; the entities show the
+  value the Kindle last reported applying, so a change shows up after it
+  wakes): update interval (5–720 min) and quiet hours start/end, which
+  override `weatherdash.conf`; **maintenance mode**, which keeps the Kindle
+  awake after its next wake (SSH reachable, settings re-read every 30 s)
+  until switched off, the next update is due or a button press; **exit
+  dashboard**, which exits to the Kindle UI (within 30 s in maintenance
+  mode). The relay clears the exit command once the Kindle reports seeing it
+  (`exit_seen`); one left over from before a start is ignored, not acted on.
+
+Maintenance mode drains the battery while on, so switch it off when done.
+To install the password on a new Kindle (the agenix identity is the
+passphrase-protected `~/.ssh/id_ed25519`):
+
+```sh
+agenix -d secrets/kindle-mqtt-password.age -i ~/.ssh/id_ed25519 |
+  ssh root@192.168.1.164 'umask 077; cat > /mnt/us/weatherdash/mqtt.secret'
+```
 
 ## Crash dumps
 
