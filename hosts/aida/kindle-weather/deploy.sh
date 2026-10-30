@@ -7,7 +7,7 @@
 # "Weather Dashboard" launcher to the library (/mnt/us/documents). With
 # --start, also launches the loop (as tapping the launcher would). The Kindle
 # only answers SSH while awake: while the dashboard runs, press the power
-# button first (that also stops the loop and brings the Kindle UI back).
+# button twice first (that stops the loop and brings the Kindle UI back).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -29,7 +29,7 @@ fi
 # loop sends it off into the new file at the wrong offset.
 # shellcheck disable=SC2016 # expands on the Kindle
 if "${ssh[@]}" '[ -s /tmp/weatherdash.pid ] && kill -0 "$(cat /tmp/weatherdash.pid)" 2>/dev/null'; then
-  echo "the dashboard loop is running on $host; stop it first (power button)" >&2
+  echo "the dashboard loop is running on $host; stop it first (double-press the power button)" >&2
   exit 1
 fi
 

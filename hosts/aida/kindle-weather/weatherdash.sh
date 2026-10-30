@@ -7,9 +7,11 @@
 # alarm for the next wake and suspend to RAM. E-ink keeps the picture without
 # power, so the device is only awake for the few seconds each update takes.
 #
-# Pressing the power button ends it: the press wakes the device, the loop sees
-# the button's interrupt count change and exits, and the EXIT trap restores
-# the Kindle UI. Started by "Weather Dashboard.sh" in the library (which
+# The power button (the only wake source besides the RTC; the touchscreen is
+# off in suspend): one press refreshes now, a second within DOUBLE_PRESS
+# seconds ends it, and the EXIT trap restores the Kindle UI. Presses are
+# counted from the button's interrupts in /proc/interrupts. Started by
+# "Weather Dashboard.sh" in the library (which
 # deploy.sh installs); nothing is installed to start it at boot, so a reboot
 # also returns to the stock UI.
 
@@ -28,9 +30,11 @@ log() {
 	echo "$(date '+%F %T') $*" >>"$LOG"
 }
 
-# Power-button presses so far (the PMIC's onkey interrupt).
+# Power-button presses so far, counted by the PMIC's release interrupt: a
+# press made while the device is still resuming loses its press interrupt
+# but not its release.
 onkey() {
-	awk '/onkey_press/ { print $2 }' /proc/interrupts
+	awk '/onkey_rel/ { print $2 }' /proc/interrupts
 }
 
 cleanup() {
@@ -183,8 +187,9 @@ show_stale() {
 	log "stale notice shown"
 }
 
-# Suspend until $1 (epoch); returns 1 if the power button woke the device.
-# Other early wakes (e.g. plugging in USB) just go back to sleep.
+# Suspend until $1 (epoch); returns 1 if the power button woke the device,
+# with the press count from before it slept in $slept_at. Other early wakes
+# (e.g. plugging in USB) just go back to sleep.
 sleep_until() {
 	while :; do
 		left=$(($1 - $(date +%s)))
@@ -197,8 +202,29 @@ sleep_until() {
 			log "suspend failed; retrying"
 			sleep 10
 		fi
+		slept_at=$k
 		[ "$(onkey)" = "$k" ] || return 1
 	done
+}
+
+# After a power-button press: say so at the bottom of the screen, then wait
+# DOUBLE_PRESS seconds for a second one, counting from $1, the count before
+# the first (a quick double press can land entirely while the device is still
+# resuming). Returns 1 on a second press (exit), else 0 with the next fetch
+# forced to redraw.
+handle_press() {
+	$FBINK -q -m -y -2 "Refreshing - press again to exit" >/dev/null 2>&1
+	i=0
+	while [ $(($(onkey) - $1)) -lt 2 ]; do
+		[ "$i" -ge $((DOUBLE_PRESS * 10)) ] && break
+		usleep 100000
+		i=$((i + 1))
+	done
+	[ $(($(onkey) - $1)) -ge 2 ] && return 1
+	pressed=$(onkey)
+	rm -f "$RUN/etag"
+	forced=1
+	log "power button: refreshing"
 }
 
 main() {
@@ -224,20 +250,30 @@ main() {
 	pressed=$(onkey)
 	last_ok=$(date +%s)
 	stale_shown=0
+	forced=0
 	while :; do
 		next=$(next_wake)
+		ok=0
 		if wifi_up; then
-			update $((next - $(date +%s))) && last_ok=$(date +%s)
+			update $((next - $(date +%s))) && ok=1 && last_ok=$(date +%s)
 			report_battery
 		else
 			log "no Wi-Fi after ${WIFI_TIMEOUT}s"
 		fi
+		# A failed refresh still has to clear the "Refreshing" line.
+		[ "$forced" = 1 ] && [ "$ok" = 0 ] && draw
+		forced=0
 		show_stale
-		[ "$(onkey)" = "$pressed" ] || break
+		# Pressed while awake (e.g. during the fetch), or woke by the button.
+		if [ "$(onkey)" != "$pressed" ]; then
+			handle_press "$pressed" || break
+			continue
+		fi
 		log "sleeping until $(date -d "@$next" '+%F %T')"
-		sleep_until "$next" || break
+		sleep_until "$next" && continue
+		handle_press "$slept_at" || break
 	done
-	log "power button pressed"
+	log "power button pressed twice"
 }
 
 main "$@"

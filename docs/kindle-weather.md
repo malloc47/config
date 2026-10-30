@@ -58,13 +58,20 @@ current; the next good fetch redraws over it.
   leaves the boot splash over the dashboard, stopping it from the scriptlet
   launcher makes it report "Application Error" when it returns, and it
   blanks the screen as it shuts down.
-- **Stop:** press the power button. The press wakes the device, the loop sees
-  the button's interrupt count change (`max77696-onkey_press` in
-  `/proc/interrupts`), clears the screen and restarts the Kindle UI, which
-  takes a minute or two to come back. Holding the power button to reboot also
-  works: nothing starts the loop at boot.
+- **Refresh now:** press the power button once (the touchscreen is off in
+  suspend, so taps can't wake it). "Refreshing - press again to exit" shows
+  at the bottom; after `DOUBLE_PRESS` (3) seconds the loop fetches and
+  redraws, then sleeps until the next scheduled wake.
+- **Stop:** press the power button twice, the second within 3 s. The loop
+  clears the screen and restarts the Kindle UI, which takes about 4 minutes
+  to come back. Presses are counted by the button's release interrupt
+  (`max77696-onkey_rel` in `/proc/interrupts`), since a press made while the
+  device is still resuming loses its press interrupt. Even so, two presses
+  in very quick succession from sleep register as one; leave a beat between
+  them. Holding the power button to reboot also works: nothing starts the
+  loop at boot.
 - SSH only works while the device is awake, so to deploy or debug, stop the
-  loop with the power button first.
+  loop with a double press first.
 
 ## Crash dumps
 
@@ -90,7 +97,7 @@ git add -A pkgs/home-assistant-kindle-weather-card
 nixos-deploy aida            # new card; restarts Puppet (and HA)
 
 $EDITOR hosts/aida/kindle-weather/weatherdash.conf   # or weatherdash.sh
-hosts/aida/kindle-weather/deploy.sh --start          # Kindle awake (power button)
+hosts/aida/kindle-weather/deploy.sh --start          # loop stopped (double press)
 ```
 
 Card config changes (entities, `days`, `hours`) go in the dashboard's raw
