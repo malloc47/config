@@ -41,6 +41,7 @@ onkey() {
 	awk '/onkey_rel/ { print $2 }' /proc/interrupts
 }
 
+# shellcheck disable=SC2329 # run by the EXIT trap
 cleanup() {
 	trap - EXIT TERM INT HUP
 	log "exiting; restoring the Kindle UI"
@@ -225,10 +226,17 @@ publish_status() {
 	mqtt || return 0
 	s=$(lipc-get-prop com.lab126.wifid signalStrength 2>/dev/null)
 	c=$(lipc-get-prop com.lab126.powerd isCharging 2>/dev/null)
-	json=$(printf '{"battery":%d,"charging":%s,"voltage":%d,"current":%d,"temperature":%d,"cycles":%d,"wifi":%d,"wake":%d,"next":%d,"refreshed":%d,"reason":"%s","result":"%s","awake":%d,"interval":%d,"quiet_start":%d,"quiet_end":%d,"maintenance":"%s","exit_seen":%s}' \
+	# Firmware ("Kindle 5.16.2.1.1 (...)"): a change means an OTA update,
+	# which can undo the jailbreak or the ad removal. Crash dumps: cores in
+	# /mnt/us and crash bundles (.tgz) in the library (see stop_ui).
+	fw=$(awk '{ print $2; exit }' /etc/prettyversion.txt 2>/dev/null)
+	dumps=$(find /mnt/us /mnt/us/documents -maxdepth 1 \( -name '*.core' -o -name '*.tgz' \) 2>/dev/null | wc -l)
+	json=$(printf '{"battery":%d,"charging":%s,"voltage":%d,"current":%d,"temperature":%d,"cycles":%d,"wifi":%d,"wake":%d,"next":%d,"refreshed":%d,"fetched":%d,"boot":%d,"firmware":"%s","storage_free":%d,"dumps":%d,"reason":"%s","result":"%s","awake":%d,"interval":%d,"quiet_start":%d,"quiet_end":%d,"maintenance":"%s","exit_seen":%s}' \
 		"$(cat $BATT/capacity)" "$([ "$c" = 1 ] && echo true || echo false)" \
 		"$(cat $BATT/voltage_now)" "$(cat $BATT/current_now)" "$(cat $BATT/temp)" \
-		"$(cat $BATT/cycle_count)" "${s%%/*}" "$wake_at" "$1" "$refreshed" "$reason" "$result" \
+		"$(cat $BATT/cycle_count)" "${s%%/*}" "$wake_at" "$1" "$refreshed" "$fetched" \
+		"$(awk '/^btime/ { print $2 }' /proc/stat)" "$fw" \
+		"$(df -k /mnt/us | awk 'NR == 2 { print int($4 / 1024) }')" "$dumps" "$reason" "$result" \
 		$(($(date +%s) - wake_at)) $((INTERVAL / 60)) "$QUIET_START" "$QUIET_END" "$maintenance" \
 		"$([ "$want_exit" = 1 ] && echo true || echo false)" 2>/dev/null)
 	curl -s -o /dev/null --max-time 5 -u "kindle:$MQTT_PASSWORD" -d "$json" \
@@ -247,6 +255,7 @@ maintenance_wait() {
 			[ "$(onkey)" = "$pressed" ] || return 0
 			i=$((i + 1))
 		done
+		lipc-set-prop com.lab126.powerd preventScreenSaver 1
 		read_settings
 		[ "$want_exit" = 1 ] && return 0
 		publish_status "$1"
@@ -305,6 +314,16 @@ handle_press() {
 	log "power button: refreshing"
 }
 
+# deploy.sh sends HUP after uploading: re-run the new script in place (same
+# pid, Kindle UI still stopped) instead of exiting and restoring the UI.
+# shellcheck disable=SC2329 # run by the HUP trap
+reload() {
+	log "reloading"
+	trap - EXIT
+	export WEATHERDASH_RELOAD=1
+	exec /bin/sh "$DIR/weatherdash.sh"
+}
+
 main() {
 	mkdir -p "$RUN"
 	# The launcher's start-stop-daemon writes our own pid here first.
@@ -318,16 +337,19 @@ main() {
 	rm -f "$RUN/etag"
 	[ -f "$LOG" ] && [ "$(wc -c <"$LOG")" -gt 262144 ] && tail -n 500 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"
 
-	ui_home
-	stop_ui
+	if [ "$WEATHERDASH_RELOAD" != 1 ]; then
+		ui_home
+		stop_ui
+	fi
 	trap cleanup EXIT
-	trap 'exit 0' INT HUP
-	lipc-set-prop com.lab126.powerd preventScreenSaver 1
-	log "started (interval ${INTERVAL}s, quiet ${QUIET_START}-${QUIET_END}, $RTC_DEV)"
+	trap 'exit 0' INT
+	trap reload HUP
+	log "started (interval ${INTERVAL}s, quiet ${QUIET_START}-${QUIET_END}, $RTC_DEV${WEATHERDASH_RELOAD:+, reloaded})"
 
 	pressed=$(onkey)
 	last_ok=$(date +%s)
 	refreshed=$last_ok
+	fetched=0
 	stale_shown=0
 	forced=0
 	maintenance=OFF
@@ -335,6 +357,10 @@ main() {
 	while :; do
 		wake_at=$(date +%s)
 		result=no_wifi
+		# Without this powerd times out into its screensaver, which draws its
+		# artwork over the dashboard; re-asserted on each wake in case
+		# anything else reset it.
+		lipc-set-prop com.lab126.powerd preventScreenSaver 1
 		if wifi_up; then
 			read_settings
 			# An exit left over from before this start (e.g. pressed while the
@@ -346,7 +372,7 @@ main() {
 				break
 			fi
 			next=$(next_wake)
-			update $((next - $(date +%s))) && last_ok=$(date +%s)
+			update $((next - $(date +%s))) && last_ok=$(date +%s) && fetched=$last_ok
 		else
 			next=$(next_wake)
 			log "no Wi-Fi after ${WIFI_TIMEOUT}s"
@@ -377,4 +403,6 @@ main() {
 	done
 }
 
-main "$@"
+# On one line, so the shell has read the whole file before running any of it
+# and deploy.sh can replace the file under a running loop.
+main "$@"; exit

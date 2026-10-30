@@ -4,10 +4,12 @@
 #   hosts/aida/kindle-weather/deploy.sh [--start] [user@host]
 #
 # Copies weatherdash.sh and weatherdash.conf to /mnt/us/weatherdash and the
-# "Weather Dashboard" launcher to the library (/mnt/us/documents). With
-# --start, also launches the loop (as tapping the launcher would). The Kindle
-# only answers SSH while awake: while the dashboard runs, press the power
-# button twice first (that stops the loop and brings the Kindle UI back).
+# "Weather Dashboard" launcher to the library (/mnt/us/documents). A running
+# loop reloads the new files in place; otherwise --start launches it (as
+# tapping the launcher would). The Kindle only answers SSH while awake: while
+# the dashboard runs, turn on its maintenance mode in Home Assistant (it stays
+# awake from its next wake) or double-press the power button (which exits to
+# the Kindle UI).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -25,13 +27,11 @@ if ! "${ssh[@]}" true 2>/dev/null; then
   exit 1
 fi
 
-# sh reads a script as it runs, so replacing weatherdash.sh under a running
-# loop sends it off into the new file at the wrong offset.
+# A loop that's running (awake: maintenance mode, or within a wake) is told to
+# reload the new files in place after the upload, keeping the Kindle UI
+# stopped; weatherdash.sh is safe to replace under it.
 # shellcheck disable=SC2016 # expands on the Kindle
-if "${ssh[@]}" '[ -s /tmp/weatherdash.pid ] && kill -0 "$(cat /tmp/weatherdash.pid)" 2>/dev/null'; then
-  echo "the dashboard loop is running on $host; stop it first (double-press the power button)" >&2
-  exit 1
-fi
+running=$("${ssh[@]}" '[ -s /tmp/weatherdash.pid ] && kill -0 "$(cat /tmp/weatherdash.pid)" 2>/dev/null && cat /tmp/weatherdash.pid' || true)
 
 # Streamed over ssh rather than scp: the launcher's name has a space, which
 # scp's remote quoting handles differently in its SFTP and legacy modes.
@@ -46,7 +46,10 @@ put weatherdash.sh /mnt/us/weatherdash/weatherdash.sh
 put weatherdash.conf /mnt/us/weatherdash/weatherdash.conf
 put "Weather Dashboard.sh" "/mnt/us/documents/Weather Dashboard.sh"
 
-if [ "$start" = 1 ]; then
+if [ -n "$running" ]; then
+  "${ssh[@]}" "kill -HUP $running"
+  echo "reloaded the running loop (pid $running); log: /mnt/us/weatherdash/weatherdash.log"
+elif [ "$start" = 1 ]; then
   "${ssh[@]}" 'sh "/mnt/us/documents/Weather Dashboard.sh"'
   echo "started; log: /mnt/us/weatherdash/weatherdash.log"
 fi

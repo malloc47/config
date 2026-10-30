@@ -20,7 +20,10 @@ it can sleep between hourly updates.
 ## How it works
 
 `weatherdash.sh` stops the Kindle UI (`stop lab126_gui`), keeps powerd from
-suspending on its own (`preventScreenSaver 1`), and loops:
+suspending or showing its screensaver on its own (`preventScreenSaver 1`,
+re-asserted on every wake: at 0, powerd times out into the screensaver, whose
+artwork lands on the dashboard and whose drawer, `blanket`, then segfaults
+without the framework), and loops:
 
 1. wait for Wi-Fi to reassociate (`com.lab126.wifid cmState` = `CONNECTED`)
    and read its settings from Home Assistant (see below);
@@ -89,10 +92,15 @@ aida publishes the 18 discovery configs (retained) and copies each status to
 the retained `kindle-weather/status` the entities read, so they keep their
 values across HA restarts.
 
-- **Sensors:** battery, charging, voltage, current, battery temperature,
-  charge cycles, Wi-Fi bars, last wake, next wake, last new image, wake
-  reason (`start`/`timer`/`button`/`maintenance`), last result
-  (`new`/`unchanged`/`failed`/`no_wifi`/`exit`), awake time.
+- **Sensors:** battery, charging, voltage, current, battery temperature
+  (close to room temperature, read just after a wake), charge cycles, Wi-Fi
+  bars, last wake, next wake, last new image, last successful fetch (any 200
+  or 304: the one to alert on for a stale dashboard), wake reason
+  (`start`/`timer`/`button`/`maintenance`), last result
+  (`new`/`unchanged`/`failed`/`no_wifi`/`exit`), awake time, and the
+  diagnostics last boot (nothing restarts the dashboard after a reboot),
+  firmware (a change means an OTA update, which can undo the jailbreak or
+  the ad removal), free storage and crash dumps (see below).
 - **Controls** (retained, applied at the next wake; the entities show the
   value the Kindle last reported applying, so a change shows up after it
   wakes): update interval (5–720 min) and quiet hours start/end, which
@@ -104,6 +112,13 @@ values across HA restarts.
   (`exit_seen`); one left over from before a start is ignored, not acted on.
 
 Maintenance mode drains the battery while on, so switch it off when done.
+It's also the way to deploy without touching the Kindle: once it's awake,
+`deploy.sh` uploads and sends the running loop a HUP, and the loop re-runs
+the new files in place (same pid, Kindle UI still stopped, a fresh draw),
+with no 4-minute UI restart.
+
+There's no frontlight control: the PW3 powers the frontlight off in suspend
+(tested), so it would only light the few seconds of each wake.
 To install the password on a new Kindle (the agenix identity is the
 passphrase-protected `~/.ssh/id_ed25519`):
 
@@ -136,7 +151,8 @@ git add -A pkgs/home-assistant-kindle-weather-card
 nixos-deploy aida            # new card; restarts Puppet (and HA)
 
 $EDITOR hosts/aida/kindle-weather/weatherdash.conf   # or weatherdash.sh
-hosts/aida/kindle-weather/deploy.sh --start          # loop stopped (double press)
+hosts/aida/kindle-weather/deploy.sh                  # running loop awake (maintenance mode): reloads in place
+hosts/aida/kindle-weather/deploy.sh --start          # loop stopped (double press): launches it
 ```
 
 Card config changes (entities, `days`, `hours`) go in the dashboard's raw

@@ -52,13 +52,16 @@ let
       // extra
     );
   timestamp =
-    id: name: field:
+    id: name: field: extra:
     # 0 (e.g. no next wake after an exit) renders "None", which MQTT sensors read as unknown.
     sensor id name
       "{{ (value_json.${field} | int) | as_datetime if value_json.${field} | int > 0 else None }}"
-      {
-        device_class = "timestamp";
-      };
+      (
+        {
+          device_class = "timestamp";
+        }
+        // extra
+      );
   number =
     id: name: extra:
     entity "number" id (
@@ -128,9 +131,32 @@ let
         state_class = "measurement";
       }
     ))
-    (timestamp "last_wake" "Last wake" "wake")
-    (timestamp "next_wake" "Next wake" "next")
-    (timestamp "last_image" "Last new image" "refreshed")
+    (timestamp "last_wake" "Last wake" "wake" { })
+    (timestamp "next_wake" "Next wake" "next" { })
+    (timestamp "last_image" "Last new image" "refreshed" { })
+    # Unlike "Last new image" (only when the forecast changed), any 200 or
+    # 304: the basis for a "dashboard is stale" alert.
+    (timestamp "last_fetch" "Last successful fetch" "fetched" { })
+    # Nothing restarts the dashboard after a reboot (e.g. a framework crash).
+    (timestamp "last_boot" "Last boot" "boot" diagnostic)
+    # A change means an OTA update, which can undo the jailbreak or ad removal.
+    (sensor "firmware" "Firmware" "{{ value_json.firmware }}" (diagnostic // { icon = "mdi:chip"; }))
+    (sensor "storage_free" "Free storage" "{{ value_json.storage_free }}" (
+      diagnostic
+      // {
+        device_class = "data_size";
+        unit_of_measurement = "MB";
+        state_class = "measurement";
+      }
+    ))
+    # Cores in /mnt/us and crash bundles in the library (docs/kindle-weather.md).
+    (sensor "crash_dumps" "Crash dumps" "{{ value_json.dumps }}" (
+      diagnostic
+      // {
+        icon = "mdi:file-alert-outline";
+        state_class = "measurement";
+      }
+    ))
     (sensor "wake_reason" "Wake reason" "{{ value_json.reason }}" (
       diagnostic
       // {
