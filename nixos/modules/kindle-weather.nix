@@ -27,7 +27,8 @@ let
 
   device = {
     identifiers = [ "kindle_weather" ];
-    name = "Kindle weather";
+    # Entity IDs derive from this at creation (weather_dashboard_*).
+    name = "Weather Dashboard";
     manufacturer = "Amazon";
     model = "Kindle Paperwhite 3";
   };

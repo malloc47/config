@@ -13,7 +13,7 @@ it can sleep between hourly updates.
 | Device loop + settings | `hosts/aida/kindle-weather/weatherdash.sh`, `weatherdash.conf` → `/mnt/us/weatherdash/` |
 | Library launcher | `hosts/aida/kindle-weather/Weather Dashboard.sh` → `/mnt/us/documents/` |
 | Upload helper | `hosts/aida/kindle-weather/deploy.sh [--start] [user@host]` |
-| HA device "Kindle weather" (MQTT) | `nixos/modules/kindle-weather.nix`: discovery, status relay, mosquitto LAN listener `:1884` |
+| HA device "Weather Dashboard" (MQTT; entities `*.weather_dashboard_*`) | `nixos/modules/kindle-weather.nix`: discovery, status relay, mosquitto LAN listener `:1884` |
 | MQTT password | `secrets/kindle-mqtt-password.age` (aida) → `/mnt/us/weatherdash/mqtt.secret` (Kindle, not deployed) |
 | Device log | `/mnt/us/weatherdash/weatherdash.log` |
 
@@ -80,7 +80,7 @@ current; the next good fetch redraws over it.
 
 ## Home Assistant
 
-The Kindle is an MQTT device, "Kindle weather", that only talks on its
+The Kindle is an MQTT device, "Weather Dashboard", that only talks on its
 wakes: each one reads `kindle-weather/set/#` for `MQTT_READ_TIME` (0.5 s; curl's
 MQTT subscribe never returns on its own, and retained messages arrive at
 once) and publishes one JSON status to `kindle-weather/state` (~0.05 s).
