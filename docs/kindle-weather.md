@@ -25,8 +25,16 @@ re-asserted on every wake: at 0, powerd times out into the screensaver, whose
 artwork lands on the dashboard and whose drawer, `blanket`, then segfaults
 without the framework), and loops:
 
-1. wait for Wi-Fi to reassociate (`com.lab126.wifid cmState` = `CONNECTED`)
-   and read its settings from Home Assistant (see below);
+1. wait for the network (a ping of aida, `WIFI_CHECK_HOST`) and read its
+   settings from Home Assistant (see below). wifid's `cmState` isn't
+   trusted: on 2026-10-30, after a resume, it read `CONNECTED` while wifid
+   had lost track of the hidden home network (`wconn-nwfail:ssid=:profile
+   not found` in `/var/log/messages`) and never reassociated, so every wake
+   failed until Wi-Fi was reconnected by hand. Without a ping reply within
+   `WIFI_TIMEOUT` (20 s) the loop turns Wi-Fi off and on, then asks wifid
+   to `cmConnect` to the network by name (remembered from wifid's `711`
+   report while connected), waiting 30 s after each; a wake that still has
+   no network reports `no_wifi`;
 2. fetch the image with `If-None-Match`; Puppet answers 304 if the render is
    unchanged, and the Kindle then skips the redraw. `&next=<secs>` lets
    Puppet preload the page just before the next wake;

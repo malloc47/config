@@ -111,13 +111,52 @@ stop_ui() {
 	trap 'exit 0' TERM
 }
 
-wifi_up() {
-	i=0
-	while [ "$i" -lt "$WIFI_TIMEOUT" ]; do
-		[ "$(lipc-get-prop com.lab126.wifid cmState 2>/dev/null)" = CONNECTED ] && return 0
+net_ok() {
+	ping -c 1 -W 2 "$WIFI_CHECK_HOST" >/dev/null 2>&1
+}
+
+# Wait up to $1 seconds for WIFI_CHECK_HOST to answer.
+wait_net() {
+	end=$(($(date +%s) + $1))
+	while [ "$(date +%s)" -lt "$end" ]; do
+		net_ok && return 0
 		sleep 1
-		i=$((i + 1))
 	done
+	return 1
+}
+
+# The home network's name, read while Wi-Fi works (wifid's "711" report:
+# "2.3 AP: <ssid> (<bssid>)"), for reconnecting by name.
+remember_ssid() {
+	s=$(lipc-get-prop com.lab126.wifid 711 2>/dev/null | sed -n 's/^2\.3 AP: \(.*\) ([0-9a-fA-F:]*)$/\1/p')
+	[ -n "$s" ] && [ "$s" != "$ssid" ] && ssid=$s && echo "$ssid" >"$RUN/ssid"
+}
+
+# Network after a wake. wifid's cmState can read CONNECTED while nothing gets
+# through: once, after a resume, it lost track of the (hidden) home network
+# ("wconn-nwfail:ssid=:profile not found") and never reassociated, wake
+# after wake. So go by a ping of WIFI_CHECK_HOST, and if none comes, restart
+# wifid's connection: Wi-Fi off and on, then a connect to the network by name.
+wifi_up() {
+	if wait_net "$WIFI_TIMEOUT"; then
+		remember_ssid
+		return 0
+	fi
+	log "no network after ${WIFI_TIMEOUT}s (cmState $(lipc-get-prop com.lab126.wifid cmState 2>/dev/null)); restarting Wi-Fi"
+	lipc-set-prop com.lab126.wifid enable 0
+	sleep 2
+	lipc-set-prop com.lab126.wifid enable 1
+	if wait_net 30; then
+		log "network back after a Wi-Fi restart"
+		return 0
+	fi
+	[ -n "$ssid" ] || return 1
+	log "still no network; connecting to $ssid"
+	lipc-set-prop com.lab126.wifid cmConnect "$ssid"
+	if wait_net 30; then
+		log "network back after connecting to $ssid"
+		return 0
+	fi
 	return 1
 }
 
@@ -346,6 +385,8 @@ main() {
 	trap reload HUP
 	log "started (interval ${INTERVAL}s, quiet ${QUIET_START}-${QUIET_END}, $RTC_DEV${WEATHERDASH_RELOAD:+, reloaded})"
 
+	ssid=$(cat "$RUN/ssid" 2>/dev/null)
+	net_ok && remember_ssid
 	pressed=$(onkey)
 	last_ok=$(date +%s)
 	refreshed=$last_ok
@@ -375,7 +416,7 @@ main() {
 			update $((next - $(date +%s))) && last_ok=$(date +%s) && fetched=$last_ok
 		else
 			next=$(next_wake)
-			log "no Wi-Fi after ${WIFI_TIMEOUT}s"
+			log "no network, even after restarting Wi-Fi"
 		fi
 		# A failed refresh still has to clear the "Refreshing" line.
 		[ "$forced" = 1 ] && [ "$result" != new ] && draw
