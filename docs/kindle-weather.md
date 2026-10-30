@@ -66,6 +66,22 @@ current; the next good fetch redraws over it.
 - SSH only works while the device is awake, so to deploy or debug, stop the
   loop with the power button first.
 
+## Crash dumps
+
+The home app (`KPPMainApp`, upstart job `kppmainapp`) aborts whenever the UI
+is stopped under it, even on its own `stop`. The jailbreak leaves
+`/PRE_GM_DEBUGGING_FEATURES_ENABLED__REMOVE_AT_GMC` in place, which turns on
+Amazon's developer crash handling: `stackdumpd` runs `dump-stack`, which
+writes a crash bundle into the library (`KPPMainAppV2_*_crash_*.txt/.tgz`,
+listed as books) and a ~200 MB core to `/mnt/us`. So the loop pauses
+`stackdumpd` while it stops the UI, and removes `/tmp/kppmainapp_started` so
+`KPPMainAppCrashRecovery` logs a normal exit instead of counting toward its
+crash-loop recovery screen. `/mnt/us/DISABLE_CORE_DUMP` and
+`DISABLE_CORE_DUMP_ALERT` (created by hand; Amazon's own opt-outs) keep any
+other crash from writing cores. A suspended `dump-stack` finishes on the next
+wake, so leftovers show up only after exiting; delete them with
+`rm -rf /mnt/us/documents/KPPMainAppV2_*_crash_* /mnt/us/*.core`.
+
 ## Changing it
 
 ```sh

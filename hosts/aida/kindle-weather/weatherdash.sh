@@ -77,6 +77,17 @@ stop_ui() {
 	# Stopping lab126_gui signals its processes, which can include whatever
 	# launched us; ignore TERM until it's down (as koreader.sh does).
 	trap "" TERM
+	# The home app (KPPMainApp, its own kppmainapp job) aborts on the way
+	# down, even when stopped on its own. stackdumpd catches that and, with
+	# the jailbreak's /PRE_GM_DEBUGGING_FEATURES_ENABLED__REMOVE_AT_GMC flag,
+	# writes a crash bundle into the library (KPPMainAppV2_*_crash_*) and a
+	# ~200 MB core to /mnt/us (unless /mnt/us/DISABLE_CORE_DUMP exists). So
+	# pause stackdumpd while the UI goes down, and clear the app's started
+	# flag so its post-stop crash recovery logs a normal exit rather than
+	# counting a crash toward its crash-loop recovery screen.
+	stop stackdumpd >/dev/null 2>&1
+	rm -f /tmp/kppmainapp_started
+	stop kppmainapp >/dev/null 2>&1
 	stop lab126_gui >/dev/null 2>&1
 	# The UI blanks the screen as it shuts down, well after `stop` returns on
 	# 5.16, and anything drawn before that is lost: wait for its processes
@@ -87,6 +98,7 @@ stop_ui() {
 		i=$((i + 1))
 	done
 	sleep 2
+	start stackdumpd >/dev/null 2>&1
 	trap 'exit 0' TERM
 }
 
