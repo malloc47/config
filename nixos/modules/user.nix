@@ -18,7 +18,6 @@ in
         createHome = true;
         home = "/" + (if (stdenv.isDarwin) then "Users" else "home") + "/" + config.settings.username;
         description = "Jarrell Waggoner";
-        uid = 1000;
         openssh.authorizedKeys.keys = [
           (builtins.readFile (
             config.settings.sshKeys + "/${config.settings.profile}/${config.settings.sshKeyName}.pub"
@@ -27,6 +26,7 @@ in
         shell = pkgs.zsh;
       }
       // lib.optionalAttrs (!stdenv.isDarwin) {
+        uid = 1000;
         isNormalUser = true;
         extraGroups = config.settings.extraGroups;
       }
