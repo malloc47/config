@@ -26,15 +26,15 @@
     "albert-tap": {
       "flake": false,
       "locked": {
-        "lastModified": 1771192745,
-        "narHash": "sha256-7HeY6kbKvAKK5wgoQhgnixp6nYCF1TtkpAsqUXT4cBQ=",
-        "owner": "malloc47",
+        "lastModified": 1793059813,
+        "narHash": "sha256-7bwmymFwT72mz3O1g6QFCxJZwzVlH86Ee1tDdLtLHeo=",
+        "owner": "albertlauncher",
         "repo": "homebrew-albert",
-        "rev": "7ff49c5dd31dbb15fc6a4586e3f492b9b768855f",
+        "rev": "667a066c7eb00cd0a491b5203b0725e132519fd1",
         "type": "github"
       },
       "original": {
-        "owner": "malloc47",
+        "owner": "albertlauncher",
         "repo": "homebrew-albert",
         "type": "github"
       }
