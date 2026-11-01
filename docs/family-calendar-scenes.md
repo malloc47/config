@@ -354,3 +354,10 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   instead of shapes inside one SVG (which repaints every frame). Further
   option if wanted: also pause on kitchen vacancy (presence sensor) the way
   screensaver_entity pauses now.
+- 2026-11-01: settings dialog (gear beside the sync glyph; per-device, in
+  localStorage, `SETTINGS` table in the card). First setting: "Animate the
+  sky" — off holds the scenery still like the screensaver pause (and skips
+  the timed events), ~10% CPU on the tablet instead of ~30%. Fixed the pause
+  rule, which missed animations on ::before/::after (golden-hour glint,
+  snowflake sway, splash hops, puddle, flag shading) — so they also kept
+  running under the screensaver until now.

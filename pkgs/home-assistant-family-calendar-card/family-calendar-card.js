@@ -137,6 +137,19 @@ if (!document.getElementById("family-calendar-card-font")) {
   document.head.appendChild(style);
 }
 
+// The settings dialog (the gear in the calendar's bar): options kept on the
+// device (this browser's localStorage, per dashboard), for things worth
+// tuning without editing the card's config. Add an entry here to add a
+// setting; read it with this._pref(key).
+const SETTINGS = [
+  {
+    key: "animate",
+    label: "Animate the sky",
+    help: "Drifting clouds, rain, twinkling stars, lightning and birds. Off keeps the scenery as a still picture, which takes far less CPU (on the kitchen tablet ~10% instead of ~30%).",
+    default: true,
+  },
+];
+
 // Google Calendar's event colours, for calendars without a configured colour.
 const PALETTE = ["#039be5", "#33b679", "#e67c73", "#f6bf26", "#8e24aa", "#f4511e", "#3f51b5", "#0b8043", "#d50000", "#616161"];
 
@@ -233,6 +246,7 @@ class FamilyCalendarCard extends HTMLElement {
       }
     });
     this._loadHidden();
+    this._loadPrefs();
     this._mode = null;
     this._collapsed = null;
     this._wx.configure(this._config);
@@ -294,6 +308,32 @@ class FamilyCalendarCard extends HTMLElement {
 
   _storageKey() {
     return `family-calendar-card:hidden:${location.pathname}`;
+  }
+
+  _prefsKey() {
+    return `family-calendar-card:settings:${location.pathname}`;
+  }
+
+  _loadPrefs() {
+    try {
+      this._prefs = JSON.parse(localStorage.getItem(this._prefsKey()) || "{}") || {};
+    } catch (_) {
+      this._prefs = {};
+    }
+  }
+
+  _pref(key) {
+    return this._prefs?.[key] ?? SETTINGS.find((s) => s.key === key)?.default;
+  }
+
+  _setPref(key, value) {
+    this._prefs = { ...this._prefs, [key]: value };
+    try {
+      localStorage.setItem(this._prefsKey(), JSON.stringify(this._prefs));
+    } catch (_) {
+      // Blocked storage: the setting holds until the page reloads.
+    }
+    this._schedule();
   }
 
   _loadHidden() {
@@ -849,6 +889,7 @@ class FamilyCalendarCard extends HTMLElement {
           <div class="bar">
             <div class="range"></div>
             <div class="nav">
+              <button class="gear" aria-label="Settings"><ha-icon icon="mdi:cog-outline"></ha-icon></button>
               <button class="sync" aria-label="Sync calendars"><ha-icon icon="mdi:refresh"></ha-icon></button>
               <button class="today-btn" data-page="0">Today</button>
               <button class="arrow" data-page="-1" aria-label="Previous"><ha-icon icon="mdi:chevron-left"></ha-icon></button>
@@ -867,6 +908,7 @@ class FamilyCalendarCard extends HTMLElement {
       </div>`;
     const root = this.shadowRoot;
     root.querySelector(".sync").addEventListener("click", () => this._sync());
+    root.querySelector(".gear").addEventListener("click", () => this._showSettings());
     root.querySelector(".nav").addEventListener("click", (e) => {
       const b = e.target.closest("[data-page]");
       if (b) this._page(Number(b.dataset.page));
@@ -891,6 +933,10 @@ class FamilyCalendarCard extends HTMLElement {
     }
     root.querySelector(".detail").addEventListener("click", (e) => {
       if (e.target.closest(".close") || !e.target.closest(".sheet")) this._hideDetail();
+    });
+    root.querySelector(".detail").addEventListener("change", (e) => {
+      const input = e.target.closest("[data-pref]");
+      if (input) this._setPref(input.dataset.pref, input.checked);
     });
     this._built = true;
     this._bannerHtml = null;
@@ -1005,10 +1051,13 @@ class FamilyCalendarCard extends HTMLElement {
     this._renderItems(items);
     this._scheduleEvents([...scene.events, ...accents.filter((a) => a.event).map((a) => a.event)]);
 
+    // Still while the screensaver is on, or with "Animate the sky" off: the
+    // animations hold where they are and the timed events don't fire.
     const saver = c.screensaver_entity && this._hass.states[c.screensaver_entity]?.state === "on";
-    if (saver !== this._paused) {
-      this._paused = saver;
-      screen.classList.toggle("paused", saver);
+    const still = !!saver || !this._pref("animate");
+    if (still !== this._paused) {
+      this._paused = still;
+      screen.classList.toggle("paused", still);
     }
     // The edge host follows the calendar sheet's top; scenery also knows
     // where the controls start (--controls-y).
@@ -1430,6 +1479,25 @@ class FamilyCalendarCard extends HTMLElement {
     this._detailTimer = setTimeout(() => this._hideDetail(), 60000);
   }
 
+  // The settings dialog, in the event detail's overlay.
+  _showSettings() {
+    const box = this.shadowRoot.querySelector(".detail");
+    box.innerHTML = `
+      <div class="sheet settings">
+        <button class="close" aria-label="Close"><ha-icon icon="mdi:close"></ha-icon></button>
+        <h2>Settings</h2>
+        ${SETTINGS.map(
+          (st) => `<label class="set-row"><span class="set-text"><span class="set-label">${esc(st.label)}</span>
+            <span class="set-help">${esc(st.help)}</span></span>
+            <input type="checkbox" role="switch" data-pref="${esc(st.key)}"${this._pref(st.key) ? " checked" : ""}></label>`,
+        ).join("")}
+        <div class="set-note">Saved on this device.</div>
+      </div>`;
+    box.hidden = false;
+    clearTimeout(this._detailTimer);
+    this._detailTimer = setTimeout(() => this._hideDetail(), 60000);
+  }
+
   _hideDetail() {
     clearTimeout(this._detailTimer);
     const box = this.shadowRoot.querySelector(".detail");
@@ -1507,10 +1575,11 @@ const STYLE = `
     border: 1px solid var(--divider-color); }
   .today-btn[disabled] { opacity: 0.4; cursor: default; }
   .arrow { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; --mdc-icon-size: 30px; }
-  .arrow:active, .today-btn:active, .chip:active, .sync:active { background: var(--secondary-background-color); }
-  /* Discreet: a small muted glyph that spins while syncing. */
-  .sync { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; margin-right: 4px;
+  .arrow:active, .today-btn:active, .chip:active, .sync:active, .gear:active { background: var(--secondary-background-color); }
+  /* Discreet: small muted glyphs; sync spins while syncing. */
+  .sync, .gear { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
     --mdc-icon-size: 20px; color: var(--secondary-text-color); }
+  .sync { margin-right: 4px; }
   .sync.busy ha-icon { animation: fcc-spin 0.9s linear infinite; }
   @keyframes fcc-spin { to { transform: rotate(360deg); } }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 12px 10px; flex: none; }
@@ -1627,6 +1696,20 @@ const STYLE = `
   .d-desc { margin-top: 12px; font-size: 16px; line-height: 1.45; white-space: pre-line; color: var(--secondary-text-color);
     overflow-wrap: anywhere; }
 
+  /* ---- settings (in the detail overlay) ---- */
+  .sheet.settings { border-top-color: var(--primary-color); }
+  .set-row { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-top: 1px solid var(--divider-color); cursor: pointer; }
+  .set-text { flex: 1; display: grid; gap: 4px; }
+  .set-label { font-size: 18px; font-weight: 600; }
+  .set-help { font-size: 14px; line-height: 1.4; color: var(--secondary-text-color); }
+  .set-row input { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 52px; height: 30px; margin: 0;
+    border-radius: 15px; background: var(--divider-color); transition: background 0.15s; cursor: pointer; }
+  .set-row input::before { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); transition: transform 0.15s; }
+  .set-row input:checked { background: var(--primary-color); }
+  .set-row input:checked::before { transform: translateX(22px); }
+  .set-note { margin-top: 6px; font-size: 13px; color: var(--secondary-text-color); }
+
   /* ---- overlays, avatar initials and tile wrappers: shown by the sky theme ---- */
   .chip .ini { display: none; }
   .tile { display: grid; min-width: 0; }
@@ -1661,7 +1744,11 @@ const STYLE = `
   .screen.sky .scene { inset: 0; z-index: 0; overflow: hidden; }
   .screen.sky .scene-edge { left: 12px; right: 12px; top: var(--edge-y, 0); height: 0; z-index: 2; }
   .screen.sky .scene-front { inset: 0; z-index: 3; overflow: hidden; }
-  .screen.sky.paused .scene *, .screen.sky.paused .scene-edge *, .screen.sky.paused .scene-front * { animation-play-state: paused !important; }
+  /* Paused: every scenery animation, including those on ::before/::after
+     (which :is() can't match). */
+  .screen.sky.paused :is(.scene, .scene-edge, .scene-front) *,
+  .screen.sky.paused :is(.scene, .scene-edge, .scene-front) *::before,
+  .screen.sky.paused :is(.scene, .scene-edge, .scene-front) *::after { animation-play-state: paused !important; }
   ${LAYER_CSS}
   ${PROP_CSS}
 

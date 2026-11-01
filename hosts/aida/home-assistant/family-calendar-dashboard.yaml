@@ -23,7 +23,8 @@ views:
         # sky's hue, dark from dusk and warmer late at night (sky.js).
         theme: sky
         # Less blur so the scenery (docs/family-calendar-scenes.md) reads
-        # through the glass; animations pause while the screensaver is on.
+        # through the glass; animations pause while the screensaver is on,
+        # and on a device whose settings (the gear) have "Animate the sky" off.
         glass_blur: 8
         glass_opacity: 0.8
         screensaver_entity: switch.family_calendar_screensaver_active
