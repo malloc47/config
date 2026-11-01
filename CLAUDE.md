@@ -40,7 +40,7 @@ All cross-repo dependencies use flake inputs — no git submodules between repos
 nix build .#nixosConfigurations.<host>.config.system.build.toplevel
 
 # Build a macOS (nix-darwin) host
-nix build .#darwinConfigurations.<host>.system.build.toplevel
+nix build .#darwinConfigurations.<host>.system
 
 # Build the installer ISO
 nix build .#nixosConfigurations.vm-iso.config.system.build.isoImage

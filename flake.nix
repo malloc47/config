@@ -42,7 +42,7 @@
       flake = false;
     };
     albert-tap = {
-      url = "github:malloc47/homebrew-albert";
+      url = "github:albertlauncher/homebrew-albert";
       flake = false;
     };
 
