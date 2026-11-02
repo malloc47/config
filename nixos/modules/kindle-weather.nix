@@ -222,6 +222,26 @@ let
     })
   ];
 
+  # The dashboard is stale when the Kindle has missed a scheduled wake by 15
+  # minutes (asleep without a network, crashed, or rebooted out of its loop:
+  # it can't report any of those) or its last fetch failed. Quiet hours just
+  # push the next wake out, and an exit to the Kindle UI reports no next
+  # wake, so neither counts. Entity IDs as renamed in HA (weather_dashboard_*).
+  staleTemplate =
+    test:
+    "{%- set next = as_datetime(states('sensor.weather_dashboard_next_wake'), none) -%}"
+    + "{{ ${test}(is_state('sensor.weather_dashboard_last_result', 'failed')"
+    + " or (next is not none and now() > next + timedelta(minutes=15))) }}";
+  staleMessage = ''
+    {%- set fetched = as_datetime(states('sensor.weather_dashboard_last_successful_fetch'), none) -%}
+    {%- set next = as_datetime(states('sensor.weather_dashboard_next_wake'), none) -%}
+    Last successful fetch {{ relative_time(fetched) ~ ' ago' if fetched else 'unknown' }}
+    {%- if is_state('sensor.weather_dashboard_last_result', 'failed') %}; the last fetch failed
+    {%- elif next %}; it missed its {{ next | as_local | as_timestamp | timestamp_custom('%-I:%M %p') }} wake
+    {%- endif %}.'';
+  notifyId = "weather_dashboard_stale";
+  phone = "notify.mobile_app_motorola_razr_plus_2024";
+
   publishDiscovery = lib.concatMapStrings (
     e:
     "mosquitto_pub -r -t ${lib.escapeShellArg e.topic} -f ${pkgs.writeText "kindle-weather-discovery.json" e.payload}\n"
@@ -242,6 +262,75 @@ in
     }
   ];
   networking.firewall.interfaces.eno1.allowedTCPPorts = [ port ];
+
+  # Stale-dashboard alert: an HA notification and a push to the Razr, both
+  # cleared when the dashboard recovers.
+  services.home-assistant.config."automation kindle_weather" = [
+    {
+      id = "weather_dashboard_stale";
+      alias = "Weather Dashboard: stale alert";
+      mode = "queued";
+      triggers = [
+        {
+          trigger = "template";
+          value_template = staleTemplate "";
+          id = "stale";
+        }
+        {
+          trigger = "template";
+          value_template = staleTemplate "not ";
+          id = "recovered";
+        }
+      ];
+      actions = [
+        {
+          choose = [
+            {
+              conditions = [
+                {
+                  condition = "trigger";
+                  id = "stale";
+                }
+              ];
+              sequence = [
+                {
+                  action = "persistent_notification.create";
+                  data = {
+                    notification_id = notifyId;
+                    title = "Weather Dashboard is stale";
+                    message = staleMessage;
+                  };
+                }
+                {
+                  action = phone;
+                  data = {
+                    title = "Weather Dashboard is stale";
+                    message = staleMessage;
+                    data.tag = notifyId;
+                  };
+                  continue_on_error = true;
+                }
+              ];
+            }
+          ];
+          default = [
+            {
+              action = "persistent_notification.dismiss";
+              data.notification_id = notifyId;
+            }
+            {
+              action = phone;
+              data = {
+                message = "clear_notification";
+                data.tag = notifyId;
+              };
+              continue_on_error = true;
+            }
+          ];
+        }
+      ];
+    }
+  ];
 
   systemd.services.kindle-weather-mqtt = {
     description = "Kindle weather: MQTT discovery and status relay";

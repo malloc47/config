@@ -119,6 +119,13 @@ values across HA restarts.
   mode). The relay clears the exit command once the Kindle reports seeing it
   (`exit_seen`); one left over from before a start is ignored, not acted on.
 
+**Stale alert** (`automation.weather_dashboard_stale_alert`, in
+`nixos/modules/kindle-weather.nix`): when the Kindle misses a scheduled wake
+by 15 minutes (no network, a crash or a reboot: it can't report any of
+those) or its last fetch failed, an HA notification and a push to the Razr
+say when it last fetched; both clear when it recovers. Quiet hours and an
+exit to the Kindle UI don't count.
+
 Maintenance mode drains the battery while on, so switch it off when done.
 It's also the way to deploy without touching the Kindle: once it's awake,
 `deploy.sh` uploads and sends the running loop a HUP, and the loop re-runs
