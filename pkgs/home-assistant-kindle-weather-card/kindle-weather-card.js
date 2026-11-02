@@ -25,6 +25,8 @@
 //   days: 5                                      # daily forecast rows (from tomorrow)
 //   hours: 24                                    # hourly chart span
 //   rain_probability, outdoor_hours, cold, hot   # outlook rows; see ../lovelace-common/weather.js
+//   battery_entity: sensor.<Kindle battery %>    # optional; top-right indicator
+//   charging_entity: binary_sensor.<charging>    # optional; bolt while "on"
 //   hide_toasts: true                            # hide HA's toasts while shown
 //
 // Icons are Material Design Icons (https://pictogrammers.com/library/mdi/,
@@ -564,6 +566,33 @@ class KindleWeatherCard extends HTMLElement {
       </svg>`;
   }
 
+  // The Kindle's own battery, top right as in its stock status bar. It comes
+  // from the status the Kindle reports after each fetch (so it's one wake
+  // old), rounded to 10% steps: an exact percentage would change the image,
+  // and so force a full redraw, at nearly every wake.
+  _battery() {
+    const c = this._config;
+    const level = num(c.battery_entity && this._hass.states[c.battery_entity]?.state);
+    if (level === null) return "";
+    const shown = Math.min(100, Math.max(0, Math.round(level / 10) * 10));
+    const charging = c.charging_entity && this._hass.states[c.charging_entity]?.state === "on";
+    const fill = Math.round((48 * shown) / 100);
+    return `
+      <div class="battery">
+        <span>${shown}%</span>
+        <svg width="68" height="32" viewBox="0 0 68 32" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="57" height="29" rx="5" fill="none" stroke="${INK}" stroke-width="3"/>
+          <rect x="60" y="10" width="6" height="12" rx="2" fill="${INK}"/>
+          ${fill ? `<rect x="6" y="6" width="${fill}" height="20" rx="2" fill="${INK}"/>` : ""}
+          ${
+            charging
+              ? `<path d="M33 3 L20 18 H29 L26 29 L39 14 H30 Z" fill="${INK}" stroke="${PAPER}" stroke-width="2.5" stroke-linejoin="round"/>`
+              : ""
+          }
+        </svg>
+      </div>`;
+  }
+
   // The temperature ramp's key: every shade with its band's lower edge.
   _legend() {
     const sw = (W - 2 * 44 - 220) / TEMP_LEVELS;
@@ -667,6 +696,9 @@ class KindleWeatherCard extends HTMLElement {
         .day svg { display: block; }
         .legend { font-family: "KindleSans", sans-serif; font-size: 22px; font-weight: 600; fill: ${MUTED}; }
         footer { display: flex; align-items: center; }
+        .battery { position: absolute; top: 14px; right: 44px; display: flex; align-items: center; gap: 8px;
+          font-size: 28px; font-weight: 700; }
+        .battery svg { display: block; }
       </style>
       <div class="screen">
         <section class="hero">
@@ -727,6 +759,7 @@ class KindleWeatherCard extends HTMLElement {
             .join("")}
         </section>
         <footer>${this._legend()}</footer>
+        ${this._battery()}
       </div>`;
   }
 }

@@ -56,8 +56,12 @@ The card's grays are the panel's 16 levels (`#000000`, `#111111` … `#ffffff`):
 temperature is shaded on a fixed 14-step ramp (7°F bands, darker = colder)
 under the hourly curve, in each day's low–high bar and in the legend;
 precipitation chance darkens its bars; night hours are a pale band. A render
-depends only on the forecast and the current hour, so the ETag holds while
-nothing changes. If fetches fail for `STALE_AFTER` (2 h), the loop prints a
+depends only on the forecast, the current hour and the Kindle's battery,
+so the ETag holds while nothing changes. The battery (top right, as in the
+stock status bar, with a bolt while charging) comes from the status the
+Kindle reports to HA after each fetch, so it's one wake old and costs the
+Kindle nothing; it's rounded to 10% steps, since an exact percentage would
+change the image, and force a full redraw, at nearly every wake. If fetches fail for `STALE_AFTER` (2 h), the loop prints a
 one-line "Not updated since …" at the bottom so stale weather isn't taken as
 current; the next good fetch redraws over it.
 
