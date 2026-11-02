@@ -21,6 +21,7 @@
 (require 'scala)
 (require 'haskell)
 (require 'terminal)
+(require 'jw-tramp)
 (require 'keys)
 (require 'osx)
 (require 'typescript)

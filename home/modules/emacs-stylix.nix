@@ -19,6 +19,9 @@ in
     home.packages = [ ];
 
     programs.emacs.enable = true;
+    programs.emacs.extraPackages = epkgs: [
+      (epkgs.callPackage ../../pkgs/tramp-rpc-server/elisp.nix { })
+    ];
     services.emacs.enable = true;
 
     home.file.".emacs.d" = {
