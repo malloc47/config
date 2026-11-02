@@ -14,6 +14,7 @@
   clipaste = prev.callPackage clipaste/default.nix { };
   clipssh = prev.callPackage clipssh/default.nix { };
   claude-history = prev.callPackage claude-history/default.nix { };
+  tramp-rpc-server = prev.callPackage tramp-rpc-server/default.nix { };
 
   # Home Assistant custom components. Called through home-assistant's OWN
   # python3Packages so buildHomeAssistantComponent and their deps resolve

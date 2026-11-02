@@ -320,7 +320,7 @@
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = specialArgs;
                 home-manager.users.${config.settings.username} =
-                  { config, ... }:
+                  { config, pkgs, ... }:
                   {
                     imports = [
                       self.homeManagerModules.osconfig-bridge
@@ -331,6 +331,7 @@
                       self.homeManagerModules.home-gh
                       self.homeManagerModules.home-sqlit
                     ];
+                    home.packages = [ pkgs.tramp-rpc-server ]; # remote end of Emacs /rpc: TRAMP
                     stylix.targets.emacs.enable = false;
                     programs.dev-toolchain.enable = true;
                     programs.sqlit.enable = true;
