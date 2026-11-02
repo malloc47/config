@@ -1047,6 +1047,19 @@ export function pickScene(ctx, cfg = {}) {
   return { id, layers: all[id].layers || [], events: all[id].events || [] };
 }
 
+// For the card's sky simulation: every usable scene whose `when` matches
+// (whatever its priority), and a scene by id.
+export function matchingScenes(ctx, cfg = {}) {
+  const all = { ...SCENES, ...(cfg.define || {}) };
+  const disabled = new Set(cfg.disable || []);
+  return Object.keys(all).filter((id) => !disabled.has(id) && matches(all[id].when, ctx));
+}
+
+export function sceneById(id, cfg = {}) {
+  const s = { ...SCENES, ...(cfg.define || {}) }[id];
+  return s ? { id, layers: s.layers || [], events: s.events || [] } : null;
+}
+
 // A scene's markup as items { key, host, html }, one per layer and host, so
 // the card can update just the layers that changed.
 export function renderScene(scene, ctx) {

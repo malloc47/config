@@ -103,13 +103,13 @@ const { Weather, CONDITION_TEXT, num, temp } = await import(
 );
 const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const { skyTheme } = await import(new URL(`./sky.js${new URL(import.meta.url).search}`, import.meta.url).href);
-const { contextOf, pickScene, pickModifiers, renderScene, LAYER_CSS, EVENTS, DEFAULT_RATES } = await import(
+const { contextOf, pickScene, pickModifiers, renderScene, matchingScenes, sceneById, LAYER_CSS, EVENTS, DEFAULT_RATES } = await import(
   new URL(`./scenes.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
-const { activeAccents, renderAccents, PROP_CSS, PROP_EVENTS, PROP_RATES } = await import(
+const { activeAccents, renderAccents, PROP_CSS, PROP_EVENTS, PROP_RATES, HOLIDAYS } = await import(
   new URL(`./props.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
-const { moon, planets } = await import(new URL(`./astro.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { moon, planets, sun } = await import(new URL(`./astro.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const ALL_EVENTS = { ...EVENTS, ...PROP_EVENTS };
 const ALL_RATES = { ...DEFAULT_RATES, ...PROP_RATES };
 
@@ -140,15 +140,110 @@ if (!document.getElementById("family-calendar-card-font")) {
 // The settings dialog (the gear in the calendar's bar): options kept on the
 // device (this browser's localStorage, per dashboard), for things worth
 // tuning without editing the card's config. Add an entry here to add a
-// setting; read it with this._pref(key).
+// setting; read it with this._pref(key). Until changed on the device, a
+// setting follows its default: for Week layout, Snap back and Glass, the
+// card's first_day, reset_after, and glass_blur/glass_opacity.
 const SETTINGS = [
   {
     key: "animate",
+    type: "toggle",
+    sky: true,
     label: "Animate the sky",
     help: "Drifting clouds, rain, twinkling stars, lightning and birds. Off keeps the scenery as a still picture, which takes far less CPU (on the kitchen tablet ~10% instead of ~30%).",
     default: true,
   },
+  {
+    key: "week",
+    type: "choice",
+    label: "Week layout",
+    help: "Seven days from today, or the calendar week from Monday.",
+    options: [
+      ["today", "Rolling"],
+      ["monday", "Mon–Sun"],
+    ],
+    default: (c) => c.first_day,
+  },
+  {
+    key: "snap",
+    type: "choice",
+    label: "Snap back to this week",
+    help: "After paging to another week, how long until it returns on its own.",
+    options: [
+      [30, "30 s"],
+      [60, "1 min"],
+      [120, "2 min"],
+      [300, "5 min"],
+      [0, "Never"],
+    ],
+    default: (c) => Number(c.reset_after),
+  },
+  {
+    key: "text",
+    type: "choice",
+    label: "Text size",
+    help: "The calendar grid: more fits when compact, it reads from further away when large.",
+    options: [
+      ["compact", "Compact"],
+      ["normal", "Normal"],
+      ["large", "Large"],
+    ],
+    default: "normal",
+  },
+  {
+    key: "glass",
+    type: "slider",
+    sky: true,
+    label: "Glass",
+    help: "Clearer glass shows more of the sky; frostier glass makes the calendar easier to read.",
+    ends: ["Scenery", "Legible"],
+    default: null, // the card's glass_blur and glass_opacity
+  },
+  {
+    key: "simulate",
+    type: "drill",
+    sky: true,
+    label: "Simulate the sky…",
+    help: "Preview any time of day, weather and holiday, and step through the scenes. Until reverted, a banner says the sky is simulated.",
+  },
 ];
+
+// Grid text scale per "Text size" setting.
+const TEXT_ZOOM = { compact: 0.88, normal: 1, large: 1.15 };
+// The glass slider (0 scenery .. 100 legible): blur doubles and opacity
+// rises by 0.15 either side of the middle, which is the defaults (8px, 0.8).
+const glassAt = (v) => {
+  const t = Math.max(0, Math.min(100, v)) / 100 - 0.5;
+  return { blur: 8 * 2 ** (t * 2), opacity: 0.8 + t * 0.3 };
+};
+
+// The sky simulation's choices: weather (a condition, or "clear" by the
+// sun), wind and temperature presets.
+const SIM_WEATHER = [
+  ["clear", "Clear"],
+  ["partlycloudy", "Partly cloudy"],
+  ["cloudy", "Cloudy"],
+  ["fog", "Fog"],
+  ["rainy", "Rain"],
+  ["pouring", "Pouring"],
+  ["lightning-rainy", "Storm"],
+  ["lightning", "Dry lightning"],
+  ["snowy", "Snow"],
+  ["snowy-rainy", "Sleet"],
+  ["hail", "Hail"],
+  ["windy", "Windy"],
+];
+const SIM_WIND = { calm: 3, breezy: 14, gusty: 26 };
+const SIM_TEMP = { cold: 24, mild: 60, hot: 92 };
+const SIM_EVENTS = [
+  ["lightning", "Lightning"],
+  ["bolt", "Bolt"],
+  ["heat_lightning", "Heat lightning"],
+  ["shooting_star", "Shooting star"],
+  ["birds", "Birds"],
+  ["horseman", "Horseman"],
+];
+// A simulation reverts on its own after this long untouched.
+const SIM_TIMEOUT = 30 * 60000;
 
 // Google Calendar's event colours, for calendars without a configured colour.
 const PALETTE = ["#039be5", "#33b679", "#e67c73", "#f6bf26", "#8e24aa", "#f4511e", "#3f51b5", "#0b8043", "#d50000", "#616161"];
@@ -287,6 +382,7 @@ class FamilyCalendarCard extends HTMLElement {
     clearTimeout(this._tickTimer);
     clearTimeout(this._fetchTimer);
     clearTimeout(this._resetTimer);
+    clearTimeout(this._simTimer);
     clearInterval(this._refreshTimer);
     this._refreshTimer = null;
     for (const t of Object.values(this._evTimers || {})) clearTimeout(t);
@@ -323,7 +419,8 @@ class FamilyCalendarCard extends HTMLElement {
   }
 
   _pref(key) {
-    return this._prefs?.[key] ?? SETTINGS.find((s) => s.key === key)?.default;
+    const d = SETTINGS.find((s) => s.key === key)?.default;
+    return this._prefs?.[key] ?? (typeof d === "function" ? d(this._config) : d);
   }
 
   _setPref(key, value) {
@@ -433,9 +530,10 @@ class FamilyCalendarCard extends HTMLElement {
   _range() {
     const today = this._today();
     let start = today;
-    if (this._config.first_day === "sunday" || this._config.first_day === "monday") {
+    const firstDay = this._pref("week");
+    if (firstDay === "sunday" || firstDay === "monday") {
       const dow = new Date(`${today}T12:00:00Z`).getUTCDay();
-      start = addDays(today, -((dow - (this._config.first_day === "monday" ? 1 : 0) + 7) % 7));
+      start = addDays(today, -((dow - (firstDay === "monday" ? 1 : 0) + 7) % 7));
     }
     start = addDays(start, this._offset * this._config.days);
     return Array.from({ length: this._config.days }, (_, i) => addDays(start, i));
@@ -445,8 +543,9 @@ class FamilyCalendarCard extends HTMLElement {
     this._offset = delta === 0 ? 0 : this._offset + delta;
     this._fetch();
     clearTimeout(this._resetTimer);
-    if (this._offset && this._config.reset_after > 0) {
-      this._resetTimer = setTimeout(() => this._page(0), this._config.reset_after * 1000);
+    const snap = Number(this._pref("snap"));
+    if (this._offset && snap > 0) {
+      this._resetTimer = setTimeout(() => this._page(0), snap * 1000);
     }
     this._schedule();
   }
@@ -905,6 +1004,8 @@ class FamilyCalendarCard extends HTMLElement {
         <footer class="banner" hidden></footer>
         <div class="scene-front" aria-hidden="true"></div>
         <div class="detail" hidden></div>
+        <div class="sim-flag" hidden><ha-icon icon="mdi:flask-outline"></ha-icon><span>Simulated sky</span>
+          <button class="sim-edit">Edit</button><button class="sim-revert">Revert</button></div>
       </div>`;
     const root = this.shadowRoot;
     root.querySelector(".sync").addEventListener("click", () => this._sync());
@@ -935,9 +1036,15 @@ class FamilyCalendarCard extends HTMLElement {
       if (e.target.closest(".close") || !e.target.closest(".sheet")) this._hideDetail();
     });
     root.querySelector(".detail").addEventListener("change", (e) => {
-      const input = e.target.closest("[data-pref]");
-      if (input) this._setPref(input.dataset.pref, input.checked);
+      const input = e.target.closest("input[data-pref]");
+      if (!input) return;
+      if (input.type === "checkbox") this._setPref(input.dataset.pref, input.checked);
+      else if (input.type === "range") this._setPref(input.dataset.pref, Number(input.value));
     });
+    root.querySelector(".detail").addEventListener("input", (e) => this._onDetailInput(e));
+    root.querySelector(".detail").addEventListener("click", (e) => this._onDetailClick(e));
+    root.querySelector(".sim-revert").addEventListener("click", () => this._endSim());
+    root.querySelector(".sim-edit").addEventListener("click", () => this._showSim());
     this._built = true;
     this._bannerHtml = null;
     this._mountCards();
@@ -976,7 +1083,11 @@ class FamilyCalendarCard extends HTMLElement {
     if (!this._built) this._build();
     this._fitHeight();
     this._wx.invalidate();
+    const zoom = TEXT_ZOOM[this._pref("text")] ?? 1;
+    const screen = this.shadowRoot.querySelector(".screen");
+    if (screen.style.getPropertyValue("--grid-zoom") !== String(zoom)) screen.style.setProperty("--grid-zoom", String(zoom));
     if (this._config.theme === "sky") this._applySky();
+    this._renderSimFlag();
     const days = this._range();
     if (this._fetchedRange !== `${days[0]}|${days[days.length - 1]}`) this._fetch();
     this._renderClock();
@@ -992,7 +1103,7 @@ class FamilyCalendarCard extends HTMLElement {
   // Animations pause while the screensaver entity is on.
   _applySky() {
     const c = this._config;
-    const o = c.sky_override || {};
+    const o = this._sim ? this._simOverride() : c.sky_override || {};
     const sun = this._hass.states[c.sun_entity]?.attributes || {};
     const weather = this._wx.src().state;
     const now = this._wx.local(Date.now());
@@ -1005,16 +1116,19 @@ class FamilyCalendarCard extends HTMLElement {
       wind: o.wind ?? Number(weather?.attributes?.wind_speed),
       temperature: o.temperature ?? Number(weather?.attributes?.temperature),
     };
-    const theme = skyTheme({ ...inputs, glass: Number(c.glass_opacity) || 0.8 });
+    const gp = this._pref("glass");
+    const glass = gp == null ? { blur: Number(c.glass_blur ?? 8), opacity: Number(c.glass_opacity) || 0.8 } : glassAt(gp);
+    const theme = skyTheme({ ...inputs, glass: glass.opacity });
     const screen = this.shadowRoot.querySelector(".screen");
     const key = JSON.stringify(theme.vars);
     if (key !== this._skyKey) {
       this._skyKey = key;
       const dash = (k) => `--${k.replace(/[A-Z]/g, (ch) => `-${ch.toLowerCase()}`)}`;
       for (const [k, v] of Object.entries(theme.vars)) screen.style.setProperty(dash(k), v);
-      screen.style.setProperty("--glass-blur", `${Number(c.glass_blur ?? 8)}px`);
       screen.classList.toggle("dark", theme.dark);
     }
+    const blur = `${glass.blur.toFixed(1)}px`;
+    if (screen.style.getPropertyValue("--glass-blur") !== blur) screen.style.setProperty("--glass-blur", blur);
 
     // The moon (astro.js), at the override's time when previewing; position
     // rounded so it only re-renders when it has visibly moved.
@@ -1034,13 +1148,16 @@ class FamilyCalendarCard extends HTMLElement {
     });
     if (o.rain_ended === undefined) this._checkRain();
     this._skyCtx = ctx;
-    const scene = pickScene(ctx, c.sky_scenes);
+    this._simScenes = this._sim ? matchingScenes(ctx, c.sky_scenes) : null;
+    const scene =
+      (this._sim?.scene && this._simScenes.includes(this._sim.scene) && sceneById(this._sim.scene, c.sky_scenes)) ||
+      pickScene(ctx, c.sky_scenes);
     // Holiday/seasonal props (props.js), drawn with the scene and reacting
     // to it through data-wx (weather group), --lit and --flick (wind).
     const accents = activeAccents(ctx, c.sky_accents, (cal) => this._events[cal] || []);
     // Modifiers (seasonal touches, the rainbow) over the scene; once-a-day
     // ones are remembered per device by date and the rain they followed.
-    const mods = pickModifiers(ctx, c.sky_modifiers).filter((m) => !m.once_per_day || this._oncePerDay(m.id, ctx));
+    const mods = pickModifiers(ctx, c.sky_modifiers).filter((m) => !m.once_per_day || this._sim || this._oncePerDay(m.id, ctx));
     const modItems = renderScene({ layers: mods.flatMap((m) => m.layers) }, ctx).map((it) => ({ ...it, key: `mod:${it.key}` }));
     const items = [...renderScene(scene, ctx), ...modItems, ...renderAccents(accents, ctx)];
     if (screen.dataset.wx !== ctx.group) screen.dataset.wx = ctx.group;
@@ -1048,13 +1165,15 @@ class FamilyCalendarCard extends HTMLElement {
     const flick = `${Math.max(0.5, 2.4 - ctx.wind / 10).toFixed(2)}s`;
     if (screen.style.getPropertyValue("--flick") !== flick) screen.style.setProperty("--flick", flick);
     screen.dataset.scene = scene.id;
+    this._skyScene = scene.id;
     this._renderItems(items);
     this._scheduleEvents([...scene.events, ...accents.filter((a) => a.event).map((a) => a.event)]);
 
     // Still while the screensaver is on, or with "Animate the sky" off: the
-    // animations hold where they are and the timed events don't fire.
+    // animations hold where they are and the timed events don't fire. A
+    // simulation always animates (it's for looking at).
     const saver = c.screensaver_entity && this._hass.states[c.screensaver_entity]?.state === "on";
-    const still = !!saver || !this._pref("animate");
+    const still = !this._sim && (!!saver || !this._pref("animate"));
     if (still !== this._paused) {
       this._paused = still;
       screen.classList.toggle("paused", still);
@@ -1464,6 +1583,7 @@ class FamilyCalendarCard extends HTMLElement {
     const name = ev.cal.name || this._hass.states[ev.cal.entity]?.attributes?.friendly_name || ev.cal.entity;
     const desc = plain(ev.description);
     const box = this.shadowRoot.querySelector(".detail");
+    box.classList.remove("docked");
     box.innerHTML = `
       <div class="sheet" style="--c: ${esc(ev.cal.color)}">
         <button class="close" aria-label="Close"><ha-icon icon="mdi:close"></ha-icon></button>
@@ -1479,29 +1599,244 @@ class FamilyCalendarCard extends HTMLElement {
     this._detailTimer = setTimeout(() => this._hideDetail(), 60000);
   }
 
-  // The settings dialog, in the event detail's overlay.
+  // The settings dialog, in the event detail's overlay: a row per SETTINGS
+  // entry (sky-only ones with the sky theme).
   _showSettings() {
-    const box = this.shadowRoot.querySelector(".detail");
-    box.innerHTML = `
+    const sky = this._config.theme === "sky";
+    const row = (st) => {
+      const v = this._pref(st.key);
+      const text = `<span class="set-text"><span class="set-label">${esc(st.label)}</span><span class="set-help">${esc(st.help)}</span></span>`;
+      if (st.type === "toggle") {
+        return `<label class="set-row">${text}<input type="checkbox" role="switch" data-pref="${st.key}"${v ? " checked" : ""}></label>`;
+      }
+      if (st.type === "choice") {
+        return `<div class="set-row set-col">${text}<div class="seg">${st.options
+          .map(([val, lab]) => `<button data-pref="${st.key}" data-val="${esc(JSON.stringify(val))}"${val === v ? ' class="on"' : ""}>${esc(lab)}</button>`)
+          .join("")}</div></div>`;
+      }
+      if (st.type === "slider") {
+        return `<div class="set-row set-col">${text}<div class="slide"><span>${esc(st.ends[0])}</span>
+          <input type="range" min="0" max="100" step="5" value="${v ?? 50}" data-pref="${st.key}"><span>${esc(st.ends[1])}</span></div></div>`;
+      }
+      return `<button class="set-row set-drill" data-drill="${st.key}">${text}<ha-icon icon="mdi:chevron-right"></ha-icon></button>`;
+    };
+    this._openPanel(`
       <div class="sheet settings">
         <button class="close" aria-label="Close"><ha-icon icon="mdi:close"></ha-icon></button>
         <h2>Settings</h2>
-        ${SETTINGS.map(
-          (st) => `<label class="set-row"><span class="set-text"><span class="set-label">${esc(st.label)}</span>
-            <span class="set-help">${esc(st.help)}</span></span>
-            <input type="checkbox" role="switch" data-pref="${esc(st.key)}"${this._pref(st.key) ? " checked" : ""}></label>`,
-        ).join("")}
+        ${SETTINGS.filter((st) => sky || !st.sky).map(row).join("")}
         <div class="set-note">Saved on this device.</div>
-      </div>`;
+      </div>`);
+  }
+
+  _openPanel(html, docked = false) {
+    const box = this.shadowRoot.querySelector(".detail");
+    box.classList.toggle("docked", docked);
+    box.innerHTML = html;
     box.hidden = false;
+    this._touchPanel();
+  }
+
+  // Panels close themselves after two minutes untouched.
+  _touchPanel() {
     clearTimeout(this._detailTimer);
-    this._detailTimer = setTimeout(() => this._hideDetail(), 60000);
+    this._detailTimer = setTimeout(() => this._hideDetail(), 120000);
+  }
+
+  _onDetailClick(e) {
+    if (!e.target.closest(".sheet.settings, .sheet.sim")) return;
+    this._touchPanel();
+    const seg = e.target.closest("button[data-pref]");
+    if (seg) {
+      this._setPref(seg.dataset.pref, JSON.parse(seg.dataset.val));
+      if (seg.dataset.pref === "week") this._offset = 0;
+      for (const b of seg.parentElement.children) b.classList.toggle("on", b === seg);
+      return;
+    }
+    if (e.target.closest("[data-drill='simulate']")) return this._showSim();
+    if (e.target.closest(".sim-back")) return this._showSettings();
+    const sim = e.target.closest("[data-sim]");
+    if (sim) return this._simSet(sim.dataset.sim, JSON.parse(sim.dataset.val));
+    const step = e.target.closest("[data-step]");
+    if (step) return this._simStep(Number(step.dataset.step));
+    const fire = e.target.closest("[data-fire]");
+    if (fire) return this._fireEvent(fire.dataset.fire);
+    if (e.target.closest(".sim-end")) {
+      this._endSim();
+      this._showSettings();
+    }
+  }
+
+  _onDetailInput(e) {
+    this._touchPanel();
+    const range = e.target.closest("input[type=range]");
+    if (!range) return;
+    if (range.dataset.pref === "glass") {
+      // Live while dragging; saved on release (change).
+      this._prefs = { ...this._prefs, glass: Number(range.value) };
+      this._schedule();
+    } else if (range.dataset.simHour !== undefined) {
+      this._simSet("hour", Number(range.value), false);
+      const lab = this.shadowRoot.querySelector(".sim-hour");
+      if (lab) lab.textContent = this._simHourText();
+      // The phase follows once the sky has been redrawn.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          const ph = this.shadowRoot.querySelector(".sim-hour + .sim-dim");
+          if (ph) ph.textContent = this._skyCtx?.phase ?? "";
+        }),
+      );
+    }
+  }
+
+  // ---- sky simulation ----------------------------------------------------
+  // A preview of other times, weather and holidays, kept in memory only (a
+  // reload, Revert, or SIM_TIMEOUT untouched ends it); the sim-flag banner
+  // shows while it's on. Unset fields follow the live sky.
+
+  _simDefaults() {
+    const now = new Date();
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", { timeZone: this._hass.config?.time_zone, hour: "numeric", minute: "numeric", hourCycle: "h23" })
+        .formatToParts(now)
+        .map((x) => [x.type, x.value]),
+    );
+    return { hour: Number(p.hour) + Number(p.minute) / 60 };
+  }
+
+  _showSim() {
+    if (!this._sim) this._sim = this._simDefaults();
+    this._armSimTimeout();
+    this._schedule();
+    this._renderSimPanel();
+  }
+
+  _endSim() {
+    this._sim = null;
+    clearTimeout(this._simTimer);
+    const box = this.shadowRoot.querySelector(".detail");
+    if (box.classList.contains("docked")) this._hideDetail();
+    this._schedule();
+  }
+
+  _armSimTimeout() {
+    clearTimeout(this._simTimer);
+    this._simTimer = setTimeout(() => this._endSim(), SIM_TIMEOUT);
+  }
+
+  _simSet(key, val, rerender = true) {
+    if (!this._sim) this._sim = this._simDefaults();
+    this._sim = { ...this._sim, [key]: val };
+    // A scene picked for other conditions may no longer match.
+    if (key !== "scene" && key !== "hour") this._sim.scene = null;
+    this._armSimTimeout();
+    this._schedule();
+    if (rerender) requestAnimationFrame(() => this._renderSimPanel());
+  }
+
+  // Step through the scenes matching the simulated conditions (0: back to
+  // the daily pick).
+  _simStep(dir) {
+    const list = this._simScenes || [];
+    if (!dir || !list.length) return this._simSet("scene", null);
+    const cur = list.indexOf(this._sim.scene ?? this._skyScene);
+    this._simSet("scene", list[(cur + dir + list.length) % list.length]);
+  }
+
+  _simHourText() {
+    const h = this._sim?.hour ?? 0;
+    const hh = Math.floor(h) % 24;
+    const mm = Math.round((h - Math.floor(h)) * 60);
+    return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`;
+  }
+
+  // The simulation as a sky_override: the time sets the sun (astro.js), and
+  // with the date (a holiday's, or today) places the moon and planets.
+  _simOverride() {
+    const sim = this._sim;
+    const tz = this._hass.config?.time_zone;
+    const today = this._today();
+    const date = sim.holiday ? HOLIDAYS.find((h) => h.id === sim.holiday).date(Number(today.slice(0, 4))) : today;
+    // Local wall time -> instant: start from that date and hour in UTC and
+    // correct by the zone's offset there (twice, for DST edges).
+    const wall = Date.parse(`${date}T00:00:00Z`) + sim.hour * 3600e3;
+    let ms = wall;
+    for (let i = 0; i < 2; i++) {
+      const p = Object.fromEntries(
+        new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+          .formatToParts(new Date(ms))
+          .map((x) => [x.type, x.value]),
+      );
+      const shown = Date.parse(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:00Z`);
+      ms += wall - shown;
+    }
+    const [lat, lng] = [this._hass.config?.latitude ?? 0, this._hass.config?.longitude ?? 0];
+    const s = sun(ms, lat, lng);
+    const o = { elevation: s.alt, rising: s.az < 180, hour: Math.floor(sim.hour) % 24, date, time: new Date(ms).toISOString() };
+    if (sim.weather) o.condition = sim.weather === "clear" ? (s.alt > -0.83 ? "sunny" : "clear-night") : sim.weather;
+    if (sim.wind) o.wind = SIM_WIND[sim.wind];
+    if (sim.temp) o.temperature = SIM_TEMP[sim.temp];
+    if (sim.aurora) o.kp = 7;
+    if (sim.rainbow) o.rain_ended = 20;
+    return o;
+  }
+
+  _renderSimPanel() {
+    if (!this._sim) return;
+    const sim = this._sim;
+    const ctx = this._skyCtx;
+    const chips = (key, opts, cur) =>
+      `<div class="seg wrap">${opts
+        .map(([val, lab]) => `<button data-sim="${key}" data-val="${esc(JSON.stringify(val))}"${val === cur ? ' class="on"' : ""}>${esc(lab)}</button>`)
+        .join("")}</div>`;
+    const live = (lab) => [[null, lab]];
+    const list = this._simScenes || [];
+    const sceneId = this._skyScene;
+    const idx = list.indexOf(sceneId);
+    const box = this.shadowRoot.querySelector(".detail");
+    const scroll = box.querySelector(".sheet")?.scrollTop ?? 0;
+    this._openPanel(
+      `<div class="sheet sim">
+        <div class="sim-head"><button class="sim-back" aria-label="Back"><ha-icon icon="mdi:chevron-left"></ha-icon></button>
+          <h2>Simulate the sky</h2><button class="close" aria-label="Close"><ha-icon icon="mdi:close"></ha-icon></button></div>
+        <div class="sim-row"><span class="sim-k">Time</span><span class="sim-v"><b class="sim-hour">${esc(this._simHourText())}</b>
+          <span class="sim-dim">${esc(ctx?.phase ?? "")}</span></span></div>
+        <input class="sim-slider" type="range" min="0" max="23.75" step="0.25" value="${sim.hour}" data-sim-hour>
+        <div class="sim-row"><span class="sim-k">Weather</span>${chips("weather", [...live("Live"), ...SIM_WEATHER], sim.weather ?? null)}</div>
+        <div class="sim-row"><span class="sim-k">Wind</span>${chips("wind", [...live("Live"), ["calm", "Calm"], ["breezy", "Breezy"], ["gusty", "Gusty"]], sim.wind ?? null)}</div>
+        <div class="sim-row"><span class="sim-k">Temp</span>${chips("temp", [...live("Live"), ["cold", "Freezing"], ["mild", "Mild"], ["hot", "Hot"]], sim.temp ?? null)}</div>
+        <div class="sim-row"><span class="sim-k">Extras</span><div class="seg wrap">${[
+          ["aurora", "Aurora (high Kp)"],
+          ["rainbow", "Rain just stopped"],
+        ]
+          .map(([k, lab]) => `<button data-sim="${k}" data-val="${!sim[k]}"${sim[k] ? ' class="on"' : ""}>${esc(lab)}</button>`)
+          .join("")}</div></div>
+        <div class="sim-row"><span class="sim-k">Holiday</span>${chips("holiday", [[null, "Today's"], ...HOLIDAYS.map((h) => [h.id, h.label])], sim.holiday ?? null)}</div>
+        <div class="sim-row"><span class="sim-k">Scene</span><span class="sim-scene">
+          <button data-step="-1" aria-label="Previous scene"><ha-icon icon="mdi:chevron-left"></ha-icon></button>
+          <span><b>${esc(sceneId ?? "none")}</b><span class="sim-dim">${idx >= 0 ? ` ${idx + 1} of ${list.length}` : ""}${sim.scene ? "" : " · daily pick"}</span></span>
+          <button data-step="1" aria-label="Next scene"><ha-icon icon="mdi:chevron-right"></ha-icon></button>
+          ${sim.scene ? `<button class="sim-auto" data-step="0">Daily pick</button>` : ""}</span></div>
+        <div class="sim-row"><span class="sim-k">Events</span><div class="seg wrap">${SIM_EVENTS.map(
+          ([name, lab]) => `<button data-fire="${name}">${esc(lab)}</button>`,
+        ).join("")}</div></div>
+        <button class="sim-end">Revert to the live sky</button>
+      </div>`,
+      true,
+    );
+    box.querySelector(".sheet").scrollTop = scroll;
+  }
+
+  _renderSimFlag() {
+    const flag = this.shadowRoot.querySelector(".sim-flag");
+    if (flag && flag.hidden === !!this._sim) flag.hidden = !this._sim;
   }
 
   _hideDetail() {
     clearTimeout(this._detailTimer);
     const box = this.shadowRoot.querySelector(".detail");
     box.hidden = true;
+    box.classList.remove("docked");
     box.innerHTML = "";
   }
 }
@@ -1702,13 +2037,55 @@ const STYLE = `
   .set-text { flex: 1; display: grid; gap: 4px; }
   .set-label { font-size: 18px; font-weight: 600; }
   .set-help { font-size: 14px; line-height: 1.4; color: var(--secondary-text-color); }
-  .set-row input { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 52px; height: 30px; margin: 0;
+  .set-row input[type="checkbox"] { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 52px; height: 30px; margin: 0;
     border-radius: 15px; background: var(--divider-color); transition: background 0.15s; cursor: pointer; }
-  .set-row input::before { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+  .set-row input[type="checkbox"]::before { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
     background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); transition: transform 0.15s; }
-  .set-row input:checked { background: var(--primary-color); }
-  .set-row input:checked::before { transform: translateX(22px); }
+  .set-row input[type="checkbox"]:checked { background: var(--primary-color); }
+  .set-row input[type="checkbox"]:checked::before { transform: translateX(22px); }
   .set-note { margin-top: 6px; font-size: 13px; color: var(--secondary-text-color); }
+  .set-col { flex-direction: column; align-items: stretch; gap: 10px; cursor: default; }
+  .set-drill { width: 100%; text-align: left; font: inherit; color: inherit; --mdc-icon-size: 26px; }
+  .set-drill ha-icon { color: var(--secondary-text-color); }
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 12px; background: var(--secondary-background-color); }
+  .seg button { flex: 1; padding: 8px 10px; border-radius: 9px; font-size: 15px; font-weight: 500; color: var(--secondary-text-color); white-space: nowrap; }
+  .seg button.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .seg.wrap { flex-wrap: wrap; background: none; padding: 0; gap: 6px; }
+  .seg.wrap button { flex: 0 0 auto; padding: 7px 12px; border-radius: 16px; background: var(--secondary-background-color); font-size: 14px; }
+  .seg.wrap button.on { background: var(--primary-color); }
+  .seg.wrap button:active { filter: brightness(1.2); }
+  .slide { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--secondary-text-color); }
+  .slide input, .sim-slider { flex: 1; accent-color: var(--primary-color); height: 28px; }
+
+  /* The sky simulation panel docks at the bottom without a scrim, so the
+     sky above stays in view; the flag marks a simulated sky. */
+  .detail.docked { background: none; align-items: end; padding: 12px; pointer-events: none; }
+  .detail.docked .sheet { pointer-events: auto; max-height: 62%; border-top-width: 0; }
+  .sheet.sim { padding: 16px 20px 20px; }
+  .sim-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .sim-head h2 { flex: 1; margin: 0; font-size: 22px; }
+  .sim-head .close { position: static; }
+  .sim-back { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; --mdc-icon-size: 28px; }
+  .sim-row { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-top: 1px solid var(--divider-color); flex-wrap: wrap; }
+  .sim-row:first-of-type { border-top: 0; }
+  .sim-k { flex: 0 0 64px; padding-top: 7px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--secondary-text-color); }
+  .sim-row > .seg { flex: 1; }
+  .sim-v { padding-top: 4px; font-size: 18px; }
+  .sim-dim { margin-left: 8px; font-size: 14px; color: var(--secondary-text-color); }
+  .sim-slider { width: 100%; margin: 0 0 6px; }
+  .sim-scene { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; }
+  .sim-scene > button[data-step="-1"], .sim-scene > button[data-step="1"] { width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--secondary-background-color); --mdc-icon-size: 26px; }
+  .sim-auto { padding: 6px 12px; border-radius: 16px; background: var(--secondary-background-color); font-size: 14px; }
+  .sim-end { width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 600;
+    background: #b3541e; color: #fff; }
+  .sim-flag { position: absolute; z-index: 6; top: 10px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px;
+    padding: 6px 6px 6px 12px; border-radius: 22px; background: #b3541e; color: #fff; font-size: 15px; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); --mdc-icon-size: 20px; white-space: nowrap; }
+  .sim-flag[hidden] { display: none; }
+  .sim-flag button { padding: 6px 12px; border-radius: 16px; background: rgba(255, 255, 255, 0.2); color: #fff; font-size: 14px; font-weight: 600; }
+  .sim-flag .sim-revert { background: #fff; color: #b3541e; }
+  .week { zoom: var(--grid-zoom, 1); }
 
   /* ---- overlays, avatar initials and tile wrappers: shown by the sky theme ---- */
   .chip .ini { display: none; }

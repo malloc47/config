@@ -43,6 +43,13 @@ export function horizontal(ra, dec, ms, lat, lng) {
   };
 }
 
+// The sun at time ms: altitude and compass azimuth (degrees), for the card's
+// sky simulation (live, the card uses sun.sun's elevation).
+export function sun(ms, lat, lng) {
+  const s = sunCoords(toDays(ms));
+  return horizontal(s.ra, s.dec, ms, lat, lng);
+}
+
 // The moon now: altitude/azimuth (degrees), illuminated fraction (0-1),
 // phase (0 new, 0.25 first quarter, 0.5 full, 0.75 last quarter).
 export function moon(ms, lat, lng) {

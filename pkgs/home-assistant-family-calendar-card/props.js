@@ -444,6 +444,18 @@ export const ACCENTS = {
 };
 export const PROP_RATES = { horseman: [900, 1800] };
 
+// A day in each built-in holiday's window, by year, for the card's sky
+// simulation to show its props.
+export const HOLIDAYS = [
+  { id: "halloween", label: "Halloween", date: (y) => `${y}-10-31` },
+  { id: "thanksgiving", label: "Thanksgiving", date: (y) => nthWeekday(y, 11, 4, 4) },
+  { id: "christmas", label: "Christmas", date: (y) => `${y}-12-20` },
+  { id: "nye", label: "New Year's Eve", date: (y) => `${y}-12-31` },
+  { id: "valentines", label: "Valentine's", date: (y) => `${y}-02-14` },
+  { id: "july4", label: "4th of July", date: (y) => `${y}-07-04` },
+  { id: "fiestas-patrias", label: "Fiestas Patrias", date: (y) => `${y}-07-28` },
+];
+
 const md = (date) => date.slice(5); // "MM-DD"
 const inRange = (date, range) => {
   const [a, b = a] = String(range).split("..");

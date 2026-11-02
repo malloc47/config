@@ -361,3 +361,14 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   rule, which missed animations on ::before/::after (golden-hour glint,
   snowflake sway, splash hops, puddle, flag shading) — so they also kept
   running under the screensaver until now.
+- 2026-11-02: more settings (per device): Week layout (rolling / Mon–Sun,
+  default first_day), Snap back to this week (30 s–5 min / never, default
+  reset_after), Text size (grid zoom 0.88 / 1 / 1.15), Glass (one slider:
+  blur 4–16px and opacity 0.65–0.95, middle = 8px / 0.8). "Simulate the
+  sky…" drill-down: docked panel (no scrim) with time of day (sun from
+  astro.js `sun()`, moon/planets at that time), weather, wind, temperature,
+  aurora, rain-just-stopped, holiday (props.js `HOLIDAYS` dates; also sets
+  the season), a scene stepper over every matching scene (`matchingScenes`,
+  `sceneById`) and buttons to fire each event. In memory only: a "Simulated
+  sky · Edit · Revert" flag shows meanwhile; reload, Revert or 30 min
+  untouched end it; it animates even with Animate the sky off.
