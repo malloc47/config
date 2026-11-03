@@ -53,21 +53,21 @@ let
       "focus.up" = "Option+K";
       "focus.right" = "Option+L";
 
-      # AeroSpace `move` swaps the window with its neighbor; in OmniWM that's
-      # move-column, which moves the whole tile or group. Niri ignores
-      # move-column up/down, so those sit on the join keys below.
-      "moveColumn.left" = "Option+Shift+H";
-      "moveColumn.down" = "Control+Option+Shift+J";
-      "moveColumn.up" = "Control+Option+Shift+K";
-      "moveColumn.right" = "Option+Shift+L";
-
-      # AeroSpace `join-with`: OmniWM's move joins the neighbor into a tab
-      # group (or extracts from one) in Dwindle, consumes/expels in Niri.
-      # Its up/down reorders within a Niri column, like AeroSpace `move`.
-      "move.left" = "Control+Option+Shift+H";
+      # AeroSpace `move` moves the window itself. OmniWM's move does that in
+      # Niri: left/right moves the window into the neighboring column (or out
+      # into a new one), up/down reorders it within its column. In Dwindle it
+      # joins the neighbor into a tab group, or extracts from one.
+      "move.left" = "Option+Shift+H";
       "move.down" = "Option+Shift+J";
       "move.up" = "Option+Shift+K";
-      "move.right" = "Control+Option+Shift+L";
+      "move.right" = "Option+Shift+L";
+
+      # Moves the whole column (Niri) or tile/group (Dwindle). Niri ignores
+      # up/down.
+      "moveColumn.left" = "Control+Option+Shift+H";
+      "moveColumn.down" = "Control+Option+Shift+J";
+      "moveColumn.up" = "Control+Option+Shift+K";
+      "moveColumn.right" = "Control+Option+Shift+L";
 
       # `layout tiles accordion` (Niri only) / `layout vertical horizontal`
       # (Dwindle only)
