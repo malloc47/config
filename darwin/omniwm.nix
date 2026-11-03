@@ -129,15 +129,6 @@ let
     "8A817103-1948-4155-B4B2-CC8FCF74B5D3"
   ];
 
-  minSize = id: bundleId: minWidth: minHeight: {
-    inherit
-      id
-      bundleId
-      minWidth
-      minHeight
-      ;
-  };
-
   # Complete settings.toml: OmniWM rejects the file if any required key is
   # missing. See https://omniwm.app/config/settings-reference/ (Double-typed
   # keys must be written as floats).
@@ -327,20 +318,8 @@ let
         axSubrole = "AXStandardWindow";
         layout = "tile";
       }
-      # OmniWM's built-in minimum sizes, which this file would otherwise drop
-      (minSize "6A31F08A-4051-4354-B439-42F4C71894A3" "com.openai.codex" 800.0 600.0)
-      (minSize "4BA546DA-2875-4BEF-B13F-1539E833B1A0" "com.eltima.cmd1.pro.mas" 950.0 550.0)
-      (minSize "486CEFA6-69AA-4A3C-AF27-BCD38F4F138B" "com.google.Chrome" 500.0 375.0)
-      (minSize "979F05F4-FFA2-4EDD-B23F-08A9944C759F" "dev.zed.Zed" 360.0 240.0)
-      (minSize "81426D13-C1A5-475E-AFBC-00BBA05042D0" "com.apple.Safari" 574.0 220.0)
-      (minSize "1CF39647-F30D-4E76-9686-79B551F1B094" "app.zen-browser.zen" 500.0 495.0)
-      (minSize "005C00D3-F665-47F8-BDAE-D80790E9E46B" "org.mozilla.firefox" 500.0 120.0)
-      (minSize "C21156B1-0224-4998-97E3-8F4FA65B9F3B" "company.thebrowser.dia" 500.0 420.0)
-      (minSize "2DE9390B-0DB4-4D0C-9ABA-06F76F1D4EA9" "com.spotify.client" 800.0 600.0)
-      (minSize "AF752D95-8497-4844-BE20-4C93E73BAEF2" "com.hnc.Discord" 800.0 500.0)
-      (minSize "7876C9EF-437E-4D4F-9C27-B1B02F4AABCE" "com.mitchellh.ghostty" 90.0 48.0)
-      (minSize "8ECAB78B-BCDD-4245-BC25-1609A49B1C86" "com.microsoft.Outlook" 930.0 650.0)
-      (minSize "552FB77D-BF0E-4737-90A6-B5BC6986C579" "com.apple.MobileSMS" 660.0 320.0)
+      # OmniWM's default minimum-size rules are left out on purpose, so
+      # windows can shrink to whatever the app itself allows
     ];
 
     monitorBarOverrides = [ ];
