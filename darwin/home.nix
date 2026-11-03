@@ -109,6 +109,19 @@
     ${pkgs.duti}/bin/duti -s org.gnu.EmacsClient public.plain-text all
   '';
 
+  # Run the daemon from Emacs.app rather than bin/emacs, so its frames carry
+  # the org.gnu.Emacs bundle ID that the OmniWM app rule (darwin/omniwm.nix)
+  # matches on. Started from the bare binary it has no bundle ID.
+  launchd.agents.emacs.config.ProgramArguments = lib.mkIf config.services.emacs.enable (
+    lib.mkForce (
+      [
+        "${config.services.emacs.package}/Applications/Emacs.app/Contents/MacOS/Emacs"
+        "--fg-daemon"
+      ]
+      ++ config.services.emacs.extraOptions
+    )
+  );
+
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 }

@@ -312,6 +312,16 @@ let
         bundleId = "org.flameshot";
         layout = "float";
       }
+      # Emacs's NS port reports its frames with the AXTextField role, which
+      # OmniWM rejects unless a rule names the exact role and subrole. Needs
+      # the daemon running from Emacs.app (darwin/home.nix) for the bundle ID.
+      {
+        id = "A8E18346-7705-4CFE-9B6C-845C9D61C94E";
+        bundleId = "org.gnu.Emacs";
+        axRole = "AXTextField";
+        axSubrole = "AXStandardWindow";
+        layout = "tile";
+      }
       # OmniWM's built-in minimum sizes, which this file would otherwise drop
       (minSize "6A31F08A-4051-4354-B439-42F4C71894A3" "com.openai.codex" 800.0 600.0)
       (minSize "4BA546DA-2875-4BEF-B13F-1539E833B1A0" "com.eltima.cmd1.pro.mas" 950.0 550.0)
