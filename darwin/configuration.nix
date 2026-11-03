@@ -114,6 +114,9 @@
         autohide-delay = 0.0;
         expose-animation-duration = 0.0;
         mineffect = "scale";
+
+        # A fixed Dock takes 86 px of height from OmniWM's tiling area
+        autohide = lib.mkIf (config.settings.darwinWindowManager == "omniwm") true;
       };
 
       # OmniWM pauses window management unless "Displays have separate
