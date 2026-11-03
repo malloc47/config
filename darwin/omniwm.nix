@@ -54,17 +54,19 @@ let
       "focus.right" = "Option+L";
 
       # AeroSpace `move` swaps the window with its neighbor; in OmniWM that's
-      # move-column, which moves the whole tile or group.
+      # move-column, which moves the whole tile or group. Niri ignores
+      # move-column up/down, so those sit on the join keys below.
       "moveColumn.left" = "Option+Shift+H";
-      "moveColumn.down" = "Option+Shift+J";
-      "moveColumn.up" = "Option+Shift+K";
+      "moveColumn.down" = "Control+Option+Shift+J";
+      "moveColumn.up" = "Control+Option+Shift+K";
       "moveColumn.right" = "Option+Shift+L";
 
       # AeroSpace `join-with`: OmniWM's move joins the neighbor into a tab
       # group (or extracts from one) in Dwindle, consumes/expels in Niri.
+      # Its up/down reorders within a Niri column, like AeroSpace `move`.
       "move.left" = "Control+Option+Shift+H";
-      "move.down" = "Control+Option+Shift+J";
-      "move.up" = "Control+Option+Shift+K";
+      "move.down" = "Option+Shift+J";
+      "move.up" = "Option+Shift+K";
       "move.right" = "Control+Option+Shift+L";
 
       # `layout tiles accordion` (Niri only) / `layout vertical horizontal`
@@ -98,6 +100,8 @@ let
       "expandContainerToAvailablePrimarySpan" = "Control+Option+F";
       "resetWindowSecondarySpan" = "Control+Option+R";
       "raiseAllFloatingWindows" = "Option+Shift+R";
+      # Keyboard focus can't otherwise reach floating windows
+      "toggleFloatingFocus" = "Option+Shift+Tab";
       "openCommandPalette" = "Control+Option+Space";
       "openMenuAnywhere" = "Control+Option+M";
       "toggleQuakeTerminal" = "Option+Grave";
@@ -108,6 +112,13 @@ let
         lib.take 9 digits
       )
     );
+
+  # Workspaces that don't follow general.defaultLayoutType
+  workspaceLayouts = {
+    "1" = "niri";
+    "5" = "niri";
+    "7" = "dwindle";
+  };
 
   # Workspace ids must stay stable across edits. 1-9 reuse OmniWM's built-in
   # ids; like AeroSpace's workspace-to-monitor-force-assignment, all ten live
@@ -144,13 +155,14 @@ let
       hotkeysEnabled = true;
       systemHyperTrigger = "None";
       hyperKeyModifiers = "Control+Option+Shift+Command";
-      defaultLayoutType = "dwindle";
+      defaultLayoutType = "niri";
       preventSleepEnabled = false;
       # Upgrades come from bumping the package above
       updateChecksEnabled = false;
       # For omniwmctl, which the skhd bindings use
       ipcEnabled = true;
       animationsEnabled = true;
+      animationSpeed = 2.0;
     };
 
     # Replaces AutoRaise (-delay 0 -focusDelay 1): focus on hover, no raise
@@ -207,7 +219,7 @@ let
     # Replaces JankyBorders, same color (matches i3)
     borders = {
       enabled = true;
-      width = 10.0;
+      width = 5.0;
       color = rgb 211 54 130;
     };
 
@@ -226,7 +238,7 @@ let
       showLabels = true;
       showFloatingWindows = false;
       windowLevel = "popup";
-      position = "overlappingMenuBar";
+      position = "belowMenuBar";
       notchMode = "moveBelowMenuBar";
       notchActiveZoneWidth = 180.0;
       systemStatsButton = false;
@@ -265,7 +277,7 @@ let
     };
 
     statusBar = {
-      showWorkspaceName = false;
+      showWorkspaceName = true;
       showAppNames = false;
       useWorkspaceId = false;
     };
@@ -295,14 +307,14 @@ let
 
     scratchpads.labels = { };
 
-    appearance.mode = "dark";
+    appearance.mode = "automatic";
 
     hotkeys = lib.mapAttrsToList (id: binding: { inherit id binding; }) hotkeys;
 
     workspaces = lib.imap1 (n: id: {
       inherit id;
       name = toString n;
-      layoutType = "default";
+      layoutType = workspaceLayouts.${toString n} or "default";
       monitorAssignment.type = "main";
     }) workspaceIds;
 
