@@ -113,13 +113,6 @@ let
       )
     );
 
-  # Workspaces that don't follow general.defaultLayoutType
-  workspaceLayouts = {
-    "1" = "niri";
-    "5" = "niri";
-    "7" = "dwindle";
-  };
-
   # Workspace ids must stay stable across edits. 1-9 reuse OmniWM's built-in
   # ids; like AeroSpace's workspace-to-monitor-force-assignment, all ten live
   # on the main monitor.
@@ -314,7 +307,7 @@ let
     workspaces = lib.imap1 (n: id: {
       inherit id;
       name = toString n;
-      layoutType = workspaceLayouts.${toString n} or "default";
+      layoutType = "default";
       monitorAssignment.type = "main";
     }) workspaceIds;
 
