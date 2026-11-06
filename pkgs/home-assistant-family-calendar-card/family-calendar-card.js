@@ -60,6 +60,9 @@
 //   reset_after: 300                   # s idle before paging back to today (0: never)
 //   refresh_interval: 300              # s between event refetches
 //   weather_entity: weather.nws_khpn   # plus weather.js's options:
+//   rain_from_forecast: 70             # show rain/snow when the entity says fog or
+//                                      # cloudy but this hour's forecast is wet at
+//                                      # this % or more (false: never)
 //   fallback_weather_entity: ...       #   rain_probability, outdoor_hours, cold, hot
 //   inside_entity: sensor.<indoor temperature>   # optional, beside the outside temp
 //   sun_entity: sun.sun                # night icons for the current conditions
@@ -1110,7 +1113,7 @@ class FamilyCalendarCard extends HTMLElement {
     const inputs = {
       elevation: o.elevation ?? Number(sun.elevation),
       rising: o.rising ?? sun.rising !== false,
-      condition: o.condition ?? weather?.state,
+      condition: o.condition ?? this._condition(),
       hour: o.hour ?? now.hour,
       date: o.date ?? now.date,
       wind: o.wind ?? Number(weather?.attributes?.wind_speed),
@@ -1324,6 +1327,28 @@ class FamilyCalendarCard extends HTMLElement {
     }
   }
 
+  // The current condition: the weather entity's (an observation, for NWS)
+  // unless it reports dry grey weather (fog, cloudy, partly cloudy) while the
+  // hourly forecast is confident of rain or snow this hour: the airport's
+  // sensor misses light rain in fog, and the station is miles away. Upgraded
+  // to rain or snow only, never a thunderstorm (the forecast's lightning is
+  // too uncertain to flash on screen). rain_from_forecast: the precipitation
+  // probability needed (default 70; false: observation only).
+  _condition() {
+    const src = this._wx.src();
+    const obs = src.state?.state;
+    const min = this._config.rain_from_forecast ?? 70;
+    if (min === false || !["fog", "cloudy", "partlycloudy"].includes(obs)) return obs;
+    const now = Date.now();
+    const hour = src.hourly.find((f) => {
+      const t = Date.parse(f.datetime);
+      return t <= now && now < t + 3600e3;
+    });
+    if (!hour || (hour.precipitation_probability ?? 0) < Number(min)) return obs;
+    const wet = { rainy: "rainy", pouring: "pouring", "lightning-rainy": "rainy", snowy: "snowy", "snowy-rainy": "snowy-rainy", hail: "hail" };
+    return wet[hour.condition] ?? obs;
+  }
+
   _renderWeather() {
     const c = this._config;
     const weather = this._wx.src().state;
@@ -1331,7 +1356,8 @@ class FamilyCalendarCard extends HTMLElement {
     const sun = this._hass.states[c.sun_entity];
     const night = sun ? sun.state === "below_horizon" : false;
     const inside = c.inside_entity && this._hass.states[c.inside_entity];
-    const ic = weather ? this._wx.conditionIcon(weather.state, night && weather.state === "partlycloudy") : "alert-circle-outline";
+    const cond = this._condition();
+    const ic = weather ? this._wx.conditionIcon(cond, night && cond === "partlycloudy") : "alert-circle-outline";
     const rows = this._wx.src().hourly.length ? [this._wx.outlookRow("today"), this._wx.outlookRow("tomorrow")] : [];
     this._set(
       ".weather",
@@ -1339,7 +1365,7 @@ class FamilyCalendarCard extends HTMLElement {
       <div class="now">
         <ha-icon icon="mdi:${ic}"></ha-icon>
         <span class="now-temp">${temp(wa.temperature)}</span>
-        <span class="now-cond">${esc(CONDITION_TEXT[weather?.state] || (weather?.state === "clear-night" ? "Clear" : weather?.state) || "Unavailable")}</span>
+        <span class="now-cond">${esc(CONDITION_TEXT[cond] || (cond === "clear-night" ? "Clear" : cond) || "Unavailable")}</span>
         ${inside && num(inside.state) !== null ? `<span class="inside"><ha-icon icon="mdi:home-thermometer-outline"></ha-icon>${temp(inside.state)}</span>` : ""}
       </div>
       ${rows
