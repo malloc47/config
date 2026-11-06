@@ -534,8 +534,8 @@ for `Successfully configured` before moving it.
 
 ### Devices touched
 - **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack:**
-  - **#2 `0x4ce175537eba0000` = "Play Room Lamp"**: retired 2026-11-05 (unplugged since
-    2026-10-16; still in z2m under that name).
+  - **#2 `0x4ce175537eba0000`** (was "Play Room Lamp"): retired 2026-11-05 and
+    force-removed from z2m (unplugged since 2026-10-16).
   - **#1 `0x4ce1755369fc0000`**: currently paired (joined the coordinator directly in
     test 2), unnamed, not deployed.
   - **#3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**: unpaired (diagnostics only).
@@ -544,8 +544,9 @@ for `Successfully configured` before moving it.
     …b48716 / …7201), or pair one and read the address in z2m.
 - **SONOFF S61SZBTPB `0xa4c1381f2ed8ffff`** (bought as a Gen3 replacement, 2026-10-16):
   paired (joined via "All", parent coordinator, so brand-new devices pair fine with
-  "All"), unnamed (`switch.0xa4c1381f2ed8ffff`). **Deployed as the play room lamp plug
-  2026-11-05.** Its power-on behavior is `off` (plug #2's was `previous`). On/off and power reporting work (0 W off, ~8.4 W with the lamp,
+  "All"). **Deployed 2026-11-05 as "Play Room Lamp"** (renamed with
+  `homeassistant_rename`, so it took over the `*.play_room_lamp*` entity ids) and set
+  to power-on behavior `previous`, matching plug #2. On/off and power reporting work (0 W off, ~8.4 W with the lamp,
   ~121.7 V; current reads 0 A at small loads). "Failed to configure" is cosmetic
   (`genOnOff` reporting `UNSUPPORTED_ATTRIBUTE`). Adds NWK decryption failures like the
   Gen3 plugs (OPEN 2).
@@ -556,8 +557,8 @@ for `Successfully configured` before moving it.
   this. The ZBMINIR2 only sends commands (`toggle`) to bound devices in
   detach-relay mode. In normal mode it just reports state. So the HA automation
   `automation.play_room_lamp_follows_play_room_light_switch` (queued; mirrors on/off,
-  re-syncs after restarts) does it until the ZBMINIR2 is replaced. Since 2026-11-05 it
-  targets the S61 (`switch.0xa4c1381f2ed8ffff`). The test binding
+  re-syncs after restarts) does it until the ZBMINIR2 is replaced. It targets
+  `switch.play_room_lamp`, which is the S61 since 2026-11-05. The test binding
   was removed. The switch's database still has two harmless stale bind records
   (see the §10 unbind note).
 - **Laundry Room Presence Sensor (SNZB-06P24):** occupancy reports had silently
