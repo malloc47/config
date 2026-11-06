@@ -284,13 +284,18 @@ export const LAYERS = {
         soft: ["#c3cad4", "#727d8c", "#7f8a98", "#939daa"],
         bright: ["#d9dee5", "#939eac", "#a2acb9", "#b4bcc7"],
         brooding: ["#a3abb6", "#4a515c", "#5d656f", "#6f7782"],
-        night: ["#4b5468", "#6b6062", "#262c39", "#3a3539"],
+        night: ["#2b313e", "#3f393d", "#1c212b", "#29262c"],
         storm: ["#7d8796", "#2b313b", "#3a414d", "#49505b"],
-        stormnight: ["#384052", "#191d26", "#1d222c", "#262b35"],
+        stormnight: ["#2a303d", "#14171e", "#181c24", "#1f232b"],
       };
-      const [c1, c2, f1, f2] = tones[p.tone] || tones[ctx.dark ? "night" : "soft"];
+      const tone = p.tone || (ctx.dark ? "night" : "soft");
       const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+      const toHex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
       const mix = (a, b2, t) => `rgb(${hex(a).map((v, i) => Math.round(v + (hex(b2)[i] - v) * t)).join(", ")})`;
+      // Night clouds are dark shapes against a dark sky (only their bases
+      // faintly lit), darker still late at night.
+      const deep = (tone === "night" || tone === "stormnight") && ctx.late ? 0.35 : 0;
+      const [c1, c2, f1, f2] = tones[tone].map((h) => toHex(hex(h).map((v) => v * (1 - deep))));
       const edge = 230; // roughly where the calendar starts
       // [top, height, cloud width, spacing, drift s, haze]: horizon first, so
       // the nearer, overhead rows are drawn over it.
