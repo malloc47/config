@@ -509,13 +509,14 @@ for `Successfully configured` before moving it.
   flowing. Fix: z2m Reconfigure. Diagnose with a direct `get` of `occupancy`.
 - **Newer device models raise `NWK_DECRYPTION_FAILURE` by ~270–380 an hour each**
   (Third Reality Gen3 plug, SONOFF S61; older models joined the same way stay at 0).
-  Functionally harmless so far; cause open — §11 OPEN 2.
+  The frames are valid on the air (sniffer, 2026-11-05); the coordinator drops some
+  during broadcast-relay bursts. Functionally harmless — §11 OPEN 2.
 - **RESET_SOFTWARE / ACK-timeout on network-attached coordinators** — widely reported
   for serial-over-TCP; strongly favors going **USB**.
 
 ---
 
-## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10; OPEN 2 updated 2026-10-16)
+## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10; OPEN 2 updated 2026-11-05)
 
 ### Network
 - USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN `0x1a62`,
@@ -533,7 +534,8 @@ for `Successfully configured` before moving it.
 
 ### Devices touched
 - **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack:**
-  - **#2 `0x4ce175537eba0000` = "Play Room Lamp"**: deployed.
+  - **#2 `0x4ce175537eba0000` = "Play Room Lamp"**: retired 2026-11-05 (unplugged since
+    2026-10-16; still in z2m under that name).
   - **#1 `0x4ce1755369fc0000`**: currently paired (joined the coordinator directly in
     test 2), unnamed, not deployed.
   - **#3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**: unpaired (diagnostics only).
@@ -542,12 +544,11 @@ for `Successfully configured` before moving it.
     …b48716 / …7201), or pair one and read the address in z2m.
 - **SONOFF S61SZBTPB `0xa4c1381f2ed8ffff`** (bought as a Gen3 replacement, 2026-10-16):
   paired (joined via "All", parent coordinator, so brand-new devices pair fine with
-  "All"), unnamed. On/off and power reporting work (0 W off, ~8.4 W with the lamp,
+  "All"), unnamed (`switch.0xa4c1381f2ed8ffff`). **Deployed as the play room lamp plug
+  2026-11-05.** Its power-on behavior is `off` (plug #2's was `previous`). On/off and power reporting work (0 W off, ~8.4 W with the lamp,
   ~121.7 V; current reads 0 A at small loads). "Failed to configure" is cosmetic
   (`genOnOff` reporting `UNSUPPORTED_ATTRIBUTE`). Adds NWK decryption failures like the
   Gen3 plugs (OPEN 2).
-- **As of 2026-10-16 evening, plug #2 and the S61 are both unplugged** (counter tests).
-  The Play Room Lamp automation still targets plug #2.
 - **Dining Room Night Light (`3RSNL02043Z`):** removed and re-paired via the
   coordinator 2026-10-16 21:00 (new short address 2747), renamed back; HA entities
   unchanged.
@@ -555,7 +556,8 @@ for `Successfully configured` before moving it.
   this. The ZBMINIR2 only sends commands (`toggle`) to bound devices in
   detach-relay mode. In normal mode it just reports state. So the HA automation
   `automation.play_room_lamp_follows_play_room_light_switch` (queued; mirrors on/off,
-  re-syncs after restarts) does it until the ZBMINIR2 is replaced. The test binding
+  re-syncs after restarts) does it until the ZBMINIR2 is replaced. Since 2026-11-05 it
+  targets the S61 (`switch.0xa4c1381f2ed8ffff`). The test binding
   was removed. The switch's database still has two harmless stale bind records
   (see the §10 unbind note).
 - **Laundry Room Presence Sensor (SNZB-06P24):** occupancy reports had silently
@@ -677,9 +679,11 @@ they joined).
   first, or wait well past a pairing window before re-pairing.
 
 ### OPEN 2: undecryptable frames from newer device models (since 2026-10-03)
-**Status (2026-10-16): attributed to the newer device models themselves, not to network
-state. Functionally harmless so far. What those devices send is unknown; the sniffer
-(below) would show it.**
+**Status (2026-11-05): the frames are valid. The sniffer decrypted every frame on the
+air, and the coordinator's failures line up with broadcast-relay bursts, not with frames
+from the newer devices. Powering a newer device still adds them (hourly rows). Most
+likely a coordinator-side limit (EmberZNet 7.4.5) that each newer router pushes past.
+Functionally harmless; not pursued further.**
 
 **The symptom.** `NWK_DECRYPTION_FAILURE` (NCP counter 25, §9) was 0–5 a day for weeks:
 through the Sep 24 migration, the Sep 25 breaker cycle, and up to Oct 2. From Oct 3 it
@@ -727,22 +731,70 @@ Note: a normal z2m remove also drops the friendly name. Rename back with
 `bridge/request/device/rename` `{"from":"<ieee>","to":"<name>","homeassistant_rename":true}`
 and HA re-creates the same entity ids.
 
-**Possible causes (each visible with a sniffer):**
-- frames sent with a key sequence number the coordinator doesn't hold (for example a
-  missed or mishandled key-switch);
-- frames sent without the extended nonce (sender IEEE), so the coordinator can't
-  build the nonce for an unknown short address;
-- broadcasts or link-status frames the coordinator can't match to a sender;
-- a neighbor network on the same z2m-default PAN and channel (less likely now: the
-  count follows our devices being powered).
+**Sniffer results (2026-11-05).** Setup and reruns: see "Sniffer on aida" below.
 
-**Next (when wanted): sniffer.** Any 802.15.4 sniffer on channel 11 near the
-coordinator, Wireshark with the network key (from `coordinator_backup.json` on aida;
-keep captures and keys private) plus ZigBeeAlliance09. Capture an hour with only the
-S61 (or one Gen3 plug) powered and look for frames from its short address that
-Wireshark can't decrypt either, then compare their NWK security header (key sequence,
-extended nonce, frame counter) with frames that do decrypt. Hardware options:
-- Nordic nRF52840 dongle (PCA10059) + nRF Sniffer for 802.15.4, on cesare;
-- a spare EFR32 radio running stock Zigbee NCP firmware, via `ember-zli sniff`
-  (SMLIGHT documents this for its MRx radios over TCP). It must not be the live
-  coordinator.
+1. **70-minute capture with the S61 powered** (18:43–19:53, after a re-join with its
+   old short address `0xE05F`). The coordinator counted **307** failures in the
+   18:54–19:54 row. The sniffer captured **130,622** frames, and **every secured frame
+   decrypted** with the network key (MIC verified). The S61's frames match an older
+   Hue bulb's byte for byte: security control `0x28`, network key, key sequence 0,
+   extended nonce present with its correct IEEE, frame counters strictly increasing
+   with no reuse. That rules out a stale key sequence, a missing nonce, unknown
+   senders, and a neighbor network (the only foreign PAN on channel 11, `0xad30`, is a
+   **Thread** network). Telink silicon isn't the factor either (the S61 is Telink, but
+   so are the clean SNZB-06P24 and Gledopto devices), and its broadcast relaying is
+   normal (~4–5 copies per broadcast, ~355 ms median relay delay like other Telink
+   routers).
+2. **Per-second correlation** (21:04–21:16; z2m stopped, coordinator counters polled
+   every 0.5 s with bellows `readCounters`, sniffer running). 44 failures in
+   12 minutes, 0 undecryptable frames among 30,874 captured.
+   - About half the failures came within ~1.3 s of a **route-request flood** starting
+     (every flood was followed by 1–3); the rest came in pairs ~1.5 s apart every
+     ~30–60 s (a periodic broadcast and its relays). Failure windows averaged
+     ~88 frames/s against ~38 overall.
+   - Against busy-matched random windows, the S61 is **not** over-represented: its own
+     frames are in 2.5% of failure windows (3.8% control), any S61 frame 77.5%
+     (81.8%), its frame-counter gaps (frames the sniffer didn't capture) 87.5%
+     (90.1%). No single device is present in every failure window.
+
+**Interpretation (not proven):** the coordinator drops some valid frames during
+broadcast bursts and counts them as decryption failures, and each newer router adds
+enough to those bursts to cross the limit. Why these models do and older ones (like
+the night light) don't isn't explained by anything visible on the air. Possible next
+levers, if it ever matters: a different coordinator firmware, or a report to
+zigbee-herdsman/EmberZNet with these numbers (share summaries only; the captures are
+decryptable with this network's key).
+
+**Sniffer on aida** (all in `~/nrfsniff`; nothing in the repo; captures and keys stay
+private):
+- Hardware: Nordic nRF52840 dongle (PCA10059) on aida's USB, flashed with Nordic's
+  nRF Sniffer for 802.15.4 firmware (v0.8.0, `nrf802154_sniffer_nrf52840dongle.hex`).
+  It shows up as `/dev/serial/by-id/usb-Nordic_Semiconductor_ASA_nRF_802154_Sniffer_…`.
+  The Open DFU bootloader is untouched (to reflash, press the side RESET button: the
+  device reappears as "Open DFU Bootloader").
+- Flashing: nixpkgs `nrfutil` with the `nrfutil-nrf5sdk-tools` extension, overriding
+  `segger-jlink-headless = emptyDirectory` (the dongle doesn't need J-Link, so this
+  avoids the J-Link license). Import nixpkgs with `overlays = [ ]` on aida, or
+  `<nixos-config>` lookup fails. Then
+  `nrfutil nrf5sdk-tools pkg generate --hw-version 52 --sd-req 0x00
+  --application-version 1 --application <hex> sniffer.zip` and
+  `nrfutil nrf5sdk-tools dfu usb-serial -pkg sniffer.zip -p <bootloader port>`.
+- Capture: Nordic's `nrf802154_sniffer.py` (Wireshark extcap script) with a Python that
+  has `pyserial`, run headless into a pcap file, e.g.
+  `sudo systemd-run --unit nrfsniff-capture --property RuntimeMaxSec=3600
+  --property KillSignal=SIGINT <python> nrf802154_sniffer.py --capture
+  --extcap-interface <sniffer port> --channel 11 --fifo <out.pcap>`.
+  Timestamps are pinned to host time at the first frame, so they line up with host
+  logs to within tens of milliseconds.
+- Decryption: `tshark` (nixpkgs `wireshark-cli`) with `~/.config/wireshark/zigbee_pc_keys`
+  (mode 600) holding the network key from `coordinator_backup.json` and
+  ZigBeeAlliance09. Useful fields: `zbee_sec.encrypted_payload` (present only when
+  decryption failed), `zbee.sec.src64`, `zbee.sec.counter`, `zbee.sec.key_seqno`,
+  `zbee.sec.ext_nonce`. tshark exits with an error on an unknown field name, so check
+  names with `tshark -G fields` and don't trust an empty result. Filter key fields out
+  of `-V` dumps.
+- Per-second counters: stop z2m, connect with bellows (`bellows.cli.util.setup(port,
+  115200)` → `initialize_network()`), poll `readCounters` (non-clearing), then restart
+  z2m. Run it as a `systemd-run` wrapper that restarts z2m unconditionally, with
+  absolute paths (`timeout` isn't on a transient unit's PATH). z2m comes back
+  "resumed".
