@@ -16,7 +16,7 @@ Sonoff MG24 migration — every gotcha below was hit for real, in the order list
    (§2 step 5). z2m's restore records the dongle's *current* IEEE as the network's
    **trust-center address**. Restore under the factory IEEE and that stale address
    survives a later IEEE fix (Gotcha #4).
-3. Four things bite **after** the swap, in this order:
+3. Five things bite **after** the swap, in this order:
    - **IEEE clone silently fails** on EFR32 → the new radio keeps its factory IEEE
      → `ROUTE_ERROR_ADDRESS_CONFLICT` storm + broken reporting. **Fix:** write the
      backup IEEE onto the dongle.
@@ -30,6 +30,9 @@ Sonoff MG24 migration — every gotcha below was hit for real, in the order list
      *after* the first restore) → existing devices fine, but **new devices can't
      stay joined**. **Fix:** make the dongle leave its network so z2m re-restores
      from backup (§7).
+   - **Bindings to the coordinator's byte-reversed IEEE** → nothing visibly broken,
+     but every report floods the mesh with an unanswerable address lookup (~70% of all
+     traffic here). **Fix:** unbind via a temporary placeholder device (§7a).
 4. After all that, **"Permit join (All)" still fails when *re-pairing* a device that
    was joined before**: its previous parent router won't take it back. That's
    pairing behavior, not network damage. Joins through any router work. **Workaround:**
@@ -422,6 +425,58 @@ for `Successfully configured` before moving it.
 
 ---
 
+## 7a. GOTCHA #5 — bindings to the byte-reversed coordinator IEEE (found 2026-11-05)
+
+**Symptom:** nothing visibly broken. A sniffer shows that most of the mesh's traffic is
+ZDO `NWK_addr_req` broadcasts for `24:d6:60:ff:fe:72:5c:a4`, which is the coordinator's
+IEEE `a4:5c:72:fe:ff:60:d6:24` **byte-reversed**. No device has that address, so the
+lookup is never answered and repeats. Each broadcast is relayed by every router. Here it
+was **~80,000 of ~112,000 frames an hour**.
+
+**Cause:** devices hold reporting bindings (and IAS sensors a CIE address) pointing at
+the reversed IEEE, alongside their correct coordinator bindings. Every report sends one
+copy to the coordinator (works) and triggers an address lookup for the other. Most
+likely created during the migration, when the IEEE byte order was in flux (§4); not
+verified. Bulbs that had **only** the reversed binding never reported state to z2m at
+all.
+
+**Detect:** `sudo grep -a -c 24d660fffe725ca4 /var/lib/zigbee2mqtt/database.db`
+(z2m's records; not proof of what's on the device), or count `NWK_addr_req` frames with
+the sniffer (§11 OPEN 2, "Sniffer on aida").
+
+**Fix (what worked):**
+1. z2m's `bridge/request/device/binds/clear` with `ieee_list` uses ZDO
+   Clear_All_Bindings, an R23 command: the Inovelli switches answered `NOT_SUPPORTED`.
+2. z2m's normal `device/unbind` needs the target to be a known device. So, with z2m
+   stopped and `database.db` backed up, **add a placeholder device record** with the
+   reversed IEEE (type `EndDevice`, an unused `nwkAddr` such as 65520,
+   `interviewCompleted: true`, endpoint 1 listing every cluster to unbind in both
+   `inClusterList` and `outClusterList`). `database.db` is one JSON object per line and
+   also holds `Group` lines that have no `ieeeAddr`.
+3. Start z2m, then for each device and endpoint:
+   `bridge/request/device/unbind`
+   `{"from":"<ieee>","from_endpoint":<ep>,"to":"0x24d660fffe725ca4","to_endpoint":1,"clusters":[<ids>],"skip_disable_reporting":true}`.
+   With debug logging on, the device's answer shows: `SUCCESS`, or
+   `no entry on device` (`NO_ENTRY`: the record was database-only). Sleeping battery
+   devices just fail.
+4. Force-remove the placeholder (`device/remove` with `force`; this also clears its HA
+   discovery entities). Then, with z2m stopped, strip any remaining reversed bind
+   records from `database.db`, so they don't trigger the wrong-record deletion bug (§10)
+   on later unbinds.
+5. Bind bulbs that had no coordinator binding: `device/bind`
+   `{"from":"<bulb>","from_endpoint":11,"to":"Coordinator","clusters":["genOnOff","genLevelCtrl"]}`
+   ("Failed to setup reporting for 'Coordinator/1'" afterwards is harmless).
+
+Before any direct `database.db` edit, see the systemd-run note in §11 OPEN 2 (transient
+units have no coreutils on `PATH`; a backup step silently failed once because of it).
+
+**Leftovers here:** the Kitchen Overhead VZM32 refused one unbind (illuminance,
+`NOT_AUTHORIZED`), so its illuminance reporting was slowed instead (§11). Eight IAS
+door/contact sensors (TS0203, TS0215A) have the reversed IEEE cached as `iasCieAddr`.
+Their events still arrive; a Reconfigure while each is awake would rewrite it.
+
+---
+
 ## 8. Post-transition verification checklist
 
 - [ ] `journalctl -u zigbee2mqtt`: `ember` handshake OK, **0** `RESET_SOFTWARE` /
@@ -436,6 +491,8 @@ for `Successfully configured` before moving it.
 - [ ] Scene/config buttons trigger their HA automations (Inovelli).
 - [ ] Sensor/local load changes sync to HA (e.g. Kitchen mmwave → `light` state).
 - [ ] gatus z2m `:8080` endpoint green; ntfy RESOLVED received if it had fired.
+- [ ] No bindings to the coordinator's **byte-reversed** IEEE (§7a):
+      `grep -a -c <reversed ieee> database.db` == 0, and no `NWK_addr_req` floods for it.
 - [ ] Commit the repo change; run `z2m-foldin aida` if devices/groups drifted.
 
 ---
@@ -509,14 +566,14 @@ for `Successfully configured` before moving it.
   flowing. Fix: z2m Reconfigure. Diagnose with a direct `get` of `occupancy`.
 - **Newer device models raise `NWK_DECRYPTION_FAILURE` by ~270–380 an hour each**
   (Third Reality Gen3 plug, SONOFF S61; older models joined the same way stay at 0).
-  The frames are valid on the air (sniffer, 2026-11-05); the coordinator drops some
-  during broadcast-relay bursts. Functionally harmless — §11 OPEN 2.
+  The frames are valid on the air (sniffer, 2026-11-05). Cutting broadcast traffic by
+  ~70% (§7a) lowered them only ~29%. Functionally harmless — §11 OPEN 2.
 - **RESET_SOFTWARE / ACK-timeout on network-attached coordinators** — widely reported
   for serial-over-TCP; strongly favors going **USB**.
 
 ---
 
-## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10; OPEN 2 updated 2026-11-05)
+## 11. Current state & open follow-ups (as of 2026-10-04 ~16:10; updated 2026-11-06)
 
 ### Network
 - USB Sonoff MG24 coordinator, IEEE `a4:5c:72:fe:ff:60:d6:24`, PAN `0x1a62`,
@@ -528,9 +585,13 @@ for `Successfully configured` before moving it.
   values and channel would look like part of this one over the air. Setting explicit
   network parameters means a new network and re-pairing everything. Separate project
   (details in private notes).
+- Traffic (sniffer): ~33,000 frames an hour after the 2026-11-05 cleanup (§7a), down
+  from ~112,000; no reversed-IEEE address lookups seen in a 5-minute sample.
 - Backups on aida (`/var/lib/zigbee2mqtt/`): `backup-pre-tc-diag-20261003-223957/`,
   `backup-pre-tc-fix-20261003-224354/`, and `backup-pre-tc-fix2-20261003-224646/`
-  (just before the §7 fix). No SLZB-era backup survives.
+  (just before the §7 fix); `backup-revbind-20261105-230129/` (with the §7a placeholder
+  added) and `backup-pre-revbind-strip-20261105-232934/` (before the final §7a database
+  strip). No SLZB-era backup survives.
 
 ### Devices touched
 - **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack: retired; none
@@ -561,10 +622,21 @@ for `Successfully configured` before moving it.
   `automation.play_room_lamp_follows_play_room_light_switch` (queued; mirrors on/off,
   re-syncs after restarts) does it until the ZBMINIR2 is replaced. It targets
   `switch.play_room_lamp`, which is the S61 since 2026-11-05. The test binding
-  was removed. The switch's database still has two harmless stale bind records
-  (see the §10 unbind note).
+  was removed. Its stale database bind records (to plug #2 and to the reversed IEEE)
+  were cleared 2026-11-05 (§7a).
 - **Laundry Room Presence Sensor (SNZB-06P24):** occupancy reports had silently
   stopped (illuminance still flowing); fixed by Reconfigure 2026-10-04 (§10).
+- **Kitchen Overhead Lights (Inovelli VZM32-SN, fw 1.02):** still holds an illuminance
+  binding to the reversed IEEE (unbind refused, `NOT_AUTHORIZED`). Its illuminance
+  reporting was slowed 2026-11-05 to min 600 s / max 3600 s / change 500 (was
+  10 s / 3600 s / 5), so it triggers a lookup a few times an hour instead of ~640.
+  Nothing in HA uses that sensor. **A z2m Reconfigure of this switch restores the old
+  reporting**; re-apply with `bridge/request/device/reporting/configure`
+  `{"id":"Kitchen Overhead Lights","endpoint":1,"cluster":"msIlluminanceMeasurement","attribute":"measuredValue","minimum_report_interval":600,"maximum_report_interval":3600,"reportable_change":500}`.
+- **Bulbs bound to the coordinator 2026-11-05:** Living room overhead lights 1–5 (Hue),
+  Living room floor lamp, Kitchen Counter Lights (`genOnOff` + `genLevelCtrl`). Before,
+  their only reporting binding pointed at the reversed IEEE, so they never pushed state
+  to z2m (§7a).
 
 ### What "All" pairing actually does: test results (2026-10-04)
 Joiner: plug #1 (and #3, #4 for A and B). Each trial opened permit-join on only the
@@ -682,11 +754,12 @@ they joined).
   first, or wait well past a pairing window before re-pairing.
 
 ### OPEN 2: undecryptable frames from newer device models (since 2026-10-03)
-**Status (2026-11-05): the frames are valid. The sniffer decrypted every frame on the
+**Status (2026-11-06): the frames are valid. The sniffer decrypted every frame on the
 air, and the coordinator's failures line up with broadcast-relay bursts, not with frames
-from the newer devices. Powering a newer device still adds them (hourly rows). Most
-likely a coordinator-side limit (EmberZNet 7.4.5) that each newer router pushes past.
-Functionally harmless; not pursued further.**
+from the newer devices. Most of those bursts turned out to be self-inflicted (§7a);
+removing them cut traffic ~70% but failures only ~29% (406 → 289 an hour with the S61
+powered). Powering a newer device still adds them. Cause of the remainder unknown;
+functionally harmless.**
 
 **The symptom.** `NWK_DECRYPTION_FAILURE` (NCP counter 25, §9) was 0–5 a day for weeks:
 through the Sep 24 migration, the Sep 25 breaker cycle, and up to Oct 2. From Oct 3 it
@@ -760,13 +833,27 @@ and HA re-creates the same entity ids.
      (81.8%), its frame-counter gaps (frames the sniffer didn't capture) 87.5%
      (90.1%). No single device is present in every failure window.
 
+3. **Where the bursts came from: bindings to the byte-reversed coordinator IEEE**
+   (§7a). ~990 address lookups an hour (all five Inovelli switches, Hue light 5, the
+   ZBMINIR2s, a few battery devices) became ~80,000 relayed frames an hour, ~70% of
+   all traffic. The coordinator's many-to-one route request (~63 an hour) is the other
+   recurring flood; that one is normal.
+4. **After the cleanup** (2026-11-05 23:00–23:30; the S61 stayed powered):
+
+   | | Before | After |
+   |---|---|---|
+   | All frames (sniffer) | ~112,000/h | ~33,000/h |
+   | Reversed-IEEE lookup frames | ~80,000/h | 0 in a 5-minute sample |
+   | NWK decryption failures (hourly row) | 406 (21:15–22:15) | **289** (23:29–00:29) |
+
 **Interpretation (not proven):** the coordinator drops some valid frames during
-broadcast bursts and counts them as decryption failures, and each newer router adds
-enough to those bursts to cross the limit. Why these models do and older ones (like
+broadcast bursts and counts them as decryption failures. Removing most of the burst
+load helped, but much less than proportionally, so burst load isn't the whole story.
+Each newer router still adds failures, and why these models do and older ones (like
 the night light) don't isn't explained by anything visible on the air. Possible next
-levers, if it ever matters: a different coordinator firmware, or a report to
-zigbee-herdsman/EmberZNet with these numbers (share summaries only; the captures are
-decryptable with this network's key).
+levers, if it ever matters: newer EmberZNet firmware for the MG24 (same family, no
+re-pair), or a report to zigbee-herdsman/EmberZNet with these numbers (share summaries
+only; the captures are decryptable with this network's key).
 
 **Sniffer on aida** (all in `~/nrfsniff`; nothing in the repo; captures and keys stay
 private):
@@ -798,6 +885,7 @@ private):
   of `-V` dumps.
 - Per-second counters: stop z2m, connect with bellows (`bellows.cli.util.setup(port,
   115200)` → `initialize_network()`), poll `readCounters` (non-clearing), then restart
-  z2m. Run it as a `systemd-run` wrapper that restarts z2m unconditionally, with
-  absolute paths (`timeout` isn't on a transient unit's PATH). z2m comes back
-  "resumed".
+  z2m. Run it as a `systemd-run` wrapper that restarts z2m unconditionally. Transient
+  units have no coreutils on `PATH` (`timeout`, `date`, `mkdir` and `cp` all fail), so
+  set `PATH=/run/current-system/sw/bin` in the wrapper and make each later step check
+  that the backup step succeeded. z2m comes back "resumed".
