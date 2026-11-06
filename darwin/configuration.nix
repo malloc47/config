@@ -5,6 +5,21 @@
   ...
 }:
 
+let
+  # nixpkgs 26.05's roboto-mono installs the family three times (static OTF,
+  # static TTF, and variable fonts), so a lookup by family name has several
+  # candidates per style and terminals can resolve a lighter face than
+  # intended. 25.11 shipped only the static TTFs; install just those.
+  robotoMonoStatic = pkgs.runCommand "roboto-mono-static-${pkgs.roboto-mono.version}" { } ''
+    mkdir -p $out/share/fonts/truetype
+    for f in ${pkgs.roboto-mono}/share/fonts/truetype/*.ttf; do
+      case "$f" in
+        *wght*) ;;
+        *) cp "$f" $out/share/fonts/truetype/ ;;
+      esac
+    done
+  '';
+in
 {
   imports = [
     ../modules/settings.nix
@@ -30,7 +45,7 @@
     libertine
     libre-baskerville
     emacs-all-the-icons-fonts
-    roboto-mono
+    robotoMonoStatic
     nerd-fonts.fira-code
     roboto-slab
   ];
