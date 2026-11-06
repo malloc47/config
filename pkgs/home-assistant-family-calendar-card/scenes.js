@@ -253,31 +253,77 @@ export const LAYERS = {
       };
     },
   },
-  // An overcast deck: soft horizontal bands drifting slowly. params: tone
-  // (soft, bright: milky with the sun showing faintly, brooding: dark and
-  // low, night).
+  // An overcast: the whole sky down to the calendar's edge filled with
+  // rows of lumpy cloud masses over a solid cloud base. Each mass is lit on
+  // top and shaded underneath, so where one overlaps the next its bright top
+  // meets the other's dark base and the clouds keep their edges. Rows nearer
+  // the horizon are smaller, flatter and paler; each row drifts at its own
+  // pace (one animation per row; the row holds its clouds three times over
+  // and moves by one copy). params: tone (soft; bright: thin, with the sun
+  // showing through; brooding: dark and low; night: bases lit by the town;
+  // storm; stormnight), opacity (lower to let a moon or glow through).
   deck: {
-    css: `.ly-deck { position: absolute; left: 0; right: 0; top: 0; height: 320px; overflow: hidden; }
-      .ly-deck i { position: absolute; left: 0; width: 200%; top: var(--y); height: var(--h); opacity: var(--o);
-        background: linear-gradient(180deg, transparent, var(--c) 35%, var(--c) 65%, transparent);
-        -webkit-mask-image: repeating-radial-gradient(ellipse 160px 60px at 30% 50%, #000 0 40%, rgba(0, 0, 0, 0.55) 70%, #000 100%);
-        animation: ly-deck-drift var(--dur) linear infinite alternate; }
-      @keyframes ly-deck-drift { from { transform: translateX(0); } to { transform: translateX(-35%); } }
-      .ly-deck b { position: absolute; width: 110px; height: 110px; border-radius: 50%; transform: translate(-50%, -50%);
-        background: radial-gradient(closest-side, rgba(255, 253, 240, 0.85) 0 22%, rgba(255, 250, 230, 0.35) 45%, transparent); }`,
+    css: `.ly-deck { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--edge-y, 220px) + 30px); overflow: hidden;
+        background: linear-gradient(180deg, var(--f1), var(--f2)); }
+      .ly-deck .row { position: absolute; left: 0; top: var(--y); width: 100%; height: var(--h); animation: ly-deck-drift var(--dur) linear infinite; }
+      .ly-deck .row i { position: absolute; left: var(--x); top: var(--dy); width: var(--w); height: 100%;
+        background: linear-gradient(180deg, var(--c1) 8%, var(--c2) 78%);
+        -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 80%), radial-gradient(closest-side, #000 72%, transparent 80%),
+          radial-gradient(closest-side, #000 72%, transparent 80%), radial-gradient(closest-side, #000 72%, transparent 80%),
+          radial-gradient(closest-side, #000 74%, transparent 82%);
+        -webkit-mask-size: 34% 58%, 40% 76%, 36% 66%, 30% 50%, 94% 46%;
+        -webkit-mask-position: var(--m1) 70%, var(--m2) 26%, var(--m3) 44%, var(--m4) 72%, 50% 92%;
+        -webkit-mask-repeat: no-repeat; }
+      @keyframes ly-deck-drift { from { transform: translateX(0); } to { transform: translateX(var(--span)); } }
+      .ly-deck b { position: absolute; width: 140px; height: 140px; border-radius: 50%; transform: translate(-50%, -50%);
+        background: radial-gradient(closest-side, rgba(255, 253, 240, 0.7) 0 18%, rgba(255, 250, 230, 0.28) 45%, transparent); }`,
     render: (ctx, p) => {
+      // [lit top, shaded base, sky behind (top, bottom)] per tone; rows
+      // further back are mixed toward the sky behind.
       const tones = {
-        soft: ["rgba(214, 220, 229, 0.8)", [[10, 90, 0.7, 260], [70, 110, 0.6, 340], [150, 120, 0.55, 300]]],
-        bright: ["rgba(250, 251, 253, 0.75)", [[0, 100, 0.65, 300], [80, 120, 0.55, 380]]],
-        brooding: ["rgba(58, 64, 78, 0.92)", [[50, 120, 0.9, 240], [120, 130, 0.88, 320], [190, 120, 0.8, 280], [0, 90, 0.7, 360]]],
-        night: ["rgba(60, 68, 88, 0.85)", [[10, 110, 0.8, 300], [100, 130, 0.7, 360]]],
+        soft: ["#c3cad4", "#727d8c", "#7f8a98", "#939daa"],
+        bright: ["#d9dee5", "#939eac", "#a2acb9", "#b4bcc7"],
+        brooding: ["#a3abb6", "#4a515c", "#5d656f", "#6f7782"],
+        night: ["#4b5468", "#6b6062", "#262c39", "#3a3539"],
+        storm: ["#7d8796", "#2b313b", "#3a414d", "#49505b"],
+        stormnight: ["#384052", "#191d26", "#1d222c", "#262b35"],
       };
-      const [c, bands] = tones[p.tone || (ctx.dark ? "night" : "soft")];
+      const [c1, c2, f1, f2] = tones[p.tone] || tones[ctx.dark ? "night" : "soft"];
+      const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+      const mix = (a, b2, t) => `rgb(${hex(a).map((v, i) => Math.round(v + (hex(b2)[i] - v) * t)).join(", ")})`;
+      const edge = 230; // roughly where the calendar starts
+      // [top, height, cloud width, spacing, drift s, haze]: horizon first, so
+      // the nearer, overhead rows are drawn over it.
+      const rows = [
+        [edge - 70, 70, 150, 92, 900, 0.5],
+        [edge - 125, 90, 200, 120, 700, 0.32],
+        [edge - 190, 110, 250, 150, 520, 0.16],
+        [-35, 130, 300, 175, 380, 0],
+      ];
+      const html = rows
+        .map(([y, h, w, gap, dur, haze], k) => {
+          const n = Math.ceil(720 / gap);
+          const span = n * gap;
+          const clouds = [];
+          for (let copy = -1; copy <= 1; copy++) {
+            const rr = rng(4409 + k * 31);
+            for (let j = 0; j < n; j++) {
+              // Irregular: spacing, size and height vary, and now and then a
+              // small fragment sits a little apart.
+              const frag = rr() < 0.2;
+              const x = copy * span + j * gap + (rr() - 0.5) * gap * 0.7;
+              const ww = w * (frag ? 0.45 + rr() * 0.2 : 0.65 + rr() * 0.9);
+              const dy = (rr() - 0.5) * h * 0.55 + (frag ? h * 0.15 : 0);
+              const m = [10 + rr() * 12, 30 + rr() * 14, 56 + rr() * 14, 80 + rr() * 12].map((v) => `${v.toFixed(0)}%`);
+              clouds.push(`<i style="--x: ${x.toFixed(0)}px; --dy: ${dy.toFixed(0)}px; --w: ${ww.toFixed(0)}px;${frag ? " height: 70%;" : ""} --m1: ${m[0]}; --m2: ${m[1]}; --m3: ${m[2]}; --m4: ${m[3]}"></i>`);
+            }
+          }
+          return `<div class="row" style="--y: ${y}px; --h: ${h}px; --dur: ${dur}s; --span: ${-span}px; --c1: ${mix(c1, f2, haze)}; --c2: ${mix(c2, f2, haze)}">${clouds.join("")}</div>`;
+        })
+        .join("");
       const sun = p.tone === "bright" ? `<b style="left: ${ctx.sun.x}%; top: ${(ctx.sun.y * 12.8).toFixed(0)}px"></b>` : "";
       return {
-        back: `<div class="ly-deck" style="--c: ${c}">${sun}${bands
-          .map(([y, h, o, dur]) => `<i style="--y: ${y}px; --h: ${h}px; --o: ${o}; --dur: ${dur}s"></i>`)
-          .join("")}</div>`,
+        back: `<div class="ly-deck" style="--f1: ${f1}; --f2: ${f2}; opacity: ${p.opacity ?? 1}">${html}${sun}</div>`,
       };
     },
   },
@@ -880,7 +926,7 @@ export const SCENES = {
   "cloudy-night-cityglow": { when: { group: "cloudy", phase: DARK }, layers: [["cityglow", {}], ["deck", { tone: "night" }]] },
   "cloudy-night-halo": {
     when: { group: "cloudy", phase: DARK, moon: "up" },
-    layers: [["moon", { blur: 2.5 }], ["deck", { tone: "night" }]],
+    layers: [["deck", { tone: "night", opacity: 0.8 }], ["moon", { blur: 2.5 }]],
   },
   "fog-day-rolling": { when: { group: "fog", phase: LIGHT }, layers: [["fog", { banks: 3 }]] },
   "fog-day-burnoff": { when: { group: "fog", phase: ["day", "golden"] }, layers: [["fog", { banks: 2, burn: true }]] },
@@ -921,27 +967,27 @@ export const SCENES = {
   },
   "storm-day-distant": {
     when: { condition: "lightning-rainy", phase: LIGHT },
-    layers: [["deck", { tone: "brooding" }], ["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]],
+    layers: [["deck", { tone: "storm" }], ["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]],
     events: ["lightning"],
   },
   "storm-day-close": {
     when: { condition: "lightning-rainy", phase: LIGHT },
-    layers: [["deck", { tone: "brooding" }], ["rainfall", { density: 60, speed: 0.48 }], ["splashes", { heavy: true }]],
+    layers: [["deck", { tone: "storm" }], ["rainfall", { density: 60, speed: 0.48 }], ["splashes", { heavy: true }]],
     events: ["lightning", "bolt"],
   },
   "storm-night-strike": {
     when: { condition: "lightning-rainy", phase: DARK },
-    layers: [["deck", { tone: "night" }], ["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]],
+    layers: [["deck", { tone: "stormnight" }], ["rainfall", { density: 55, speed: 0.5 }], ["splashes", { heavy: true }]],
     events: ["lightning", "bolt"],
   },
   "storm-night-heat": {
     when: { condition: "lightning-rainy", phase: DARK },
-    layers: [["deck", { tone: "night" }], ["rainfall", { density: 35 }], ["splashes", {}]],
+    layers: [["deck", { tone: "stormnight" }], ["rainfall", { density: 35 }], ["splashes", {}]],
     events: ["heat_lightning", "lightning"],
   },
   "storm-dry": {
     when: { condition: "lightning" },
-    layers: [["deck", { tone: "brooding" }]],
+    layers: [["deck", { tone: "storm" }]],
     events: ["heat_lightning", "lightning"],
   },
   "snow-day-gentle": { when: { group: "snow", phase: LIGHT }, layers: [["snowfall", { density: 40, size: 8, speed: 11 }]] },

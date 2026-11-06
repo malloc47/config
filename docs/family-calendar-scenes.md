@@ -372,3 +372,11 @@ and the tablet, commit). Status: `[ ]` todo, `[~]` in progress, `[x]` done.
   `sceneById`) and buttons to fire each event. In memory only: a "Simulated
   sky · Edit · Revert" flag shows meanwhile; reload, Revert or 30 min
   untouched end it; it animates even with Animate the sky off.
+- 2026-11-05: `deck` rebuilt (it read as blurry blobs on the tablet): a
+  solid overcast base filling the sky to the calendar's edge, with four rows
+  of distinct cloud masses (puff mask, lit tops, shaded bases so overlaps
+  keep edges; irregular sizes/spacing/heights and stray fragments; rows
+  nearer the horizon smaller, flatter, hazier; one drift animation per
+  row). Tones soft/bright (mid-grey for white text), brooding, night (bases
+  warmed by the town), and new storm/stormnight for the storm scenes;
+  `opacity` param (cloudy-night-halo uses 0.8 with the moon over it).
