@@ -533,15 +533,17 @@ for `Successfully configured` before moving it.
   (just before the §7 fix). No SLZB-era backup survives.
 
 ### Devices touched
-- **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack:**
-  - **#2 `0x4ce175537eba0000`** (was "Play Room Lamp"): retired 2026-11-05 and
-    force-removed from z2m (unplugged since 2026-10-16).
-  - **#1 `0x4ce1755369fc0000`**: currently paired (joined the coordinator directly in
-    test 2), unnamed, not deployed.
-  - **#3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**: unpaired (diagnostics only).
-  - All three have been joined before, so pair them via the coordinator or a specific
-    router, not "All". To tell them apart, match the IEEE on the label (…69fc /
-    …b48716 / …7201), or pair one and read the address in z2m.
+- **Third Reality Smart Plug Gen3 (`3RSP02064Z`, fw 1.00.47) 4-pack: retired; none
+  left in z2m.**
+  - **#2 `0x4ce175537eba0000`** (was "Play Room Lamp"): force-removed 2026-11-05
+    (unplugged since 2026-10-16).
+  - **#1 `0x4ce1755369fc0000`**: force-removed 2026-11-05 (unplugged since
+    2026-10-04).
+  - **#3 `0x4ce175b487160000`, #4 `0x4ce1755372010000`**: removed 2026-10-04
+    (diagnostics only).
+  - All four have been joined before, so if one is ever re-paired, use the
+    coordinator or a specific router, not "All". To tell them apart, match the IEEE on
+    the label (…7eba / …69fc / …b48716 / …7201).
 - **SONOFF S61SZBTPB `0xa4c1381f2ed8ffff`** (bought as a Gen3 replacement, 2026-10-16):
   paired (joined via "All", parent coordinator, so brand-new devices pair fine with
   "All"). **Deployed 2026-11-05 as "Play Room Lamp"** (renamed with
