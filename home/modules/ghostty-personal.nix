@@ -40,12 +40,8 @@ in
       themes = {
         solarized-light = {
           background = "fdf6e3";
-          # Solarized's base01 (#586e75) is intentionally low-contrast on the
-          # cream background and reads as washed-out gray for body text and the
-          # prompt. Use base02 for a readable foreground while staying in the
-          # palette; emphasized colors below are unchanged.
-          foreground = "073642";
-          cursor-color = "073642";
+          foreground = "586e75";
+          cursor-color = "586e75";
           selection-background = "93a1a1";
           selection-foreground = "586e75";
           palette = [
