@@ -1,0 +1,36 @@
+# Generic ESP32-S3 board with an RC522 RFID/NFC reader on I2C, exposing a
+# binary sensor that is on while one known tag is present. Created in the
+# ESPHome Builder, then folded into the repo.
+substitutions:
+  name: rfid-binary-sensor
+  friendly_name: RFID Binary Sensor
+  api_key: !secret rfid_binary_sensor_api_key
+  ota_password: !secret rfid_binary_sensor_ota_password
+  ap_password: !secret rfid_binary_sensor_ap_password
+
+packages:
+  base: !include common/base.yaml
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+# "${friendly_name} Fallback Hotspot" would exceed the 32-char SSID limit.
+wifi:
+  ap:
+    ssid: RFID Binary Sen Fallback Hotspot
+
+i2c:
+  sda: GPIO2
+  scl: GPIO1
+  scan: true
+
+rc522_i2c:
+  address: 0x28
+  update_interval: 1s
+
+binary_sensor:
+  - platform: rc522
+    uid: "04-97-28-19-CD-2A-81"
+    name: "NFC Tag Present"
