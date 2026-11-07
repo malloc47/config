@@ -37,7 +37,7 @@ let
   # OmniWM hotkeys by action id. Anything left out is unassigned, including
   # the OmniWM defaults that collide with the AeroSpace bindings (Option+Return,
   # Option+Shift+F, Option+Minus/Equal, Option+Shift+Minus/Equal). Launchers,
-  # alt-f and the resize mode live in skhd below.
+  # the float toggle and the resize mode live in skhd below.
   hotkeys =
     lib.listToAttrs (
       lib.concatLists (
@@ -75,7 +75,9 @@ let
       "toggleSplit" = "Option+Shift+Space";
       "toggleWorkspaceLayout" = "Control+Option+Shift+Space";
 
-      "toggleFullscreen" = "Option+Shift+F";
+      # Swapped with AeroSpace's alt-f float toggle, which is now
+      # Option+Shift+F in skhd below
+      "toggleFullscreen" = "Option+F";
       "balanceSizes" = "Option+Shift+Equal";
       "closeFocusedWindow" = "Option+Shift+C";
       "workspaceBackAndForth" = "Option+Tab";
@@ -412,7 +414,7 @@ in
         '';
 
     # Bindings OmniWM hotkeys can't express: launching commands, chaining
-    # commands (alt-f), and modes (alt-r). AeroSpace's alt-esc VM passthrough
+    # commands (alt-shift-f), and modes (alt-r). AeroSpace's alt-esc VM passthrough
     # mode has no equivalent, since OmniWM hotkeys can't be paused.
     services.skhd = {
       enable = true;
@@ -427,7 +429,7 @@ in
         alt + shift - x : ${pkgs.flameshot}/bin/flameshot gui
         hyper - l : pmset displaysleepnow
 
-        alt - f : ${omniwmctl} command toggle-focused-window-floating; osascript ${zoomKeepOnTop}
+        alt + shift - f : ${omniwmctl} command toggle-focused-window-floating; osascript ${zoomKeepOnTop}
 
         :: resize
         alt - r ; resize
