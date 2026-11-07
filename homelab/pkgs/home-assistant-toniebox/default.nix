@@ -1,7 +1,7 @@
 # Unofficial Home Assistant integration for the Toniebox, talking to the Tonie
 # Cloud (my.tonies.com) API. Not in nixpkgs and not a core integration, so it is
 # packaged here and consumed via services.home-assistant.customComponents (see
-# nixos/modules/home-automation.nix), the same way as the packaged emporia_vue.
+# modules/home-automation.nix), the same way as the packaged emporia_vue.
 #
 # Built with buildHomeAssistantComponent via home-assistant.python3Packages so it
 # lands in HA's own Python set (3.14), matching the running interpreter. Its only

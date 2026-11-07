@@ -13,13 +13,14 @@ jobs:
         with:
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
       - run: nix fmt -- --ci
+      - run: nix build --no-link .#checks.x86_64-linux.homelab-boundary
 
   eval-nixos:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        host: [salome, aida, attila, vm-iso]
+        host: [salome, aida, aroldo, attila, vm-iso]
     steps:
       - uses: actions/checkout@v5
       - name: Create personal stub

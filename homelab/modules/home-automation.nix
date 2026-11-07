@@ -692,12 +692,12 @@ in
   # captured here.
   #
   # To make a deploy a restore point without clobbering UI edits, following the
-  # same seed-then-warn philosophy as home/modules/drift-check.nix:
+  # same seed-then-warn philosophy as config: home/modules/drift-check.nix:
   #   * seed each file from the repo baseline only when it is ABSENT (fresh box /
   #     disaster recovery), via tmpfiles `C` (copy-if-missing);
   #   * on every switch, diff the live file against the baseline and WARN on
   #     drift — never overwrite the running copy.
-  # Capture drift back into the repo with `z2m-foldin aida` (see shell-personal),
+  # Capture drift back into the repo with `z2m-foldin aida` (programs.homelab-tools),
   # then commit: the commit is the backup.
   #
   # NOTE: this captures naming/grouping config only. Device pairings live in

@@ -76,19 +76,19 @@ in
     malloc47
   ];
   # Home Assistant long-lived access token for home-assistant-matter-hub
-  # (loaded as a systemd credential; see homelab/modules/home-automation.nix).
+  # (loaded as a systemd credential; see modules/home-automation.nix).
   "home-assistant-matter-hub-token.age".publicKeys = [
     aida
     malloc47
   ];
   # Home Assistant long-lived access token of the non-admin `eink` user, for
-  # Puppet (services.ha-puppet; see homelab/modules/home-automation.nix).
+  # Puppet (services.ha-puppet; see modules/home-automation.nix).
   "ha-puppet-token.age".publicKeys = [
     aida
     malloc47
   ];
   # ESPHome secrets.yaml (shared Wi-Fi + per-device API key/OTA/AP passwords),
-  # symlinked into /var/lib/esphome; see homelab/modules/home-automation.nix.
+  # symlinked into /var/lib/esphome; see modules/home-automation.nix.
   "esphome-secrets.yaml.age".publicKeys = [
     aida
     malloc47
@@ -96,7 +96,7 @@ in
 
   # MQTT password of the wall Kindle's `kindle` user (mosquitto's LAN
   # listener on aida); a plaintext copy lives on the Kindle in
-  # /mnt/us/weatherdash/mqtt.secret (homelab/docs/kindle-weather.md).
+  # /mnt/us/weatherdash/mqtt.secret (docs/kindle-weather.md).
   "kindle-mqtt-password.age".publicKeys = [
     aida
     malloc47

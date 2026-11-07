@@ -182,13 +182,13 @@ Visit `https://adguard.home.malloc47.com` and complete the setup wizard:
 ## 9. Home Assistant + MQTT (Zigbee)
 
 The Home Assistant, mosquitto (MQTT broker), and zigbee2mqtt services are
-declarative (`nixos/modules/home-automation.nix`). Two things still need a
+declarative (`modules/home-automation.nix`). Two things still need a
 one-time manual pass.
 
 ### Set the Zigbee coordinator address
 
 zigbee2mqtt reaches the SLZB-MR5U coordinator over the LAN. Set its IP in
-`nixos/modules/home-automation.nix` (the `slzb.host` value) and deploy.
+`modules/home-automation.nix` (the `slzb.host` value) and deploy.
 
 ### Onboard Home Assistant and connect MQTT
 

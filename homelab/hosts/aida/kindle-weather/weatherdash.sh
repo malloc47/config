@@ -7,7 +7,7 @@
 # wake and suspend to RAM. E-ink keeps the picture without power, so the
 # device is only awake for the few seconds each update takes. On each wake it
 # also reads its settings from Home Assistant and reports its status, over
-# MQTT (nixos/modules/kindle-weather.nix).
+# MQTT (modules/kindle-weather.nix).
 #
 # The power button (the only wake source besides the RTC; the touchscreen is
 # off in suspend): one press refreshes now, a second within DOUBLE_PRESS

@@ -111,7 +111,7 @@ labels/ownerRefs, scaled down.)
 
 - Keep engine config, group *definitions*, and HA-discovery overrides in
   `services.zigbee2mqtt.settings` (native declarative where z2m still supports it).
-- Add to `nixos/modules/home-automation.nix`:
+- Add to `modules/home-automation.nix`:
   - the spec as a Nix attrset → `pkgs.writeText "zigbee-spec.json" (builtins.toJSON spec)`;
   - `systemd.services.zigbee-reconcile` running a `pkgs.python3.withPackages
     (ps: [ ps.paho-mqtt ])` script, `After=zigbee2mqtt.service`, MQTT creds from the

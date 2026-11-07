@@ -28,7 +28,7 @@ Save and exit.
 Enable pixiecore on aida temporarily:
 
 ```bash
-# In hosts/aida.nix, uncomment the ../modules/netboot.nix import, then deploy:
+# In homelab/hosts/aida.nix, uncomment the ../modules/netboot.nix import, then deploy:
 nixos-rebuild switch --flake .#aida
 ```
 
@@ -62,7 +62,7 @@ nix run github:nix-community/nixos-anywhere -- \
 After installation completes, disable pixiecore on aida:
 
 ```bash
-# In hosts/aida.nix, comment out the ../modules/netboot.nix import, then deploy:
+# In homelab/hosts/aida.nix, comment out the ../modules/netboot.nix import, then deploy:
 nixos-rebuild switch --flake .#aida
 ```
 

@@ -21,7 +21,7 @@ views:
         sun_entity: sun.sun
         days: 5
         hours: 24
-        # The Kindle's own battery (MQTT, nixos/modules/kindle-weather.nix),
+        # The Kindle's own battery (MQTT, modules/kindle-weather.nix),
         # drawn top right in 10% steps.
         battery_entity: sensor.weather_dashboard_battery
         charging_entity: binary_sensor.weather_dashboard_charging

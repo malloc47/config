@@ -43,7 +43,7 @@ Sonoff MG24 migration — every gotcha below was hit for real, in the order list
 ## 0. Where everything lives
 
 **Repo (this config):**
-- `nixos/modules/home-automation.nix` — z2m `serial` block, systemd resilience
+- `modules/home-automation.nix` — z2m `serial` block, systemd resilience
   (`Restart=always`, `RestartSec=30`, `startLimitIntervalSec=0`), `DeviceAllow`
   for the USB tty, and the `devices.yaml`/`groups.yaml` seed + drift-check.
 - `hosts/aida.nix` — gatus watchdog (z2m `:8080` probe → ntfy via aroldo) + agenix
@@ -136,7 +136,7 @@ above. Prefer it over another network coordinator.
    ```bash
    ssh aida 'sudo systemctl stop zigbee2mqtt'
    ```
-2. **Edit the repo serial block** (`nixos/modules/home-automation.nix`) to the new
+2. **Edit the repo serial block** (`modules/home-automation.nix`) to the new
    dongle. Current known-good block:
    ```nix
    serial = {

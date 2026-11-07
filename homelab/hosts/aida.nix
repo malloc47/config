@@ -103,10 +103,10 @@
     mqtt-password.file = ../secrets/mqtt-password.age;
     mqtt-password-env.file = ../secrets/mqtt-password-env.age;
     # The wall Kindle's MQTT user on mosquitto's LAN listener
-    # (nixos/modules/kindle-weather.nix).
+    # (modules/kindle-weather.nix).
     kindle-mqtt-password.file = ../secrets/kindle-mqtt-password.age;
     # securityKeys JSON ({ S0_Legacy, S2_* }) merged into zwave-js's config at
-    # runtime via LoadCredential; see nixos/modules/home-automation.nix.
+    # runtime via LoadCredential; see modules/home-automation.nix.
     zwave-js-keys.file = ../secrets/zwave-js-keys.json.age;
     # HA long-lived access token for home-assistant-matter-hub. No owner: the
     # service runs as a DynamicUser and reads this via a systemd credential

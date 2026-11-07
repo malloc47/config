@@ -15,6 +15,7 @@ tasks:
     cmds:
       - nix eval --offline --read-only .#nixosConfigurations.salome.config.system.build.toplevel.drvPath
       - nix eval --offline --read-only .#nixosConfigurations.aida.config.system.build.toplevel.drvPath
+      - nix eval --offline --read-only .#nixosConfigurations.aroldo.config.system.build.toplevel.drvPath
       - nix eval --offline --read-only .#nixosConfigurations.attila.config.system.build.toplevel.drvPath
       - nix eval --offline --read-only .#nixosConfigurations.vm-iso.config.system.build.toplevel.drvPath
       - nix eval --offline --read-only .#darwinConfigurations.cesare.system

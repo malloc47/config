@@ -15,7 +15,7 @@
 #
 # The panel runs in 4-level grayscale (the UC8179 4-gray model from
 # esphome/esphome#18470, installed as a local external component; see
-# epaperSpiG4 in nixos/modules/home-automation.nix). Backgrounds are 4-gray;
+# epaperSpiG4 in modules/home-automation.nix). Backgrounds are 4-gray;
 # the clock, date and battery are drawn 1-bit, so the per-minute update stays a
 # flash-free differential partial that leaves the grays alone. A background
 # whose content changed (Puppet sends ETags; unchanged ones come back 304) also

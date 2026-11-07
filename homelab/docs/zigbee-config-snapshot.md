@@ -8,7 +8,7 @@ captures the two UI-editable YAML files so a NixOS deploy doubles as a backup.
 ## What it covers (and what it doesn't)
 
 The NixOS `services.zigbee2mqtt` module regenerates only `configuration.yaml`
-(from `settings` in `nixos/modules/home-automation.nix`). Two files are left
+(from `settings` in `modules/home-automation.nix`). Two files are left
 Z2M-owned and mutable — the clickops surface:
 
 - `devices.yaml` — friendly-name renames and per-device options
@@ -21,7 +21,7 @@ bare-metal recovery. Group *membership* and bindings are the reconciler's job.
 
 ## How it works (seed-then-warn, never clobber)
 
-Mirrors `home/modules/drift-check.nix`, at the system level:
+Mirrors `config: home/modules/drift-check.nix`, at the system level:
 
 1. **Baseline** lives in the repo at `hosts/aida/zigbee2mqtt/{devices,groups}.yaml`.
 2. **Seed** — `systemd.tmpfiles` `C` (copy-if-absent) restores the baseline only
@@ -40,7 +40,7 @@ clickops state, but never destroys it.
 Capture out-of-band UI edits back into the repo baseline:
 
 ```sh
-z2m-foldin aida       # defined next to nixos-deploy in home/modules/shell-personal.nix
+z2m-foldin aida       # programs.homelab-tools (config: home/modules/homelab-tools.nix)
 ```
 
 It fetches `aida:/var/lib/zigbee2mqtt/{devices,groups}.yaml` into the repo and

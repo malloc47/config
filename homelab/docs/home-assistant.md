@@ -1,7 +1,7 @@
 # Home Assistant operations (aida)
 
 Ongoing/operational guide for the home-automation stack on `aida`. The services
-themselves are declarative in `nixos/modules/home-automation.nix`; this doc
+themselves are declarative in `modules/home-automation.nix`; this doc
 covers the manual, UI-side tasks that aren't captured in Nix.
 
 For first-time bring-up (secrets, onboarding, connecting MQTT) see
@@ -61,7 +61,7 @@ integration added (Settings → Devices & Services shows MQTT with no error).
   z2m can finish the interview; a second attempt often succeeds.
 - **Coordinator offline:** `ssh aida systemctl status zigbee2mqtt`, and verify
   the SLZB at `192.168.1.124` is reachable (ping / its own web UI). If its LAN IP
-  changes, update `slzb.host` in `nixos/modules/home-automation.nix` and redeploy.
+  changes, update `slzb.host` in `modules/home-automation.nix` and redeploy.
 - **Range:** mains-powered Zigbee devices act as routers — add one near the edge
   of coverage before placing distant battery sensors.
 - **Firmware:** device OTA updates are handled in z2m's OTA tab; the SLZB
@@ -79,7 +79,7 @@ Not built; evaluate before committing to it.
 ## Adding another MQTT "add-on" (the pattern)
 
 To bring in another bridge (esphome, etc.), edit
-`nixos/modules/home-automation.nix`: enable the service, point its MQTT client at
+`modules/home-automation.nix`: enable the service, point its MQTT client at
 `mqtt://127.0.0.1:1883` with the `mqtt` account, enable its HA/MQTT discovery,
 and add a Caddy vhost (behind Authelia unless it needs its own auth). HA
 auto-discovers it — no broker or HA changes required.
@@ -89,7 +89,7 @@ auto-discovers it — no broker or HA changes required.
 The HA UI editors write `automations.yaml` (list), `scenes.yaml` (list), and
 `scripts.yaml` (dict) into `/var/lib/hass`. The nix-owned, read-only
 `configuration.yaml` carries the matching `automation:/scene:/script: !include …`
-directives (in `nixos/modules/home-automation.nix`) so HA loads them. **Without
+directives (in `modules/home-automation.nix`) so HA loads them. **Without
 those includes the UI saves the file but HA never loads it and "New automation
 setup" times out** — that is the symptom, not a parse error.
 
@@ -100,7 +100,7 @@ lives at `hosts/aida/home-assistant/{automations,scenes,scripts}.yaml`, HA's
 (non-fatal) when a live file diverges. Capture UI edits back into the repo with:
 
 ```sh
-ha-foldin aida    # beside nixos-deploy / z2m-foldin in home/modules/shell-personal.nix
+ha-foldin aida    # programs.homelab-tools (config: home/modules/homelab-tools.nix)
 ```
 
 Review the diff and commit — the commit is the backup. Scope: automations/scenes/
@@ -115,8 +115,8 @@ writable, so clickops edits live only on aida until folded back into the repo. A
 `nixos-deploy` **warns** when they've drifted and **never** clobbers them, so
 there is no rush — capture whenever you want a fresh backup point.
 
-Prereq: the `z2m-foldin` / `ha-foldin` helpers live in your shell rc
-(`home/modules/shell-personal.nix`), so they become available after a
+Prereq: the `z2m-foldin` / `ha-foldin` commands come from
+`programs.homelab-tools` (`config: home/modules/homelab-tools.nix`), so they become available after a
 `home-manager switch` on the machine you run them from. Until then use the manual
 equivalent in step 2.
 
@@ -153,7 +153,7 @@ committing.
 ## Z-Wave (ZWA-2 controller)
 
 Declarative, no zwave-js-ui: HA's `zwave_js` integration connects over websocket
-to `services.zwave-js` (in `nixos/modules/home-automation.nix`), which drives the
+to `services.zwave-js` (in `modules/home-automation.nix`), which drives the
 Nabu Casa **ZWA-2** USB stick and holds the S0/S2 security keys (agenix secret
 `zwave-js-keys.json.age`, merged at runtime). Device management is done from HA's
 built-in Z-Wave panel.

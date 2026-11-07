@@ -13,7 +13,7 @@ it can sleep between hourly updates.
 | Device loop + settings | `hosts/aida/kindle-weather/weatherdash.sh`, `weatherdash.conf` → `/mnt/us/weatherdash/` |
 | Library launcher | `hosts/aida/kindle-weather/Weather Dashboard.sh` → `/mnt/us/documents/` |
 | Upload helper | `hosts/aida/kindle-weather/deploy.sh [--start] [user@host]` |
-| HA device "Weather Dashboard" (MQTT; entities `*.weather_dashboard_*`) | `nixos/modules/kindle-weather.nix`: discovery, status relay, mosquitto LAN listener `:1884` |
+| HA device "Weather Dashboard" (MQTT; entities `*.weather_dashboard_*`) | `modules/kindle-weather.nix`: discovery, status relay, mosquitto LAN listener `:1884` |
 | MQTT password | `secrets/kindle-mqtt-password.age` (aida) → `/mnt/us/weatherdash/mqtt.secret` (Kindle, not deployed) |
 | Device log | `/mnt/us/weatherdash/weatherdash.log` |
 
@@ -124,7 +124,7 @@ values across HA restarts.
   (`exit_seen`); one left over from before a start is ignored, not acted on.
 
 **Stale alert** (`automation.weather_dashboard_stale_alert`, in
-`nixos/modules/kindle-weather.nix`): when the Kindle misses a scheduled wake
+`modules/kindle-weather.nix`): when the Kindle misses a scheduled wake
 by 15 minutes (no network, a crash or a reboot: it can't report any of
 those) or its last fetch failed, an HA notification and a push to the Razr
 say when it last fetched; both clear when it recovers. Quiet hours and an
