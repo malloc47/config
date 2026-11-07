@@ -7,11 +7,9 @@
 
 {
   imports = [
-    ../modules/settings.nix
-    ../nixos/modules/motd.nix
-    ../nixos/modules/home-automation.nix
+    ../modules/home-automation.nix
     # Uncomment to enable netboot provisioning for bare-metal installs:
-    # ../nixos/modules/netboot.nix
+    # ../modules/netboot.nix
   ];
 
   services.openssh.enable = true;

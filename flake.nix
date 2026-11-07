@@ -107,6 +107,12 @@
           };
           overlays = [ ];
         };
+      # Homelab hosts (aida, aroldo). Not exported as modules: it consumes
+      # this flake's outputs like any other downstream flake would.
+      homelab = import ./homelab {
+        inherit inputs;
+        base = self;
+      };
     in
     {
       nixosConfigurations = {
@@ -195,94 +201,6 @@
           ];
         };
 
-        aida = nixpkgs.lib.nixosSystem rec {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit inputs;
-            pkgs-unstable = pkgsUnstableFor system;
-          };
-          modules = [
-            home-manager.nixosModules.home-manager
-            disko.nixosModules.disko
-            agenix.nixosModules.default
-            self.nixosModules.settings
-            self.nixosModules.user
-            self.nixosModules.nixpkgs
-            self.nixosModules.ssh
-            self.nixosModules.mosh
-            self.nixosModules.configuration-flake
-            self.nixosModules.stylix
-            self.nixosModules.theme
-            self.hardwareModules.gmktec-g10
-            self.diskModules.gmktec-g10
-            ./hosts/aida.nix
-            { settings.sshKeys = "${personal}/ssh"; }
-            {
-              networking.hostName = "aida";
-              system.stateVersion = "26.05";
-            }
-            (
-              { config, ... }:
-              {
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.extraSpecialArgs = specialArgs;
-                home-manager.users.${config.settings.username} = {
-                  imports = [
-                    self.homeManagerModules.osconfig-bridge
-                    self.homeManagerModules.home
-                    self.homeManagerModules.home-agenix
-                    self.homeManagerModules.home-sqlit
-                  ];
-                  programs.sqlit.enable = true;
-                };
-              }
-            )
-          ];
-        };
-
-        aroldo = nixpkgs.lib.nixosSystem rec {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit inputs;
-            pkgs-unstable = pkgsUnstableFor system;
-          };
-          modules = [
-            home-manager.nixosModules.home-manager
-            disko.nixosModules.disko
-            agenix.nixosModules.default
-            self.nixosModules.settings
-            self.nixosModules.user
-            self.nixosModules.nixpkgs
-            self.nixosModules.ssh
-            self.nixosModules.mosh
-            self.nixosModules.configuration-flake
-            self.nixosModules.stylix
-            self.nixosModules.theme
-            self.hardwareModules.racknerd-vps
-            self.diskModules.racknerd-vps
-            ./hosts/aroldo.nix
-            { settings.sshKeys = "${personal}/ssh"; }
-            {
-              networking.hostName = "aroldo";
-              system.stateVersion = "26.05";
-            }
-            (
-              { config, ... }:
-              {
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.extraSpecialArgs = specialArgs;
-                home-manager.users.${config.settings.username}.imports = [
-                  self.homeManagerModules.osconfig-bridge
-                  self.homeManagerModules.home
-                  self.homeManagerModules.home-agenix
-                ];
-              }
-            )
-          ];
-        };
-
         attila = nixpkgs.lib.nixosSystem rec {
           system = "x86_64-linux";
           specialArgs = {
@@ -352,7 +270,8 @@
             )
           ];
         };
-      };
+      }
+      // homelab.nixosConfigurations;
 
       darwinConfigurations = {
         cesare = nix-darwin.lib.darwinSystem rec {
@@ -465,15 +384,11 @@
       hardwareModules = {
         lxc = ./hardware/lxc.nix;
         vmware-fusion-arm = ./hardware/vmware-fusion-arm.nix;
-        gmktec-g10 = ./hardware/gmktec-g10.nix;
-        racknerd-vps = ./hardware/racknerd-vps.nix;
         dell-xps-9315 = ./hardware/dell-xps-9315.nix;
       };
 
       diskModules = {
         vmware-fusion = ./disk/vmware-fusion.nix;
-        gmktec-g10 = ./disk/gmktec-g10.nix;
-        racknerd-vps = ./disk/racknerd-vps.nix;
         dell-xps-9315 = ./disk/dell-xps-9315.nix;
       };
 
@@ -486,6 +401,30 @@
             nixfmt-rfc-style.enable = true;
           };
         };
+
+        # homelab/ must stay liftable into its own flake: nothing in it may
+        # reach the base by relative path (use `base.*` outputs instead), and
+        # nothing in the base may import from it (only flake.nix wires it in).
+        homelab-boundary = nixpkgs.legacyPackages.${system}.runCommand "homelab-boundary" { } ''
+          cd ${./.}
+          fail=0
+          while IFS= read -r f; do
+            for p in $(grep -oE '(\.\./)+[A-Za-z0-9_./-]*' "$f" || true); do
+              case "$(realpath -m --relative-to=. "$(dirname "$f")/$p")" in
+                homelab | homelab/*) ;;
+                *)
+                  echo "$f: '$p' reaches outside homelab/"
+                  fail=1
+                  ;;
+              esac
+            done
+          done < <(find homelab -name '*.nix')
+          if grep -rnE '(\./|\.\./)+homelab\b' --include='*.nix' --exclude-dir=homelab --exclude=flake.nix .; then
+            echo "base files above import from homelab/"
+            fail=1
+          fi
+          [ "$fail" = 0 ] && touch $out
+        '';
       });
 
       devShells = forAllSystems (system: {

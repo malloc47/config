@@ -9,11 +9,6 @@ let
   aidaTailscaleIP = "100.64.0.1";
 in
 {
-  imports = [
-    ../modules/settings.nix
-    ../nixos/modules/motd.nix
-  ];
-
   motd = {
     enable = true;
     hardware = "racknerd vps";

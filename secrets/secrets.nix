@@ -1,103 +1,12 @@
 let
-  aida = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHIJ8w4XJ5Q2T+E0Mr5kvH39LS4INn5MfxaN2eRdskTi root@aida";
   attila = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOPlUC4rL847EA33C4cxd9xJl2BFbh5CMgb72ZLRKpF5 root@attila";
   cesare = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEgj2i1LZ39cDblcHZesMEa0HW03F8UqfWMPRucxPiBb";
-  aroldo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILo3pfY8U0RfVKsDDR3Fqqr/8LthqdTcdS8mmMeeKTjZ root@aroldo";
   malloc47 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE6Ql5G8d09APA4ABhzMk0gQtr8CGxeynRGlhOB+1pjk malloc47-2026-03";
   malloc47-user = "age19a3dcu3xrl77my69a38uw62ret4edv2x87rkxedgndlpyacfsdeqkd0h2h";
 in
 {
   "nix-access-tokens.age".publicKeys = [
     cesare
-    malloc47
-  ];
-  "caddy-basicauth.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "cloudflare-acme.age".publicKeys = [
-    aida
-    aroldo
-    malloc47
-  ];
-  "authelia-jwt-secret.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "authelia-storage-key.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "authelia-session-secret.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "authelia-users.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "cloudflared-credentials.age".publicKeys = [
-    aida
-    aroldo
-    malloc47
-  ];
-  "ntfy-admin-password.age".publicKeys = [
-    aroldo
-    malloc47
-  ];
-  "ntfy-admin-password-env.age".publicKeys = [
-    aida
-    aroldo
-    malloc47
-  ];
-  "homepage-env.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "authelia-oidc-hmac.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "authelia-oidc-private-key.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "authelia-karakeep-secret-digest.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "karakeep-oauth-env.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "mqtt-password.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "mqtt-password-env.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  "zwave-js-keys.json.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  # Home Assistant long-lived access token for home-assistant-matter-hub
-  # (loaded as a systemd credential; see nixos/modules/home-automation.nix).
-  "home-assistant-matter-hub-token.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  # Home Assistant long-lived access token of the non-admin `eink` user, for
-  # Puppet (services.ha-puppet; see nixos/modules/home-automation.nix).
-  "ha-puppet-token.age".publicKeys = [
-    aida
-    malloc47
-  ];
-  # ESPHome secrets.yaml (shared Wi-Fi + per-device API key/OTA/AP passwords),
-  # symlinked into /var/lib/esphome; see nixos/modules/home-automation.nix.
-  "esphome-secrets.yaml.age".publicKeys = [
-    aida
     malloc47
   ];
   "wifi-unimatrix47.age".publicKeys = [
@@ -109,14 +18,6 @@ in
     malloc47-user
     attila
     cesare
-  ];
-
-  # MQTT password of the wall Kindle's `kindle` user (mosquitto's LAN
-  # listener on aida); a plaintext copy lives on the Kindle in
-  # /mnt/us/weatherdash/mqtt.secret (docs/kindle-weather.md).
-  "kindle-mqtt-password.age".publicKeys = [
-    aida
-    malloc47
   ];
 
   "deepseek-api-key.age".publicKeys = [

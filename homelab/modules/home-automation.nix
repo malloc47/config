@@ -35,14 +35,14 @@ let
   # editors write these and require a matching `!include` in the (nix-owned,
   # read-only) configuration.yaml to load them — see the seed/drift wiring below.
   haFiles = {
-    "automations.yaml" = ../../hosts/aida/home-assistant/automations.yaml;
-    "scenes.yaml" = ../../hosts/aida/home-assistant/scenes.yaml;
-    "scripts.yaml" = ../../hosts/aida/home-assistant/scripts.yaml;
+    "automations.yaml" = ../hosts/aida/home-assistant/automations.yaml;
+    "scenes.yaml" = ../hosts/aida/home-assistant/scenes.yaml;
+    "scripts.yaml" = ../hosts/aida/home-assistant/scripts.yaml;
   };
 
   # ESPHome device configs: every hosts/aida/esphome/<device>.yaml is a device,
   # and common/ holds the packages they `!include`. See the esphome wiring below.
-  esphomeDir = ../../hosts/aida/esphome;
+  esphomeDir = ../hosts/aida/esphome;
   esphomeCommon = esphomeDir + "/common";
   esphomeCommonFiles = builtins.attrNames (builtins.readDir esphomeCommon);
   esphomeDevices =
@@ -708,15 +708,15 @@ in
     in
     [
       "d /var/lib/zigbee2mqtt 0700 zigbee2mqtt zigbee2mqtt -"
-      (seed "devices.yaml" ../../hosts/aida/zigbee2mqtt/devices.yaml)
-      (seed "groups.yaml" ../../hosts/aida/zigbee2mqtt/groups.yaml)
+      (seed "devices.yaml" ../hosts/aida/zigbee2mqtt/devices.yaml)
+      (seed "groups.yaml" ../hosts/aida/zigbee2mqtt/groups.yaml)
     ];
 
   system.activationScripts.zigbee2mqttDriftCheck.text =
     let
       baseline = {
-        "devices.yaml" = ../../hosts/aida/zigbee2mqtt/devices.yaml;
-        "groups.yaml" = ../../hosts/aida/zigbee2mqtt/groups.yaml;
+        "devices.yaml" = ../hosts/aida/zigbee2mqtt/devices.yaml;
+        "groups.yaml" = ../hosts/aida/zigbee2mqtt/groups.yaml;
       };
       check = name: src: ''
         live=/var/lib/zigbee2mqtt/${name}
