@@ -329,6 +329,13 @@ in
       # up. Will own color temp for its lights, so retire manual color-temp
       # automations on those lights when adopting it.
       pkgs.home-assistant-custom-components.adaptive_lighting
+      # ble_esl (eigger/hass-ble-esl) — packaged in-repo (pkgs/home-assistant-ble-esl).
+      # Writes images over BLE GATT to the Poshiji XTE shelf labels (PSJ-420 4.2",
+      # PSJ-290 2.9", BWRY) through HA's bluetooth stack on aida's onboard
+      # adapter (hardware.bluetooth below). Tags are auto-discovered from their
+      # advertisements and confirmed via the UI; layouts and schedules are in
+      # docs/ble-esl.md.
+      pkgs.home-assistant-ble-esl
     ];
     # Custom Lovelace (frontend) cards, registered as dashboard resources.
     # Used by the LD2410 mmWave tuning dashboard: with the sensor's engineering
@@ -462,6 +469,12 @@ in
       # so devices couldn't fetch them.
       homeassistant.internal_url = "https://home.malloc47.com";
       homeassistant.external_url = "https://home.malloc47.com";
+      # Repo-owned YAML packages (scripts + automations together), loaded
+      # read-only from the store. Unlike automations.yaml/scripts.yaml these
+      # are not UI-editable and not part of ha-foldin.
+      # ble_esl: weather layouts and schedule for the BLE e-paper shelf labels
+      # (docs/ble-esl.md).
+      homeassistant.packages.ble_esl = "!include ${../hosts/aida/home-assistant/ble-esl.yaml}";
       # "Kiosk": layout tweaks for small wall tablets, applied per view (the
       # living-room Fire HD 8 dashboard, hosts/aida/home-assistant/
       # living-room-dashboard.yaml). Its WebView is 960x600 CSS px, where the

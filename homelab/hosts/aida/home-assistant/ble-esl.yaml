@@ -1,0 +1,520 @@
+# Bluetooth e-paper shelf labels (ble_esl integration; docs/ble-esl.md).
+#
+# Loaded as the `ble_esl` Home Assistant package (modules/home-automation.nix),
+# so it is Nix-owned: not editable from the UI and not part of ha-foldin.
+#
+#   ESL 4.2" (PSJ-420, 400x300 BWRY)  image.esl_420_*  — weather: now, the next
+#                                     four NWS periods, and a 24 h temperature line
+#   ESL 2.9" (PSJ-290, 296x128 BWRY)  image.esl_290_*  — current outdoor temp, plus
+#                                     today's forecast before noon, tomorrow's after
+#
+# Data is NWS (weather.nws_khpn): twice_daily day/night periods and hourly.
+# When NWS is unavailable the run is skipped, so the labels keep the last good
+# image rather than showing blanks. Writes are guarded (Prevent Duplicate Send
+# is on for both tags), so an unchanged image costs no BLE airtime or battery.
+#
+# Preview without touching the panels: run script.esl_weather_render with
+# dry_run: true, then look at image.esl_420_preview_content /
+# image.esl_290_preview_content.
+
+script:
+  esl_weather_render:
+    alias: "ESL: render weather labels"
+    description: Render the NWS forecast onto the 4.2" and 2.9" e-paper labels.
+    mode: queued
+    max: 2
+    fields:
+      dry_run:
+        description: Render the previews only; send nothing to the tags.
+        default: false
+        # `boolean:` rather than `boolean: {}`: HA's package merge drops
+        # empty mappings, which leaves an invalid empty selector.
+        selector:
+          boolean:
+    sequence:
+      - condition: template
+        value_template: "{{ states('weather.nws_khpn') not in ['unavailable', 'unknown'] }}"
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.nws_khpn
+        data:
+          type: twice_daily
+        response_variable: twice_daily
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.nws_khpn
+        data:
+          type: hourly
+        response_variable: hourly
+      - variables:
+          dry: "{{ dry_run | default(false) | bool }}"
+          periods: "{{ twice_daily['weather.nws_khpn'].forecast }}"
+          hours: "{{ hourly['weather.nws_khpn'].forecast[:24] }}"
+          night: "{{ is_state('sun.sun', 'below_horizon') }}"
+          icons:
+            clear-night: mdi:weather-night
+            cloudy: mdi:weather-cloudy
+            exceptional: mdi:alert-circle-outline
+            fog: mdi:weather-fog
+            hail: mdi:weather-hail
+            lightning: mdi:weather-lightning
+            lightning-rainy: mdi:weather-lightning-rainy
+            partlycloudy: mdi:weather-partly-cloudy
+            pouring: mdi:weather-pouring
+            rainy: mdi:weather-rainy
+            snowy: mdi:weather-snowy
+            snowy-rainy: mdi:weather-snowy-rainy
+            sunny: mdi:weather-sunny
+            windy: mdi:weather-windy
+            windy-variant: mdi:weather-windy-variant
+          names:
+            clear-night: Clear
+            cloudy: Cloudy
+            exceptional: Alert
+            fog: Fog
+            hail: Hail
+            lightning: Storms
+            lightning-rainy: T-storms
+            partlycloudy: Partly cloudy
+            pouring: Heavy rain
+            rainy: Rain
+            snowy: Snow
+            snowy-rainy: Wintry mix
+            sunny: Sunny
+            windy: Windy
+            windy-variant: Windy
+      - condition: template
+        value_template: "{{ periods | count >= 4 and hours | count > 0 }}"
+      - variables:
+          now_temp: "{{ state_attr('weather.nws_khpn', 'temperature') | round(0) | int }}"
+          now_cond: "{{ states('weather.nws_khpn') }}"
+          # NWS reports the night sky as sunny/partlycloudy too.
+          now_icon: >-
+            {% set c = states('weather.nws_khpn') %}
+            {% if night and c == 'sunny' %}mdi:weather-night
+            {% elif night and c == 'partlycloudy' %}mdi:weather-night-partly-cloudy
+            {% else %}{{ icons.get(c, 'mdi:weather-cloudy') }}{% endif %}
+          now_name: >-
+            {% set c = states('weather.nws_khpn') %}
+            {{ 'Clear' if night and c == 'sunny' else names.get(c, c) }}
+          humidity: "{{ state_attr('weather.nws_khpn', 'humidity') | round(0) | int }}"
+          wind: >-
+            {% set b = state_attr('weather.nws_khpn', 'wind_bearing') %}
+            {% set dirs = ['N','NE','E','SE','S','SW','W','NW'] %}
+            {{ state_attr('weather.nws_khpn', 'wind_speed') | round(0) | int }} mph
+            {{- ' ' ~ dirs[((b | float(0) + 22.5) // 45) | int % 8] if b is number else '' }}
+          stamp: "{{ now().strftime('%-I %p') }}"
+          # The next four day/night periods, labelled like NWS does.
+          cols: >-
+            {% set ns = namespace(out=[]) %}
+            {% for p in periods[:4] %}
+              {% set d = as_datetime(p.datetime) | as_local %}
+              {% if d.date() == now().date() %}
+                {% set label = 'Today' if p.is_daytime else 'Tonight' %}
+              {% else %}
+                {% set label = d.strftime('%a') ~ ('' if p.is_daytime else ' Night') %}
+              {% endif %}
+              {% set ns.out = ns.out + [{
+                'label': label,
+                'icon': icons.get(p.condition, 'mdi:weather-cloudy')
+                        if p.is_daytime or p.condition not in ['sunny', 'partlycloudy']
+                        else ('mdi:weather-night' if p.condition == 'sunny' else 'mdi:weather-night-partly-cloudy'),
+                'temp': p.temperature | round(0) | int,
+                'color': 'red' if p.is_daytime else 'black',
+                'rain': p.precipitation_probability | default(0, true) | int,
+              }] %}
+            {% endfor %}
+            {{ ns.out }}
+          temps: "{{ hours | map(attribute='temperature') | map('round', 0) | map('int') | list }}"
+          # 2.9": today's day period before noon, tomorrow's after, each with the
+          # night that follows it.
+          afternoon: "{{ now().hour >= 12 }}"
+      - variables:
+          want: "{{ (now() + timedelta(days=1 if afternoon else 0)).date() | string }}"
+      - variables:
+          day: >-
+            {{ periods | selectattr('is_daytime') | selectattr('datetime', 'match', want)
+               | list | first | default(periods | selectattr('is_daytime') | first, true) }}
+      - variables:
+          after: >-
+            {{ periods | rejectattr('is_daytime') | selectattr('datetime', '>', day.datetime)
+               | list | first | default({}, true) }}
+          day_label: >-
+            {{ ('Tomorrow' if afternoon else 'Today') ~ ' · '
+               ~ (as_datetime(day.datetime) | as_local).strftime('%a') }}
+          day_icon: "{{ icons.get(day.condition, 'mdi:weather-cloudy') }}"
+          day_name: "{{ names.get(day.condition, day.condition) }}"
+          day_pop: >-
+            {{ [day.precipitation_probability | default(0, true),
+                after.precipitation_probability | default(0, true)] | max | int }}
+      - action: ble_esl.write_guarded
+        continue_on_error: true
+        target:
+          entity_id: image.esl_420_last_updated_content
+        data:
+          dry_run: "{{ dry }}"
+          background: white
+          payload:
+            # Header band
+            - type: rectangle
+              x_start: 0
+              y_start: 0
+              x_end: 399
+              y_end: 29
+              fill: black
+            - type: text
+              value: "{{ now().strftime('%A, %B %-d') }}"
+              x: 10
+              "y": 15
+              size: 18
+              color: white
+              anchor: lm
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "as of {{ stamp }}"
+              x: 390
+              "y": 15
+              size: 14
+              color: white
+              anchor: rm
+              font: fonts/NotoSansKR-Regular.ttf
+            # Now
+            - type: icon
+              value: "{{ now_icon }}"
+              x: 10
+              "y": 38
+              size: 84
+              color: black
+            - type: text
+              value: "{{ now_temp }}°"
+              x: 104
+              "y": 80
+              size: 72
+              color: black
+              anchor: lm
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ now_name }}"
+              x: 250
+              "y": 46
+              size: 20
+              color: black
+              anchor: lm
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "Humidity {{ humidity }}%"
+              x: 250
+              "y": 78
+              size: 15
+              color: black
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "Wind {{ wind }}"
+              x: 250
+              "y": 102
+              size: 15
+              color: black
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: line
+              x_start: 0
+              y_start: 132
+              x_end: 399
+              y_end: 132
+              fill: black
+              width: 2
+            # Next four periods, one 100 px column each
+            - type: text
+              value: "{{ cols[0].label }}"
+              x: 50
+              "y": 140
+              size: 15
+              color: black
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ cols[0].icon }}"
+              x: 30
+              "y": 160
+              size: 40
+              color: black
+            - type: text
+              value: "{{ cols[0].temp }}°"
+              x: 50
+              "y": 204
+              size: 24
+              color: "{{ cols[0].color }}"
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ cols[0].rain }}%"
+              x: 50
+              "y": 234
+              size: 14
+              color: black
+              anchor: mt
+              visible: "{{ cols[0].rain >= 10 }}"
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "{{ cols[1].label }}"
+              x: 150
+              "y": 140
+              size: 15
+              color: black
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ cols[1].icon }}"
+              x: 130
+              "y": 160
+              size: 40
+              color: black
+            - type: text
+              value: "{{ cols[1].temp }}°"
+              x: 150
+              "y": 204
+              size: 24
+              color: "{{ cols[1].color }}"
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ cols[1].rain }}%"
+              x: 150
+              "y": 234
+              size: 14
+              color: black
+              anchor: mt
+              visible: "{{ cols[1].rain >= 10 }}"
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "{{ cols[2].label }}"
+              x: 250
+              "y": 140
+              size: 15
+              color: black
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ cols[2].icon }}"
+              x: 230
+              "y": 160
+              size: 40
+              color: black
+            - type: text
+              value: "{{ cols[2].temp }}°"
+              x: 250
+              "y": 204
+              size: 24
+              color: "{{ cols[2].color }}"
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ cols[2].rain }}%"
+              x: 250
+              "y": 234
+              size: 14
+              color: black
+              anchor: mt
+              visible: "{{ cols[2].rain >= 10 }}"
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "{{ cols[3].label }}"
+              x: 350
+              "y": 140
+              size: 15
+              color: black
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ cols[3].icon }}"
+              x: 330
+              "y": 160
+              size: 40
+              color: black
+            - type: text
+              value: "{{ cols[3].temp }}°"
+              x: 350
+              "y": 204
+              size: 24
+              color: "{{ cols[3].color }}"
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ cols[3].rain }}%"
+              x: 350
+              "y": 234
+              size: 14
+              color: black
+              anchor: mt
+              visible: "{{ cols[3].rain >= 10 }}"
+              font: fonts/NotoSansKR-Regular.ttf
+            # Next 24 h of temperatures
+            - type: line
+              x_start: 0
+              y_start: 256
+              x_end: 399
+              y_end: 256
+              fill: black
+              width: 2
+            - type: text
+              value: "{{ temps | max }}°"
+              x: 8
+              "y": 262
+              size: 14
+              color: red
+              anchor: lt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ temps | min }}°"
+              x: 8
+              "y": 296
+              size: 14
+              color: black
+              anchor: lb
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: sparkline
+              x: 44
+              "y": 262
+              width: 348
+              height: 34
+              values: "{{ temps | join(',') }}"
+              color: red
+              fill: yellow
+              width_line: 2
+              dot_last: false
+        response_variable: result_420
+      - action: ble_esl.write_guarded
+        continue_on_error: true
+        target:
+          entity_id: image.esl_290_last_updated_content
+        data:
+          dry_run: "{{ dry }}"
+          background: white
+          payload:
+            # Now (left)
+            - type: text
+              value: NOW
+              x: 8
+              "y": 4
+              size: 13
+              color: black
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ now_temp }}°"
+              x: 58
+              "y": 56
+              size: 56
+              color: black
+              anchor: mm
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ now_icon }}"
+              x: 6
+              "y": 88
+              size: 22
+              color: black
+            - type: text_fit
+              value: "{{ now_name }}"
+              x: 30
+              "y": 88
+              width: 88
+              height: 22
+              size: 13
+              min_size: 9
+              max_lines: 1
+              fit: shrink
+              padding: 0
+              color: black
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "as of {{ stamp }}"
+              x: 8
+              "y": 124
+              size: 11
+              color: black
+              anchor: lb
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: line
+              x_start: 120
+              y_start: 0
+              x_end: 120
+              y_end: 127
+              fill: black
+              width: 2
+            # Today (morning) or tomorrow (afternoon) — right
+            - type: rectangle
+              x_start: 121
+              y_start: 0
+              x_end: 295
+              y_end: 22
+              fill: yellow
+            - type: text
+              value: "{{ day_label }}"
+              x: 208
+              "y": 11
+              size: 15
+              color: black
+              anchor: mm
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ day_icon }}"
+              x: 128
+              "y": 30
+              size: 52
+              color: black
+            - type: text
+              value: "Hi {{ day.temperature | round(0) | int }}°"
+              x: 190
+              "y": 30
+              size: 24
+              color: red
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "Lo {{ after.temperature | round(0) | int }}°"
+              x: 190
+              "y": 60
+              size: 20
+              color: black
+              visible: "{{ after.temperature is defined }}"
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ day_name }}"
+              x: 128
+              "y": 84
+              size: 15
+              color: black
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: icon
+              value: mdi:umbrella-outline
+              x: 128
+              "y": 106
+              size: 18
+              color: black
+            - type: text
+              value: "{{ day_pop }}%"
+              x: 150
+              "y": 106
+              size: 14
+              color: "{{ 'red' if day_pop >= 50 else 'black' }}"
+              font: fonts/NotoSansKR-Bold.ttf
+        response_variable: result_290
+
+automation:
+  - id: esl_weather_schedule
+    alias: "ESL: refresh weather labels"
+    description: >-
+      Every three hours from 6 AM to 9 PM. Guarded writes skip a tag whose image
+      hasn't changed.
+    mode: single
+    triggers:
+      - trigger: time
+        at:
+          - "06:00:00"
+          - "09:00:00"
+          - "12:00:00"
+          - "15:00:00"
+          - "18:00:00"
+          - "21:00:00"
+    actions:
+      - action: script.esl_weather_render
