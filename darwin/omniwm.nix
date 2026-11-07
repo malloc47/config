@@ -441,5 +441,11 @@ in
         resize < escape ; default
       '';
     };
+
+    # skhd watches its config path but misses Home Manager swapping the
+    # symlink, so it keeps running the old bindings until restarted
+    xdg.configFile."skhd/skhdrc".onChange = ''
+      run /bin/launchctl kickstart -k gui/$(id -u)/${config.launchd.agents.skhd.config.Label} || true
+    '';
   };
 }
