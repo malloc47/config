@@ -85,10 +85,20 @@ export class Banner {
       banner: {
         msg: { type: "render_template", template: this.config.banner_template, strict: false, report_errors: false },
         onMessage: (m) => {
-          if ("result" in m) this._message = String(m.result ?? "").trim();
+          if ("result" in m) {
+            this._message = String(m.result ?? "").trim();
+            this._messageSeen = true;
+          }
         },
       },
     };
+  }
+
+  // Whether the asynchronous parts (the message template's first result,
+  // today's calendar alerts) have arrived, so items() is the whole banner.
+  ready() {
+    if (this.config.banner_template && !this._messageSeen) return false;
+    return !this._calAlerts?.length || this._calItemsDay === this._localDate(Date.now());
   }
 
   // Everything to show now. compact folds the open doors into one item (for

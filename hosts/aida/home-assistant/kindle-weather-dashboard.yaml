@@ -25,3 +25,6 @@ views:
         # drawn top right in 10% steps.
         battery_entity: sensor.weather_dashboard_battery
         charging_entity: binary_sensor.weather_dashboard_charging
+        # Top left: "Updated HH:MM", when the content last changed (so it
+        # never makes the Kindle redraw by itself); stale means no new image.
+        show_updated: true

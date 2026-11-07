@@ -33,7 +33,9 @@
 //   cold: 45                                     # focus: °F below which it's coat weather
 //   hot: 85                                      # focus: °F at/above which it's hot
 //   gray: false                                  # 4-gray panel: muted text and rules in gray
-//   show_updated: true                           # footer "Updated HH:MM" (changes every render)
+//   show_updated: true                           # footer "Updated HH:MM": when the content last
+//                                                # changed (lovelace-common/stamp.js), so it
+//                                                # never changes the image on its own
 //   show_clock_area: false                       # outline the device-drawn area (design aid)
 //   hide_toasts: true                            # hide HA's toasts while shown (see below)
 //
@@ -44,6 +46,7 @@ const { CONDITION_ICON, CONDITION_TEXT, CONDITION_RANK, Weather, num, temp } = a
   new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
 const { Banner } = await import(new URL(`./banner.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { contentStamp } = await import(new URL(`./stamp.js${new URL(import.meta.url).search}`, import.meta.url).href);
 
 const ICONS = {
   "weather-sunny": "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z",
@@ -393,8 +396,21 @@ class EinkDashboardCard extends HTMLElement {
       this._renderScreen(true);
     }
     this._fitText();
-    // The first layout can use a fallback font; measure again with DejaVu.
-    document.fonts.ready.then(() => this._fitText());
+    // The first layout can use a fallback font; measure again with DejaVu,
+    // then date the content (the stamp follows the final layout).
+    document.fonts.ready.then(() => {
+      this._fitText();
+      this._stamp();
+    });
+  }
+
+  // "Updated HH:MM": when this page's content last changed, not this render.
+  _stamp() {
+    const el = this.shadowRoot.querySelector(".updated .at");
+    if (!el) return;
+    const ready = this._src().ok && this._bn.ready();
+    this._stampAt = contentStamp(`${location.pathname}|${this._config.layout || "standard"}`, this.shadowRoot.querySelector(".screen"), el, ready);
+    el.textContent = this._stampAt ? this._clockTime(this._stampAt) : "";
   }
 
   // Outlook rows ([data-fit]) whose forecast text doesn't fit, in order: hide
@@ -711,7 +727,7 @@ ${c.layout === "focus" ? focusBody : c.layout === "far" ? farBody : standardBody
                   .join("")}</div>`
               : `<div class="spacer"></div>`
           }
-          ${c.show_updated ? `<div class="updated">Updated ${esc(this._clockTime(Date.now()))}</div>` : ""}
+          ${c.show_updated ? `<div class="updated">Updated <span class="at">${this._stampAt ? esc(this._clockTime(this._stampAt)) : ""}</span></div>` : ""}
           ${
             c.battery_slot
               ? `<div class="battery-slot"></div>`

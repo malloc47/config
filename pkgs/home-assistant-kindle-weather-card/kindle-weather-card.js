@@ -14,7 +14,8 @@
 //
 // Every render depends only on the forecast and the current hour, so an
 // unchanged forecast renders identically and Puppet's ETag lets the Kindle skip
-// redrawing (no "Updated" stamp).
+// redrawing. The optional "Updated" stamp keeps that: it's the time the
+// content last changed (lovelace-common/stamp.js), not the render's.
 //
 // Config:
 //   type: custom:kindle-weather-card
@@ -28,6 +29,8 @@
 //   battery_entity: sensor.<Kindle battery %>    # optional; top-right indicator
 //   charging_entity: binary_sensor.<charging>    # optional; bolt while "on"
 //   hide_toasts: true                            # hide HA's toasts while shown
+//   show_updated: false                          # top-left "Updated HH:MM": when the content
+//                                                # last changed (never on its own)
 //
 // Icons are Material Design Icons (https://pictogrammers.com/library/mdi/,
 // Apache-2.0), embedded as SVG paths so the card has no runtime dependencies.
@@ -35,6 +38,7 @@
 const { CONDITION_ICON, CONDITION_TEXT, Weather, num, temp } = await import(
   new URL(`./weather.js${new URL(import.meta.url).search}`, import.meta.url).href
 );
+const { contentStamp } = await import(new URL(`./stamp.js${new URL(import.meta.url).search}`, import.meta.url).href);
 
 const ICONS = {
   "weather-sunny": "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z",
@@ -400,8 +404,20 @@ class KindleWeatherCard extends HTMLElement {
     this._wx.invalidate();
     this._renderScreen();
     this._fitText();
-    // The first layout can use a fallback font; measure again with DejaVu.
-    document.fonts.ready.then(() => this._fitText());
+    // The first layout can use a fallback font; measure again with DejaVu,
+    // then date the content (the stamp follows the final layout).
+    document.fonts.ready.then(() => {
+      this._fitText();
+      this._stamp();
+    });
+  }
+
+  // "Updated HH:MM": when the content last changed, not this render.
+  _stamp() {
+    const el = this.shadowRoot.querySelector(".updated .at");
+    if (!el) return;
+    this._stampAt = contentStamp(location.pathname, this.shadowRoot.querySelector(".screen"), el, this._wx.src().ok);
+    el.textContent = this._stampAt ? this._wx.clockTime(this._stampAt) : "";
   }
 
   // Outlook rows whose forecast text doesn't fit: drop the what-to-wear hint,
@@ -699,6 +715,7 @@ class KindleWeatherCard extends HTMLElement {
         .battery { position: absolute; top: 14px; right: 44px; display: flex; align-items: center; gap: 8px;
           font-size: 28px; font-weight: 700; }
         .battery svg { display: block; }
+        .updated { position: absolute; top: 18px; left: 44px; font-size: 26px; font-weight: 600; color: ${MUTED}; }
       </style>
       <div class="screen">
         <section class="hero">
@@ -760,6 +777,7 @@ class KindleWeatherCard extends HTMLElement {
         </section>
         <footer>${this._legend()}</footer>
         ${this._battery()}
+        ${c.show_updated ? `<div class="updated">Updated <span class="at">${this._stampAt ? esc(this._wx.clockTime(this._stampAt)) : ""}</span></div>` : ""}
       </div>`;
   }
 }

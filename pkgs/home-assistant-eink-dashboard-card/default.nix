@@ -22,7 +22,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "eink-dashboard-card";
-  version = "0.15.0";
+  version = "0.16.1";
 
   src = ./eink-dashboard-card.js;
   dontUnpack = true;
@@ -32,6 +32,7 @@ stdenvNoCC.mkDerivation {
     mkdir $out
     install -m0644 $src $out/eink-dashboard-card.js
     install -m0644 ${../lovelace-common/weather.js} $out/weather.js
+    install -m0644 ${../lovelace-common/stamp.js} $out/stamp.js
     install -m0644 ${../lovelace-common/banner.js} $out/banner.js
     for f in DejaVuSans DejaVuSans-Bold DejaVuSansCondensed DejaVuSansCondensed-Bold; do
       install -m0644 ${dejavu_fonts}/share/fonts/truetype/$f.ttf $out/$f.ttf
