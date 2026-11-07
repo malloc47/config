@@ -1,21 +1,236 @@
-- id: '1786317932770'
-  alias: Test
+- id: '1786425583507'
+  alias: Doorbell turns on lights
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.front_door_visitor
+    from:
+    - 'off'
+    to:
+    - 'on'
+  conditions:
+  - condition: sun
+    after: sunset
+    after_offset:
+      hours: -1
+      minutes: 0
+      seconds: 0
+  - condition: device
+    type: is_off
+    device_id: 4ec56f1da9d2959a09dcbd48af4f2ec7
+    entity_id: 13e72bd4c27c11762206f4d66d166d5e
+    domain: light
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    target:
+      entity_id:
+      - light.foyer_group
+      - light.front_porch_light
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 10
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_off
+    metadata: {}
+    target:
+      entity_id:
+      - light.foyer_group
+      - light.front_porch_light
+    data: {}
+  mode: single
+- id: '1786426503165'
+  alias: Toggle front porch light
   description: ''
   triggers:
   - domain: mqtt
     device_id: 057518eec1d3811d026ba93360c97e01
     type: action
-    subtype: 1_single
+    subtype: 2_single
     trigger: device
   conditions: []
   actions:
-  - device_id: 57f45550e354cca511391d4d922cf0ac
-    domain: light
-    entity_id: cc9fd0d46e86dcaa8187544e53eb5f9d
-    type: flash
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id: light.front_porch_light
+    data: {}
   mode: single
-- id: '1786322842662'
-  alias: Test
+- id: '1786655181397'
+  alias: Door Notifications
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.front_door_contact
+    - binary_sensor.side_door_contact
+    - binary_sensor.utility_room_door_contact
+    - binary_sensor.dining_room_sliding_door_contact
+    - binary_sensor.basement_door_contact
+    - binary_sensor.west_gate_contact
+    - binary_sensor.east_gate_contact
+    from:
+    - 'off'
+    - 'on'
+    to:
+    - 'off'
+    - 'on'
+  conditions:
+  - condition: state
+    entity_id: input_select.alert_level
+    state:
+    - All Notifications
+    - Silent Notifications
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.state == ''on'' }}'
+      sequence:
+      - parallel:
+        - action: notify.mobile_app_motorola_razr_plus_2024
+          metadata: {}
+          data:
+            message: '{{ trigger.to_state.name }} is open'
+            data:
+              tag: '{{ trigger.entity_id }}'
+              ttl: 0
+              priority: high
+        - if:
+          - condition: time
+            after: 08:00:00
+            before: '21:00:00'
+          - condition: state
+            entity_id: input_select.alert_level
+            state:
+            - All Notifications
+          then:
+          - action: reolink.play_chime
+            metadata: {}
+            data:
+              device_id:
+              - 6f6ee06524038b5c0a29595d3c617eb8
+              - 77c6615345b4cf871dd1e121caaeae31
+              ringtone: pianokey
+    default:
+    - action: notify.mobile_app_motorola_razr_plus_2024
+      metadata: {}
+      data:
+        message: clear_notification
+        data:
+          tag: '{{ trigger.entity_id }}'
+  mode: queued
+  max: 10
+- id: '1786662794299'
+  alias: Toggle foyer and stair lights
+  description: ''
+  triggers:
+  - device_id: 529cbf9b8487605d7d2efab28f4b0443
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '001'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 001
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id:
+      - light.foyer_group
+    data: {}
+  mode: single
+- id: '1786662892164'
+  alias: Toggle porch light
+  description: ''
+  triggers:
+  - device_id: 529cbf9b8487605d7d2efab28f4b0443
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '002'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 002
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id: light.front_porch_light
+    data: {}
+  mode: single
+- id: '1786681013248'
+  alias: Toggle living room lights
+  description: ''
+  triggers:
+  - device_id: 26e713eb6f6baa26a78c3ad6d704090d
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '001'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 001
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id:
+      - light.living_room_lights
+    data: {}
+  mode: single
+- id: '1786681102299'
+  alias: Toggle stair and foyer lights
+  description: ''
+  triggers:
+  - device_id: 26e713eb6f6baa26a78c3ad6d704090d
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '002'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 002
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.foyer_group
+  mode: single
+- id: '1786681644670'
+  alias: Turn off all lights
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 057518eec1d3811d026ba93360c97e01
+    type: action
+    subtype: 4_single
+    trigger: device
+  conditions: []
+  actions:
+  - action: script.turn_off_all_lights
+    metadata: {}
+    data: {}
+  mode: single
+- id: '1786682024316'
+  alias: Toggle foyer and stair light
   description: ''
   triggers:
   - domain: mqtt
@@ -26,24 +241,768 @@
     trigger: device
   conditions: []
   actions:
-  - device_id: 57f45550e354cca511391d4d922cf0ac
-    domain: light
-    entity_id: cc9fd0d46e86dcaa8187544e53eb5f9d
-    type: flash
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id:
+      - light.foyer_light
+      - light.lower_stair_light
+    data: {}
   mode: single
-- id: '1786324906219'
-  alias: Test
+- id: '1786682203494'
+  alias: Turn on all front 1st floor lights
   description: ''
   triggers:
   - domain: mqtt
     device_id: 057518eec1d3811d026ba93360c97e01
     type: action
-    subtype: 1_single
+    subtype: 1_double
     trigger: device
   conditions: []
   actions:
-  - type: toggle
-    device_id: 57f45550e354cca511391d4d922cf0ac
-    entity_id: cc9fd0d46e86dcaa8187544e53eb5f9d
-    domain: light
+  - action: light.turn_on
+    metadata: {}
+    target:
+      entity_id:
+      - light.living_room_lights
+      - light.foyer_light
+      - light.front_porch_light
+      - light.lower_stair_light
+    data: {}
   mode: single
+- id: '1786682277691'
+  alias: Toggle living room lights
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 057518eec1d3811d026ba93360c97e01
+    type: action
+    subtype: 3_single
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.living_room_lights
+  mode: single
+- id: '1786758565359'
+  alias: Cycle color temperature
+  description: ''
+  triggers:
+  - device_id: 26e713eb6f6baa26a78c3ad6d704090d
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '003'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 003
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - sequence:
+    - action: input_select.select_next
+      data:
+        cycle: true
+      target:
+        entity_id: input_select.light_temperature
+    - action: light.turn_on
+      metadata: {}
+      target:
+        entity_id:
+        - light.foyer_light
+        - light.lower_stair_light
+        - light.living_room_lights
+        - light.living_room_floor_lamp
+        - light.upper_stair_light
+      data:
+        color_temp_kelvin: '{{ states(''input_select.light_temperature'') | int(3000)
+          }}'
+  mode: single
+- id: '1786765339748'
+  alias: Cycle alert level
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 35ea5cde8f6a87aecb802db4eb3afd14
+    type: action
+    subtype: emergency
+    metadata: {}
+    trigger: device
+  conditions: []
+  actions:
+  - action: input_select.select_next
+    metadata: {}
+    target:
+      entity_id: input_select.alert_level
+    data:
+      cycle: true
+  - action: notify.google_assistant_sdk
+    metadata: {}
+    data:
+      message: Alert Level set to {{ states('input_select.alert_level') }}
+      target: Living Room
+  mode: single
+- id: '1787455680831'
+  alias: Front porch light on front door open
+  description: When the front door opens after dark and the porch light is off, turn
+    it on. Once the door has stayed closed for 5 minutes, turn it back off — but only
+    if this automation is the one that turned it on. Re-opening the door within the
+    5 minutes restarts the countdown.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.front_door_contact
+    from: 'off'
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: light.front_porch_light
+    state: 'off'
+  - condition: state
+    entity_id: sensor.front_door_day_night_state
+    state:
+    - night
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.front_porch_light
+  - repeat:
+      sequence:
+      - wait_for_trigger:
+        - trigger: state
+          entity_id: binary_sensor.front_door_contact
+          to: 'off'
+      - wait_for_trigger:
+        - trigger: state
+          entity_id: binary_sensor.front_door_contact
+          to: 'on'
+        timeout:
+          minutes: 5
+        continue_on_timeout: true
+      until:
+      - condition: template
+        value_template: '{{ wait.trigger is none }}'
+  - action: light.turn_off
+    target:
+      entity_id: light.front_porch_light
+  mode: restart
+- id: '1787608459252'
+  alias: Living room knob - multi-mode control
+  description: ' [Option B round 1: honor knob action_transition_time for smooth blended
+    ramping; max 3->10; filter to real actions.]'
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Rotating button
+  conditions:
+  - condition: template
+    value_template: '{{ (trigger.payload_json.action | default('''')) in [''toggle'',
+      ''hue_move'', ''brightness_step_up'', ''brightness_step_down''] }}'
+  actions:
+  - variables:
+      action: '{{ trigger.payload_json.action }}'
+      active: '{{ states(''input_select.living_room_knob_mode'') }}'
+      dir: '{{ 1 if trigger.payload_json.action == ''brightness_step_up'' else -1
+        }}'
+      size: '{{ trigger.payload_json.action_step_size | float(25) }}'
+      trans: '{{ trigger.payload_json.action_transition_time | float(0.2) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ action == ''toggle'' }}'
+      sequence:
+      - action: input_select.select_next
+        target:
+          entity_id: input_select.living_room_knob_mode
+    - conditions:
+      - '{{ action == ''hue_move'' }}'
+      sequence:
+      - variables:
+          def_k: '{{ states(''input_select.light_temperature'') | float(3000) }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.living_room_overhead_lights_temperature
+        data:
+          value: '{{ def_k }}'
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.living_room_knob_mode
+        data:
+          option: temp
+      - action: light.turn_on
+        target:
+          entity_id: light.living_room_overhead_lights
+        data:
+          transition: 0
+          color_temp_kelvin: '{{ def_k | int }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ action in [''brightness_step_up'', ''brightness_step_down'']
+          }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ active == ''temp'' }}'
+          sequence:
+          - variables:
+              new_k: "{{ [[ (states('input_number.living_room_overhead_lights_temperature')
+                | float(3000)) + dir * size * 5,\n      2000 ] | max, 6500 ] | min
+                }}"
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.living_room_overhead_lights_temperature
+            data:
+              value: '{{ new_k }}'
+          - action: light.turn_on
+            target:
+              entity_id: light.living_room_overhead_lights
+            data:
+              transition: '{{ trans }}'
+              color_temp_kelvin: '{{ new_k | int }}'
+        - conditions:
+          - condition: template
+            value_template: '{{ active == ''hue'' }}'
+          sequence:
+          - variables:
+              new_h: '{{ (states(''input_number.living_room_overhead_lights_state'')
+                | float(0) + dir * size * 0.5) % 360 }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.living_room_overhead_lights_state
+            data:
+              value: '{{ new_h }}'
+          - action: light.turn_on
+            target:
+              entity_id: light.living_room_overhead_lights
+            data:
+              transition: '{{ trans }}'
+              hs_color:
+              - '{{ new_h }}'
+              - 100
+        - conditions:
+          - condition: template
+            value_template: '{{ active == ''brightness'' }}'
+          sequence:
+          - variables:
+              new_b: "{{ [[ (states('input_number.living_room_overhead_lights_brightness')
+                | float(128)) + dir * size,\n      1 ] | max, 255 ] | min }}"
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.living_room_overhead_lights_brightness
+            data:
+              value: '{{ new_b }}'
+          - action: light.turn_on
+            target:
+              entity_id: light.living_room_overhead_lights
+            data:
+              transition: '{{ trans }}'
+              brightness: '{{ new_b | int }}'
+  mode: queued
+  max: 10
+  max_exceeded: silent
+- id: '1788816178679'
+  alias: Closet under stairs light follows door
+  description: Turn the Closet under stairs light on when the Stairs Closet Door opens,
+    and off when it closes.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.stairs_closet_door_contact
+    to:
+    - 'on'
+    - 'off'
+  conditions: []
+  actions:
+  - action: light.turn_{{ 'on' if trigger.to_state.state == 'on' else 'off' }}
+    target:
+      entity_id: light.closet_under_stairs
+  mode: single
+- id: '1788923758473'
+  alias: Laundry room presence detection
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.laundry_room_presence_sensor_occupancy
+      light_target:
+        entity_id: light.shellydimmerg4us_acebe6e89fbc
+      no_motion_wait: 60
+- id: '1789357582919'
+  alias: Turn off first floor lights
+  description: ''
+  triggers:
+  - device_id: 529cbf9b8487605d7d2efab28f4b0443
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '004'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 004
+    trigger: device
+    value: '0'
+  - device_id: 26e713eb6f6baa26a78c3ad6d704090d
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '004'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 004
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: script.turn_off_first_floor_lights
+    data: {}
+  mode: single
+- id: '1789423696197'
+  alias: Garden Hose Valve Notifications
+  description: Immediate, urgent notification when the garden hose valve is turned
+    on (water running); the notification is cleared automatically when the valve is
+    turned off. Mirrors the Door Notifications tag-based clear pattern. Sent to all
+    phones.
+  triggers:
+  - trigger: state
+    entity_id:
+    - switch.garden_hose_valve
+    from:
+    - 'off'
+    - 'on'
+    to:
+    - 'off'
+    - 'on'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.state == ''on'' }}'
+      sequence:
+      - parallel:
+        - action: notify.mobile_app_motorola_razr_plus_2024
+          metadata: {}
+          data:
+            title: "\U0001F4A7 Garden Hose Valve ON"
+            message: '{{ trigger.to_state.name }} is ON — water is running'
+            data:
+              tag: '{{ trigger.entity_id }}'
+              ttl: 0
+              priority: high
+              importance: high
+              channel: Garden Hose Valve
+              sticky: true
+        - action: notify.mobile_app_pixel_8_pro
+          metadata: {}
+          data:
+            title: "\U0001F4A7 Garden Hose Valve ON"
+            message: '{{ trigger.to_state.name }} is ON — water is running'
+            data:
+              tag: '{{ trigger.entity_id }}'
+              ttl: 0
+              priority: high
+              importance: high
+              channel: Garden Hose Valve
+              sticky: true
+    default:
+    - parallel:
+      - action: notify.mobile_app_motorola_razr_plus_2024
+        metadata: {}
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ trigger.entity_id }}'
+      - action: notify.mobile_app_pixel_8_pro
+        metadata: {}
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ trigger.entity_id }}'
+  mode: queued
+  max: 10
+- id: '1789428894806'
+  alias: Night Mode Button Press
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 35ea5cde8f6a87aecb802db4eb3afd14
+    type: action
+    subtype: emergency
+    metadata: {}
+    trigger: device
+  conditions: []
+  actions:
+  - action: script.turn_off_all_lights
+    metadata: {}
+    data: {}
+  - action: switch.turn_on
+    metadata: {}
+    target:
+      entity_id:
+      - switch.adaptive_lighting_bathrooms_adaptive_lighting_sleep_mode_bathrooms
+      - switch.adaptive_lighting_bedroom_adaptive_lighting_sleep_mode_bedroom
+    data: {}
+  mode: single
+- id: '1789581409738'
+  alias: Stairs Under Light Presence Trigger
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.stairs_upper_presence_sensor_occupancy
+      light_target:
+        entity_id: light.upper_stair_light
+      no_motion_wait: 120
+- id: '1789589494043'
+  alias: 'Stairs Lower Presence Sensor Trigger '
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.stairs_lower_presence_sensor_presence
+      light_target:
+        entity_id: light.lower_stair_light
+      no_motion_wait: 60
+- id: '1789591945968'
+  alias: Stairs Closet Light Timer
+  description: ''
+  use_blueprint:
+    path: Blackshome/manual-light.yaml
+    input:
+      trigger_input:
+      - light.closet_under_stairs
+      time_delay:
+        hours: 0
+        minutes: 20
+        seconds: 0
+      motion_trigger: binary_sensor.stairs_closet_door_contact
+      include_motion_trigger: enable_motion_trigger
+- id: '1789617245188'
+  alias: Garden hose valve child lock after close
+  description: When the garden hose valve has been closed (off) continuously for 15
+    minutes, engage its child lock. Opening the valve before the 15 minutes elapses
+    cancels the pending lock and resets the timer (the state trigger only fires after
+    a continuous closed period).
+  triggers:
+  - trigger: state
+    entity_id: switch.garden_hose_valve
+    to: 'off'
+    for:
+      minutes: 15
+  conditions: []
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.garden_hose_valve_child_lock
+  mode: single
+- id: '1789701040100'
+  alias: Upstairs Bathroom Presence Sensor Trigger
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.upstairs_bathroom_presence_sensor_occupancy
+      light_target:
+        entity_id: light.upstairs_bathroom_lights
+      no_motion_wait: 600
+- id: '1789846096381'
+  alias: Tag Garden Hose Child Lock is scanned
+  description: ''
+  triggers:
+  - trigger: tag
+    tag_id: c67b04a2-d6c6-4490-b4ef-988427f2559f
+  conditions: []
+  actions:
+  - action: switch.toggle
+    metadata: {}
+    target:
+      entity_id: switch.garden_hose_valve_child_lock
+    data: {}
+  mode: single
+- id: '1789848238069'
+  alias: Garden Hose Valve Child Lock Notifications
+  description: Immediate notification when the garden hose valve child lock is UNLOCKED
+    (off); cleared automatically when it is locked again (on). Mirrors the Garden
+    Hose Valve Notifications tag-based clear pattern. Sent to all phones.
+  triggers:
+  - trigger: state
+    entity_id:
+    - switch.garden_hose_valve_child_lock
+    from:
+    - 'off'
+    - 'on'
+    to:
+    - 'off'
+    - 'on'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.state == ''off'' }}'
+      sequence:
+      - parallel:
+        - action: notify.mobile_app_motorola_razr_plus_2024
+          metadata: {}
+          data:
+            title: "\U0001F513 Garden Hose Valve Child Lock UNLOCKED"
+            message: '{{ trigger.to_state.name }} is UNLOCKED'
+            data:
+              tag: '{{ trigger.entity_id }}'
+              ttl: 0
+              priority: high
+              importance: high
+              channel: Garden Hose Valve Child Lock
+              sticky: true
+        - action: notify.mobile_app_pixel_8_pro
+          metadata: {}
+          data:
+            title: "\U0001F513 Garden Hose Valve Child Lock UNLOCKED"
+            message: '{{ trigger.to_state.name }} is UNLOCKED'
+            data:
+              tag: '{{ trigger.entity_id }}'
+              ttl: 0
+              priority: high
+              importance: high
+              channel: Garden Hose Valve Child Lock
+              sticky: true
+    default:
+    - parallel:
+      - action: notify.mobile_app_motorola_razr_plus_2024
+        metadata: {}
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ trigger.entity_id }}'
+      - action: notify.mobile_app_pixel_8_pro
+        metadata: {}
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ trigger.entity_id }}'
+  mode: queued
+  max: 10
+- id: '1789860659967'
+  alias: 'Kids Room Light Toggle '
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: b12e560e9a49202602d21e6005f0ba77
+    type: action
+    subtype: config_single
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id: light.kids_room_lights
+    data: {}
+  mode: single
+- id: '1789875128240'
+  alias: 'Toggle Bedroom Lamps '
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: a6ea1dbaae4e3fd29b1a5190fe018659
+    type: action
+    subtype: config_single
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    target:
+      entity_id: light.bedroom_lights
+    data: {}
+  mode: single
+- id: '1789876500214'
+  alias: Reset Day (5am)
+  description: ''
+  triggers:
+  - trigger: time
+    at: 05:00:00
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    metadata: {}
+    target:
+      entity_id:
+      - switch.adaptive_lighting_sleep_mode_downstairs
+      - switch.adaptive_lighting_bathrooms_adaptive_lighting_sleep_mode_bathrooms
+      - switch.adaptive_lighting_bedroom_adaptive_lighting_sleep_mode_bedroom
+      - switch.adaptive_stairs_adaptive_lighting_sleep_mode_stairs
+    data: {}
+  mode: single
+- id: '1789880035248'
+  alias: Kids Room Door Night Notifications
+  description: 'Between 8pm and 5am, when the kids room door opens (a kid has left
+    their room): turns on the Living Room Notification Light (red) as a visual indicator
+    AND sends a sticky notification to all phones. When the door closes — or at 5am
+    when the window ends — the light is turned off and the notification cleared. Merged
+    from the former ''Kids Door Notification'' light automation so the light now shares
+    the 8pm-5am window. Tag-based clear mirrors the Garden Hose Valve / Door Notifications
+    pattern.'
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.kids_room_door_contact
+    from:
+    - 'off'
+    - 'on'
+    to:
+    - 'on'
+    - 'off'
+  - trigger: time
+    at: 05:00:00
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.kids_room_door_contact
+        state: 'on'
+      - condition: time
+        after: '20:00:00'
+        before: 05:00:00
+      sequence:
+      - parallel:
+        - action: light.turn_on
+          metadata: {}
+          target:
+            entity_id: light.dining_room_night_light
+          data:
+            rgb_color:
+            - 255
+            - 63
+            - 33
+        - action: notify.mobile_app_motorola_razr_plus_2024
+          metadata: {}
+          data:
+            title: "\U0001F6AA Kids Room Door Opened"
+            message: Someone left the kids' room
+            data:
+              tag: binary_sensor.kids_room_door_contact
+              ttl: 0
+              priority: high
+              importance: high
+              channel: Kids Room Door
+              sticky: true
+        - action: notify.mobile_app_pixel_8_pro
+          metadata: {}
+          data:
+            title: "\U0001F6AA Kids Room Door Opened"
+            message: Someone left the kids' room
+            data:
+              tag: binary_sensor.kids_room_door_contact
+              ttl: 0
+              priority: high
+              importance: high
+              channel: Kids Room Door
+              sticky: true
+    default:
+    - parallel:
+      - action: light.turn_off
+        metadata: {}
+        target:
+          entity_id: light.dining_room_night_light
+        data:
+          transition: 1
+      - action: notify.mobile_app_motorola_razr_plus_2024
+        metadata: {}
+        data:
+          message: clear_notification
+          data:
+            tag: binary_sensor.kids_room_door_contact
+      - action: notify.mobile_app_pixel_8_pro
+        metadata: {}
+        data:
+          message: clear_notification
+          data:
+            tag: binary_sensor.kids_room_door_contact
+  mode: queued
+  max: 10
+- id: '1790457225344'
+  alias: Laundry Room Remote Up
+  description: ''
+  triggers:
+  - device_id: 7b978a0ccc7d5e6889f3673b904af139
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '001'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 001
+    metadata: {}
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    target:
+      entity_id: light.shellydimmerg4us_acebe6e89fbc
+    data: {}
+  mode: single
+- id: '1790457268328'
+  alias: Laundry Room Remote Down
+  description: ''
+  triggers:
+  - device_id: 7b978a0ccc7d5e6889f3673b904af139
+    domain: zwave_js
+    type: event.value_notification.central_scene
+    property: scene
+    property_key: '002'
+    endpoint: 0
+    command_class: 91
+    subtype: Endpoint 0 Scene 002
+    trigger: device
+    value: '0'
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    target:
+      entity_id: light.shellydimmerg4us_acebe6e89fbc
+    data: {}
+  mode: single
+- id: '1790639667475'
+  alias: 'Kids Room Toggle Stair Night Mode '
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: b12e560e9a49202602d21e6005f0ba77
+    type: action
+    subtype: config_double
+    trigger: device
+  conditions: []
+  actions:
+  - action: switch.toggle
+    metadata: {}
+    target:
+      entity_id: switch.adaptive_stairs_adaptive_lighting_sleep_mode_stairs
+    data: {}
+  mode: single
+- id: '1791084564016'
+  alias: Play Room Lamp follows Play Room Light Switch
+  description: 'Mirror the Play Room Light Switch relay (Sonoff ZBMINIR2) onto the
+    Play Room Lamp plug (SONOFF S61 0xa4c1381f2ed8ffff since 2026-11-05; replaced
+    a Third Reality Gen3 plug). Interim until the ZBMINIR2 is replaced: it cannot
+    drive the lamp over a Zigbee binding (it only sends toggle, and only in detach-relay
+    mode).'
+  triggers:
+  - trigger: state
+    entity_id: switch.play_room_light_switch
+    to:
+    - 'on'
+    - 'off'
+  conditions: []
+  actions:
+  - action: switch.turn_{{ trigger.to_state.state }}
+    target:
+      entity_id: switch.play_room_lamp
+  mode: queued
+  max: 10

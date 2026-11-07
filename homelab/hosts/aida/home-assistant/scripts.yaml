@@ -1,1 +1,23 @@
-{}
+turn_off_all_lights:
+  alias: Turn Off All Lights
+  sequence:
+  - action: light.turn_off
+    target:
+      entity_id: '{{ states.light | map(attribute=''entity_id'') | join('', '') }}'
+    data: {}
+  - action: fan.turn_off
+    metadata: {}
+    target:
+      entity_id: fan.upstairs_bathroom_lights
+    data: {}
+  mode: single
+  description: ''
+turn_off_first_floor_lights:
+  alias: Turn Off First Floor Lights
+  description: Turn off every light on the first floor (all first_floor areas).
+  sequence:
+  - action: light.turn_off
+    target:
+      floor_id: first_floor
+    data: {}
+  mode: single
