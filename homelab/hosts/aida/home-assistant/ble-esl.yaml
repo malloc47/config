@@ -16,6 +16,9 @@
 # Preview without touching the panels: run script.esl_weather_render with
 # dry_run: true, then look at image.esl_420_preview_content /
 # image.esl_290_preview_content.
+#
+# A write that fails after all retries notifies the phone (esl_write_failed),
+# which is the signal that a tag has been moved out of range.
 
 script:
   esl_weather_render:
@@ -518,3 +521,49 @@ automation:
           - "21:00:00"
     actions:
       - action: script.esl_weather_render
+
+  # Phone alert when a tag write fails outright. Failure Count only counts
+  # writes that failed with every retry used up (Retry Count 3), not attempts
+  # a retry rescued. It is in memory and restarts from 0 with HA, so only a
+  # real increase (not unavailable -> 0) fires. The message carries the
+  # failed write's breakdown from Last Failure Time's attributes: a low rssi
+  # or an `unreachable`/`connect` stage means the placement is out of range
+  # (move the tag or add a Bluetooth proxy). The tag's notification is
+  # replaced by its next failure, not stacked.
+  - id: esl_write_failed
+    alias: "ESL: notify on failed write"
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id:
+          - sensor.esl_420_failure_count
+          - sensor.esl_290_failure_count
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.from_state is not none
+             and trigger.from_state.state | is_number
+             and trigger.to_state.state | is_number
+             and trigger.to_state.state | int > trigger.from_state.state | int }}
+    actions:
+      - variables:
+          tag: >-
+            {{ device_attr(device_id(trigger.entity_id), 'name_by_user')
+               or device_attr(device_id(trigger.entity_id), 'name') }}
+          last: "{{ trigger.entity_id | replace('failure_count', 'last_failure_time') }}"
+          stage: "{{ state_attr(last, 'failed_stage') or 'unknown stage' }}"
+          rssi: "{{ state_attr(last, 'rssi') }}"
+          attempts: "{{ state_attr(last, 'attempt') }}"
+          error: "{{ state_attr(last, 'error') or '' }}"
+      - action: notify.mobile_app_motorola_razr_plus_2024
+        data:
+          title: "E-paper label write failed"
+          message: >-
+            {{ tag }}: failed at {{ stage }}
+            {%- if rssi is number %}, RSSI {{ rssi }} dBm{% endif %}
+            {%- if attempts is number %} after {{ attempts }} attempt{{ 's' if attempts != 1 }}{% endif %}.
+            {% if error %}{{ error }} {% endif -%}
+            ({{ trigger.to_state.state }} failed since HA started.)
+          data:
+            tag: "{{ trigger.entity_id }}"
+            channel: E-paper labels

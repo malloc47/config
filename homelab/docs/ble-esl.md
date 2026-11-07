@@ -69,7 +69,7 @@ failing tag does not stop the other.
 ### Editing a layout
 
 1. Edit `hosts/aida/home-assistant/ble-esl.yaml`.
-2. `nixos-deploy aida` (HA reloads; it does not restart).
+2. `nixos-deploy aida` (HA reloads or restarts to pick it up).
 3. Preview: Developer Tools → Actions → `script.esl_weather_render` with
    `dry_run: true`, then open `image.esl_420_preview_content` /
    `image.esl_290_preview_content`. This renders but sends nothing.
@@ -135,9 +135,15 @@ default), `sensor.esl_*_write_duration`, `sensor.esl_*_failure_count`,
 ## Bluetooth range
 
 The onboard adapter has been enough so far: every write succeeded first
-try, with no proxy. Once the tags are mounted in their final spots, watch
-`failure_count` and the write-duration attributes (`connect_s`, `rssi`). If
-a tag starts needing retries, add an ESPHome Bluetooth proxy with
+try, with no proxy. `automation.esl_notify_on_failed_write` pushes a phone
+notification (`notify.mobile_app_motorola_razr_plus_2024`, channel
+"E-paper labels") whenever a tag's `failure_count` goes up, i.e. a write
+failed with all retries used. The notification names the tag, the stage it
+failed at, its RSSI and the error. So after moving a tag, no checking is
+needed; a bad spot announces itself at the next refresh that changes its
+image. Writes that a retry rescued don't alert; for those, look at the
+write-duration attributes (`attempt`, `connect_s`, `rssi`). If a tag
+keeps failing, add an ESPHome Bluetooth proxy with
 `bluetooth_proxy: {active: true}`; passive proxies only forward
 advertisements and cannot write. All tags share one BLE lock, so writes go
 one at a time.
