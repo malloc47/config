@@ -158,7 +158,9 @@
                     self.homeManagerModules.home-gui
                     self.homeManagerModules.home-vm
                     self.homeManagerModules.home-agenix
+                    self.homeManagerModules.homelab-tools
                   ];
+                  programs.homelab-tools.enable = true;
                   # Emacs uses its own solarized-theme; don't let Stylix manage it
                   stylix.targets.emacs.enable = false;
                   # wm.nix / rofi.nix set these explicitly
@@ -248,7 +250,9 @@
                       self.homeManagerModules.home-agenix
                       self.homeManagerModules.home-gh
                       self.homeManagerModules.home-sqlit
+                      self.homeManagerModules.homelab-tools
                     ];
+                    programs.homelab-tools.enable = true;
                     home.packages = [ pkgs.tramp-rpc-server ]; # remote end of Emacs /rpc: TRAMP
                     stylix.targets.emacs.enable = false;
                     programs.dev-toolchain.enable = true;
@@ -307,7 +311,9 @@
                     self.homeManagerModules.home-dev
                     self.homeManagerModules.home-ai
                     self.homeManagerModules.home-agenix
+                    self.homeManagerModules.homelab-tools
                   ];
+                  programs.homelab-tools.enable = true;
                   stylix.targets.emacs.enable = false;
                   stylix.targets.i3.enable = false;
                   stylix.targets.rofi.enable = false;
@@ -369,6 +375,7 @@
         home-gh = ./home/modules/gh.nix;
         home-sqlit = ./home/modules/sqlit.nix;
         home-drift-check = ./home/modules/drift-check.nix;
+        homelab-tools = ./home/modules/homelab-tools.nix;
       };
 
       darwinModules = {

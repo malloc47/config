@@ -69,8 +69,10 @@ in
                 base.homeManagerModules.home
                 base.homeManagerModules.home-agenix
                 base.homeManagerModules.home-sqlit
+                base.homeManagerModules.homelab-tools
               ];
               programs.sqlit.enable = true;
+              programs.homelab-tools.enable = true;
             };
           }
         )
@@ -111,11 +113,15 @@ in
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = specialArgs;
-            home-manager.users.${config.settings.username}.imports = [
-              base.homeManagerModules.osconfig-bridge
-              base.homeManagerModules.home
-              base.homeManagerModules.home-agenix
-            ];
+            home-manager.users.${config.settings.username} = {
+              imports = [
+                base.homeManagerModules.osconfig-bridge
+                base.homeManagerModules.home
+                base.homeManagerModules.home-agenix
+                base.homeManagerModules.homelab-tools
+              ];
+              programs.homelab-tools.enable = true;
+            };
           }
         )
       ];
