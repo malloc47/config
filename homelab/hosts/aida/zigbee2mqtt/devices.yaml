@@ -5,4 +5,87 @@
 '0xb4e842908f0e0000':
   friendly_name: Front porch light
 '0xe456acfffe7a08d6':
-  friendly_name: Foyer Light Switch
+  friendly_name: Entry Light Remote
+'0xb4e8428fed0d0000':
+  friendly_name: Closet under stairs
+'0x5c3aa2fffe50fb42':
+  friendly_name: Living Room Overhead Light Switch
+'0xb4e84290d9c70000':
+  friendly_name: Lower Stair Light (old)
+'0xa4c1380a0a7affff':
+  friendly_name: Front Door
+'0xa4c1380a0571ffff':
+  friendly_name: Dining room sliding door
+'0xa4c138429cb60812':
+  friendly_name: Rotating button
+  debounce_ignore: []
+'0xa4c13809fb6fffff':
+  friendly_name: Side Door
+'0xa4c13809f655ffff':
+  friendly_name: Utility Room Door
+'0xa4c13809f66bffff':
+  friendly_name: Basement Door
+'0xa4c138bd684f1a3e':
+  friendly_name: Night mode
+'0xa4c138590f658357':
+  friendly_name: Kitchen Counter Lights
+'0x001788010f19bdad':
+  friendly_name: Foyer Light
+'0x001788010f1892b4':
+  friendly_name: Lower Stair Light
+'0x001788010f18acbf':
+  friendly_name: Living room overhead light 1
+'0x001788010f1892a1':
+  friendly_name: Living room overhead light 2
+'0x001788010f187c97':
+  friendly_name: Living room overhead light 3
+'0x001788010f187c7b':
+  friendly_name: Living room overhead light 4
+'0x001788010f187c72':
+  friendly_name: Living room overhead light 5
+'0xa4c138a9f32970f5':
+  friendly_name: Kids Room Bed Light
+'0x00158d008c8734e3':
+  friendly_name: West Gate
+'0xa4c13809fb43ffff':
+  friendly_name: Kids Room Door
+'0x001788010f187c8e':
+  friendly_name: Upper Stair Light
+'0xa4c1380a0ab5ffff':
+  friendly_name: Stairs Closet Door
+'0xa4c1380a0137ffff':
+  friendly_name: Attic Door
+'0x54ef44100172685d':
+  friendly_name: Stairs Lower Presence Sensor
+'0x6ce4a4fffeb1035d':
+  friendly_name: Play Room Light Switch
+'0xacebe6fffee89fbc':
+  friendly_name: Laundry Room Light Relay
+'0xa4c1381f0a13ffff':
+  friendly_name: Bedroom Climate Sensor
+'0x00158d008c872f82':
+  friendly_name: East Gate
+'0xa4c13814d79dffff':
+  friendly_name: Laundry Room Presence Sensor
+'0xa4c138142226ffff':
+  friendly_name: Garden Hose Valve
+'0xa4c13814f406ffff':
+  friendly_name: Stairs Upper Presence Sensor
+'0x0022a300003b6839':
+  friendly_name: Dining Room Light Fan
+'0xa4c13814e310ffff':
+  friendly_name: Upstairs Bathroom Presence Sensor
+'0x5c3aa2fffe55e421':
+  friendly_name: Office Light Switch
+'0x5c3aa2fffe4e9ccb':
+  friendly_name: Bedroom Overhead Light Switch
+'0x5c3aa2fffe56822f':
+  friendly_name: Kids Room Overhead Light Switch
+'0x6ce4a4fffe9ee351':
+  friendly_name: Side Door Light Relay
+'0x54ef441001779c31':
+  friendly_name: Dining Room Relay
+'0xa4c1381f2ed8ffff':
+  friendly_name: Play Room Lamp
+'0xb40ecfd7ff8b0000':
+  friendly_name: Dining Room Night Light
