@@ -1014,8 +1014,12 @@ in
   # Puppet keeps one browser page open, which only loads Lovelace resources on
   # a full page load: restart it with HA (whose restarts otherwise leave the
   # page on stale, failed subscriptions) and whenever a card it renders changes.
+  # partOf only carries stops and restarts over, so a `systemctl stop` then
+  # `start` of HA left Puppet down (and the e-ink panel without its pages);
+  # wantedBy starts it again with HA.
   systemd.services.ha-puppet = {
     partOf = [ "home-assistant.service" ];
+    wantedBy = [ "home-assistant.service" ];
     restartTriggers = [
       pkgs.home-assistant-eink-dashboard-card
       pkgs.home-assistant-kindle-weather-card
