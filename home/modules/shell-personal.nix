@@ -263,8 +263,11 @@ in
             PROMPT="''${lambda_color}λ''${lambda_color:+%f} ''${host_part}$(_prompt_pwd)''${git_part}''${nix_part} ▸ "
           }
 
+          # Homelab hosts (aida, aroldo) live in lab-config, the rest in config.
           nixos-deploy() {
-            nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --no-reexec --sudo
+            local flake=~/src/config
+            [[ -e ~/src/lab-config/hosts/$1.nix ]] && flake=~/src/lab-config
+            nixos-rebuild switch --flake "$flake#$1" --target-host $1 --build-host $1 --no-reexec --sudo
           }
         '';
       sessionVariables = {
@@ -326,8 +329,11 @@ in
             export PS1="λ ''${HOST_PART}\w \$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/') ▸ "
         fi
 
+        # Homelab hosts (aida, aroldo) live in lab-config, the rest in config.
         nixos-deploy() {
-          nixos-rebuild switch --flake ~/src/config#$1 --target-host $1 --build-host $1 --no-reexec --sudo
+          local flake=~/src/config
+          [[ -e ~/src/lab-config/hosts/$1.nix ]] && flake=~/src/lab-config
+          nixos-rebuild switch --flake "$flake#$1" --target-host $1 --build-host $1 --no-reexec --sudo
         }
       '';
       sessionVariables = {

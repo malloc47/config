@@ -28,8 +28,8 @@ Save and exit.
 Enable pixiecore on aida temporarily:
 
 ```bash
-# In homelab/hosts/aida.nix, uncomment the ../modules/netboot.nix import, then deploy:
-nixos-rebuild switch --flake .#aida
+# In lab-config: hosts/aida.nix, uncomment the ../modules/netboot.nix import, then deploy:
+nixos-deploy aida   # deploys from ~/src/lab-config
 ```
 
 Boot the XPS:
@@ -62,8 +62,8 @@ nix run github:nix-community/nixos-anywhere -- \
 After installation completes, disable pixiecore on aida:
 
 ```bash
-# In homelab/hosts/aida.nix, comment out the ../modules/netboot.nix import, then deploy:
-nixos-rebuild switch --flake .#aida
+# In lab-config: hosts/aida.nix, comment out the ../modules/netboot.nix import, then deploy:
+nixos-deploy aida   # deploys from ~/src/lab-config
 ```
 
 ### Option B: USB boot + nixos-anywhere

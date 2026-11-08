@@ -50,8 +50,8 @@ in
 
     repo = lib.mkOption {
       type = lib.types.str;
-      default = "${config.home.homeDirectory}/src/config/homelab";
-      description = "Checkout of the homelab tree whose hosts/<host>/ these commands read and write.";
+      default = "${config.home.homeDirectory}/src/lab-config";
+      description = "Checkout of lab-config, whose hosts/<host>/ these commands read and write.";
     };
   };
 

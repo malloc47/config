@@ -24,9 +24,9 @@ my machines, confusingly called `nixos/configuration.nix`.
 
 The home network's hosts (`aida`, `aroldo`) and everything specific to
 them (Home Assistant, ESPHome, Zigbee, the e-ink/Kindle dashboards,
-their secrets and docs) live under `homelab/`. That tree consumes this
-flake's exported modules the same way an external flake would, and
-nothing the flake exports depends on it; see `homelab/README.md`.
+their secrets and docs) live in a separate private repo, `lab-config`,
+which consumes this flake's exported modules as an input, the same way
+the work machines' flake does.
 
 Userspace is controlled by home-manager, which is included as a NixOS
 module and (re)built alongside the whole OS. `config/home.nix` is the

@@ -1,7 +1,0 @@
-'1':
-  friendly_name: Entry Lights
-'2':
-  friendly_name: 'Living Room Lights '
-  optimistic: true
-'3':
-  friendly_name: Living room overhead lights

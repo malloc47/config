@@ -1,6 +1,6 @@
 # NixOS Major Version Upgrade Runbook
 
-A guide to upgrading both the `config` and `work-config` flakes from one stable
+A guide to upgrading the `config`, `work-config` and `lab-config` flakes from one stable
 NixOS release to the next (e.g. 26.05 → 26.11).  The steps below are
 version-agnostic; see the linked commits for the exact option renames and
 workarounds that were needed at each release.
@@ -87,9 +87,15 @@ options that surface.  Typical error classes at each upgrade cycle:
 Build the NixOS hosts to surface errors:
 
 ```sh
-nix build .#nixosConfigurations.aida.config.system.build.toplevel --no-link
-nix build .#nixosConfigurations.aroldo.config.system.build.toplevel --no-link
 nix build .#nixosConfigurations.attila.config.system.build.toplevel --no-link
+```
+
+To catch homelab breakage before pushing, also build aida and aroldo from
+`lab-config` against this checkout:
+
+```sh
+(cd ~/src/lab-config && nix build --override-input config path:../config \
+  .#nixosConfigurations.aida.config.system.build.toplevel --no-link)
 ```
 
 ### 2d. Bump `stateVersion` in `flake.nix`
@@ -216,9 +222,28 @@ git push origin main
 
 ---
 
-## 4. Deploy
+## 4. Upgrade `lab-config`
 
-### 4a. Agent host (this machine)
+`lab-config` (aida, aroldo) has no version strings of its own: nixpkgs,
+home-manager, disko, agenix and the rest follow the `config` input, so the
+upgrade is a relock plus `stateVersion`.
+
+```sh
+cd ~/src/lab-config
+nix flake update config          # picks up the commit pushed in step 2
+nix build .#nixosConfigurations.aida.config.system.build.toplevel --no-link
+nix build .#nixosConfigurations.aroldo.config.system.build.toplevel --no-link
+```
+
+Fix evaluation errors as in 2c (Home Assistant components and the packages in
+`pkgs/` are the usual suspects), bump the `stateVersion`s in `default.nix`,
+then commit with the same `Upgrade to NixOS X.YY` subject and push to `master`.
+
+---
+
+## 5. Deploy
+
+### 5a. Agent host (this machine)
 
 ```sh
 cd ~/src/work-config
@@ -231,7 +256,7 @@ Evaluate whether to also activate the system-manager config:
 sudo $(nix build --no-link --print-out-paths .#systemConfigs.agent)/bin/activate
 ```
 
-### 4b. Other hosts
+### 5b. Other hosts
 
 Deploy via the normal per-host mechanism (nixos-rebuild, darwin-rebuild, etc.).
 Each host rebuilds against the new generation on its next scheduled update or
@@ -239,7 +264,7 @@ manual deploy.
 
 ---
 
-## 5. Post-upgrade cleanup
+## 6. Post-upgrade cleanup
 
 After all hosts have been deployed and are stable:
 

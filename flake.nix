@@ -107,12 +107,6 @@
           };
           overlays = [ ];
         };
-      # Homelab hosts (aida, aroldo). Not exported as modules: it consumes
-      # this flake's outputs like any other downstream flake would.
-      homelab = import ./homelab {
-        inherit inputs;
-        base = self;
-      };
     in
     {
       nixosConfigurations = {
@@ -274,8 +268,7 @@
             )
           ];
         };
-      }
-      // homelab.nixosConfigurations;
+      };
 
       darwinConfigurations = {
         cesare = nix-darwin.lib.darwinSystem rec {
@@ -408,30 +401,6 @@
             nixfmt-rfc-style.enable = true;
           };
         };
-
-        # homelab/ must stay liftable into its own flake: nothing in it may
-        # reach the base by relative path (use `base.*` outputs instead), and
-        # nothing in the base may import from it (only flake.nix wires it in).
-        homelab-boundary = nixpkgs.legacyPackages.${system}.runCommand "homelab-boundary" { } ''
-          cd ${./.}
-          fail=0
-          while IFS= read -r f; do
-            for p in $(grep -oE '(\.\./)+[A-Za-z0-9_./-]*' "$f" || true); do
-              case "$(realpath -m --relative-to=. "$(dirname "$f")/$p")" in
-                homelab | homelab/*) ;;
-                *)
-                  echo "$f: '$p' reaches outside homelab/"
-                  fail=1
-                  ;;
-              esac
-            done
-          done < <(find homelab -name '*.nix')
-          if grep -rnE '(\./|\.\./)+homelab\b' --include='*.nix' --exclude-dir=homelab --exclude=flake.nix .; then
-            echo "base files above import from homelab/"
-            fail=1
-          fi
-          [ "$fail" = 0 ] && touch $out
-        '';
       });
 
       devShells = forAllSystems (system: {
