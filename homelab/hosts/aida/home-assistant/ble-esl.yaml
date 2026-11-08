@@ -3,8 +3,9 @@
 # Loaded as the `ble_esl` Home Assistant package (modules/home-automation.nix),
 # so it is Nix-owned: not editable from the UI and not part of ha-foldin.
 #
-#   ESL 4.2" (PSJ-420, 400x300 BWRY)  image.esl_420_*  — weather: now, the next
-#                                     four NWS periods, and a 24 h temperature line
+#   ESL 4.2" (PSJ-420, 400x300 BWRY)  image.esl_420_*  — the 2.9"'s day full width
+#                                     (same rules), the five days after it, and a
+#                                     footer with the message and now
 #   ESL 2.9" (PSJ-290, 296x128 BWRY)  image.esl_290_*  — kids' room: the day ahead
 #                                     (today before noon, tomorrow after); banner
 #                                     red on daycare/school/after-care exception
@@ -129,28 +130,6 @@ script:
             {{ state_attr('weather.nws_khpn', 'wind_speed') | round(0) | int }} mph
             {{- ' ' ~ dirs[((b | float(0) + 22.5) // 45) | int % 8] if b is number else '' }}
           stamp: "{{ now().strftime('%-I %p') }}"
-          # The next four day/night periods, labelled like NWS does.
-          cols: >-
-            {% set ns = namespace(out=[]) %}
-            {% for p in periods[:4] %}
-              {% set d = as_datetime(p.datetime) | as_local %}
-              {% if d.date() == now().date() %}
-                {% set label = 'Today' if p.is_daytime else 'Tonight' %}
-              {% else %}
-                {% set label = d.strftime('%a') ~ ('' if p.is_daytime else ' Night') %}
-              {% endif %}
-              {% set ns.out = ns.out + [{
-                'label': label,
-                'icon': icons.get(p.condition, 'mdi:weather-cloudy')
-                        if p.is_daytime or p.condition not in ['sunny', 'partlycloudy']
-                        else ('mdi:weather-night' if p.condition == 'sunny' else 'mdi:weather-night-partly-cloudy'),
-                'temp': p.temperature | round(0) | int,
-                'color': 'red' if p.is_daytime else 'black',
-                'rain': p.precipitation_probability | default(0, true) | int,
-              }] %}
-            {% endfor %}
-            {{ ns.out }}
-          temps: "{{ hours | map(attribute='temperature') | map('round', 0) | map('int') | list }}"
           # 2.9": the day to get ready for — today before noon, tomorrow from
           # noon on (the evening look at tomorrow).
           tomorrow: >-
@@ -195,9 +174,8 @@ script:
           # "Kindergarten (half-day), after-care from 11:35 AM". Short markers
           # (pick-ups and anything of 15 min or less, like the bus) are only
           # named when nothing else is missing. texts: fullest wording first.
-          exception: >-
+          excs: >-
             {%- set routine_cals = ['calendar.kids_school', 'calendar.bastian'] -%}
-            {%- set D = day_date -%}
             {%- set today = as_datetime(today_date) -%}
             {%- set vis = namespace(days=[]) -%}
             {%- for i in range(7) -%}
@@ -209,9 +187,11 @@ script:
               {{- t | replace('Discovery Village ', '') | replace('Transfiguration ', '')
                     | regex_replace(' \\([A-Z]+ \\d+ [AP]M\\)', '') | trim -}}
             {%- endmacro -%}
+            {%- macro lc(t) %}{{ t[0] | lower ~ t[1:] }}{% endmacro -%}
             {%- macro hm(t) -%}{{ t.strftime('%-I:%M %p') | replace(':00', '') }}{%- endmacro -%}
+            {%- set res = namespace(m={}) -%}
+            {%- for D in vis.days -%}
             {%- set out = namespace(no=[], changed=[], minor=[]) -%}
-            {%- if D in vis.days -%}
               {%- for c in routine_cals -%}
                 {%- set occ = namespace(l=[]) -%}
                 {%- for ev in cal[c].events | default([]) if 'T' in ev.start -%}
@@ -258,8 +238,6 @@ script:
                   {%- endif -%}
                 {%- endfor -%}
               {%- endfor -%}
-            {%- endif -%}
-            {%- macro lc(t) %}{{ t[0] | lower ~ t[1:] }}{% endmacro -%}
             {%- set no = out.no if out.no or out.changed else out.minor -%}
             {%- set parts = [] -%}
             {%- if no %}{% set parts = parts + ['No ' ~ (no | map('lower') | join(', '))] %}{% endif -%}
@@ -269,74 +247,59 @@ script:
               {%- set parts = parts + [ch.l | join(', ')] -%}
             {%- endif -%}
             {%- set full = parts | join('; ') -%}
-            {{ {'missing': (no or out.changed) | count > 0,
-                'texts': ([full, full | regex_replace(' [AP]M', '')] | unique | list) if full else []} }}
+            {%- set res.m = dict(res.m, **{D: {'missing': (no or out.changed) | count > 0,
+                'texts': ([full, full | regex_replace(' [AP]M', '')] | unique | list) if full else []}}) -%}
+            {%- endfor -%}
+            {{ res.m }}
           # Persistent notices from the E1001/kitchen banner (lovelace-common/
           # banner.js; keep calendar_alerts in step with eink-panel-dashboard.yaml):
           # the free-text message (input_text.eink_banner) and calendar alerts
           # on the shown day. The banner's dishwasher and open doors are
           # moment-to-moment, so they are left out of a label redrawn every 3 h.
-          notices: >-
-            {%- set alerts = [{'entity': 'calendar.charisrebecca_gmail_com', 'match': '^Humira$', 'icon': 'mdi:needle'}] -%}
-            {%- set out = namespace(l=[]) -%}
+          message: >-
             {%- set msg = states('input_text.eink_banner') -%}
-            {%- if msg not in ['', 'unknown', 'unavailable'] %}{% set out.l = out.l + [{'icon': 'mdi:bell-outline', 'text': msg}] %}{% endif -%}
-            {%- for a in alerts -%}
-              {%- for ev in cal[a.entity].events | default([]) -%}
-                {%- if 'T' in ev.start -%}
-                  {%- set first = (as_datetime(ev.start) | as_local).strftime('%Y-%m-%d') -%}
-                  {%- set last = (as_datetime(ev.end) | as_local - timedelta(seconds=1)).strftime('%Y-%m-%d') -%}
-                {%- else -%}
-                  {%- set first = ev.start -%}
-                  {%- set last = (as_datetime(ev.end) - timedelta(days=1)).strftime('%Y-%m-%d') -%}
-                {%- endif -%}
-                {%- if first <= day_date <= last and ev.summary is match(a.match, ignorecase=true)
-                       and ev.summary not in out.l | map(attribute='text') | list -%}
-                  {%- set out.l = out.l + [{'icon': a.icon, 'text': ev.summary}] -%}
-                {%- endif -%}
+            {{ msg if msg not in ['', 'unknown', 'unavailable'] else '' }}
+          # Calendar alerts by date, for the visible week and the day after.
+          alerts_by_day: >-
+            {%- set alerts = [{'entity': 'calendar.charisrebecca_gmail_com', 'match': '^Humira$', 'icon': 'mdi:needle'}] -%}
+            {%- set res = namespace(m={}) -%}
+            {%- for i in range(8) -%}
+              {%- set D = (as_datetime(today_date) + timedelta(days=i)).strftime('%Y-%m-%d') -%}
+              {%- set out = namespace(l=[]) -%}
+              {%- for a in alerts -%}
+                {%- for ev in cal[a.entity].events | default([]) -%}
+                  {%- if 'T' in ev.start -%}
+                    {%- set first = (as_datetime(ev.start) | as_local).strftime('%Y-%m-%d') -%}
+                    {%- set last = (as_datetime(ev.end) | as_local - timedelta(seconds=1)).strftime('%Y-%m-%d') -%}
+                  {%- else -%}
+                    {%- set first = ev.start -%}
+                    {%- set last = (as_datetime(ev.end) - timedelta(days=1)).strftime('%Y-%m-%d') -%}
+                  {%- endif -%}
+                  {%- if first <= D <= last and ev.summary is match(a.match, ignorecase=true)
+                         and ev.summary not in out.l | map(attribute='text') | list -%}
+                    {%- set out.l = out.l + [{'icon': a.icon, 'text': ev.summary}] -%}
+                  {%- endif -%}
+                {%- endfor -%}
               {%- endfor -%}
+              {%- if out.l %}{% set res.m = dict(res.m, **{D: out.l}) %}{% endif -%}
             {%- endfor -%}
-            {{ out.l }}
+            {{ res.m }}
       - variables:
-          # The hourly forecast over that day's outdoor hours, 7 AM-10 PM like
-          # the E1001 and kitchen cards' outdoor_hours: [7, 22] (for today, what
-          # is left of them). Its range and wet hours are what the kids dress
-          # and pack for; the overnight lows either side are not.
-          waking: >-
-            {% set ns = namespace(out=[]) %}
-            {% for f in all_hours %}
-              {% set t = as_datetime(f.datetime) | as_local %}
-              {% if t.date() | string == day_date and 7 <= t.hour < 22 %}
-                {% set ns.out = ns.out + [{
-                  'h': t.hour,
-                  'temperature': f.temperature,
-                  'pop': f.precipitation_probability | default(0, true),
-                  'condition': f.condition,
-                }] %}
-              {% endif %}
-            {% endfor %}
-            {{ ns.out }}
-      - variables:
-          # "Tomorrow · Sunday, Nov 8"; day_offset (0 today, 1 tomorrow)
-          # picks the banner colour.
-          day_offset: "{{ (as_datetime(day_date).date() - as_datetime(today_date).date()).days }}"
-          day_label: >-
-            {% set d = as_datetime(day_date) %}
-            {% set n = (d.date() - as_datetime(today_date).date()).days %}
-            {{ ('Today · ' if n == 0 else 'Tomorrow · ' if n == 1 else '')
-               ~ d.strftime('%A, %b %-d') }}
-          day_hi: >-
-            {{ ([day.temperature] + (waking | map(attribute='temperature') | list))
-               | max | round(0) | int }}
-          day_lo: >-
-            {{ (waking | map(attribute='temperature') | list
-                or [day.temperature]) | min | round(0) | int }}
-          # The "what to wear" outlook, ported from lovelace-common/weather.js
-          # outlookRow() (the E1001 and kitchen cards) with their thresholds:
-          # an hour is wet at >= 50% chance, coat below 45 °F, hot from 85 °F.
-          # texts runs from most to least detailed; the render picks one that
-          # fits. icon is the worst condition when it rains, else the usual one.
-          outlook: >-
+          # Per-day panels: the day both labels show (panels[0]: today before
+          # noon, tomorrow from noon). A list so more days can be added.
+          # Each covers its day's outdoor hours, 7 AM-10 PM like the E1001
+          # and kitchen cards' outdoor_hours: [7, 22] (for today, what is
+          # left of them): their range and wet hours are what the kids dress
+          # and pack for; the overnight lows either side are not. The high
+          # also takes NWS's daytime high.
+          #
+          # outlook is the "what to wear" outlook, ported from
+          # lovelace-common/weather.js outlookRow() (the E1001 and kitchen
+          # cards) with their thresholds: an hour is wet at >= 50% chance,
+          # coat below 45 °F, hot from 85 °F. Its texts run from most to least
+          # detailed; the render picks one that fits. Its icon is the worst
+          # condition when it rains, else the usual one.
+          panels: >-
             {%- macro hl(h) -%}
               {{- 'midnight' if h % 24 == 0 else 'noon' if h % 24 == 12
                   else ((h % 12) or 12) ~ (' AM' if h % 24 < 12 else ' PM') -}}
@@ -347,104 +310,184 @@ script:
               {{- pa[0] ~ '–' ~ lb if pa | count > 1 and pb | count > 1 and pa[1] == pb[1]
                   else la ~ '–' ~ lb -}}
             {%- endmacro -%}
-            {%- set rank = {'exceptional': 100, 'lightning-rainy': 90, 'lightning': 85,
-                'hail': 80, 'snowy-rainy': 75, 'snowy': 70, 'pouring': 65, 'rainy': 60,
-                'fog': 50, 'windy-variant': 45, 'windy': 40, 'cloudy': 30,
-                'partlycloudy': 20, 'sunny': 10, 'clear-night': 10} -%}
-            {%- set wetc = ['rainy', 'pouring', 'lightning-rainy', 'lightning', 'snowy',
-                'snowy-rainy', 'hail', 'exceptional'] -%}
-            {%- set hrs = waking -%}
-            {%- if hrs | count == 0 -%}
-              {{ {'texts': [names.get(day.condition, day.condition)], 'icon': icons.get(day.condition, 'mdi:weather-cloudy'), 'wear': none, 'wear_icon': none} }}
-            {%- else -%}
-              {%- set conds = hrs | map(attribute='condition') | list -%}
-              {%- set ns = namespace(worst=conds[0], spans=[], dry=[], usual=none, best=0) -%}
-              {#- Most common condition, wet ones read as cloudy: for a dry day a
-                  better summary than the single worst hour (NWS tags
-                  slight-chance hours as rainy). -#}
-              {%- for c in conds -%}
-                {%- if rank.get(c, 0) > rank.get(ns.worst, 0) %}{% set ns.worst = c %}{% endif -%}
-                {%- set ns.dry = ns.dry + ['cloudy' if c in wetc else c] -%}
-              {%- endfor -%}
-              {%- for k in ns.dry | unique -%}
-                {%- set n = ns.dry | select('eq', k) | list | count -%}
-                {%- if n > ns.best %}{% set ns.best = n %}{% set ns.usual = k %}{% endif -%}
-              {%- endfor -%}
-              {%- set usual = ns.usual -%}
-              {#- Rain spans: consecutive wet hours, bridging single dry hours. -#}
-              {%- set wet = hrs | selectattr('pop', '>=', 50) | list -%}
-              {%- for f in wet -%}
-                {%- if ns.spans and f.h - ns.spans[-1][1] <= 1 -%}
-                  {%- set ns.spans = ns.spans[:-1] + [[ns.spans[-1][0], f.h + 1]] -%}
-                {%- else -%}
-                  {%- set ns.spans = ns.spans + [[f.h, f.h + 1]] -%}
+            {%- macro hours_for(date) -%}
+              {%- set ns = namespace(out=[]) -%}
+              {%- for f in all_hours -%}
+                {%- set t = as_datetime(f.datetime) | as_local -%}
+                {%- if t.date() | string == date and 7 <= t.hour < 22 -%}
+                  {%- set ns.out = ns.out + [{
+                    'h': t.hour,
+                    'temperature': f.temperature,
+                    'pop': f.precipitation_probability | default(0, true),
+                    'condition': f.condition,
+                  }] -%}
                 {%- endif -%}
               {%- endfor -%}
-              {%- set first = hrs[0].h %}{% set last = hrs[-1].h + 1 -%}
-              {%- set pops = hrs | map(attribute='pop') | list %}{% set maxpop = pops | max -%}
-              {%- if ns.spans -%}
-                {%- set kind = 'Snow' if 'snowy' in conds
-                    else 'Sleet' if 'snowy-rainy' in conds or 'hail' in conds
-                    else 'Storms' if conds | select('match', 'lightning') | list
-                    else 'Rain' -%}
-                {%- set ts = namespace(full=[], terse=[]) -%}
-                {%- for sp in ns.spans[:2] -%}
-                  {%- set lead = loop.first -%}
-                  {%- for terse in [false, true] -%}
-                    {%- set w = kind ~ ' ' if lead else '' if terse else 'again ' -%}
-                    {%- if sp[0] <= first and sp[1] >= last -%}
-                      {%- set d = kind ~ ' all day' if lead else '' -%}
-                    {%- elif sp[0] <= first -%}
-                      {%- set d = w ~ ('till ' if terse else 'until ') ~ hl(sp[1]) -%}
-                    {%- elif sp[1] >= last -%}
-                      {%- set d = w ~ 'from ' ~ hl(sp[0]) -%}
-                    {%- else -%}
-                      {%- set d = w ~ hr(sp[0], sp[1]) -%}
-                    {%- endif -%}
-                    {%- if d and terse %}{% set ts.terse = ts.terse + [d] %}{% elif d %}{% set ts.full = ts.full + [d] %}{% endif -%}
-                  {%- endfor -%}
-                {%- endfor -%}
-                {%- set more = ', …' if ns.spans | count > 2 else '' -%}
-                {%- set full = ts.full | join(', ') ~ more -%}
-                {%- set amount = ' (' ~ (wet | map(attribute='pop') | max | int) ~ '%)' -%}
-                {%- set texts = [full ~ amount, full, ts.terse | join(', ') ~ more] -%}
-                {%- set icon = ns.worst -%}
+              {{- ns.out | tojson -}}
+            {%- endmacro -%}
+            {%- macro ol(hrs, day) -%}
+              {%- set rank = {'exceptional': 100, 'lightning-rainy': 90, 'lightning': 85,
+                  'hail': 80, 'snowy-rainy': 75, 'snowy': 70, 'pouring': 65, 'rainy': 60,
+                  'fog': 50, 'windy-variant': 45, 'windy': 40, 'cloudy': 30,
+                  'partlycloudy': 20, 'sunny': 10, 'clear-night': 10} -%}
+              {%- set wetc = ['rainy', 'pouring', 'lightning-rainy', 'lightning', 'snowy',
+                  'snowy-rainy', 'hail', 'exceptional'] -%}
+              {%- if hrs | count == 0 -%}
+                {{ {'texts': [names.get(day.condition, day.condition)], 'icon': icons.get(day.condition, 'mdi:weather-cloudy'), 'wear': none, 'wear_icon': none} | tojson }}
               {%- else -%}
-                {%- set sky = {'sunny': 'sunny', 'clear-night': 'clear', 'partlycloudy': 'partly cloudy',
-                    'cloudy': 'cloudy', 'fog': 'foggy', 'windy': 'windy', 'windy-variant': 'windy'}.get(usual) -%}
-                {%- if maxpop >= 20 -%}
-                  {%- set Sky = sky[0] | upper ~ sky[1:] if sky else 'Mostly dry' -%}
-                  {%- set peak = hrs | selectattr('pop', '>=', maxpop - 5) | list -%}
-                  {%- set ps = peak[0].h %}{% set pe = peak[-1].h + 1 -%}
-                  {%- set when = '' -%}
-                  {%- if peak | count == pe - ps and pe - ps <= (last - first) / 2 -%}
-                    {%- set when = ' until ' ~ hl(pe) if ps <= first
-                        else ' from ' ~ hl(ps) if pe >= last
-                        else ' ' ~ hr(ps, pe) -%}
+                {%- set conds = hrs | map(attribute='condition') | list -%}
+                {%- set ns = namespace(worst=conds[0], spans=[], dry=[], usual=none, best=0) -%}
+                {#- Most common condition, wet ones read as cloudy: for a dry day a
+                    better summary than the single worst hour (NWS tags
+                    slight-chance hours as rainy). -#}
+                {%- for c in conds -%}
+                  {%- if rank.get(c, 0) > rank.get(ns.worst, 0) %}{% set ns.worst = c %}{% endif -%}
+                  {%- set ns.dry = ns.dry + ['cloudy' if c in wetc else c] -%}
+                {%- endfor -%}
+                {%- for k in ns.dry | unique -%}
+                  {%- set n = ns.dry | select('eq', k) | list | count -%}
+                  {%- if n > ns.best %}{% set ns.best = n %}{% set ns.usual = k %}{% endif -%}
+                {%- endfor -%}
+                {%- set usual = ns.usual -%}
+                {#- Rain spans: consecutive wet hours, bridging single dry hours. -#}
+                {%- set wet = hrs | selectattr('pop', '>=', 50) | list -%}
+                {%- for f in wet -%}
+                  {%- if ns.spans and f.h - ns.spans[-1][1] <= 1 -%}
+                    {%- set ns.spans = ns.spans[:-1] + [[ns.spans[-1][0], f.h + 1]] -%}
+                  {%- else -%}
+                    {%- set ns.spans = ns.spans + [[f.h, f.h + 1]] -%}
                   {%- endif -%}
-                  {%- set texts = [Sky ~ ' (' ~ maxpop | int ~ '%' ~ when ~ ')', Sky ~ ' (' ~ maxpop | int ~ '%)'] -%}
+                {%- endfor -%}
+                {%- set first = hrs[0].h %}{% set last = hrs[-1].h + 1 -%}
+                {%- set pops = hrs | map(attribute='pop') | list %}{% set maxpop = pops | max -%}
+                {%- if ns.spans -%}
+                  {%- set kind = 'Snow' if 'snowy' in conds
+                      else 'Sleet' if 'snowy-rainy' in conds or 'hail' in conds
+                      else 'Storms' if conds | select('match', 'lightning') | list
+                      else 'Rain' -%}
+                  {%- set ts = namespace(full=[], terse=[]) -%}
+                  {%- for sp in ns.spans[:2] -%}
+                    {%- set lead = loop.first -%}
+                    {%- for terse in [false, true] -%}
+                      {%- set w = kind ~ ' ' if lead else '' if terse else 'again ' -%}
+                      {%- if sp[0] <= first and sp[1] >= last -%}
+                        {%- set d = kind ~ ' all day' if lead else '' -%}
+                      {%- elif sp[0] <= first -%}
+                        {%- set d = w ~ ('till ' if terse else 'until ') ~ hl(sp[1]) -%}
+                      {%- elif sp[1] >= last -%}
+                        {%- set d = w ~ 'from ' ~ hl(sp[0]) -%}
+                      {%- else -%}
+                        {%- set d = w ~ hr(sp[0], sp[1]) -%}
+                      {%- endif -%}
+                      {%- if d and terse %}{% set ts.terse = ts.terse + [d] %}{% elif d %}{% set ts.full = ts.full + [d] %}{% endif -%}
+                    {%- endfor -%}
+                  {%- endfor -%}
+                  {%- set more = ', …' if ns.spans | count > 2 else '' -%}
+                  {%- set full = ts.full | join(', ') ~ more -%}
+                  {%- set amount = ' (' ~ (wet | map(attribute='pop') | max | int) ~ '%)' -%}
+                  {%- set texts = [full ~ amount, full, ts.terse | join(', ') ~ more] -%}
+                  {%- set icon = ns.worst -%}
                 {%- else -%}
-                  {%- set texts = ['Dry, ' ~ sky if sky else 'Dry'] -%}
+                  {%- set sky = {'sunny': 'sunny', 'clear-night': 'clear', 'partlycloudy': 'partly cloudy',
+                      'cloudy': 'cloudy', 'fog': 'foggy', 'windy': 'windy', 'windy-variant': 'windy'}.get(usual) -%}
+                  {%- if maxpop >= 20 -%}
+                    {%- set Sky = sky[0] | upper ~ sky[1:] if sky else 'Mostly dry' -%}
+                    {%- set peak = hrs | selectattr('pop', '>=', maxpop - 5) | list -%}
+                    {%- set ps = peak[0].h %}{% set pe = peak[-1].h + 1 -%}
+                    {%- set when = '' -%}
+                    {%- if peak | count == pe - ps and pe - ps <= (last - first) / 2 -%}
+                      {%- set when = ' until ' ~ hl(pe) if ps <= first
+                          else ' from ' ~ hl(ps) if pe >= last
+                          else ' ' ~ hr(ps, pe) -%}
+                    {%- endif -%}
+                    {%- set texts = [Sky ~ ' (' ~ maxpop | int ~ '%' ~ when ~ ')', Sky ~ ' (' ~ maxpop | int ~ '%)'] -%}
+                  {%- else -%}
+                    {%- set texts = ['Dry, ' ~ sky if sky else 'Dry'] -%}
+                  {%- endif -%}
+                  {%- set icon = usual -%}
                 {%- endif -%}
-                {%- set icon = usual -%}
+                {#- Dress for the coldest outdoor hour; flag heat separately. -#}
+                {%- set temps = hrs | map(attribute='temperature') | list -%}
+                {%- set lo = temps | min %}{% set hi = temps | max -%}
+                {%- set wear = 'Heavy coat' if lo < 32 else 'Coat' if lo < 45 else 'Jacket' if lo < 58
+                    else 'Light layer' if lo < 68 else 'T-shirt' -%}
+                {%- set wicon = 'mdi:snowflake' if lo < 32 else 'mdi:tshirt-crew-outline' -%}
+                {%- if hi >= 85 -%}
+                  {%- set wear = 'Hot' if wear == 'T-shirt' else wear ~ ', hot' %}{% set wicon = 'mdi:thermometer-high' -%}
+                {%- endif -%}
+                {%- if ns.spans -%}
+                  {%- set snow = 'snowy' in conds or 'snowy-rainy' in conds -%}
+                  {%- set wear = ('Boots, ' if snow else 'Umbrella, ') ~ wear | lower -%}
+                  {%- set wicon = 'mdi:snowflake' if snow else 'mdi:umbrella-outline' -%}
+                {%- endif -%}
+                {{ {'texts': texts | unique | list, 'icon': icons.get(icon, 'mdi:weather-cloudy'),
+                    'wear': wear, 'wear_icon': wicon} | tojson }}
               {%- endif -%}
-              {#- Dress for the coldest outdoor hour; flag heat separately. -#}
+            {%- endmacro -%}
+            {%- set res = namespace(l=[]) -%}
+            {%- for i in range(1) -%}
+              {%- set dt = as_datetime(day_date) + timedelta(days=i) -%}
+              {%- set d = dt.strftime('%Y-%m-%d') -%}
+              {%- set hrs = hours_for(d) | from_json -%}
               {%- set temps = hrs | map(attribute='temperature') | list -%}
-              {%- set lo = temps | min %}{% set hi = temps | max -%}
-              {%- set wear = 'Heavy coat' if lo < 32 else 'Coat' if lo < 45 else 'Jacket' if lo < 58
-                  else 'Light layer' if lo < 68 else 'T-shirt' -%}
-              {%- set wicon = 'mdi:snowflake' if lo < 32 else 'mdi:tshirt-crew-outline' -%}
-              {%- if hi >= 85 -%}
-                {%- set wear = 'Hot' if wear == 'T-shirt' else wear ~ ', hot' %}{% set wicon = 'mdi:thermometer-high' -%}
+              {%- set dp = day if i == 0 else (periods | selectattr('is_daytime')
+                  | selectattr('datetime', 'match', d) | list | first
+                  | default({'temperature': temps | max if temps else none, 'condition': 'cloudy'}, true)) -%}
+              {%- set n = (dt.date() - as_datetime(today_date).date()).days -%}
+              {%- set rel = 'Today · ' if n == 0 else 'Tomorrow · ' if n == 1 else '' -%}
+              {#- No period and no hours (shouldn't happen live): "–", not an error. -#}
+              {%- set his = ([dp.temperature] if dp.temperature is not none else []) + temps -%}
+              {%- set hi = his | max if his else none -%}
+              {%- set los = temps or his -%}
+              {%- set res.l = res.l + [{
+                  'date': d,
+                  'offset': n,
+                  'label': rel ~ dt.strftime('%A, %b %-d'),
+                  'label_short': rel ~ dt.strftime('%a, %b %-d' if rel else '%A, %b %-d'),
+                  'hi': (hi | round(0) | int) if hi is not none else '–',
+                  'lo': (los | min | round(0) | int) if los else '–',
+                  'outlook': ol(hrs, dp) | from_json,
+                  'exception': excs.get(d, {'missing': false, 'texts': []}),
+                  'alerts': alerts_by_day.get(d, []),
+              }] -%}
+            {%- endfor -%}
+            {{ res.l }}
+          # 4.2": the five days after the shown day, paired from NWS's
+          # day/night periods like the E1001's daily columns (weather.js
+          # pairTwiceDaily(): the day's high and condition, that night's low,
+          # the higher chance). exception marks an exception day within the
+          # visible week (excs).
+          strip: >-
+            {%- set res = namespace(l=[]) -%}
+            {%- for i in range(1, 6) -%}
+              {%- set dt = as_datetime(day_date) + timedelta(days=i) -%}
+              {%- set d = dt.strftime('%Y-%m-%d') -%}
+              {%- set ps = periods | selectattr('datetime', 'match', d) | list -%}
+              {%- if ps -%}
+                {%- set dp = ps | selectattr('is_daytime') | first | default(none) -%}
+                {%- set np = ps | rejectattr('is_daytime') | first | default(none) -%}
+                {%- set c = dp.condition if dp else np.condition -%}
+                {%- set res.l = res.l + [{
+                    'label': dt.strftime('%a %-d'),
+                    'icon': icons.get(c, 'mdi:weather-cloudy'),
+                    'hi': (dp.temperature | round(0) | int ~ '°') if dp else '–',
+                    'lo': (np.temperature | round(0) | int ~ '°') if np else '–',
+                    'rain': ps | map(attribute='precipitation_probability') | map('default', 0, true) | max | int,
+                    'exception': excs.get(d, {}).get('missing', false),
+                }] -%}
               {%- endif -%}
-              {%- if ns.spans -%}
-                {%- set snow = 'snowy' in conds or 'snowy-rainy' in conds -%}
-                {%- set wear = ('Boots, ' if snow else 'Umbrella, ') ~ wear | lower -%}
-                {%- set wicon = 'mdi:snowflake' if snow else 'mdi:umbrella-outline' -%}
-              {%- endif -%}
-              {{ {'texts': texts | unique | list, 'icon': icons.get(icon, 'mdi:weather-cloudy'),
-                  'wear': wear, 'wear_icon': wicon} }}
-            {%- endif -%}
+            {%- endfor -%}
+            {{ res.l }}
+      - variables:
+          # The 2.9" shows panels[0].
+          day_label: "{{ panels[0].label }}"
+          day_offset: "{{ panels[0].offset }}"
+          day_hi: "{{ panels[0].hi }}"
+          day_lo: "{{ panels[0].lo }}"
+          outlook: "{{ panels[0].outlook }}"
+          exception: "{{ panels[0].exception }}"
+          notices: >-
+            {{ ([{'icon': 'mdi:bell-outline', 'text': message}] if message else []) + panels[0].alerts }}
       - variables:
           # The outlook line, fitted the way the E1001 card's _fitText does:
           # the fullest wording plus the what-to-wear hint; else drop the hint;
@@ -462,7 +505,8 @@ script:
             {%- set wear_w = (12 + 16 + 3 + w(outlook.wear, adv_regular, 14) | float)
                 if outlook.wear else none -%}
             {%- if wear_w is not none and w(texts[0], adv_bold, 16) | float + wear_w <= width -%}
-              {{ {'text': texts[0], 'size': 16, 'wear': true} }}
+              {{ {'text': texts[0], 'size': 16, 'wear': true,
+                  'wear_ix': (292 - w(outlook.wear, adv_regular, 14) | float - 19) | round(0) | int} }}
             {%- else -%}
               {%- set ns = namespace(t=none) -%}
               {%- for t in texts -%}
@@ -522,12 +566,86 @@ script:
                 {%- set pick.t = c.texts | last %}{% set pick.w = 16 + w(pick.t, adv_bold, 12) | float -%}
               {%- endif -%}
               {%- if pick.t is not none -%}
-                {%- set ns.parts = ns.parts + [{'icon': c.icon, 'text': pick.t, 'color': c.color,
+                {%- set x = (4 + ns.used + (8 if ns.parts else 0)) | round(0) | int -%}
+                {%- set ns.parts = ns.parts + [{'icon': c.icon, 'text': pick.t, 'color': c.color, 'ix': x, 'tx': x + 16,
                     'font': 'fonts/NotoSansKR-Bold.ttf' if c.bold else 'fonts/NotoSansKR-Regular.ttf'}] -%}
                 {%- set ns.used = ns.used + pick.w -%}
               {%- endif -%}
             {%- endfor -%}
             {{ {'parts': ns.parts, 'n': ns.parts | count, 'stamp': ns.show_stamp} }}
+      - variables:
+          # 4.2" top (392 px of text): the outlook line like the 2.9"'s
+          # outlook_fit, larger (18 px bold, hint 16 px), the high/low
+          # positions like nums, and a note line: the exception in red at its
+          # fullest wording that fits, then the calendar alerts if they fit.
+          top42: >-
+            {%- macro w(t, tab, size) -%}
+              {%- set ns = namespace(n=0) -%}
+              {%- for c in t %}{% set ns.n = ns.n + tab.get(c, 0.65) %}{% endfor -%}
+              {{- ns.n * size -}}
+            {%- endmacro -%}
+            {%- set p = panels[0] -%}
+            {%- set width = 392 -%}
+            {%- set texts = p.outlook.texts -%}
+            {%- set ol = namespace(t=none, size=18, wear=false, wear_ix=0) -%}
+            {%- set wear_w = (14 + 18 + 3 + w(p.outlook.wear, adv_regular, 16) | float) if p.outlook.wear else none -%}
+            {%- if wear_w is not none and w(texts[0], adv_bold, 18) | float + wear_w <= width -%}
+              {%- set ol.t = texts[0] %}{% set ol.wear = true -%}
+              {%- set ol.wear_ix = (396 - w(p.outlook.wear, adv_regular, 16) | float - 21) | round(0) | int -%}
+            {%- else -%}
+              {%- for t in texts -%}
+                {%- if ol.t is none and w(t, adv_bold, 18) | float <= width %}{% set ol.t = t %}{% endif -%}
+              {%- endfor -%}
+              {%- if ol.t is none %}{% set ol.t = texts | last %}{% set ol.size = 15 %}{% endif -%}
+            {%- endif -%}
+            {%- set hi = p.hi ~ '°' %}{% set lo = p.lo ~ '°' -%}
+            {%- set big = hi | length <= 3 and lo | length <= 3 -%}
+            {%- set hs = 62 if big else 52 %}{% set ls = 54 if big else 46 -%}
+            {%- set lo_arrow = 112 + w(hi, adv_bold, hs) | float | round(0) | int + 14 -%}
+            {%- set note = namespace(parts=[], used=0) -%}
+            {%- if p.exception.missing -%}
+              {%- set pick = namespace(t=p.exception.texts | last) -%}
+              {%- for t in p.exception.texts | reverse -%}
+                {%- if 18 + w(t, adv_bold, 14) | float <= width %}{% set pick.t = t %}{% endif -%}
+              {%- endfor -%}
+              {%- set note.parts = [{'icon': 'mdi:alert-circle', 'text': pick.t, 'color': 'red', 'ix': 4, 'tx': 22, 'font': 'fonts/NotoSansKR-Bold.ttf'}] -%}
+              {%- set note.used = 18 + w(pick.t, adv_bold, 14) | float -%}
+            {%- endif -%}
+            {%- for a in p.alerts -%}
+              {%- set aw = 18 + w(a.text, adv_regular, 14) | float + (12 if note.parts else 0) -%}
+              {%- if note.used + aw <= width -%}
+                {%- set x = (4 + note.used + (12 if note.parts else 0)) | round(0) | int -%}
+                {%- set note.parts = note.parts + [{'icon': a.icon, 'text': a.text, 'color': 'black', 'ix': x, 'tx': x + 18, 'font': 'fonts/NotoSansKR-Regular.ttf'}] -%}
+                {%- set note.used = note.used + aw -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ {'banner': 'red' if p.exception.missing else 'yellow' if p.offset == 1 else 'white',
+                'ink': 'white' if p.exception.missing else 'black',
+                'outlook': ol.t, 'outlook_size': ol.size, 'wear': ol.wear, 'wear_ix': ol.wear_ix,
+                'hi': hi, 'lo': lo, 'hi_size': hs, 'lo_size': ls,
+                'hi_arrow_y': (88 - 0.79 * hs / 2 - 17) | round(0) | int,
+                'lo_arrow_y': (88 - 0.79 * ls / 2 - 17) | round(0) | int,
+                'lo_arrow_x': lo_arrow, 'lo_x': lo_arrow + 30,
+                'note': note.parts, 'n': note.parts | count} }}
+          # 4.2" footer (392 px): the banner message, then the current
+          # conditions at their fullest wording that fits, and the stamp.
+          footer42: >-
+            {%- macro w(t, tab, size) -%}
+              {%- set ns = namespace(n=0) -%}
+              {%- for c in t %}{% set ns.n = ns.n + tab.get(c, 0.65) %}{% endfor -%}
+              {{- ns.n * size -}}
+            {%- endmacro -%}
+            {%- set avail = 392 - w('as of ' ~ stamp, adv_regular, 12) | float - 10 -%}
+            {%- set used = (17 + w(message, adv_bold, 13) | float + 10) if message else 0 -%}
+            {%- set nows = ['Now ' ~ now_temp ~ '° · ' ~ now_name ~ ' · Humidity ' ~ humidity ~ '% · Wind ' ~ wind,
+                            'Now ' ~ now_temp ~ '° · ' ~ now_name ~ ' · ' ~ humidity ~ '% · ' ~ wind,
+                            'Now ' ~ now_temp ~ '° · ' ~ now_name, 'Now ' ~ now_temp ~ '°'] -%}
+            {%- set ns = namespace(t=none) -%}
+            {%- for t in nows -%}
+              {%- if ns.t is none and used + 16 + w(t, adv_regular, 13) | float <= avail %}{% set ns.t = t %}{% endif -%}
+            {%- endfor -%}
+            {%- set now_x = (4 + used) | round(0) | int -%}
+            {{ {'now': ns.t or '', 'message': message, 'now_ix': now_x, 'now_tx': now_x + 17} }}
       - action: ble_esl.write_guarded
         continue_on_error: true
         target:
@@ -536,234 +654,415 @@ script:
           dry_run: "{{ dry }}"
           background: white
           payload:
-            # Header band
+            # The 2.9"'s day across the full width, with the 2.9"'s rules:
+            # banner (date; plain today, yellow tomorrow, red on an exception
+            # day), icon and ▲high ▼low, the outlook with what to wear, and the
+            # exception and calendar alerts. Then the five days after it, and a
+            # footer with the banner message and current conditions.
             - type: rectangle
               x_start: 0
               y_start: 0
               x_end: 399
-              y_end: 29
+              y_end: 25
+              fill: "{{ top42.banner }}"
+            - type: line
+              x_start: 0
+              y_start: 25
+              x_end: 399
+              y_end: 25
               fill: black
+              width: 1
             - type: text
-              value: "{{ now().strftime('%A, %B %-d') }}"
-              x: 10
-              "y": 15
-              size: 18
-              color: white
-              anchor: lm
+              value: "{{ panels[0].label }}"
+              x: 200
+              "y": 13
+              size: 17
+              color: "{{ top42.ink }}"
+              anchor: mm
               font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: "as of {{ stamp }}"
-              x: 390
-              "y": 15
-              size: 14
-              color: white
-              anchor: rm
-              font: fonts/NotoSansKR-Regular.ttf
-            # Now
             - type: icon
-              value: "{{ now_icon }}"
-              x: 10
-              "y": 38
-              size: 84
-              color: black
-            - type: text
-              value: "{{ now_temp }}°"
-              x: 104
-              "y": 80
+              value: "{{ panels[0].outlook.icon }}"
+              x: 6
+              "y": 30
               size: 72
               color: black
-              anchor: lm
+            - type: icon
+              value: mdi:arrow-up-bold
+              x: 82
+              "y": "{{ top42.hi_arrow_y }}"
+              size: 34
+              color: red
+            - type: text
+              value: "{{ top42.hi }}"
+              x: 112
+              "y": 88
+              size: "{{ top42.hi_size }}"
+              color: red
+              anchor: ls
               font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: "{{ now_name }}"
-              x: 250
-              "y": 46
-              size: 20
+            - type: icon
+              value: mdi:arrow-down-bold
+              x: "{{ top42.lo_arrow_x }}"
+              "y": "{{ top42.lo_arrow_y }}"
+              size: 34
               color: black
-              anchor: lm
+            - type: text
+              value: "{{ top42.lo }}"
+              x: "{{ top42.lo_x }}"
+              "y": 88
+              size: "{{ top42.lo_size }}"
+              color: black
+              anchor: ls
               font: fonts/NotoSansKR-Bold.ttf
+            # Outlook, with what to wear right-aligned when it fits; one baseline.
             - type: text
-              value: "Humidity {{ humidity }}%"
-              x: 250
-              "y": 78
-              size: 15
+              value: "{{ top42.outlook }}"
+              x: 4
+              "y": 119
+              size: "{{ top42.outlook_size }}"
               color: black
-              anchor: lm
-              font: fonts/NotoSansKR-Regular.ttf
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ panels[0].outlook.wear_icon or 'mdi:tshirt-crew-outline' }}"
+              x: "{{ top42.wear_ix }}"
+              "y": 104
+              size: 18
+              color: black
+              visible: "{{ top42.wear }}"
             - type: text
-              value: "Wind {{ wind }}"
-              x: 250
-              "y": 102
-              size: 15
+              value: "{{ panels[0].outlook.wear or '' }}"
+              x: 396
+              "y": 119
+              size: 16
               color: black
-              anchor: lm
+              anchor: rs
               font: fonts/NotoSansKR-Regular.ttf
+              visible: "{{ top42.wear }}"
+            # The exception (red) and calendar alerts, one baseline.
+            - type: icon
+              value: "{{ top42.note[0].icon if top42.n > 0 else 'mdi:circle-small' }}"
+              x: "{{ top42.note[0].ix if top42.n > 0 else 0 }}"
+              "y": 130
+              size: 16
+              color: "{{ top42.note[0].color if top42.n > 0 else 'black' }}"
+              visible: "{{ top42.n > 0 }}"
+            - type: text
+              value: "{{ top42.note[0].text if top42.n > 0 else '' }}"
+              x: "{{ top42.note[0].tx if top42.n > 0 else 0 }}"
+              "y": 143
+              size: 14
+              color: "{{ top42.note[0].color if top42.n > 0 else 'black' }}"
+              anchor: ls
+              font: "{{ top42.note[0].font if top42.n > 0 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ top42.n > 0 }}"
+            - type: icon
+              value: "{{ top42.note[1].icon if top42.n > 1 else 'mdi:circle-small' }}"
+              x: "{{ top42.note[1].ix if top42.n > 1 else 0 }}"
+              "y": 130
+              size: 16
+              color: "{{ top42.note[1].color if top42.n > 1 else 'black' }}"
+              visible: "{{ top42.n > 1 }}"
+            - type: text
+              value: "{{ top42.note[1].text if top42.n > 1 else '' }}"
+              x: "{{ top42.note[1].tx if top42.n > 1 else 0 }}"
+              "y": 143
+              size: 14
+              color: "{{ top42.note[1].color if top42.n > 1 else 'black' }}"
+              anchor: ls
+              font: "{{ top42.note[1].font if top42.n > 1 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ top42.n > 1 }}"
             - type: line
               x_start: 0
-              y_start: 132
+              y_start: 152
               x_end: 399
-              y_end: 132
+              y_end: 152
               fill: black
               width: 2
-            # Next four periods, one 100 px column each
+            # ---- strip day 0 (a red name marks an exception day)
             - type: text
-              value: "{{ cols[0].label }}"
-              x: 50
-              "y": 140
-              size: 15
-              color: black
+              value: "{{ strip[0].label if strip | count > 0 else '' }}"
+              x: 40
+              "y": 160
+              size: 14
+              color: "{{ 'red' if strip | count > 0 and strip[0].exception else 'black' }}"
               anchor: mt
               font: fonts/NotoSansKR-Bold.ttf
             - type: icon
-              value: "{{ cols[0].icon }}"
-              x: 30
-              "y": 160
-              size: 40
+              value: "{{ strip[0].icon if strip | count > 0 else 'mdi:circle-small' }}"
+              x: 21
+              "y": 179
+              size: 38
               color: black
+              visible: "{{ strip | count > 0 }}"
             - type: text
-              value: "{{ cols[0].temp }}°"
-              x: 50
-              "y": 204
-              size: 24
-              color: "{{ cols[0].color }}"
-              anchor: mt
+              value: "{{ strip[0].hi if strip | count > 0 else '' }}"
+              x: 38
+              "y": 236
+              size: 17
+              color: red
+              anchor: rs
               font: fonts/NotoSansKR-Bold.ttf
             - type: text
-              value: "{{ cols[0].rain }}%"
-              x: 50
-              "y": 234
-              size: 14
+              value: "{{ strip[0].lo if strip | count > 0 else '' }}"
+              x: 43
+              "y": 236
+              size: 17
               color: black
-              anchor: mt
-              visible: "{{ cols[0].rain >= 10 }}"
-              font: fonts/NotoSansKR-Regular.ttf
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: mdi:water
+              x: 20
+              "y": 243
+              size: 13
+              color: "{{ 'red' if strip | count > 0 and strip[0].rain >= 50 else 'black' }}"
+              visible: "{{ strip | count > 0 }}"
             - type: text
-              value: "{{ cols[1].label }}"
-              x: 150
-              "y": 140
-              size: 15
-              color: black
+              value: "{{ (strip[0].rain ~ '%') if strip | count > 0 else '' }}"
+              x: 35
+              "y": 250
+              size: 13
+              color: "{{ 'red' if strip | count > 0 and strip[0].rain >= 50 else 'black' }}"
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            # ---- strip day 1 (a red name marks an exception day)
+            - type: text
+              value: "{{ strip[1].label if strip | count > 1 else '' }}"
+              x: 120
+              "y": 160
+              size: 14
+              color: "{{ 'red' if strip | count > 1 and strip[1].exception else 'black' }}"
               anchor: mt
               font: fonts/NotoSansKR-Bold.ttf
             - type: icon
-              value: "{{ cols[1].icon }}"
-              x: 130
-              "y": 160
-              size: 40
+              value: "{{ strip[1].icon if strip | count > 1 else 'mdi:circle-small' }}"
+              x: 101
+              "y": 179
+              size: 38
               color: black
+              visible: "{{ strip | count > 1 }}"
             - type: text
-              value: "{{ cols[1].temp }}°"
-              x: 150
-              "y": 204
-              size: 24
-              color: "{{ cols[1].color }}"
-              anchor: mt
+              value: "{{ strip[1].hi if strip | count > 1 else '' }}"
+              x: 118
+              "y": 236
+              size: 17
+              color: red
+              anchor: rs
               font: fonts/NotoSansKR-Bold.ttf
             - type: text
-              value: "{{ cols[1].rain }}%"
-              x: 150
-              "y": 234
-              size: 14
+              value: "{{ strip[1].lo if strip | count > 1 else '' }}"
+              x: 123
+              "y": 236
+              size: 17
               color: black
-              anchor: mt
-              visible: "{{ cols[1].rain >= 10 }}"
-              font: fonts/NotoSansKR-Regular.ttf
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: mdi:water
+              x: 100
+              "y": 243
+              size: 13
+              color: "{{ 'red' if strip | count > 1 and strip[1].rain >= 50 else 'black' }}"
+              visible: "{{ strip | count > 1 }}"
             - type: text
-              value: "{{ cols[2].label }}"
-              x: 250
-              "y": 140
-              size: 15
-              color: black
+              value: "{{ (strip[1].rain ~ '%') if strip | count > 1 else '' }}"
+              x: 115
+              "y": 250
+              size: 13
+              color: "{{ 'red' if strip | count > 1 and strip[1].rain >= 50 else 'black' }}"
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            # ---- strip day 2 (a red name marks an exception day)
+            - type: text
+              value: "{{ strip[2].label if strip | count > 2 else '' }}"
+              x: 200
+              "y": 160
+              size: 14
+              color: "{{ 'red' if strip | count > 2 and strip[2].exception else 'black' }}"
               anchor: mt
               font: fonts/NotoSansKR-Bold.ttf
             - type: icon
-              value: "{{ cols[2].icon }}"
-              x: 230
-              "y": 160
-              size: 40
+              value: "{{ strip[2].icon if strip | count > 2 else 'mdi:circle-small' }}"
+              x: 181
+              "y": 179
+              size: 38
               color: black
+              visible: "{{ strip | count > 2 }}"
             - type: text
-              value: "{{ cols[2].temp }}°"
-              x: 250
-              "y": 204
-              size: 24
-              color: "{{ cols[2].color }}"
-              anchor: mt
+              value: "{{ strip[2].hi if strip | count > 2 else '' }}"
+              x: 198
+              "y": 236
+              size: 17
+              color: red
+              anchor: rs
               font: fonts/NotoSansKR-Bold.ttf
             - type: text
-              value: "{{ cols[2].rain }}%"
-              x: 250
-              "y": 234
-              size: 14
+              value: "{{ strip[2].lo if strip | count > 2 else '' }}"
+              x: 203
+              "y": 236
+              size: 17
               color: black
-              anchor: mt
-              visible: "{{ cols[2].rain >= 10 }}"
-              font: fonts/NotoSansKR-Regular.ttf
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: mdi:water
+              x: 180
+              "y": 243
+              size: 13
+              color: "{{ 'red' if strip | count > 2 and strip[2].rain >= 50 else 'black' }}"
+              visible: "{{ strip | count > 2 }}"
             - type: text
-              value: "{{ cols[3].label }}"
-              x: 350
-              "y": 140
-              size: 15
-              color: black
+              value: "{{ (strip[2].rain ~ '%') if strip | count > 2 else '' }}"
+              x: 195
+              "y": 250
+              size: 13
+              color: "{{ 'red' if strip | count > 2 and strip[2].rain >= 50 else 'black' }}"
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            # ---- strip day 3 (a red name marks an exception day)
+            - type: text
+              value: "{{ strip[3].label if strip | count > 3 else '' }}"
+              x: 280
+              "y": 160
+              size: 14
+              color: "{{ 'red' if strip | count > 3 and strip[3].exception else 'black' }}"
               anchor: mt
               font: fonts/NotoSansKR-Bold.ttf
             - type: icon
-              value: "{{ cols[3].icon }}"
-              x: 330
-              "y": 160
-              size: 40
+              value: "{{ strip[3].icon if strip | count > 3 else 'mdi:circle-small' }}"
+              x: 261
+              "y": 179
+              size: 38
               color: black
+              visible: "{{ strip | count > 3 }}"
             - type: text
-              value: "{{ cols[3].temp }}°"
-              x: 350
-              "y": 204
-              size: 24
-              color: "{{ cols[3].color }}"
-              anchor: mt
+              value: "{{ strip[3].hi if strip | count > 3 else '' }}"
+              x: 278
+              "y": 236
+              size: 17
+              color: red
+              anchor: rs
               font: fonts/NotoSansKR-Bold.ttf
             - type: text
-              value: "{{ cols[3].rain }}%"
-              x: 350
-              "y": 234
-              size: 14
+              value: "{{ strip[3].lo if strip | count > 3 else '' }}"
+              x: 283
+              "y": 236
+              size: 17
               color: black
-              anchor: mt
-              visible: "{{ cols[3].rain >= 10 }}"
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: mdi:water
+              x: 260
+              "y": 243
+              size: 13
+              color: "{{ 'red' if strip | count > 3 and strip[3].rain >= 50 else 'black' }}"
+              visible: "{{ strip | count > 3 }}"
+            - type: text
+              value: "{{ (strip[3].rain ~ '%') if strip | count > 3 else '' }}"
+              x: 275
+              "y": 250
+              size: 13
+              color: "{{ 'red' if strip | count > 3 and strip[3].rain >= 50 else 'black' }}"
+              anchor: lm
               font: fonts/NotoSansKR-Regular.ttf
-            # Next 24 h of temperatures
+            # ---- strip day 4 (a red name marks an exception day)
+            - type: text
+              value: "{{ strip[4].label if strip | count > 4 else '' }}"
+              x: 360
+              "y": 160
+              size: 14
+              color: "{{ 'red' if strip | count > 4 and strip[4].exception else 'black' }}"
+              anchor: mt
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ strip[4].icon if strip | count > 4 else 'mdi:circle-small' }}"
+              x: 341
+              "y": 179
+              size: 38
+              color: black
+              visible: "{{ strip | count > 4 }}"
+            - type: text
+              value: "{{ strip[4].hi if strip | count > 4 else '' }}"
+              x: 358
+              "y": 236
+              size: 17
+              color: red
+              anchor: rs
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: "{{ strip[4].lo if strip | count > 4 else '' }}"
+              x: 363
+              "y": 236
+              size: 17
+              color: black
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: mdi:water
+              x: 340
+              "y": 243
+              size: 13
+              color: "{{ 'red' if strip | count > 4 and strip[4].rain >= 50 else 'black' }}"
+              visible: "{{ strip | count > 4 }}"
+            - type: text
+              value: "{{ (strip[4].rain ~ '%') if strip | count > 4 else '' }}"
+              x: 355
+              "y": 250
+              size: 13
+              color: "{{ 'red' if strip | count > 4 and strip[4].rain >= 50 else 'black' }}"
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            # ---- footer
             - type: line
               x_start: 0
-              y_start: 256
+              y_start: 272
               x_end: 399
-              y_end: 256
+              y_end: 272
               fill: black
-              width: 2
-            - type: text
-              value: "{{ temps | max }}°"
-              x: 8
-              "y": 262
-              size: 14
-              color: red
-              anchor: lt
-              font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: "{{ temps | min }}°"
-              x: 8
-              "y": 296
-              size: 14
+              width: 1
+            # Footer: the banner message, current conditions and stamp, one baseline.
+            - type: icon
+              value: "mdi:bell-outline"
+              x: 4
+              "y": 279
+              size: 15
               color: black
-              anchor: lb
+              visible: "{{ footer42.message != '' }}"
+            - type: text
+              value: "{{ footer42.message }}"
+              x: 21
+              "y": 291
+              size: 13
+              color: black
+              anchor: ls
               font: fonts/NotoSansKR-Bold.ttf
-            - type: sparkline
-              x: 44
-              "y": 262
-              width: 348
-              height: 34
-              values: "{{ temps | join(',') }}"
-              color: red
-              fill: yellow
-              width_line: 2
-              dot_last: false
+              visible: "{{ footer42.message != '' }}"
+            - type: icon
+              value: "{{ now_icon }}"
+              x: "{{ footer42.now_ix }}"
+              "y": 279
+              size: 15
+              color: black
+              visible: "{{ footer42.now != '' }}"
+            - type: text
+              value: "{{ footer42.now }}"
+              x: "{{ footer42.now_tx }}"
+              "y": 291
+              size: 13
+              color: black
+              anchor: ls
+              font: fonts/NotoSansKR-Regular.ttf
+              visible: "{{ footer42.now != '' }}"
+            - type: text
+              value: "as of {{ stamp }}"
+              x: 396
+              "y": 291
+              size: 12
+              color: black
+              anchor: rs
+              font: fonts/NotoSansKR-Regular.ttf
         response_variable: result_420
       - action: ble_esl.write_guarded
         continue_on_error: true
@@ -834,40 +1133,35 @@ script:
               color: black
               anchor: ls
               font: fonts/NotoSansKR-Bold.ttf
-            # Outlook (rain timing or sky), with what to wear at the right
-            # end of the same line when it fits (outlook_fit).
-            - type: stack
+            # Outlook (rain timing or sky), with what to wear right-aligned on the
+            # same line when it fits (outlook_fit). Texts share one baseline; x
+            # positions come from the advance-width tables.
+            - type: text
+              value: "{{ outlook_fit.text }}"
               x: 4
-              "y": 84
-              width: 288
-              # Without a height the box is the whole canvas and align: center
-              # drops the line off the bottom.
-              height: 22
-              direction: horizontal
-              justify: between
-              align: center
-              elements:
-                - type: text
-                  value: "{{ outlook_fit.text }}"
-                  size: "{{ outlook_fit.size }}"
-                  color: black
-                  font: fonts/NotoSansKR-Bold.ttf
-                - type: row
-                  gap: 3
-                  align: center
-                  visible: "{{ outlook_fit.wear }}"
-                  elements:
-                    - type: icon
-                      value: "{{ outlook.wear_icon }}"
-                      size: 16
-                      color: black
-                    - type: text
-                      value: "{{ outlook.wear }}"
-                      size: 14
-                      color: black
-                      font: fonts/NotoSansKR-Regular.ttf
-            # Footer: the exception, notices and current conditions (footer),
-            # with the "as of" stamp at the right.
+              "y": 101
+              size: "{{ outlook_fit.size }}"
+              color: black
+              anchor: ls
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: icon
+              value: "{{ outlook.wear_icon or 'mdi:tshirt-crew-outline' }}"
+              x: "{{ outlook_fit.wear_ix | default(0) }}"
+              "y": 88
+              size: 16
+              color: black
+              visible: "{{ outlook_fit.wear }}"
+            - type: text
+              value: "{{ outlook.wear or '' }}"
+              x: 292
+              "y": 101
+              size: 14
+              color: black
+              anchor: rs
+              font: fonts/NotoSansKR-Regular.ttf
+              visible: "{{ outlook_fit.wear }}"
+            # Footer: the exception, notices and current conditions (footer), and
+            # the "as of" stamp, all on one baseline.
             - type: line
               x_start: 0
               y_start: 109
@@ -875,80 +1169,79 @@ script:
               y_end: 109
               fill: black
               width: 1
-            - type: stack
-              x: 4
-              "y": 111
-              width: 288
-              height: 17
-              direction: horizontal
-              gap: 8
-              align: center
-              elements:
-                - type: row
-                  gap: 2
-                  align: center
-                  visible: "{{ footer.n > 0 }}"
-                  elements:
-                    - type: icon
-                      value: "{{ footer.parts[0].icon if footer.n > 0 else 'mdi:circle-small' }}"
-                      size: 14
-                      color: "{{ footer.parts[0].color if footer.n > 0 else 'black' }}"
-                    - type: text
-                      value: "{{ footer.parts[0].text if footer.n > 0 else '' }}"
-                      size: 12
-                      color: "{{ footer.parts[0].color if footer.n > 0 else 'black' }}"
-                      font: "{{ footer.parts[0].font if footer.n > 0 else 'fonts/NotoSansKR-Regular.ttf' }}"
-                - type: row
-                  gap: 2
-                  align: center
-                  visible: "{{ footer.n > 1 }}"
-                  elements:
-                    - type: icon
-                      value: "{{ footer.parts[1].icon if footer.n > 1 else 'mdi:circle-small' }}"
-                      size: 14
-                      color: "{{ footer.parts[1].color if footer.n > 1 else 'black' }}"
-                    - type: text
-                      value: "{{ footer.parts[1].text if footer.n > 1 else '' }}"
-                      size: 12
-                      color: "{{ footer.parts[1].color if footer.n > 1 else 'black' }}"
-                      font: "{{ footer.parts[1].font if footer.n > 1 else 'fonts/NotoSansKR-Regular.ttf' }}"
-                - type: row
-                  gap: 2
-                  align: center
-                  visible: "{{ footer.n > 2 }}"
-                  elements:
-                    - type: icon
-                      value: "{{ footer.parts[2].icon if footer.n > 2 else 'mdi:circle-small' }}"
-                      size: 14
-                      color: "{{ footer.parts[2].color if footer.n > 2 else 'black' }}"
-                    - type: text
-                      value: "{{ footer.parts[2].text if footer.n > 2 else '' }}"
-                      size: 12
-                      color: "{{ footer.parts[2].color if footer.n > 2 else 'black' }}"
-                      font: "{{ footer.parts[2].font if footer.n > 2 else 'fonts/NotoSansKR-Regular.ttf' }}"
-                - type: row
-                  gap: 2
-                  align: center
-                  visible: "{{ footer.n > 3 }}"
-                  elements:
-                    - type: icon
-                      value: "{{ footer.parts[3].icon if footer.n > 3 else 'mdi:circle-small' }}"
-                      size: 14
-                      color: "{{ footer.parts[3].color if footer.n > 3 else 'black' }}"
-                    - type: text
-                      value: "{{ footer.parts[3].text if footer.n > 3 else '' }}"
-                      size: 12
-                      color: "{{ footer.parts[3].color if footer.n > 3 else 'black' }}"
-                      font: "{{ footer.parts[3].font if footer.n > 3 else 'fonts/NotoSansKR-Regular.ttf' }}"
+            - type: icon
+              value: "{{ footer.parts[0].icon if footer.n > 0 else 'mdi:circle-small' }}"
+              x: "{{ footer.parts[0].ix if footer.n > 0 else 0 }}"
+              "y": 112
+              size: 14
+              color: "{{ footer.parts[0].color if footer.n > 0 else 'black' }}"
+              visible: "{{ footer.n > 0 }}"
+            - type: text
+              value: "{{ footer.parts[0].text if footer.n > 0 else '' }}"
+              x: "{{ footer.parts[0].tx if footer.n > 0 else 0 }}"
+              "y": 123
+              size: 12
+              color: "{{ footer.parts[0].color if footer.n > 0 else 'black' }}"
+              anchor: ls
+              font: "{{ footer.parts[0].font if footer.n > 0 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer.n > 0 }}"
+            - type: icon
+              value: "{{ footer.parts[1].icon if footer.n > 1 else 'mdi:circle-small' }}"
+              x: "{{ footer.parts[1].ix if footer.n > 1 else 0 }}"
+              "y": 112
+              size: 14
+              color: "{{ footer.parts[1].color if footer.n > 1 else 'black' }}"
+              visible: "{{ footer.n > 1 }}"
+            - type: text
+              value: "{{ footer.parts[1].text if footer.n > 1 else '' }}"
+              x: "{{ footer.parts[1].tx if footer.n > 1 else 0 }}"
+              "y": 123
+              size: 12
+              color: "{{ footer.parts[1].color if footer.n > 1 else 'black' }}"
+              anchor: ls
+              font: "{{ footer.parts[1].font if footer.n > 1 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer.n > 1 }}"
+            - type: icon
+              value: "{{ footer.parts[2].icon if footer.n > 2 else 'mdi:circle-small' }}"
+              x: "{{ footer.parts[2].ix if footer.n > 2 else 0 }}"
+              "y": 112
+              size: 14
+              color: "{{ footer.parts[2].color if footer.n > 2 else 'black' }}"
+              visible: "{{ footer.n > 2 }}"
+            - type: text
+              value: "{{ footer.parts[2].text if footer.n > 2 else '' }}"
+              x: "{{ footer.parts[2].tx if footer.n > 2 else 0 }}"
+              "y": 123
+              size: 12
+              color: "{{ footer.parts[2].color if footer.n > 2 else 'black' }}"
+              anchor: ls
+              font: "{{ footer.parts[2].font if footer.n > 2 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer.n > 2 }}"
+            - type: icon
+              value: "{{ footer.parts[3].icon if footer.n > 3 else 'mdi:circle-small' }}"
+              x: "{{ footer.parts[3].ix if footer.n > 3 else 0 }}"
+              "y": 112
+              size: 14
+              color: "{{ footer.parts[3].color if footer.n > 3 else 'black' }}"
+              visible: "{{ footer.n > 3 }}"
+            - type: text
+              value: "{{ footer.parts[3].text if footer.n > 3 else '' }}"
+              x: "{{ footer.parts[3].tx if footer.n > 3 else 0 }}"
+              "y": 123
+              size: 12
+              color: "{{ footer.parts[3].color if footer.n > 3 else 'black' }}"
+              anchor: ls
+              font: "{{ footer.parts[3].font if footer.n > 3 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer.n > 3 }}"
             - type: text
               value: "as of {{ stamp }}"
               x: 292
-              "y": 120
+              "y": 123
               size: 11
               color: black
-              anchor: rm
-              visible: "{{ footer.stamp }}"
+              anchor: rs
               font: fonts/NotoSansKR-Regular.ttf
+              visible: "{{ footer.stamp }}"
         response_variable: result_290
 
 automation:

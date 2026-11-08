@@ -45,10 +45,25 @@ not an identifier the integration uses.
 Both labels show NWS weather (`weather.nws_khpn`, `twice_daily` +
 `hourly`), rendered by `script.esl_weather_render`:
 
-- **4.2"**: date and "as of" header; current icon, temperature, condition,
-  humidity and wind; the next four NWS day/night periods (red for daytime
-  highs, black for overnight lows, precipitation shown when ≥ 10%); and a
-  24-hour temperature line.
+- **4.2"**: the 2.9"'s day-ahead view across the full width, plus a
+  five-day strip.
+  - **Top, full width**: the 2.9"'s day (today before noon, tomorrow from
+    noon) with its rules: a banner with the date, plain for today, yellow
+    for tomorrow and red on an exception day; the condition icon with
+    ▲high/▼low; the outlook line with what to wear at its right when it
+    fits; and a note line with the day's exception (red) and calendar
+    alerts (Humira).
+  - **Strip**: the five days after it, paired from NWS's
+    day/night periods like the E1001's daily columns (day's high and
+    condition, that night's low, the higher chance; red at ≥ 50%). A red
+    day name marks an exception day, for days within the kitchen card's
+    one-week window (beyond it the card doesn't judge either).
+  - **Footer**: the banner message, then the current conditions at their
+    fullest wording that fits (with humidity and wind), and the "as of"
+    stamp.
+
+  Both screens are built from the same per-day data (`panels`, `excs`,
+  `alerts_by_day`, `strip` in the script), so they agree.
 - **2.9"** (kids' room): the day to get ready for, **today before noon and
   tomorrow from noon on**, filling the screen.
   - **Banner**: "Today · Friday, Nov 6" plain, "Tomorrow · Saturday,
@@ -148,6 +163,11 @@ Payload notes for this file:
   the banner.
 - A `stack`/`row` with no `height` is as tall as the canvas, so
   `align: center` puts its children off-screen. Give it a height.
+- Don't line up texts with a stack's `align: center`. It centres each glyph
+  box, so the baseline moves with the letters ("as of 9 PM" sat 3 px below
+  "Humidity…"). Anchor every text on a line at one baseline (`ls`/`rs`) and
+  place them with x positions from the advance tables, as the outlook,
+  note and footer lines do.
 
 ## State that is not in the repo
 
