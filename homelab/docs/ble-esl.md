@@ -50,20 +50,52 @@ Both labels show NWS weather (`weather.nws_khpn`, `twice_daily` +
   highs, black for overnight lows, precipitation shown when ≥ 10%); and a
   24-hour temperature line.
 - **2.9"** (kids' room): the day to get ready for, **today before noon and
-  tomorrow from noon on**, filling the screen. A weekday banner sits over
-  the condition icon, then the high (red, ▲ glyph) and the low (▼ glyph)
-  at 56/52 px; a three-character temperature like "101°" steps both down
-  a size. Below them is the E1001 and
-  kitchen cards' outlook line: rain timing with its chance ("Rain 1–4 PM
-  (70%)"), or the sky and any lesser chance ("Cloudy (30% 2–5 PM)",
-  "Dry, sunny"). The clothing hint ("Umbrella, jacket") sits at the right of
-  that line when it fits. Everything covers that day's outdoor hours,
-  7 AM–10 PM (the cards' `outdoor_hours: [7, 22]`; for today, what is left
-  of them), from the hourly forecast; the high also takes NWS's daytime
-  high. A one-line footer has the current temperature, condition and "as
-  of" stamp. The script's `forecast_day` field (`auto`/`today`/`tomorrow`)
-  forces either view for previewing. If today has no daytime period left,
-  it shows the next day, labelled as such.
+  tomorrow from noon on**, filling the screen.
+  - **Banner**: "Today · Friday, Nov 6" plain, "Tomorrow · Saturday,
+    Nov 7" yellow, and **red** (white text) when that day is an exception
+    day for the kids (below).
+  - **Middle**: the condition icon, then the high (red, ▲ glyph) and the
+    low (▼ glyph) at 56/52 px; a three-character temperature like "101°"
+    steps both down a size. Below them is the E1001 and kitchen cards'
+    outlook line: rain timing with its chance ("Rain 1–4 PM (70%)"), or
+    the sky and any lesser chance ("Cloudy (30% 2–5 PM)", "Dry, sunny").
+    The clothing hint ("Umbrella, jacket") sits at the right of that line
+    when it fits. Everything covers that day's outdoor hours, 7 AM–10 PM
+    (the cards' `outdoor_hours: [7, 22]`; for today, what is left of them),
+    from the hourly forecast; the high also takes NWS's daytime high.
+  - **Footer**, in priority order, with each item using its fullest
+    wording that still fits:
+    1. the exception in red ("No kindergarten, after-care", "Kindergarten
+       (half-day), after-care from 11:35 AM");
+    2. the persistent notices from the E1001/kitchen banner: the free-text
+       message (`input_text.eink_banner`) and the Humira calendar alert,
+       here for the *shown* day;
+    3. the current temperature and condition.
+
+    The "as of" stamp keeps the right end unless the exception needs the
+    whole line. The banner's dishwasher and open-door items are left out,
+    since they would be stale on a label redrawn every 3 hours.
+
+  The script's `forecast_day` field (`auto`/`today`/`tomorrow`) forces
+  either view for previewing. If today has no daytime period left, it shows
+  the next day, labelled as such.
+
+  **Exception days** follow the kitchen card's "Regular schedule" strip
+  (`family-calendar-card.js` `_regular()`, `regular_schedule` in
+  `family-calendar-dashboard.yaml`). For `calendar.kids_school` and
+  `calendar.bastian`, the routine is the timed events with the same title
+  and start/end times that are among the visible days (a week from today)
+  and fall on at least 3 weekdays there, or within one Monday–Sunday week of
+  the ±14-day lookaround. A weekday missing any piece of a calendar's
+  routine is an exception. The footer names what's missing (titles shortened
+  by the dashboard's `title_rewrites`). An event with a matching title at
+  other times counts as changed, not missing ("after-care from 11:35 AM",
+  "Kindergarten (half-day)"). Five-minute markers (bus, pick-up) are only
+  named when nothing else is missing. Checked on the real calendars
+  (2026-11-07): Nov 3 "No kindergarten, after-care"; Nov 11 "No
+  kindergarten, after-care, daycare"; Oct 28–29 the half-day wording; Nov
+  6–7 none. If the card's routine rules or the dashboard's calendars,
+  rewrites or `calendar_alerts` change, change `ble-esl.yaml` to match.
 
   The outlook is a Jinja port of `outlookRow()` in
   `pkgs/lovelace-common/weather.js`, with the same thresholds and wordings.
