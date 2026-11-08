@@ -83,6 +83,11 @@ script:
             sunny: mdi:weather-sunny
             windy: mdi:weather-windy
             windy-variant: mdi:weather-windy-variant
+          # Advance widths (em) of the bundled NotoSansKR Bold / Regular, measured
+          # with PIL, so templates can tell whether a line fits; summing them
+          # overestimates kerned text by about a pixel, which errs on the safe side.
+          adv_bold: {'a': 0.591, 'b': 0.644, 'c': 0.527, 'd': 0.644, 'e': 0.581, 'f': 0.372, 'g': 0.597, 'h': 0.64, 'i': 0.304, 'j': 0.306, 'k': 0.604, 'l': 0.315, 'm': 0.964, 'n': 0.641, 'o': 0.626, 'p': 0.644, 'q': 0.644, 'r': 0.437, 's': 0.495, 't': 0.421, 'u': 0.637, 'v': 0.576, 'w': 0.863, 'x': 0.562, 'y': 0.574, 'z': 0.511, 'A': 0.641, 'B': 0.681, 'C': 0.656, 'D': 0.714, 'E': 0.615, 'F': 0.585, 'G': 0.717, 'H': 0.757, 'I': 0.33, 'J': 0.568, 'K': 0.686, 'L': 0.578, 'M': 0.853, 'N': 0.749, 'O': 0.77, 'P': 0.667, 'Q': 0.77, 'R': 0.682, 'S': 0.624, 'T': 0.625, 'U': 0.748, 'V': 0.619, 'W': 0.915, 'X': 0.627, 'Y': 0.58, 'Z': 0.613, '0': 0.59, '1': 0.59, '2': 0.59, '3': 0.59, '4': 0.59, '5': 0.59, '6': 0.59, '7': 0.59, '8': 0.59, '9': 0.59, ' ': 0.227, ',': 0.325, '.': 0.325, '(': 0.378, ')': 0.378, '%': 0.963, '–': 0.544, '…': 1.0, '-': 0.37, "'": 0.325, '°': 0.404, ':': 0.325}
+          adv_regular: {'a': 0.563, 'b': 0.618, 'c': 0.51, 'd': 0.62, 'e': 0.554, 'f': 0.325, 'g': 0.564, 'h': 0.607, 'i': 0.275, 'j': 0.275, 'k': 0.552, 'l': 0.284, 'm': 0.926, 'n': 0.61, 'o': 0.606, 'p': 0.62, 'q': 0.62, 'r': 0.388, 's': 0.468, 't': 0.377, 'u': 0.607, 'v': 0.521, 'w': 0.802, 'x': 0.498, 'y': 0.521, 'z': 0.475, 'A': 0.608, 'B': 0.657, 'C': 0.638, 'D': 0.688, 'E': 0.589, 'F': 0.552, 'G': 0.689, 'H': 0.728, 'I': 0.293, 'J': 0.535, 'K': 0.646, 'L': 0.543, 'M': 0.812, 'N': 0.723, 'O': 0.742, 'P': 0.633, 'Q': 0.742, 'R': 0.635, 'S': 0.596, 'T': 0.599, 'U': 0.721, 'V': 0.575, 'W': 0.878, 'X': 0.573, 'Y': 0.531, 'Z': 0.603, '0': 0.555, '1': 0.555, '2': 0.555, '3': 0.555, '4': 0.555, '5': 0.555, '6': 0.555, '7': 0.555, '8': 0.555, '9': 0.555, ' ': 0.224, ',': 0.278, '.': 0.278, '(': 0.338, ')': 0.338, '%': 0.921, '–': 0.536, '…': 1.0, '-': 0.347, "'": 0.278, '°': 0.37, ':': 0.278}
           names:
             clear-night: Clear
             cloudy: Cloudy
@@ -159,15 +164,21 @@ script:
           # A string ("2026-11-08"): script variables don't keep date objects.
           day_date: "{{ (as_datetime(day.datetime) | as_local).date() | string }}"
       - variables:
-          # The hourly forecast over that day's waking hours (7 AM-8 PM; for
-          # today, what is left of them): its range and wettest hour are what
-          # the kids dress and pack for. The overnight lows on either side are not.
+          # The hourly forecast over that day's outdoor hours, 7 AM-10 PM like
+          # the E1001 and kitchen cards' outdoor_hours: [7, 22] (for today, what
+          # is left of them). Its range and wet hours are what the kids dress
+          # and pack for; the overnight lows either side are not.
           waking: >-
             {% set ns = namespace(out=[]) %}
-            {% for h in all_hours %}
-              {% set t = as_datetime(h.datetime) | as_local %}
-              {% if t.date() | string == day_date and 7 <= t.hour <= 20 %}
-                {% set ns.out = ns.out + [h] %}
+            {% for f in all_hours %}
+              {% set t = as_datetime(f.datetime) | as_local %}
+              {% if t.date() | string == day_date and 7 <= t.hour < 22 %}
+                {% set ns.out = ns.out + [{
+                  'h': t.hour,
+                  'temperature': f.temperature,
+                  'pop': f.precipitation_probability | default(0, true),
+                  'condition': f.condition,
+                }] %}
               {% endif %}
             {% endfor %}
             {{ ns.out }}
@@ -177,17 +188,168 @@ script:
             {% set n = (d.date() - now().date()).days %}
             {{ ('Today · ' if n == 0 else 'Tomorrow · ' if n == 1 else '')
                ~ d.strftime('%A') }}
-          day_icon: "{{ icons.get(day.condition, 'mdi:weather-cloudy') }}"
-          day_name: "{{ names.get(day.condition, day.condition) }}"
           day_hi: >-
             {{ ([day.temperature] + (waking | map(attribute='temperature') | list))
                | max | round(0) | int }}
           day_lo: >-
             {{ (waking | map(attribute='temperature') | list
                 or [day.temperature]) | min | round(0) | int }}
-          day_rain: >-
-            {{ (waking | map(attribute='precipitation_probability') | map('default', 0, true) | list
-                or [day.precipitation_probability | default(0, true)]) | max | int }}
+          # The "what to wear" outlook, ported from lovelace-common/weather.js
+          # outlookRow() (the E1001 and kitchen cards) with their thresholds:
+          # an hour is wet at >= 50% chance, coat below 45 °F, hot from 85 °F.
+          # texts runs from most to least detailed; the render picks one that
+          # fits. icon is the worst condition when it rains, else the usual one.
+          outlook: >-
+            {%- macro hl(h) -%}
+              {{- 'midnight' if h % 24 == 0 else 'noon' if h % 24 == 12
+                  else ((h % 12) or 12) ~ (' AM' if h % 24 < 12 else ' PM') -}}
+            {%- endmacro -%}
+            {%- macro hr(a, b) -%}
+              {%- set la = hl(a) %}{% set lb = hl(b) -%}
+              {%- set pa = la.split(' ') %}{% set pb = lb.split(' ') -%}
+              {{- pa[0] ~ '–' ~ lb if pa | count > 1 and pb | count > 1 and pa[1] == pb[1]
+                  else la ~ '–' ~ lb -}}
+            {%- endmacro -%}
+            {%- set rank = {'exceptional': 100, 'lightning-rainy': 90, 'lightning': 85,
+                'hail': 80, 'snowy-rainy': 75, 'snowy': 70, 'pouring': 65, 'rainy': 60,
+                'fog': 50, 'windy-variant': 45, 'windy': 40, 'cloudy': 30,
+                'partlycloudy': 20, 'sunny': 10, 'clear-night': 10} -%}
+            {%- set wetc = ['rainy', 'pouring', 'lightning-rainy', 'lightning', 'snowy',
+                'snowy-rainy', 'hail', 'exceptional'] -%}
+            {%- set hrs = waking -%}
+            {%- if hrs | count == 0 -%}
+              {{ {'texts': [names.get(day.condition, day.condition)], 'icon': icons.get(day.condition, 'mdi:weather-cloudy'), 'wear': none, 'wear_icon': none} }}
+            {%- else -%}
+              {%- set conds = hrs | map(attribute='condition') | list -%}
+              {%- set ns = namespace(worst=conds[0], spans=[], dry=[], usual=none, best=0) -%}
+              {#- Most common condition, wet ones read as cloudy: for a dry day a
+                  better summary than the single worst hour (NWS tags
+                  slight-chance hours as rainy). -#}
+              {%- for c in conds -%}
+                {%- if rank.get(c, 0) > rank.get(ns.worst, 0) %}{% set ns.worst = c %}{% endif -%}
+                {%- set ns.dry = ns.dry + ['cloudy' if c in wetc else c] -%}
+              {%- endfor -%}
+              {%- for k in ns.dry | unique -%}
+                {%- set n = ns.dry | select('eq', k) | list | count -%}
+                {%- if n > ns.best %}{% set ns.best = n %}{% set ns.usual = k %}{% endif -%}
+              {%- endfor -%}
+              {%- set usual = ns.usual -%}
+              {#- Rain spans: consecutive wet hours, bridging single dry hours. -#}
+              {%- set wet = hrs | selectattr('pop', '>=', 50) | list -%}
+              {%- for f in wet -%}
+                {%- if ns.spans and f.h - ns.spans[-1][1] <= 1 -%}
+                  {%- set ns.spans = ns.spans[:-1] + [[ns.spans[-1][0], f.h + 1]] -%}
+                {%- else -%}
+                  {%- set ns.spans = ns.spans + [[f.h, f.h + 1]] -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- set first = hrs[0].h %}{% set last = hrs[-1].h + 1 -%}
+              {%- set pops = hrs | map(attribute='pop') | list %}{% set maxpop = pops | max -%}
+              {%- if ns.spans -%}
+                {%- set kind = 'Snow' if 'snowy' in conds
+                    else 'Sleet' if 'snowy-rainy' in conds or 'hail' in conds
+                    else 'Storms' if conds | select('match', 'lightning') | list
+                    else 'Rain' -%}
+                {%- set ts = namespace(full=[], terse=[]) -%}
+                {%- for sp in ns.spans[:2] -%}
+                  {%- set lead = loop.first -%}
+                  {%- for terse in [false, true] -%}
+                    {%- set w = kind ~ ' ' if lead else '' if terse else 'again ' -%}
+                    {%- if sp[0] <= first and sp[1] >= last -%}
+                      {%- set d = kind ~ ' all day' if lead else '' -%}
+                    {%- elif sp[0] <= first -%}
+                      {%- set d = w ~ ('till ' if terse else 'until ') ~ hl(sp[1]) -%}
+                    {%- elif sp[1] >= last -%}
+                      {%- set d = w ~ 'from ' ~ hl(sp[0]) -%}
+                    {%- else -%}
+                      {%- set d = w ~ hr(sp[0], sp[1]) -%}
+                    {%- endif -%}
+                    {%- if d and terse %}{% set ts.terse = ts.terse + [d] %}{% elif d %}{% set ts.full = ts.full + [d] %}{% endif -%}
+                  {%- endfor -%}
+                {%- endfor -%}
+                {%- set more = ', …' if ns.spans | count > 2 else '' -%}
+                {%- set full = ts.full | join(', ') ~ more -%}
+                {%- set amount = ' (' ~ (wet | map(attribute='pop') | max | int) ~ '%)' -%}
+                {%- set texts = [full ~ amount, full, ts.terse | join(', ') ~ more] -%}
+                {%- set icon = ns.worst -%}
+              {%- else -%}
+                {%- set sky = {'sunny': 'sunny', 'clear-night': 'clear', 'partlycloudy': 'partly cloudy',
+                    'cloudy': 'cloudy', 'fog': 'foggy', 'windy': 'windy', 'windy-variant': 'windy'}.get(usual) -%}
+                {%- if maxpop >= 20 -%}
+                  {%- set Sky = sky[0] | upper ~ sky[1:] if sky else 'Mostly dry' -%}
+                  {%- set peak = hrs | selectattr('pop', '>=', maxpop - 5) | list -%}
+                  {%- set ps = peak[0].h %}{% set pe = peak[-1].h + 1 -%}
+                  {%- set when = '' -%}
+                  {%- if peak | count == pe - ps and pe - ps <= (last - first) / 2 -%}
+                    {%- set when = ' until ' ~ hl(pe) if ps <= first
+                        else ' from ' ~ hl(ps) if pe >= last
+                        else ' ' ~ hr(ps, pe) -%}
+                  {%- endif -%}
+                  {%- set texts = [Sky ~ ' (' ~ maxpop | int ~ '%' ~ when ~ ')', Sky ~ ' (' ~ maxpop | int ~ '%)'] -%}
+                {%- else -%}
+                  {%- set texts = ['Dry, ' ~ sky if sky else 'Dry'] -%}
+                {%- endif -%}
+                {%- set icon = usual -%}
+              {%- endif -%}
+              {#- Dress for the coldest outdoor hour; flag heat separately. -#}
+              {%- set temps = hrs | map(attribute='temperature') | list -%}
+              {%- set lo = temps | min %}{% set hi = temps | max -%}
+              {%- set wear = 'Heavy coat' if lo < 32 else 'Coat' if lo < 45 else 'Jacket' if lo < 58
+                  else 'Light layer' if lo < 68 else 'T-shirt' -%}
+              {%- set wicon = 'mdi:snowflake' if lo < 32 else 'mdi:tshirt-crew-outline' -%}
+              {%- if hi >= 85 -%}
+                {%- set wear = 'Hot' if wear == 'T-shirt' else wear ~ ', hot' %}{% set wicon = 'mdi:thermometer-high' -%}
+              {%- endif -%}
+              {%- if ns.spans -%}
+                {%- set snow = 'snowy' in conds or 'snowy-rainy' in conds -%}
+                {%- set wear = ('Boots, ' if snow else 'Umbrella, ') ~ wear | lower -%}
+                {%- set wicon = 'mdi:snowflake' if snow else 'mdi:umbrella-outline' -%}
+              {%- endif -%}
+              {{ {'texts': texts | unique | list, 'icon': icons.get(icon, 'mdi:weather-cloudy'),
+                  'wear': wear, 'wear_icon': wicon} }}
+            {%- endif -%}
+      - variables:
+          # The outlook line, fitted the way the E1001 card's _fitText does:
+          # the fullest wording plus the what-to-wear hint; else drop the hint;
+          # else the first shorter wording that fits; else the tersest one at
+          # 80% size. 288 px wide: 16 px bold text, then a 12 px gap, then a
+          # 16 px icon, 3 px and 14 px regular text.
+          outlook_fit: >-
+            {%- macro w(t, tab, size) -%}
+              {%- set ns = namespace(n=0) -%}
+              {%- for c in t %}{% set ns.n = ns.n + tab.get(c, 0.65) %}{% endfor -%}
+              {{- ns.n * size -}}
+            {%- endmacro -%}
+            {%- set width = 288 -%}
+            {%- set texts = outlook.texts -%}
+            {%- set wear_w = (12 + 16 + 3 + w(outlook.wear, adv_regular, 14) | float)
+                if outlook.wear else none -%}
+            {%- if wear_w is not none and w(texts[0], adv_bold, 16) | float + wear_w <= width -%}
+              {{ {'text': texts[0], 'size': 16, 'wear': true} }}
+            {%- else -%}
+              {%- set ns = namespace(t=none) -%}
+              {%- for t in texts -%}
+                {%- if ns.t is none and w(t, adv_bold, 16) | float <= width %}{% set ns.t = t %}{% endif -%}
+              {%- endfor -%}
+              {{ {'text': ns.t or texts | last, 'size': 16 if ns.t else 13, 'wear': false} }}
+            {%- endif -%}
+          # High and low, each after an arrow glyph, on one baseline (y 76).
+          # Two-character temperatures get 56/52 px; a wider one ("100°",
+          # "-12°") drops both a size so the pair still fits. The low follows
+          # the high's measured width; the 30 px arrows are centred on the
+          # digits (their tops sit 0.79 em above the baseline) and overlap the
+          # gaps by their glyph padding.
+          nums: >-
+            {%- set hi = day_hi ~ '°' %}{% set lo = day_lo ~ '°' -%}
+            {%- set big = hi | length <= 3 and lo | length <= 3 -%}
+            {%- set hs = 56 if big else 46 %}{% set ls = 52 if big else 44 -%}
+            {%- set ns = namespace(w=0) -%}
+            {%- for c in hi %}{% set ns.w = ns.w + adv_bold.get(c, 0.65) %}{% endfor -%}
+            {%- set lo_arrow = 86 + (ns.w * hs) | round(0) | int + 6 -%}
+            {{ {'hi': hi, 'lo': lo, 'hi_size': hs, 'lo_size': ls,
+                'hi_arrow_y': (76 - 0.79 * hs / 2 - 15) | round(0) | int,
+                'lo_arrow_y': (76 - 0.79 * ls / 2 - 15) | round(0) | int,
+                'lo_arrow_x': lo_arrow, 'lo_x': lo_arrow + 26} }}
       - action: ble_esl.write_guarded
         continue_on_error: true
         target:
@@ -433,109 +595,116 @@ script:
           dry_run: "{{ dry }}"
           background: white
           payload:
-            # The day ahead: header, then condition, high, low and rain chance
-            # as large as fits.
+            # The day ahead: header; then the condition icon and the high and low
+            # (arrow glyphs, one baseline; anchor ls, so glyph tops can't climb
+            # into the banner); then the outlook (which carries the chance of
+            # rain) and what to wear.
             - type: rectangle
               x_start: 0
               y_start: 0
               x_end: 295
-              y_end: 23
+              y_end: 21
               fill: yellow
             - type: text
               value: "{{ day_label }}"
               x: 148
-              "y": 12
-              size: 16
+              "y": 11
+              size: 15
               color: black
               anchor: mm
               font: fonts/NotoSansKR-Bold.ttf
             - type: icon
-              value: "{{ day_icon }}"
+              value: "{{ outlook.icon }}"
               x: 2
-              "y": 25
-              size: 62
+              "y": 26
+              size: 52
               color: black
-            - type: text
-              value: "{{ day_hi }}°"
-              x: 68
-              "y": 22
-              size: 44
-              color: red
-              font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: high
-              x: 72
-              "y": 72
-              size: 12
-              color: black
-              font: fonts/NotoSansKR-Regular.ttf
-            - type: text
-              value: "{{ day_lo }}°"
-              x: 150
-              "y": 32
-              size: 32
-              color: black
-              font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: low
-              x: 152
-              "y": 72
-              size: 12
-              color: black
-              font: fonts/NotoSansKR-Regular.ttf
             - type: icon
-              value: mdi:umbrella-outline
-              x: 214
-              "y": 36
-              size: 26
-              color: "{{ 'red' if day_rain >= 50 else 'black' }}"
+              value: mdi:arrow-up-bold
+              x: 58
+              "y": "{{ nums.hi_arrow_y }}"
+              size: 30
+              color: red
             - type: text
-              value: "{{ day_rain }}%"
-              x: 242
-              "y": 34
-              size: 22
-              color: "{{ 'red' if day_rain >= 50 else 'black' }}"
+              value: "{{ nums.hi }}"
+              x: 86
+              "y": 76
+              size: "{{ nums.hi_size }}"
+              color: red
+              anchor: ls
               font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: rain
-              x: 244
-              "y": 72
-              size: 12
+            - type: icon
+              value: mdi:arrow-down-bold
+              x: "{{ nums.lo_arrow_x }}"
+              "y": "{{ nums.lo_arrow_y }}"
+              size: 30
               color: black
-              font: fonts/NotoSansKR-Regular.ttf
             - type: text
-              value: "{{ day_name }}"
-              x: 6
-              "y": 86
-              size: 15
+              value: "{{ nums.lo }}"
+              x: "{{ nums.lo_x }}"
+              "y": 76
+              size: "{{ nums.lo_size }}"
               color: black
+              anchor: ls
               font: fonts/NotoSansKR-Bold.ttf
+            # Outlook (rain timing or sky), with what to wear at the right
+            # end of the same line when it fits (outlook_fit).
+            - type: stack
+              x: 4
+              "y": 84
+              width: 288
+              # Without a height the box is the whole canvas and align: center
+              # drops the line off the bottom.
+              height: 22
+              direction: horizontal
+              justify: between
+              align: center
+              elements:
+                - type: text
+                  value: "{{ outlook_fit.text }}"
+                  size: "{{ outlook_fit.size }}"
+                  color: black
+                  font: fonts/NotoSansKR-Bold.ttf
+                - type: row
+                  gap: 3
+                  align: center
+                  visible: "{{ outlook_fit.wear }}"
+                  elements:
+                    - type: icon
+                      value: "{{ outlook.wear_icon }}"
+                      size: 16
+                      color: black
+                    - type: text
+                      value: "{{ outlook.wear }}"
+                      size: 14
+                      color: black
+                      font: fonts/NotoSansKR-Regular.ttf
             # Footer: right now
             - type: line
               x_start: 0
-              y_start: 107
+              y_start: 114
               x_end: 295
-              y_end: 107
+              y_end: 114
               fill: black
               width: 1
             - type: icon
               value: "{{ now_icon }}"
               x: 4
-              "y": 110
-              size: 16
+              "y": 116
+              size: 12
               color: black
             - type: text
               value: "Now {{ now_temp }}° · {{ now_name }}"
-              x: 24
-              "y": 118
-              size: 13
+              x: 20
+              "y": 121
+              size: 12
               color: black
               anchor: lm
               font: fonts/NotoSansKR-Regular.ttf
             - type: text
               value: "as of {{ stamp }}"
               x: 292
-              "y": 118
+              "y": 121
               size: 11
               color: black
               anchor: rm

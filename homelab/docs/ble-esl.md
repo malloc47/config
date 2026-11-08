@@ -50,15 +50,29 @@ Both labels show NWS weather (`weather.nws_khpn`, `twice_daily` +
   highs, black for overnight lows, precipitation shown when ≥ 10%); and a
   24-hour temperature line.
 - **2.9"** (kids' room): the day to get ready for, **today before noon and
-  tomorrow from noon on**, filling the screen. It shows the weekday, the
-  condition icon and name, the high (red), the low and the chance of rain
-  (red at ≥ 50%). High, low and rain cover that day's waking hours (7 AM to
-  8 PM, from the hourly forecast; for today, what is left of them), not the
-  overnight lows either side. The high also takes NWS's daytime high. A
-  one-line footer has the current temperature and condition with the "as
+  tomorrow from noon on**, filling the screen. A weekday banner sits over
+  the condition icon, then the high (red, ▲ glyph) and the low (▼ glyph)
+  at 56/52 px; a three-character temperature like "101°" steps both down
+  a size. Below them is the E1001 and
+  kitchen cards' outlook line: rain timing with its chance ("Rain 1–4 PM
+  (70%)"), or the sky and any lesser chance ("Cloudy (30% 2–5 PM)",
+  "Dry, sunny"). The clothing hint ("Umbrella, jacket") sits at the right of
+  that line when it fits. Everything covers that day's outdoor hours,
+  7 AM–10 PM (the cards' `outdoor_hours: [7, 22]`; for today, what is left
+  of them), from the hourly forecast; the high also takes NWS's daytime
+  high. A one-line footer has the current temperature, condition and "as
   of" stamp. The script's `forecast_day` field (`auto`/`today`/`tomorrow`)
   forces either view for previewing. If today has no daytime period left,
   it shows the next day, labelled as such.
+
+  The outlook is a Jinja port of `outlookRow()` in
+  `pkgs/lovelace-common/weather.js`, with the same thresholds and wordings.
+  If you change one, change the other. It was checked against the JS on
+  eleven synthetic days (2026-11-07); all matched. The line is fitted like
+  the card's `_fitText`: the fullest wording plus the hint; else drop the
+  hint; else a shorter wording; else the tersest at 80% size. Widths come
+  from per-character advance tables of the bundled fonts (`adv_bold`,
+  `adv_regular`), which slightly overestimate.
 
 `automation.esl_refresh_weather_labels` runs the script at 06, 09, 12, 15,
 18 and 21:00. When NWS is unavailable or returns too few periods the run
@@ -97,6 +111,11 @@ Payload notes for this file:
   ("Only one type can be specified").
 - `text_fit` sizes against the full line height. With a tight `height` it
   shrinks far below `size`, so use plain `text` for short strings.
+- Anchor big numbers at their baseline (`anchor: ls`). The default anchor
+  puts the glyph box's top at `y`, and on the panel the high climbed into
+  the banner.
+- A `stack`/`row` with no `height` is as tall as the canvas, so
+  `align: center` puts its children off-screen. Give it a height.
 
 ## State that is not in the repo
 
