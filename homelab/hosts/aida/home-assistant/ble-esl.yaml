@@ -167,7 +167,8 @@ script:
           # that are among the visible days (a week from today) and fall on at
           # least 3 weekdays there, or within one Monday-Sunday week of the
           # fetched events. A weekday is an exception when any of a calendar's
-          # routine is missing from it.
+          # routine is missing from it. Each visible day also gets its
+          # schedule items for the 4.2"'s note line.
           #
           # The footer says what is missing: "No kindergarten, after-care" or,
           # when a same-named event replaces it at other times,
@@ -177,9 +178,10 @@ script:
           excs: >-
             {%- set routine_cals = ['calendar.kids_school', 'calendar.bastian'] -%}
             {%- set today = as_datetime(today_date) -%}
-            {%- set vis = namespace(days=[]) -%}
+            {%- set vis = namespace(days=[], all=[]) -%}
             {%- for i in range(7) -%}
               {%- set d = today + timedelta(days=i) -%}
+              {%- set vis.all = vis.all + [d.strftime('%Y-%m-%d')] -%}
               {%- if d.isoweekday() <= 5 %}{% set vis.days = vis.days + [d.strftime('%Y-%m-%d')] %}{% endif -%}
             {%- endfor -%}
             {%- macro tidy(t) -%}
@@ -189,66 +191,94 @@ script:
             {%- endmacro -%}
             {%- macro lc(t) %}{{ t[0] | lower ~ t[1:] }}{% endmacro -%}
             {%- macro hm(t) -%}{{ t.strftime('%-I:%M %p') | replace(':00', '') }}{%- endmacro -%}
+            {#- The kids' single-day timed events. A series key is calendar,
+                folded title, start time and duration, as the card's keyOf. -#}
+            {%- set ev = namespace(l=[]) -%}
+            {%- for c in routine_cals -%}
+              {%- for e in cal[c].events | default([]) if 'T' in e.start -%}
+                {%- set st = as_datetime(e.start) | as_local %}{% set en = as_datetime(e.end) | as_local -%}
+                {%- set dur = ((en - st).total_seconds() // 60) | int -%}
+                {%- if st.date() == (en - timedelta(seconds=1)).date() -%}
+                  {%- set folded = e.summary | lower | regex_replace('[^a-z0-9]+', ' ') | trim -%}
+                  {%- set ev.l = ev.l + [{
+                      'cal': c,
+                      'k': c ~ '|' ~ folded ~ '|' ~ st.strftime('%H:%M') ~ '|' ~ dur,
+                      'folded': folded, 'title': e.summary, 'dur': dur,
+                      'weekday': st.isoweekday() <= 5,
+                      'date': st.strftime('%Y-%m-%d'),
+                      'week': (st - timedelta(days=st.isoweekday() - 1)).strftime('%Y-%m-%d'),
+                      'start': st, 'end': en,
+                      'marker': dur <= 15 or folded is match('pick ?up\\b')}] -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endfor -%}
+            {#- The routine: series on the visible weekdays that fall on at
+                least 3 weekdays there or within one Monday-Sunday week. In
+                calendar order, then by first visible occurrence. -#}
+            {%- set wd = ev.l | selectattr('weekday') | list -%}
+            {%- set rt = namespace(l=[], keys=[]) -%}
+            {%- for c in routine_cals -%}
+              {%- for o in wd | selectattr('cal', 'eq', c) | selectattr('date', 'in', vis.days) | sort(attribute='start') -%}
+                {%- if o.k not in rt.keys -%}
+                  {%- set mine = wd | selectattr('k', 'eq', o.k) | list -%}
+                  {%- set nvis = mine | selectattr('date', 'in', vis.days) | map(attribute='date') | unique | list | count -%}
+                  {%- set wk = namespace(max=0) -%}
+                  {%- for w in mine | map(attribute='week') | unique -%}
+                    {%- set n = mine | selectattr('week', 'eq', w) | map(attribute='date') | unique | list | count -%}
+                    {%- if n > wk.max %}{% set wk.max = n %}{% endif -%}
+                  {%- endfor -%}
+                  {%- set rt.keys = rt.keys + [o.k] -%}
+                  {%- if nvis >= 3 or wk.max >= 3 %}{% set rt.l = rt.l + [o] %}{% endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endfor -%}
+            {%- set routine_keys = rt.l | map(attribute='k') | list -%}
             {%- set res = namespace(m={}) -%}
-            {%- for D in vis.days -%}
-            {%- set out = namespace(no=[], changed=[], minor=[]) -%}
-              {%- for c in routine_cals -%}
-                {%- set occ = namespace(l=[]) -%}
-                {%- for ev in cal[c].events | default([]) if 'T' in ev.start -%}
-                  {%- set st = as_datetime(ev.start) | as_local %}{% set en = as_datetime(ev.end) | as_local -%}
-                  {%- set dur = ((en - st).total_seconds() // 60) | int -%}
-                  {%- if st.date() == (en - timedelta(seconds=1)).date() and st.isoweekday() <= 5 -%}
-                    {%- set folded = ev.summary | lower | regex_replace('[^a-z0-9]+', ' ') | trim -%}
-                    {%- set occ.l = occ.l + [{
-                        'k': folded ~ '|' ~ st.strftime('%H:%M') ~ '|' ~ dur,
-                        'folded': folded, 'title': ev.summary, 'dur': dur,
-                        'date': st.strftime('%Y-%m-%d'),
-                        'week': (st - timedelta(days=st.isoweekday() - 1)).strftime('%Y-%m-%d'),
-                        'start': st, 'end': en}] -%}
-                  {%- endif -%}
-                {%- endfor -%}
-                {%- set onD = occ.l | selectattr('date', 'eq', D) | list -%}
-                {%- set onD_keys = onD | map(attribute='k') | list -%}
-                {%- set seen = namespace(k=[]) -%}
-                {%- for o in occ.l | selectattr('date', 'in', vis.days) | sort(attribute='start') -%}
-                  {%- if o.k not in seen.k -%}
-                    {%- set seen.k = seen.k + [o.k] -%}
-                    {%- set mine = occ.l | selectattr('k', 'eq', o.k) | list -%}
-                    {%- set nvis = mine | selectattr('date', 'in', vis.days) | map(attribute='date') | unique | list | count -%}
-                    {%- set wk = namespace(max=0) -%}
-                    {%- for w in mine | map(attribute='week') | unique -%}
-                      {%- set n = mine | selectattr('week', 'eq', w) | map(attribute='date') | unique | list | count -%}
-                      {%- if n > wk.max %}{% set wk.max = n %}{% endif -%}
-                    {%- endfor -%}
-                    {%- if (nvis >= 3 or wk.max >= 3) and o.k not in onD_keys -%}
-                      {%- set title = tidy(o.title) -%}
-                      {%- if o.dur <= 15 or o.folded is match('pick ?up\\b') -%}
-                        {%- set out.minor = out.minor + [title] -%}
-                      {%- else -%}
-                        {%- set alt = onD | selectattr('folded', 'match', o.folded) | first | default(none) -%}
-                        {%- if alt is none -%}
-                          {%- set out.no = out.no + [title] -%}
-                        {%- elif alt.folded == o.folded -%}
-                          {%- set out.changed = out.changed + [title ~ (' from ' ~ hm(alt.start) if alt.start.strftime('%H:%M') != o.start.strftime('%H:%M') else ' until ' ~ hm(alt.end))] -%}
-                        {%- else -%}
-                          {%- set out.changed = out.changed + [tidy(alt.title)] -%}
-                        {%- endif -%}
-                      {%- endif -%}
+            {%- for D in vis.all -%}
+              {%- set onD = ev.l | selectattr('date', 'eq', D) | list -%}
+              {%- set onD_keys = onD | map(attribute='k') | list -%}
+              {%- set out = namespace(no=[], changed=[], minor=[]) -%}
+              {%- if D in vis.days -%}
+                {%- for o in rt.l if o.k not in onD_keys -%}
+                  {%- set title = tidy(o.title) -%}
+                  {%- if o.marker -%}
+                    {%- set out.minor = out.minor + [title] -%}
+                  {%- else -%}
+                    {%- set alt = onD | selectattr('cal', 'eq', o.cal) | selectattr('folded', 'match', o.folded) | first | default(none) -%}
+                    {%- if alt is none -%}
+                      {%- set out.no = out.no + [title] -%}
+                    {%- elif alt.folded == o.folded -%}
+                      {%- set out.changed = out.changed + [title ~ (' from ' ~ hm(alt.start) if alt.start.strftime('%H:%M') != o.start.strftime('%H:%M') else ' until ' ~ hm(alt.end))] -%}
+                    {%- else -%}
+                      {%- set out.changed = out.changed + [tidy(alt.title)] -%}
                     {%- endif -%}
                   {%- endif -%}
                 {%- endfor -%}
+              {%- endif -%}
+              {%- set no = out.no if out.no or out.changed else out.minor -%}
+              {%- set parts = [] -%}
+              {%- if no %}{% set parts = parts + ['No ' ~ (no | map('lower') | join(', '))] %}{% endif -%}
+              {%- if out.changed -%}
+                {%- set ch = namespace(l=[]) -%}
+                {%- for t in out.changed %}{% set ch.l = ch.l + [t if loop.first and not no else lc(t)] %}{% endfor -%}
+                {%- set parts = parts + [ch.l | join(', ')] -%}
+              {%- endif -%}
+              {%- set full = parts | join('; ') -%}
+              {#- The day's schedule: its action times (markers: the bus,
+                  pick-ups) and whatever is outside the routine (a parade; on
+                  weekends, everything), by time, a pick-up shared by both
+                  calendars once. -#}
+              {%- set it = namespace(l=[], seen=[]) -%}
+              {%- for e in onD | sort(attribute='start') if e.marker or e.k not in routine_keys -%}
+                {%- set id = e.folded ~ '|' ~ e.start.strftime('%H:%M') -%}
+                {%- if id not in it.seen -%}
+                  {%- set it.seen = it.seen + [id] -%}
+                  {%- set it.l = it.l + [tidy(e.title) ~ ' ' ~ hm(e.start)] -%}
+                {%- endif -%}
               {%- endfor -%}
-            {%- set no = out.no if out.no or out.changed else out.minor -%}
-            {%- set parts = [] -%}
-            {%- if no %}{% set parts = parts + ['No ' ~ (no | map('lower') | join(', '))] %}{% endif -%}
-            {%- if out.changed -%}
-              {%- set ch = namespace(l=[]) -%}
-              {%- for t in out.changed %}{% set ch.l = ch.l + [t if loop.first and not no else lc(t)] %}{% endfor -%}
-              {%- set parts = parts + [ch.l | join(', ')] -%}
-            {%- endif -%}
-            {%- set full = parts | join('; ') -%}
-            {%- set res.m = dict(res.m, **{D: {'missing': (no or out.changed) | count > 0,
-                'texts': ([full, full | regex_replace(' [AP]M', '')] | unique | list) if full else []}}) -%}
+              {%- set res.m = dict(res.m, **{D: {'missing': (no or out.changed) | count > 0,
+                  'texts': ([full, full | regex_replace(' [AP]M', '')] | unique | list) if full else [],
+                  'items': it.l}}) -%}
             {%- endfor -%}
             {{ res.m }}
           # Persistent notices from the E1001/kitchen banner (lovelace-common/
@@ -447,7 +477,7 @@ script:
                   'hi': (hi | round(0) | int) if hi is not none else '–',
                   'lo': (los | min | round(0) | int) if los else '–',
                   'outlook': ol(hrs, dp) | from_json,
-                  'exception': excs.get(d, {'missing': false, 'texts': []}),
+                  'exception': excs.get(d, {'missing': false, 'texts': [], 'items': []}),
                   'alerts': alerts_by_day.get(d, []),
               }] -%}
             {%- endfor -%}
@@ -576,8 +606,9 @@ script:
       - variables:
           # 4.2" top (392 px of text): the outlook line like the 2.9"'s
           # outlook_fit, larger (18 px bold, hint 16 px), the high/low
-          # positions like nums, and a note line: the exception in red at its
-          # fullest wording that fits, then the calendar alerts if they fit.
+          # positions like nums, and a note line about the kids' day: the
+          # exception in red at its fullest wording that fits, or on other
+          # days their schedule (excs items).
           top42: >-
             {%- macro w(t, tab, size) -%}
               {%- set ns = namespace(n=0) -%}
@@ -611,14 +642,29 @@ script:
               {%- set note.parts = [{'icon': 'mdi:alert-circle', 'text': pick.t, 'color': 'red', 'ix': 4, 'tx': 22, 'font': 'fonts/NotoSansKR-Bold.ttf'}] -%}
               {%- set note.used = 18 + w(pick.t, adv_bold, 14) | float -%}
             {%- endif -%}
-            {%- for a in p.alerts -%}
-              {%- set aw = 18 + w(a.text, adv_regular, 14) | float + (12 if note.parts else 0) -%}
-              {%- if note.used + aw <= width -%}
-                {%- set x = (4 + note.used + (12 if note.parts else 0)) | round(0) | int -%}
-                {%- set note.parts = note.parts + [{'icon': a.icon, 'text': a.text, 'color': 'black', 'ix': x, 'tx': x + 18, 'font': 'fonts/NotoSansKR-Regular.ttf'}] -%}
-                {%- set note.used = note.used + aw -%}
+            {#- No exception: the kids' schedule for the day (action times and
+                anything outside the routine): in full, else without AM/PM,
+                else the items that fit and "…". -#}
+            {%- if not p.exception.missing and p.exception['items'] -%}
+              {%- set budget = width - 18 -%}
+              {%- set full = p.exception['items'] | join(' · ') -%}
+              {%- set short = full | regex_replace(' [AP]M', '') -%}
+              {%- set sc = namespace(t='', all=true) -%}
+              {%- if w(full, adv_regular, 14) | float <= budget -%}
+                {%- set sc.t = full -%}
+              {%- elif w(short, adv_regular, 14) | float <= budget -%}
+                {%- set sc.t = short -%}
+              {%- else -%}
+                {%- for t in p.exception['items'] | map('regex_replace', ' [AP]M', '') -%}
+                  {%- set cand = sc.t ~ (' · ' if sc.t else '') ~ t -%}
+                  {%- if sc.all and w(cand ~ ' …', adv_regular, 14) | float <= budget %}{% set sc.t = cand %}{% else %}{% set sc.all = false %}{% endif -%}
+                {%- endfor -%}
+                {%- set sc.t = sc.t ~ ' …' if sc.t else '' -%}
               {%- endif -%}
-            {%- endfor -%}
+              {%- if sc.t -%}
+                {%- set note.parts = [{'icon': 'mdi:calendar-clock', 'text': sc.t, 'color': 'black', 'ix': 4, 'tx': 22, 'font': 'fonts/NotoSansKR-Regular.ttf'}] -%}
+              {%- endif -%}
+            {%- endif -%}
             {{ {'banner': 'red' if p.exception.missing else 'yellow' if p.offset == 1 else 'white',
                 'ink': 'white' if p.exception.missing else 'black',
                 'outlook': ol.t, 'outlook_size': ol.size, 'wear': ol.wear, 'wear_ix': ol.wear_ix,
@@ -627,25 +673,40 @@ script:
                 'lo_arrow_y': (88 - 0.79 * ls / 2 - 17) | round(0) | int,
                 'lo_arrow_x': lo_arrow, 'lo_x': lo_arrow + 30,
                 'note': note.parts, 'n': note.parts | count} }}
-          # 4.2" footer (392 px): the banner message, then the current
-          # conditions at their fullest wording that fits, and the stamp.
+          # 4.2" footer (392 px), like the 2.9"'s: the notices (banner message,
+          # the shown day's calendar alerts), then the current conditions at
+          # their fullest wording that fits, with x positions for one
+          # baseline, and the stamp at the right. 13 px text, 15 px icons.
           footer42: >-
             {%- macro w(t, tab, size) -%}
               {%- set ns = namespace(n=0) -%}
               {%- for c in t %}{% set ns.n = ns.n + tab.get(c, 0.65) %}{% endfor -%}
               {{- ns.n * size -}}
             {%- endmacro -%}
-            {%- set avail = 392 - w('as of ' ~ stamp, adv_regular, 12) | float - 10 -%}
-            {%- set used = (17 + w(message, adv_bold, 13) | float + 10) if message else 0 -%}
-            {%- set nows = ['Now ' ~ now_temp ~ '° · ' ~ now_name ~ ' · Humidity ' ~ humidity ~ '% · Wind ' ~ wind,
-                            'Now ' ~ now_temp ~ '° · ' ~ now_name ~ ' · ' ~ humidity ~ '% · ' ~ wind,
-                            'Now ' ~ now_temp ~ '° · ' ~ now_name, 'Now ' ~ now_temp ~ '°'] -%}
-            {%- set ns = namespace(t=none) -%}
-            {%- for t in nows -%}
-              {%- if ns.t is none and used + 16 + w(t, adv_regular, 13) | float <= avail %}{% set ns.t = t %}{% endif -%}
+            {%- set cands = namespace(l=[]) -%}
+            {%- if message %}{% set cands.l = [{'icon': 'mdi:bell-outline', 'texts': [message], 'bold': true}] %}{% endif -%}
+            {%- for a in panels[0].alerts -%}
+              {%- set cands.l = cands.l + [{'icon': a.icon, 'texts': [a.text], 'bold': false}] -%}
             {%- endfor -%}
-            {%- set now_x = (4 + used) | round(0) | int -%}
-            {{ {'now': ns.t or '', 'message': message, 'now_ix': now_x, 'now_tx': now_x + 17} }}
+            {%- set cands.l = cands.l + [{'icon': now_icon, 'bold': false, 'texts': [
+                'Now ' ~ now_temp ~ '° · ' ~ now_name ~ ' · Humidity ' ~ humidity ~ '% · Wind ' ~ wind,
+                'Now ' ~ now_temp ~ '° · ' ~ now_name ~ ' · ' ~ humidity ~ '% · ' ~ wind,
+                'Now ' ~ now_temp ~ '° · ' ~ now_name, 'Now ' ~ now_temp ~ '°']}] -%}
+            {%- set ns = namespace(parts=[], used=0, avail=392 - w('as of ' ~ stamp, adv_regular, 12) | float - 10) -%}
+            {%- for c in cands.l -%}
+              {%- set pick = namespace(t=none, w=0) -%}
+              {%- for t in c.texts -%}
+                {%- set iw = 17 + w(t, adv_bold if c.bold else adv_regular, 13) | float + (10 if ns.parts else 0) -%}
+                {%- if pick.t is none and ns.used + iw <= ns.avail %}{% set pick.t = t %}{% set pick.w = iw %}{% endif -%}
+              {%- endfor -%}
+              {%- if pick.t is not none -%}
+                {%- set x = (4 + ns.used + (10 if ns.parts else 0)) | round(0) | int -%}
+                {%- set ns.parts = ns.parts + [{'icon': c.icon, 'text': pick.t, 'ix': x, 'tx': x + 17,
+                    'font': 'fonts/NotoSansKR-Bold.ttf' if c.bold else 'fonts/NotoSansKR-Regular.ttf'}] -%}
+                {%- set ns.used = ns.used + pick.w -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ {'parts': ns.parts, 'n': ns.parts | count} }}
       - action: ble_esl.write_guarded
         continue_on_error: true
         target:
@@ -1022,39 +1083,71 @@ script:
               y_end: 272
               fill: black
               width: 1
-            # Footer: the banner message, current conditions and stamp, one baseline.
+            # Footer: notices, current conditions and the stamp, one baseline.
             - type: icon
-              value: "mdi:bell-outline"
-              x: 4
+              value: "{{ footer42.parts[0].icon if footer42.n > 0 else 'mdi:circle-small' }}"
+              x: "{{ footer42.parts[0].ix if footer42.n > 0 else 0 }}"
               "y": 279
               size: 15
               color: black
-              visible: "{{ footer42.message != '' }}"
+              visible: "{{ footer42.n > 0 }}"
             - type: text
-              value: "{{ footer42.message }}"
-              x: 21
+              value: "{{ footer42.parts[0].text if footer42.n > 0 else '' }}"
+              x: "{{ footer42.parts[0].tx if footer42.n > 0 else 0 }}"
               "y": 291
               size: 13
               color: black
               anchor: ls
-              font: fonts/NotoSansKR-Bold.ttf
-              visible: "{{ footer42.message != '' }}"
+              font: "{{ footer42.parts[0].font if footer42.n > 0 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer42.n > 0 }}"
             - type: icon
-              value: "{{ now_icon }}"
-              x: "{{ footer42.now_ix }}"
+              value: "{{ footer42.parts[1].icon if footer42.n > 1 else 'mdi:circle-small' }}"
+              x: "{{ footer42.parts[1].ix if footer42.n > 1 else 0 }}"
               "y": 279
               size: 15
               color: black
-              visible: "{{ footer42.now != '' }}"
+              visible: "{{ footer42.n > 1 }}"
             - type: text
-              value: "{{ footer42.now }}"
-              x: "{{ footer42.now_tx }}"
+              value: "{{ footer42.parts[1].text if footer42.n > 1 else '' }}"
+              x: "{{ footer42.parts[1].tx if footer42.n > 1 else 0 }}"
               "y": 291
               size: 13
               color: black
               anchor: ls
-              font: fonts/NotoSansKR-Regular.ttf
-              visible: "{{ footer42.now != '' }}"
+              font: "{{ footer42.parts[1].font if footer42.n > 1 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer42.n > 1 }}"
+            - type: icon
+              value: "{{ footer42.parts[2].icon if footer42.n > 2 else 'mdi:circle-small' }}"
+              x: "{{ footer42.parts[2].ix if footer42.n > 2 else 0 }}"
+              "y": 279
+              size: 15
+              color: black
+              visible: "{{ footer42.n > 2 }}"
+            - type: text
+              value: "{{ footer42.parts[2].text if footer42.n > 2 else '' }}"
+              x: "{{ footer42.parts[2].tx if footer42.n > 2 else 0 }}"
+              "y": 291
+              size: 13
+              color: black
+              anchor: ls
+              font: "{{ footer42.parts[2].font if footer42.n > 2 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer42.n > 2 }}"
+            - type: icon
+              value: "{{ footer42.parts[3].icon if footer42.n > 3 else 'mdi:circle-small' }}"
+              x: "{{ footer42.parts[3].ix if footer42.n > 3 else 0 }}"
+              "y": 279
+              size: 15
+              color: black
+              visible: "{{ footer42.n > 3 }}"
+            - type: text
+              value: "{{ footer42.parts[3].text if footer42.n > 3 else '' }}"
+              x: "{{ footer42.parts[3].tx if footer42.n > 3 else 0 }}"
+              "y": 291
+              size: 13
+              color: black
+              anchor: ls
+              font: "{{ footer42.parts[3].font if footer42.n > 3 else 'fonts/NotoSansKR-Regular.ttf' }}"
+              visible: "{{ footer42.n > 3 }}"
             - type: text
               value: "as of {{ stamp }}"
               x: 396

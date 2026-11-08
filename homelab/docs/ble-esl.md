@@ -51,16 +51,20 @@ Both labels show NWS weather (`weather.nws_khpn`, `twice_daily` +
     noon) with its rules: a banner with the date, plain for today, yellow
     for tomorrow and red on an exception day; the condition icon with
     ▲high/▼low; the outlook line with what to wear at its right when it
-    fits; and a note line with the day's exception (red) and calendar
-    alerts (Humira).
+    fits; and a line about the kids' day: the exception in red, or
+    otherwise their schedule. The schedule shows the day's action times
+    (events of 15 min or less: the bus, pick-ups) and anything outside the
+    routine ("Halloween Parade 10 AM"; on weekends, every activity). It is
+    in time order, a shared pick-up appears once, AM/PM is dropped when
+    tight, and the line ends in "…" when items still don't fit.
   - **Strip**: the five days after it, paired from NWS's
     day/night periods like the E1001's daily columns (day's high and
     condition, that night's low, the higher chance; red at ≥ 50%). A red
     day name marks an exception day, for days within the kitchen card's
     one-week window (beyond it the card doesn't judge either).
-  - **Footer**: the banner message, then the current conditions at their
-    fullest wording that fits (with humidity and wind), and the "as of"
-    stamp.
+  - **Footer**, like the 2.9"'s: the banner message and the shown day's
+    calendar alerts (Humira), then the current conditions at their fullest
+    wording that fits (with humidity and wind), and the "as of" stamp.
 
   Both screens are built from the same per-day data (`panels`, `excs`,
   `alerts_by_day`, `strip` in the script), so they agree.
