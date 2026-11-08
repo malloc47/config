@@ -7,7 +7,7 @@ Device firmware configs live in the repo, not in the Device Builder
 |---|---|
 | Device configs | `hosts/aida/esphome/<device>.yaml` (each file is one device) |
 | Shared boilerplate (Wi-Fi, fallback AP, API, OTA, logger, project stamp) | `hosts/aida/esphome/common/base.yaml`, pulled in via `packages:` |
-| Local external components (e.g. e1001-clock's 4-gray `epaper_spi`) | Built by Nix (`epaperSpiG4` in `modules/home-automation.nix`), installed at `/var/lib/esphome/components`; device YAML uses `external_components: source: {type: local, path: components}` |
+| Local external components (e1001-clock's 4-gray `epaper_spi`; living-room-voice-assistant's `esp_audio_stack`/`esp_aec` from n-IA-hane/esphome-audio-stack) | Built by Nix (`esphomeComponents` in `modules/home-automation.nix`), installed at `/var/lib/esphome/components`; device YAML uses `external_components: source: {type: local, path: components}` and lists the components it uses |
 | Local font files (e.g. e1001-clock's DejaVu Sans Bold and MDI glyphs) | Built by Nix (`esphomeFonts` in `modules/home-automation.nix`), installed at `/var/lib/esphome/fonts`; device YAML uses `font: - file: fonts/<name>.ttf` |
 | Secrets (`secrets.yaml`) | `secrets/esphome-secrets.yaml.age` (agenix; aida + malloc47) |
 | On aida | `/var/lib/esphome/<device>.yaml`, `common/` → root-owned copies installed on switch (read-only to the Builder); `secrets.yaml` → symlink to `/run/agenix/esphome-secrets` |
@@ -64,6 +64,18 @@ reflashed HA shows the old revision.
    device into aida doesn't work as-is: the services only allow
    `/dev/ttyS*`/`/dev/ttyUSB*`, and native-USB ESP32-S3/C3 boards enumerate as
    `ttyACM`.) After that, `esphome-deploy <name>` works over OTA.
+
+   Or, with the board plugged into aida: compile it with `sudo systemctl
+   start esphome-deploy@<name>` (the build succeeds, the OTA step fails since
+   the device isn't on the network yet), then write the factory image as root:
+
+   ```sh
+   sudo esptool --port /dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_<mac>-if00 \
+     write-flash 0 /var/lib/esphome/.esphome/build/<name>/build/firmware.factory.bin
+   ```
+
+   (esptool from the ESPHome package's closure.) Back up the stock firmware
+   first with `read-flash 0 ALL <file>`.
 5. Adopt it in HA (Settings → Devices → discovered ESPHome device) using the
    API key. HA config entries are still UI-managed.
 

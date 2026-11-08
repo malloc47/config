@@ -64,7 +64,7 @@ let
             esphome.version
             # Local external components and fonts (installed under
             # components/ and fonts/).
-            (builtins.unsafeDiscardStringContext (toString epaperSpiG4))
+            (builtins.unsafeDiscardStringContext (toString esphomeComponents))
             (builtins.unsafeDiscardStringContext (toString esphomeFonts))
             (builtins.readFile file)
           ]
@@ -85,21 +85,22 @@ let
     exec esphome -s fw_rev "$rev" run --no-logs --device OTA "/var/lib/esphome/$1.yaml"
   '';
 
-  # ESPHome 2026.10 beta, for epaper_spi's `full_update_next` action (PR
-  # esphome/esphome#19213). nixpkgs tops out at 2026.8.0 (unstable) / 2026.5.1
-  # (26.05), so bump unstable's package. 2026.9+ adds `ninja` and widens the
-  # wheel pin; other deps are a few patch/minor releases behind upstream's pins
-  # in unstable, which pythonRelaxDeps tolerates. The skipped tests only fail in
-  # the build sandbox (no network, $HOME or serial port) or exercise dev
-  # tooling. Move to 2026.10.0 once released, and drop this once
+  # ESPHome 2026.10.2: 2026.10 is the first release with epaper_spi's
+  # `full_update_next` action (PR esphome/esphome#19213), and the floor for the
+  # living-room voice assistant's audio-stack components. nixpkgs tops out at
+  # 2026.8.0 (unstable) / 2026.5.1 (26.05), so bump unstable's package. 2026.9+
+  # adds `ninja` and widens the wheel pin; other deps are a few patch/minor
+  # releases behind upstream's pins in unstable, which pythonRelaxDeps
+  # tolerates. The skipped tests only fail in the build sandbox (no network,
+  # $HOME or serial port) or exercise dev tooling. Drop this once
   # nixpkgs-unstable's esphome catches up.
   esphome = pkgs-unstable.esphome.overridePythonAttrs (old: rec {
-    version = "2026.10.0b2";
+    version = "2026.10.2";
     src = pkgs-unstable.fetchFromGitHub {
       owner = "esphome";
       repo = "esphome";
       tag = version;
-      hash = "sha256-/OYRbGA79JZi5V3KlAaCq5gC2gHp9sWnvLMYooXcEWU=";
+      hash = "sha256-DMz0dy8mYUglNP036EwVfPr6A0gIoA/YAk80+hhAwfM=";
     };
     postPatch = builtins.replaceStrings [ "<0.48" ] [ "<0.49" ] old.postPatch;
     dependencies = old.dependencies ++ [ pkgs-unstable.python3Packages.ninja ];
@@ -118,6 +119,8 @@ let
     ];
     disabledTestPaths = old.disabledTestPaths ++ [
       "tests/component_tests/lvgl/test_list_outside_block.py"
+      # PlatformIO prefetch writes its cache under $HOME.
+      "tests/unit_tests/test_platformio_prefetch.py"
       # Dev-tooling tests (dependency-pin sync, protobuf codegen) that need
       # yamlrocks / a newer aioesphomeapi than unstable has; not used at runtime.
       "tests/script/test_sync_dependency_versions.py"
@@ -131,19 +134,19 @@ let
   esphome-device-builder-frontend =
     pkgs-unstable.esphome-device-builder.frontend.overridePythonAttrs
       (old: rec {
-        version = "0.1.366";
+        version = "0.1.373";
         src = pkgs-unstable.fetchFromGitHub {
           owner = "esphome";
           repo = "device-builder-frontend";
           tag = version;
-          hash = "sha256-GbiWj4yVYCVRu4OD6MSetQJaPXlPfdS+b8OnorxVPTE=";
+          hash = "sha256-vroab1H3RsznC6CLf3DirOa6kufp3gBwNVW0FoR8vH4=";
         };
         pnpmDeps = pkgs-unstable.fetchPnpmDeps {
           inherit (old) pname;
           inherit version src;
           pnpm = pkgs-unstable.pnpm_11;
           fetcherVersion = 4;
-          hash = "sha256-84zvZEy4ptVLy/B1WbIVh/hcdi4e/xkXEfd5uldR2wg=";
+          hash = "sha256-3hLkPDFCxG55AuixG5AQhDJyyBEWPhBmNF1HdNo8Lfk=";
         };
       });
   # epaper_spi with the 4-gray UC8179 model from esphome/esphome#18470 (open;
@@ -199,6 +202,25 @@ let
       grep -q 'PLANE_BIT\[4\] = {0, 0, 1, 1};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
       grep -q 'PLANE_BIT_INV\[4\] = {1, 1, 0, 0};' $out/epaper_spi/epaper_spi_uc8179_g4.cpp
     '';
+  # n-IA-hane/esphome-audio-stack: I2S bus and codec driver plus esp-sr echo
+  # cancellation, for the living-room voice assistant (Waveshare 1.85C-BOX V2),
+  # whose mic and speaker share one I2S bus. With it the mic keeps capturing
+  # (echo-cancelled) while the speaker plays, so the wake word still works over
+  # music and replies. Pinned by release tag; its ESP-IDF dependencies (esp-sr,
+  # esp_codec_dev, esp_audio_effects) come from the Espressif registry at
+  # compile time, like ESPHome's own.
+  esphomeAudioStack = pkgs.fetchFromGitHub {
+    owner = "n-IA-hane";
+    repo = "esphome-audio-stack";
+    tag = "v2026.11.0";
+    hash = "sha256-Zetg8cjADcsfQX82T2IrPWPvtCZBKe/5iZlYvBNOh8o=";
+  };
+  # Local external components, installed at /var/lib/esphome/components; device
+  # YAML picks the ones it needs from `components`.
+  esphomeComponents = pkgs.runCommand "esphome-components" { } ''
+    mkdir $out
+    cp -r ${epaperSpiG4}/. ${esphomeAudioStack}/esphome/components/. $out/
+  '';
   # Font files device configs reference as fonts/<name> (installed at
   # /var/lib/esphome/fonts by the esphomeConfigs activation below): e1001-clock
   # draws its battery indicator with the dashboard card's DejaVu Sans Bold and
@@ -211,19 +233,24 @@ let
   esphome-device-builder =
     (pkgs-unstable.esphome-device-builder.override { inherit esphome; }).overridePythonAttrs
       (old: rec {
-        version = "1.22.0";
+        version = "1.25.0";
         src = pkgs-unstable.fetchFromGitHub {
           owner = "esphome";
           repo = "device-builder";
           tag = version;
-          hash = "sha256-CVEet29wYX/0TzVIRkaNNdKNg03YTk4ERDglJqjaBVA=";
+          hash = "sha256-cZBM6HUJ2WjCVP6oMUvLrDaI4gUMSYhlzPQ/10vuVBM=";
         };
         dependencies = map (
           d:
           if (d.pname or "") == "esphome-device-builder-frontend" then esphome-device-builder-frontend else d
         ) old.dependencies;
-        # 1.22's MCP tests import jsonschema (a test-only extra).
+        # The MCP tests import jsonschema (a test-only extra).
         nativeCheckInputs = old.nativeCheckInputs ++ [ pkgs-unstable.python3Packages.jsonschema ];
+        # Compiles real firmware (toolchain download into $HOME); can't run in
+        # the build sandbox.
+        disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
+          "tests/e2e/slow/esp8266/test_native_arduino_compile_download.py"
+        ];
       });
 
   # Exterior doors/gates (plus the attic) for the e1001-clock panel: listed in
@@ -885,11 +912,14 @@ in
       );
       BindReadOnlyPaths = [ "${pkgs.nix-ld}/libexec/nix-ld:/lib64/ld-linux-x86-64.so.2" ];
       # Firmware builds (~1 min, all cores, ~1G) yield to aida's other services.
-      # Inherited by esphome-deploy@ below.
+      # Inherited by esphome-deploy@ below. living-room-voice-assistant's
+      # precompiled header (LVGL, esp-sr, audio stack) across all cores needs
+      # more than 3G; capped there it thrashed in reclaim (600+ GB re-read in
+      # 30 min) instead of compiling.
       CPUWeight = "idle";
       Nice = 19;
       IOSchedulingClass = "idle";
-      MemoryHigh = "3G";
+      MemoryHigh = "5G";
       # The repo owns these (installed by the esphomeConfigs activation script
       # below). The Builder saves via write-to-temp + rename, which would replace
       # a merely root-owned file in its own state dir; a read-only bind mount
@@ -922,7 +952,9 @@ in
         // {
           Type = "oneshot";
           ExecStart = "${esphomeDeploy} %i";
-          TimeoutStartSec = "30min";
+          # A clean build of living-room-voice-assistant (esp-sr, LVGL) at idle
+          # priority runs past 30 min.
+          TimeoutStartSec = "1h";
         };
     };
 
@@ -978,9 +1010,9 @@ in
               ;;
           esac
         done
-        # Local external components and fonts (built by Nix; see epaperSpiG4
-        # and esphomeFonts): replaced wholesale with root-owned copies, like
-        # common/.
+        # Local external components and fonts (built by Nix; see
+        # esphomeComponents and esphomeFonts): replaced wholesale with
+        # root-owned copies, like common/.
         esphomeInstallTree() {
           rm -rf "$2"
           install -d -o root -g esphome -m 0750 "$2"
@@ -989,7 +1021,7 @@ in
           find "$2" -type d -exec chmod 0750 {} +
           find "$2" -type f -exec chmod 0640 {} +
         }
-        esphomeInstallTree ${epaperSpiG4} /var/lib/esphome/components
+        esphomeInstallTree ${esphomeComponents} /var/lib/esphome/components
         esphomeInstallTree ${esphomeFonts} /var/lib/esphome/fonts
         if [ -L /var/lib/esphome/common ]; then rm -f /var/lib/esphome/common; fi
         install -d -o root -g esphome -m 0750 /var/lib/esphome/common
