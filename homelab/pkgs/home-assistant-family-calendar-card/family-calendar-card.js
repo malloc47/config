@@ -1479,8 +1479,9 @@ class FamilyCalendarCard extends HTMLElement {
     bar.hidden = !items.length;
     this.shadowRoot.querySelector(".screen").classList.toggle("has-banner", items.length > 0);
     bar.innerHTML = full;
-    if (items.length && bar.scrollWidth > bar.clientWidth + 1 && this._bn.openDoors().length > 1) {
-      bar.innerHTML = html(this._bn.items(true));
+    // Overflowing: drop the appliances' time left, then fold the open doors.
+    for (let level = 1; level <= 2 && items.length && bar.scrollWidth > bar.clientWidth + 1; level++) {
+      bar.innerHTML = html(this._bn.items(level));
     }
   }
 

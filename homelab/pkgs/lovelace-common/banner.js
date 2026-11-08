@@ -7,7 +7,7 @@
 // Items, in order, each { icon: <MDI name>, text, shrink }:
 //   - the banner message (a Jinja template, default input_text.eink_banner),
 //   - calendar alerts: matching calendar events today, up all day,
-//   - running appliances ("Dishwasher 40%", "... paused"),
+//   - running appliances ("Dishwasher 40% · 1 h 5 min left", "... paused"),
 //   - open doors: the on members of a group (or one summary item, compact).
 // shrink items may ellipsize when the bar is full; the others keep their size.
 //
@@ -24,6 +24,8 @@
 //       state_entity: sensor.dishwasher_operation_state
 //       running_states: [run]                    # default [run]; "pause" shows as paused
 //       progress_entity: sensor.dishwasher_program_progress   # optional "N%"
+//       finish_entity: sensor.dishwasher_program_finish_time  # optional "· N min left"
+//                                                # (a timestamp; dropped first when the bar is full)
 //   doors_entity: binary_sensor.perimeter_doors  # group whose open members are listed
 
 // Free-text message shown first (empty hides it).
@@ -101,16 +103,18 @@ export class Banner {
     return !this._calAlerts?.length || this._calItemsDay === this._localDate(Date.now());
   }
 
-  // Everything to show now. compact folds the open doors into one item (for
-  // a bar that overflowed).
+  // Everything to show now, at a level of compactness for a bar that
+  // overflowed: 0 everything, 1 appliances without their time left, 2 also
+  // the open doors folded into one item (compact = true means 2).
   items(compact = false) {
+    const level = compact === true ? 2 : Number(compact) || 0;
     this._refreshCalendarAlerts();
     const doors = this.openDoors();
     return [
       ...(this._message ? [{ icon: "bell-outline", text: this._message, shrink: true }] : []),
       ...(this._calItemsDay === this._localDate(Date.now()) ? this._calItems : []),
-      ...this.appliances(),
-      ...(compact && doors.length > 1
+      ...this.appliances().map(({ long, ...it }) => (level === 0 && long ? { ...it, text: long } : it)),
+      ...(level >= 2 && doors.length > 1
         ? [{ icon: "door-open", text: `${doors.length} open: ${doors.map((d) => d.text).join(", ")}`, shrink: true }]
         : doors),
     ];
@@ -134,7 +138,8 @@ export class Banner {
   }
 
   // Running appliances: icon + "<name> <progress>%" (with "paused"
-  // mid-cycle). Nothing when idle, finished or unavailable.
+  // mid-cycle), and as `long` the same with the time left when there's a
+  // finish_entity. Nothing when idle, finished or unavailable.
   appliances() {
     return (this.config.appliances || [])
       .map((a) => {
@@ -144,7 +149,16 @@ export class Banner {
         if (!running && !paused) return null;
         const pct = a.progress_entity ? num(this.hass.states[a.progress_entity]?.state) : null;
         const parts = [a.name, paused ? "paused" : null, pct !== null ? `${Math.round(pct)}%` : null];
-        return { icon: a.icon || "dishwasher", text: parts.filter(Boolean).join(" ") };
+        const text = parts.filter(Boolean).join(" ");
+        // Time left until the finish timestamp, for the roomier form.
+        const finish = a.finish_entity ? Date.parse(this.hass.states[a.finish_entity]?.state) : NaN;
+        const mins = Math.ceil((finish - Date.now()) / 60000);
+        let left = null;
+        if (!paused && mins > 0) {
+          const [h, m] = [Math.floor(mins / 60), mins % 60];
+          left = h ? `${h} h${m ? ` ${m} min` : ""} left` : `${m} min left`;
+        }
+        return { icon: a.icon || "dishwasher", text, long: left ? `${text} · ${left}` : null };
       })
       .filter(Boolean);
   }

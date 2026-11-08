@@ -100,7 +100,8 @@ views:
         # Notification bar along the bottom edge, with the same notices as the
         # living room e-ink panel's banner (keep these in step with
         # eink-panel-dashboard.yaml): the banner message (default template,
-        # input_text.eink_banner), Humira days, a running dishwasher and open
+        # input_text.eink_banner), Humira days, a running dishwasher (with its
+        # time left here, when the bar has room) and open
         # perimeter doors. Hidden while empty; it never wakes the tablet.
         banner: true
         calendar_alerts:
@@ -112,6 +113,7 @@ views:
             icon: dishwasher
             state_entity: sensor.dishwasher_operation_state
             progress_entity: sensor.dishwasher_program_progress
+            finish_entity: sensor.dishwasher_program_finish_time
         doors_entity: binary_sensor.perimeter_doors
         controls_columns: 3
         # A tap anywhere on a control toggles it (HA's tiles otherwise toggle
@@ -149,37 +151,14 @@ views:
             name: Kitchen fan
             tap_action:
               action: toggle
-          # Dishwasher: its state, or the finish time while a program runs.
-          - type: conditional
-            conditions:
-              - condition: state
-                entity: sensor.dishwasher_operation_state
-                state_not: run
-            card:
-              type: tile
-              entity: sensor.dishwasher_operation_state
-              name: Dishwasher
-              icon: mdi:dishwasher
-              # Status only: nothing to toggle, and no popup on a tap.
-              tap_action:
-                action: none
-              icon_tap_action:
-                action: none
-          - type: conditional
-            conditions:
-              - condition: state
-                entity: sensor.dishwasher_operation_state
-                state: run
-            card:
-              type: tile
-              entity: sensor.dishwasher_program_finish_time
-              name: Dishwasher done
-              icon: mdi:dishwasher
-              # Status only: nothing to toggle, and no popup on a tap.
-              tap_action:
-                action: none
-              icon_tap_action:
-                action: none
+          # Deck lights (the switch_as_x light over the deck relay). The
+          # dishwasher's progress and time left are in the notification bar.
+          - type: tile
+            entity: light.patio_lights
+            name: Deck lights
+            icon: mdi:outdoor-lamp
+            tap_action:
+              action: toggle
           # Front door: toggles Kiosk Satellite's own full-screen camera view
           # (its "Default" view is the front door camera) rather than HA's
           # popup. Styled as a button (the card's `button` option).
