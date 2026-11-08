@@ -59,7 +59,7 @@ external_components:
   - source:
       type: local
       path: components
-    components: [esp_audio_stack, esp_aec]
+    components: [esp_audio_stack, esp_aec, esp_audio_capture]
 
 esphome:
   min_version: 2026.10.0
@@ -162,6 +162,11 @@ globals:
     type: int
     restore_value: false
     initial_value: "0"
+  # Set while the mics run at the lower playback PGA.
+  - id: playback_pga_active
+    type: bool
+    restore_value: false
+    initial_value: "false"
   # While set, the ring shows the volume instead of the phase.
   - id: show_volume
     type: bool
@@ -171,6 +176,7 @@ globals:
 # --- Audio -------------------------------------------------------------------
 
 esp_audio_stack:
+  id: audio_bus
   i2s_lrclk_pin: GPIO38
   i2s_bclk_pin: GPIO48
   i2s_mclk_pin: GPIO2
@@ -195,8 +201,8 @@ esp_audio_stack:
       type: es7210
       address: 0x40
       mic_selected: 15
-      # The speaker sits close enough to overload the ADC at higher gain;
-      # capture with headroom and add gain after AEC (Mic Gain below).
+      # Overridden at runtime by the Mic PGA numbers below: high while
+      # listening, low during playback.
       gain_db: 0.0
       # Physical MIC3 carries the attenuated DAC output (TDM slot 1).
       ref_channel: 2
@@ -216,8 +222,14 @@ esp_audio_stack:
   on_amplifier_required:
     - script.stop: amp_idle_powerdown
     - output.turn_on: speaker_enable
+    - script.execute: pga_for_playback
   on_amplifier_idle:
     - script.execute: amp_idle_powerdown
+    - script.stop: pga_for_playback
+    - lambda: id(playback_pga_active) = false;
+    - number.set:
+        id: mic_pga
+        value: !lambda return id(mic_pga_listening).state;
 
 esp_aec:
   id: aec_processor
@@ -623,13 +635,67 @@ switch:
 
 number:
   - platform: esp_audio_stack
-    # Gain after AEC: the ADC captures at 0 dB for headroom (see codec above).
+    # Digital gain after AEC; it can't recover what the ADC didn't resolve.
     mic_gain:
       id: mic_gain
       name: Mic Gain
       min_value: -20
       max_value: 30
       initial_value: 24
+    # Analog ES7210 gain (0-37.5 dB) for the two mics, driven by the two
+    # template numbers below, and for the DAC reference channel.
+    input_pga:
+      id: mic_pga
+      name: Microphone PGA
+      internal: true
+    reference_pga:
+      name: Reference PGA
+
+  # Analog mic gain switches with playback. Measured 2026-11-08 at 5 ft: at
+  # 0 dB speech reached the ADC at -78 dBFS (peaks -62), too few bits for the
+  # wake word; 30 dB brings it to -51 dBFS. But at 30 dB the speaker (50%
+  # volume) clips the mics and AEC then removes only ~1 dB of echo, so
+  # playback longer than the wake chime drops to the lower gain.
+  - platform: template
+    id: mic_pga_listening
+    name: Mic PGA (listening)
+    icon: mdi:microphone-plus
+    entity_category: config
+    unit_of_measurement: dB
+    min_value: 0
+    max_value: 37.5
+    step: 1.5
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    on_value:
+      - if:
+          condition:
+            lambda: return !id(playback_pga_active);
+          then:
+            - number.set:
+                id: mic_pga
+                value: !lambda return x;
+  - platform: template
+    id: mic_pga_playback
+    name: Mic PGA (during playback)
+    icon: mdi:microphone-minus
+    entity_category: config
+    unit_of_measurement: dB
+    min_value: 0
+    max_value: 37.5
+    step: 1.5
+    initial_value: 12
+    restore_value: true
+    optimistic: true
+    on_value:
+      - if:
+          condition:
+            lambda: return id(playback_pga_active);
+          then:
+            - number.set:
+                id: mic_pga
+                value: !lambda return x;
 
 binary_sensor:
   - platform: gpio
@@ -663,6 +729,30 @@ button:
   - platform: restart
     name: Restart
     entity_category: config
+  - platform: template
+    name: Start audio capture
+    entity_category: diagnostic
+    on_press:
+      - esp_audio_capture.start: audio_capture
+  - platform: template
+    name: Stop audio capture
+    entity_category: diagnostic
+    on_press:
+      - esp_audio_capture.stop: audio_capture
+
+# Diagnostics: streams 15 s of PCM from each stage (both raw mics, the echo
+# reference, AEC in/out, final output) over TCP to a receiver on aida, for
+# level and gain tuning. Nothing runs until Start is pressed. Receiver:
+# esphome-audio-stack's tools/capture_audio.py, port 19091 (closed in aida's
+# firewall unless opened for the capture).
+esp_audio_capture:
+  id: audio_capture
+  esp_audio_stack_id: audio_bus
+  microphone_id: mic
+  address: 192.168.1.10
+  duration: 15s
+  buffer_size: 65536
+  points: [raw_mic, reference, processor_input, processor_output, output]
 
 script:
   # Start a push-to-talk session (BOOT/tap); a wake word passes its own word.
@@ -798,6 +888,22 @@ script:
                 id(phase) = ${phase_idle};
                 id(session_text) = "";
             - script.execute: draw_display
+
+  # Lower the analog mic gain once playback has run past the wake chime
+  # (so a command spoken right after the chime keeps the listening gain);
+  # on_amplifier_idle restores it.
+  - id: pga_for_playback
+    mode: restart
+    then:
+      - delay: 700ms
+      - if:
+          condition:
+            lambda: return id(phase) != ${phase_waiting} && id(phase) != ${phase_listening};
+          then:
+            - lambda: id(playback_pga_active) = true;
+            - number.set:
+                id: mic_pga
+                value: !lambda return id(mic_pga_playback).state;
 
   - id: amp_idle_powerdown
     mode: restart
