@@ -5,8 +5,9 @@
 #
 #   ESL 4.2" (PSJ-420, 400x300 BWRY)  image.esl_420_*  — weather: now, the next
 #                                     four NWS periods, and a 24 h temperature line
-#   ESL 2.9" (PSJ-290, 296x128 BWRY)  image.esl_290_*  — current outdoor temp, plus
-#                                     today's forecast before noon, tomorrow's after
+#   ESL 2.9" (PSJ-290, 296x128 BWRY)  image.esl_290_*  — kids' room: the day ahead
+#                                     (today before noon, tomorrow after), with
+#                                     current conditions as a footer
 #
 # Data is NWS (weather.nws_khpn): twice_daily day/night periods and hourly.
 # When NWS is unavailable the run is skipped, so the labels keep the last good
@@ -34,6 +35,17 @@ script:
         # empty mappings, which leaves an invalid empty selector.
         selector:
           boolean:
+      forecast_day:
+        description: >-
+          Which day the 2.9" shows. auto = today before noon, tomorrow from
+          noon on; today/tomorrow force one, for previewing both layouts.
+        default: auto
+        selector:
+          select:
+            options:
+              - auto
+              - today
+              - tomorrow
     sequence:
       - condition: template
         value_template: "{{ states('weather.nws_khpn') not in ['unavailable', 'unknown'] }}"
@@ -52,6 +64,7 @@ script:
       - variables:
           dry: "{{ dry_run | default(false) | bool }}"
           periods: "{{ twice_daily['weather.nws_khpn'].forecast }}"
+          all_hours: "{{ hourly['weather.nws_khpn'].forecast }}"
           hours: "{{ hourly['weather.nws_khpn'].forecast[:24] }}"
           night: "{{ is_state('sun.sun', 'below_horizon') }}"
           icons:
@@ -129,27 +142,52 @@ script:
             {% endfor %}
             {{ ns.out }}
           temps: "{{ hours | map(attribute='temperature') | map('round', 0) | map('int') | list }}"
-          # 2.9": today's day period before noon, tomorrow's after, each with the
-          # night that follows it.
-          afternoon: "{{ now().hour >= 12 }}"
+          # 2.9": the day to get ready for — today before noon, tomorrow from
+          # noon on (the evening look at tomorrow).
+          tomorrow: >-
+            {% set f = forecast_day | default('auto') %}
+            {{ f == 'tomorrow' or (f == 'auto' and now().hour >= 12) }}
       - variables:
-          want: "{{ (now() + timedelta(days=1 if afternoon else 0)).date() | string }}"
+          want: "{{ (now() + timedelta(days=1 if tomorrow else 0)).date() | string }}"
       - variables:
+          # Falls back to the next daytime period when that day has none left
+          # (today, late); everything below follows the period actually picked.
           day: >-
             {{ periods | selectattr('is_daytime') | selectattr('datetime', 'match', want)
                | list | first | default(periods | selectattr('is_daytime') | first, true) }}
       - variables:
-          after: >-
-            {{ periods | rejectattr('is_daytime') | selectattr('datetime', '>', day.datetime)
-               | list | first | default({}, true) }}
+          # A string ("2026-11-08"): script variables don't keep date objects.
+          day_date: "{{ (as_datetime(day.datetime) | as_local).date() | string }}"
+      - variables:
+          # The hourly forecast over that day's waking hours (7 AM-8 PM; for
+          # today, what is left of them): its range and wettest hour are what
+          # the kids dress and pack for. The overnight lows on either side are not.
+          waking: >-
+            {% set ns = namespace(out=[]) %}
+            {% for h in all_hours %}
+              {% set t = as_datetime(h.datetime) | as_local %}
+              {% if t.date() | string == day_date and 7 <= t.hour <= 20 %}
+                {% set ns.out = ns.out + [h] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.out }}
+      - variables:
           day_label: >-
-            {{ ('Tomorrow' if afternoon else 'Today') ~ ' · '
-               ~ (as_datetime(day.datetime) | as_local).strftime('%a') }}
+            {% set d = as_datetime(day_date) %}
+            {% set n = (d.date() - now().date()).days %}
+            {{ ('Today · ' if n == 0 else 'Tomorrow · ' if n == 1 else '')
+               ~ d.strftime('%A') }}
           day_icon: "{{ icons.get(day.condition, 'mdi:weather-cloudy') }}"
           day_name: "{{ names.get(day.condition, day.condition) }}"
-          day_pop: >-
-            {{ [day.precipitation_probability | default(0, true),
-                after.precipitation_probability | default(0, true)] | max | int }}
+          day_hi: >-
+            {{ ([day.temperature] + (waking | map(attribute='temperature') | list))
+               | max | round(0) | int }}
+          day_lo: >-
+            {{ (waking | map(attribute='temperature') | list
+                or [day.temperature]) | min | round(0) | int }}
+          day_rain: >-
+            {{ (waking | map(attribute='precipitation_probability') | map('default', 0, true) | list
+                or [day.precipitation_probability | default(0, true)]) | max | int }}
       - action: ble_esl.write_guarded
         continue_on_error: true
         target:
@@ -395,112 +433,113 @@ script:
           dry_run: "{{ dry }}"
           background: white
           payload:
-            # Now (left)
-            - type: text
-              value: NOW
-              x: 8
-              "y": 4
-              size: 13
-              color: black
-              font: fonts/NotoSansKR-Bold.ttf
-            - type: text
-              value: "{{ now_temp }}°"
-              x: 58
-              "y": 56
-              size: 56
-              color: black
-              anchor: mm
-              font: fonts/NotoSansKR-Bold.ttf
-            - type: icon
-              value: "{{ now_icon }}"
-              x: 6
-              "y": 88
-              size: 22
-              color: black
-            - type: text_fit
-              value: "{{ now_name }}"
-              x: 30
-              "y": 88
-              width: 88
-              height: 22
-              size: 13
-              min_size: 9
-              max_lines: 1
-              fit: shrink
-              padding: 0
-              color: black
-              font: fonts/NotoSansKR-Regular.ttf
-            - type: text
-              value: "as of {{ stamp }}"
-              x: 8
-              "y": 124
-              size: 11
-              color: black
-              anchor: lb
-              font: fonts/NotoSansKR-Regular.ttf
-            - type: line
-              x_start: 120
-              y_start: 0
-              x_end: 120
-              y_end: 127
-              fill: black
-              width: 2
-            # Today (morning) or tomorrow (afternoon) — right
+            # The day ahead: header, then condition, high, low and rain chance
+            # as large as fits.
             - type: rectangle
-              x_start: 121
+              x_start: 0
               y_start: 0
               x_end: 295
-              y_end: 22
+              y_end: 23
               fill: yellow
             - type: text
               value: "{{ day_label }}"
-              x: 208
-              "y": 11
-              size: 15
+              x: 148
+              "y": 12
+              size: 16
               color: black
               anchor: mm
               font: fonts/NotoSansKR-Bold.ttf
             - type: icon
               value: "{{ day_icon }}"
-              x: 128
-              "y": 30
-              size: 52
+              x: 2
+              "y": 25
+              size: 62
               color: black
             - type: text
-              value: "Hi {{ day.temperature | round(0) | int }}°"
-              x: 190
-              "y": 30
-              size: 24
+              value: "{{ day_hi }}°"
+              x: 68
+              "y": 22
+              size: 44
               color: red
               font: fonts/NotoSansKR-Bold.ttf
             - type: text
-              value: "Lo {{ after.temperature | round(0) | int }}°"
-              x: 190
-              "y": 60
-              size: 20
+              value: high
+              x: 72
+              "y": 72
+              size: 12
               color: black
-              visible: "{{ after.temperature is defined }}"
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "{{ day_lo }}°"
+              x: 150
+              "y": 32
+              size: 32
+              color: black
               font: fonts/NotoSansKR-Bold.ttf
             - type: text
-              value: "{{ day_name }}"
-              x: 128
-              "y": 84
-              size: 15
+              value: low
+              x: 152
+              "y": 72
+              size: 12
               color: black
               font: fonts/NotoSansKR-Regular.ttf
             - type: icon
               value: mdi:umbrella-outline
-              x: 128
-              "y": 106
-              size: 18
+              x: 214
+              "y": 36
+              size: 26
+              color: "{{ 'red' if day_rain >= 50 else 'black' }}"
+            - type: text
+              value: "{{ day_rain }}%"
+              x: 242
+              "y": 34
+              size: 22
+              color: "{{ 'red' if day_rain >= 50 else 'black' }}"
+              font: fonts/NotoSansKR-Bold.ttf
+            - type: text
+              value: rain
+              x: 244
+              "y": 72
+              size: 12
+              color: black
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "{{ day_name }}"
+              x: 6
+              "y": 86
+              size: 15
+              color: black
+              font: fonts/NotoSansKR-Bold.ttf
+            # Footer: right now
+            - type: line
+              x_start: 0
+              y_start: 107
+              x_end: 295
+              y_end: 107
+              fill: black
+              width: 1
+            - type: icon
+              value: "{{ now_icon }}"
+              x: 4
+              "y": 110
+              size: 16
               color: black
             - type: text
-              value: "{{ day_pop }}%"
-              x: 150
-              "y": 106
-              size: 14
-              color: "{{ 'red' if day_pop >= 50 else 'black' }}"
-              font: fonts/NotoSansKR-Bold.ttf
+              value: "Now {{ now_temp }}° · {{ now_name }}"
+              x: 24
+              "y": 118
+              size: 13
+              color: black
+              anchor: lm
+              font: fonts/NotoSansKR-Regular.ttf
+            - type: text
+              value: "as of {{ stamp }}"
+              x: 292
+              "y": 118
+              size: 11
+              color: black
+              anchor: rm
+              font: fonts/NotoSansKR-Regular.ttf
         response_variable: result_290
 
 automation:

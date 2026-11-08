@@ -49,11 +49,16 @@ Both labels show NWS weather (`weather.nws_khpn`, `twice_daily` +
   humidity and wind; the next four NWS day/night periods (red for daytime
   highs, black for overnight lows, precipitation shown when ≥ 10%); and a
   24-hour temperature line.
-- **2.9"**: current outdoor temperature (the most prominent element) and
-  condition on the left. On the right is the forecast for **today before
-  noon and tomorrow from noon on**: high, the following night's low,
-  condition, and the higher precipitation chance of the two periods (red at
-  ≥ 50%).
+- **2.9"** (kids' room): the day to get ready for, **today before noon and
+  tomorrow from noon on**, filling the screen. It shows the weekday, the
+  condition icon and name, the high (red), the low and the chance of rain
+  (red at ≥ 50%). High, low and rain cover that day's waking hours (7 AM to
+  8 PM, from the hourly forecast; for today, what is left of them), not the
+  overnight lows either side. The high also takes NWS's daytime high. A
+  one-line footer has the current temperature and condition with the "as
+  of" stamp. The script's `forecast_day` field (`auto`/`today`/`tomorrow`)
+  forces either view for previewing. If today has no daytime period left,
+  it shows the next day, labelled as such.
 
 `automation.esl_refresh_weather_labels` runs the script at 06, 09, 12, 15,
 18 and 21:00. When NWS is unavailable or returns too few periods the run
@@ -71,7 +76,7 @@ failing tag does not stop the other.
 1. Edit `hosts/aida/home-assistant/ble-esl.yaml`.
 2. `nixos-deploy aida` (HA reloads or restarts to pick it up).
 3. Preview: Developer Tools → Actions → `script.esl_weather_render` with
-   `dry_run: true`, then open `image.esl_420_preview_content` /
+   `dry_run: true` (and `forecast_day` to see the other 2.9" view), then open `image.esl_420_preview_content` /
    `image.esl_290_preview_content`. This renders but sends nothing.
 4. Send: run the automation, or the script without `dry_run`.
 
