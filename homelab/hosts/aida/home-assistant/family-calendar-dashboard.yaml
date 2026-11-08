@@ -114,6 +114,9 @@ views:
             progress_entity: sensor.dishwasher_program_progress
         doors_entity: binary_sensor.perimeter_doors
         controls_columns: 3
+        # A tap anywhere on a control toggles it (HA's tiles otherwise toggle
+        # only from the icon and open the more-info popup elsewhere); a long
+        # press still opens the popup for the full controls.
         cards:
           # Lights: one row each, the brightness slider beside the icon
           # (which toggles them), so the row is as tall as the next.
@@ -121,12 +124,16 @@ views:
             entity: light.kitchen_overhead_lights
             name: Kitchen
             features_position: inline
+            tap_action:
+              action: toggle
             features:
               - type: light-brightness
           - type: tile
             entity: light.kitchen_counter_lights
             name: Counter
             features_position: inline
+            tap_action:
+              action: toggle
             features:
               - type: light-brightness
           # Dining room ceiling fixture (light and fan together, one switch).
@@ -134,10 +141,14 @@ views:
             entity: light.dining_room_light_fan
             name: Dining light + fan
             icon: mdi:ceiling-fan-light
+            tap_action:
+              action: toggle
           # Relay L2 of the "Dining Room Relay".
           - type: tile
             entity: fan.kitchen_fan
             name: Kitchen fan
+            tap_action:
+              action: toggle
           # Dishwasher: its state, or the finish time while a program runs.
           - type: conditional
             conditions:
@@ -149,6 +160,11 @@ views:
               entity: sensor.dishwasher_operation_state
               name: Dishwasher
               icon: mdi:dishwasher
+              # Status only: nothing to toggle, and no popup on a tap.
+              tap_action:
+                action: none
+              icon_tap_action:
+                action: none
           - type: conditional
             conditions:
               - condition: state
@@ -159,6 +175,11 @@ views:
               entity: sensor.dishwasher_program_finish_time
               name: Dishwasher done
               icon: mdi:dishwasher
+              # Status only: nothing to toggle, and no popup on a tap.
+              tap_action:
+                action: none
+              icon_tap_action:
+                action: none
           # Front door: toggles Kiosk Satellite's own full-screen camera view
           # (its "Default" view is the front door camera) rather than HA's
           # popup. Styled as a button (the card's `button` option).
