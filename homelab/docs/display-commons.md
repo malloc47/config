@@ -1,6 +1,7 @@
 # Display commons: shared notices, outlook and schedule for every display
 
-Status: **design, not started** (2026-11-07). Paths are relative to
+Status: **design, not started** (2026-11-07; schedule directives and the
+voice assistant's display added 2026-11-08). Paths are relative to
 `homelab/` unless written `config: <path>`.
 
 aida drives several displays of very different kinds. Each one grew its own
@@ -41,6 +42,7 @@ are presentation and stay in the cards.
 | Kindle Paperwhite 3 (bedroom) | `kindle-weather-card` → Puppet PNG | hourly wake | 1072×1448, 16 grays, full redraw, battery |
 | ESL 2.9" (kids' room) | Jinja + imagespec in `ble-esl.yaml` | 6 AM–9 PM every 3 h | 296×128, BWRY, BLE, battery |
 | ESL 4.2" | same | same | 400×300, BWRY |
+| Living-room voice assistant (Waveshare ESP32-S3 1.85C-BOX) | ESPHome firmware, LVGL (`hosts/aida/esphome/living-room-voice-assistant.yaml`) | live (HA state pushes) | 360×360 round LCD; LVGL fonts carry a compiled glyph set (Montserrat), icons only from a compiled list; a conversation, timer or clock owns the screen most of the time |
 | Phone (mobile_app notify) | HA notifications | on event | interrupts; only for what's urgent |
 
 ## Where the shared logic lives today
@@ -72,6 +74,7 @@ calendars, weather, appliances, doors, todo.notices, input helpers
         ▼
   display profiles (Nix) ──► renderers: lovelace-common (cards, Puppet),
                              ESL (imagespec or Puppet + dlimg),
+                             ESPHome/LVGL firmware (flat attributes),
                              Markdown cards, phone notify
 ```
 
@@ -81,7 +84,11 @@ Three sensors, plus one native to-do list:
 
 - **`sensor.household_notices`**: state is the number of active notices;
   attributes are `items` (the notice contract below), `profiles` (each
-  display's selection) and `revisions` (a hash per display profile).
+  display's selection) and `revisions` (a hash per display profile). For
+  profiles marked `flat`, there are also plain string attributes
+  `<profile>_text` and `<profile>_icon` (the selection already rendered to
+  one line). ESPHome reads an attribute as its string form, so firmware
+  can't usefully read the nested `profiles` value.
 - **`todo.notices`** (HA's local to-do integration): ad-hoc notices.
   Add one from the HA app, or from an automation with `todo.add_item`. The
   due date is the expiry, and the description carries options in the same
@@ -128,6 +135,12 @@ A renderer applies these rules, in this order:
    display refreshes** and **fits** the space left. If none fits, show the
    icon alone where the profile allows, or drop the notice.
 4. Stop when the profile's slots run out.
+5. Adapt the result to the profile's character set and icon list. A
+   `charset: basic` profile gets the text with typographic characters
+   replaced ("·" → "-", "—" → "-", curly quotes → straight; anything else
+   outside the set dropped). An icon not in the profile's `icons` list
+   becomes its `fallbackIcon`. Firmware fonts then never show a missing
+   glyph.
 
 The selection runs server-side, so each profile's list arrives ready in
 `profiles.<name>`; the JS and Jinja renderers only lay it out. Fitting to
@@ -157,9 +170,20 @@ displays = {
   kindle = { refresh = "1h"; slots = 1; minPriority = "high"; rooms = [ "bedroom" ]; };
   esl-290 = { refresh = "3h"; slots = 1; minPriority = "high"; rooms = [ "kids" ]; };
   esl-420 = { refresh = "3h"; slots = 2; minPriority = "normal"; rooms = [ "kids" ]; };
+  voice-living = {
+    refresh = "live"; slots = 1; minPriority = "high"; rooms = [ "living" ];
+    flat = true; charset = "basic";
+    icons = [ "needle" "alert" "alarm-light" "dishwasher" "door-open" "trash-can-outline" ];
+    fallbackIcon = "bell-outline";
+  };
   phone = { refresh = "event"; minPriority = "critical"; };
 };
 ```
+
+`flat`, `charset` and `icons` exist for firmware-native displays (ESPHome
+with LVGL or a `display:` lambda), whose fonts and icon glyphs are fixed at
+build time. The `icons` list stays in step with the glyphs compiled into the
+firmware: generate both from the same Nix list where possible.
 
 ### 4. Refresh driven by revisions
 
@@ -190,6 +214,15 @@ interval for battery devices:
   dashboard can show the notices this way.
 - Phone: one automation sends notifications for new `critical`/`high`
   notices from the phone profile, deduplicated by `id`.
+- Voice assistant (and future ESPHome displays): two `text_sensor`s with
+  `platform: homeassistant` read `sensor.household_notices`'
+  `voice-living_text` and `voice-living_icon` attributes. The LVGL page
+  shows them under the clock and date only while the assistant is idle;
+  listening, a reply or a running timer take precedence, as now.
+  `critical` could also tint the phase ring. Updates arrive as HA state
+  pushes, so the profile is `live`: firmware redraws only changed labels,
+  and the selection already absorbed the minute-by-minute forms (`slots =
+  1`, `minPriority = "high"`, so a dishwasher countdown never reaches it).
 - ESLs, two options:
   1. Keep imagespec, but read the feeds: the Jinja shrinks to layout, with
      no outlook, routine or notice logic.
@@ -210,15 +243,32 @@ the routine logic needs tests. Its surface stays small: the three sensors,
 optional `household.post_notice` / `household.clear_notice` services (the
 to-do list may make them unnecessary), and the profile config from Nix.
 
-## Calendar events as notices
+## Event directives: calendar events as notices and schedule hints
 
-Today a notice from a calendar takes a rule per card: `calendar_alerts:
-{entity, match: "^Humira$", icon}` (copied into three configs). You've
-offered to mark the events themselves instead, which makes the mechanism
-general: any event on any calendar, now or later, can become a notice with
-no config change.
+Calendar events can carry instructions for the feeds, written in the
+events themselves rather than in per-display config. One syntax covers two
+uses: `#notice` makes an event a notice, and the schedule directives
+(`#routine`, `#once`, `#exception`, `#pickup`, `#marker`) correct
+`sensor.family_schedule` where its heuristics guess wrong. Today both are
+config: a notice from a calendar takes a rule per card (`calendar_alerts:
+{entity, match: "^Humira$", icon}`, copied into three configs), and the
+schedule's guesses are tuned with `min_days`, `pickup_match` and a 15-minute
+marker cutoff (copied into the card and the ESL Jinja). With directives, any
+event on any calendar, now or later, can become a notice or steer the
+schedule with no config change.
 
-### Options considered
+### Directive syntax
+
+One directive per line in the event description: `#<name>`, then bare
+words and `key=value` pairs (quote values with spaces). Lines are
+case-insensitive and read after HTML is stripped (`<p>`, `<br>` and
+entities like `&amp;`, which Google returns for rich-text descriptions).
+Several directives can share an event (one per line), unknown directives
+and keys are ignored (reserved for later), and a malformed line is ignored
+and logged once. A directive on a recurring series applies to every
+occurrence.
+
+### Notice mechanisms considered
 
 | Mechanism | Example | For | Against |
 |---|---|---|---|
@@ -227,12 +277,9 @@ no config change.
 | Title emoji | `💉 Humira` | visible in the calendar, fast to type on a phone | carries only "notice + icon"; the emoji shows on every display (strip it, or map it to MDI, since e-ink and ESL fonts have no emoji) |
 | Description directive | a line `#notice high icon=needle` | carries any field; invisible in calendar grids; set once on a recurring series, it covers every instance | not visible at a glance; descriptions arrive as HTML |
 
-### Recommendation: a directive, an emoji shorthand, and rules for foreign calendars
+### Notices: a directive, an emoji shorthand, and rules for foreign calendars
 
-1. **Description directive** (the general mechanism). A line in the event
-   description, case-insensitive, after HTML is stripped (`<p>`, `<br>`
-   and entities like `&amp;`, which Google returns for rich-text
-   descriptions):
+1. **`#notice`** (the general mechanism):
 
    ```
    #notice
@@ -283,10 +330,34 @@ calendar ("Transfig: no aftercare — Staff dev.") become notices with
 `#notice high rooms=kitchen,kids from=-1d`, so they show the evening
 before.
 
-The same directive syntax could later carry schedule hints for
-`sensor.family_schedule`, for example `#routine` to force an event into the
-routine, or `#exception` to flag a day. That's an open question below, not
-part of the first step.
+### Schedule directives
+
+`sensor.family_schedule` keeps its heuristics as defaults: a routine is a
+series on at least `min_days` weekdays of a week within the lookaround;
+pickups match `pickup_match`; events of 15 minutes or less are markers
+(pins such as the bus). Directives override them per event:
+
+| Directive | Effect | Example |
+|---|---|---|
+| `#routine` | part of its row's routine even below `min_days` (a new arrangement starting midweek, a routine that's only twice a week) | Bastian's Tuesday/Thursday swim: `#routine` |
+| `#once` | never part of a routine; always shown as that day's own item, even when it repeats | a lesson that happens to fall on three days one week |
+| `#exception` | the days it covers are exception days for a row, with its wording, even when the routine events are all present; `for=` names the rows (calendar names), needed on shared calendars like Family; `text=` / `short=` give the wording | Family's "Transfig: no aftercare — Staff dev.": `#exception for=priscilla text="No after-care" short="No aftercare"` |
+| `#pickup` | the row's pickup pin (shared between rows when the times agree), whatever its title | "Grandma gets Bastian": `#pickup` |
+| `#marker` | a pin rather than a block, whatever its length | a 30-minute drop-off window: `#marker` |
+
+An event can carry both kinds: the staff-development closure above, with
+
+```
+#exception for=priscilla text="No after-care"
+#notice high rooms=kitchen,kids from=-1d
+```
+
+is an exception day on Priscilla's row (kitchen strip, both ESLs) and a
+notice from the evening before. School-published calendars you can't edit
+keep config rules here too, in the integration's config.
+
+The emoji shorthand stays for notices only: the schedule directives are
+rare corrections, better spelled out than encoded in a title.
 
 ## Entity budget
 
@@ -304,20 +375,26 @@ Three to four net new entities, all excluded from the recorder.
 
 Each step stands alone.
 
-1. **Notices feed.** The integration skeleton, `sensor.household_notices`
-   (sources: appliances, doors, the banner input_text, `todo.notices`,
-   calendar directives, emoji shorthand and config rules), display profiles
-   from Nix, and per-profile revisions. Switch `banner.js` (kitchen, E1001)
-   and the ESL notice line to read it. Replace `eink_panel_refresh`'s
-   trigger list with the E1001 revision. Mark Humira in the calendar.
+1. **Notices feed.** The integration skeleton with the directive parser
+   (shared with step 3), `sensor.household_notices` (sources: appliances,
+   doors, the banner input_text, `todo.notices`, `#notice` directives, the
+   emoji shorthand and config rules), display profiles from Nix, and
+   per-profile revisions and flat attributes. Switch `banner.js` (kitchen,
+   E1001) and the ESL notice line to read it. Replace `eink_panel_refresh`'s
+   trigger list with the E1001 revision. Mark Humira in the calendar. Add
+   the notice line to the voice assistant's idle screen (its two
+   `text_sensor`s and LVGL labels, with the icon glyphs generated from the
+   profile's `icons`).
 2. **Weather outlook feed.** Move the outlook buckets, wordings and what
    to wear (`weather.js`), and the rain-from-forecast correction, into
    `sensor.weather_outlook`; the E1001, Kindle and ESLs gain the
    correction; delete the ESL's Jinja outlook.
 3. **Schedule feed.** Move `_regular()`'s routine/exception logic with
-   lookaround, dedupe and `title_rewrites` into `sensor.family_schedule`.
-   The kitchen strip and both ESLs read it, and the ESL's Jinja routine
-   goes.
+   lookaround, dedupe and `title_rewrites` into `sensor.family_schedule`,
+   with the schedule directives (`#routine`, `#once`, `#exception`,
+   `#pickup`, `#marker`) overriding its heuristics. The kitchen strip and
+   both ESLs read it, and the ESL's Jinja routine goes. Then mark the
+   closures already on the Family calendar with `#exception for=...`.
 4. **ESL via Puppet (spike).** Render one label as a Lovelace card through
    Puppet in BWRY and place it with `dlimg`; adopt it if small text holds
    up.
@@ -334,8 +411,11 @@ Each step stands alone.
   2026-10-28), DST, a recurring directive, HTML descriptions, overflowing
   profiles.
 - The profile selector is a pure function (notices + profile → selection +
-  revision), so the degradation rules are tested exhaustively, independent
-  of HA.
+  revision + flat text), so the degradation rules, the charset adaptation
+  and the icon fallback are tested exhaustively, independent of HA.
+- The directive parser gets table tests: HTML descriptions as Google
+  returns them, several directives per event, quoting, unknown keys,
+  malformed lines, and recurring series.
 - Renderers keep their existing checks: Puppet renders on scratch
   dashboards, never the live e-ink ones; ETag/304 across minute rollovers;
   ESL `dry_run` previews.
@@ -348,7 +428,11 @@ Each step stands alone.
 - Should dismissing a notice (a tap in the kitchen) be per display, or
   household-wide (complete the to-do item / record the event UID as
   dismissed)?
-- Should the schedule feed accept directives (`#routine`, `#exception`)?
+- `#exception for=` takes calendar names (`priscilla`): should it also
+  accept people, for when a kid's events span several calendars?
+- Should the voice assistant also *speak* `critical` notices (an Assist
+  announcement on the satellite), as an audio display with its own
+  profile?
 - Weather alerts from NWS: worth a source (as `high`/`critical`
   notices)?
 - Phone notifications: only `critical`, or `high` too, with quiet hours?

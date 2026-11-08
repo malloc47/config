@@ -23,7 +23,9 @@
 # Wake words (choose in HA's satellite settings): "Hey Jeeves" (the
 # house-wide one), or "Okay Nabu". While a timer rings or a reply plays,
 # "Stop" ends it. The BOOT button or a tap on the screen starts/stops Assist
-# (and silences a timer).
+# (and silences a timer); swiping up/down on the screen changes the volume
+# (the board has no other usable buttons). "Wake word sensitivity" in HA
+# trades missed wakes against false ones.
 #
 # Display (LVGL): a ring around the edge shows the phase (blue listening,
 # purple thinking, green replying, red error/muted; a timer's remaining
@@ -155,6 +157,16 @@ globals:
     type: bool
     restore_value: false
     initial_value: "false"
+  # Vertical travel of the current touch (px, + = down), for tap vs swipe.
+  - id: touch_dy
+    type: int
+    restore_value: false
+    initial_value: "0"
+  # While set, the ring shows the volume instead of the phase.
+  - id: show_volume
+    type: bool
+    restore_value: false
+    initial_value: "false"
 
 # --- Audio -------------------------------------------------------------------
 
@@ -277,6 +289,8 @@ audio:
 audio_file:
   - id: wake_sound_file
     file: ${sounds}/wake_word_triggered.flac
+  - id: volume_tick_file
+    file: ${sounds}/center_button_press.flac
   - id: timer_finished_sound_file
     file: ${sounds}/timer_finished.flac
   - id: mute_on_sound_file
@@ -386,6 +400,35 @@ micro_wake_word:
                             # Pass the detected word on to HA's pipeline.
                             - voice_assistant.start:
                                 wake_word: !lambda return wake_word;
+
+# Probability cutoffs per model, as uint8 (x/255). "Hey jeeves" ships at
+# 0.95 and its trainer's close-miss threshold is 0.78; the "Okay Nabu"
+# values are the HA Voice PE's.
+select:
+  - platform: template
+    name: Wake word sensitivity
+    id: wake_word_sensitivity
+    icon: mdi:ear-hearing
+    optimistic: true
+    restore_value: true
+    entity_category: config
+    initial_option: Moderately sensitive
+    options:
+      - Slightly sensitive
+      - Moderately sensitive
+      - Very sensitive
+    on_value:
+      - lambda: |-
+          if (x == "Slightly sensitive") {
+            id(hey_jeeves).set_probability_cutoff(242);  // 0.95
+            id(okay_nabu).set_probability_cutoff(217);   // 0.85
+          } else if (x == "Moderately sensitive") {
+            id(hey_jeeves).set_probability_cutoff(224);  // 0.88
+            id(okay_nabu).set_probability_cutoff(176);   // 0.69
+          } else {
+            id(hey_jeeves).set_probability_cutoff(204);  // 0.80
+            id(okay_nabu).set_probability_cutoff(143);   // 0.56
+          }
 
 voice_assistant:
   id: va
@@ -717,6 +760,29 @@ script:
           TaskHandle_t t = xTaskGetHandle("mww");
           if (t != nullptr) vTaskPrioritySet(t, 8);
 
+  - id: change_volume
+    parameters:
+      delta: float
+    then:
+      - media_player.volume_set:
+          id: player
+          volume: !lambda return clamp(id(player).volume + delta, 0.0f, 1.0f);
+      - script.execute: volume_overlay
+      - script.execute:
+          id: play_sound
+          priority: false
+          sound: volume_tick_file
+
+  # Show the volume on the ring for a moment after it changes.
+  - id: volume_overlay
+    mode: restart
+    then:
+      - lambda: id(show_volume) = true;
+      - script.execute: draw_display
+      - delay: 2s
+      - lambda: id(show_volume) = false;
+      - script.execute: draw_display
+
   - id: clear_error
     mode: restart
     then:
@@ -779,6 +845,10 @@ script:
             color = 0xFFA000;
             value = t.total_seconds ? (100 * t.seconds_left) / t.total_seconds : 0;
           }
+          if (id(show_volume)) {
+            color = 0xFFFFFF;
+            value = (int) roundf(id(player).volume * 100);
+          }
           lv_obj_set_style_arc_color(id(ring), lv_color_hex(color), LV_PART_INDICATOR);
           lv_arc_set_value(id(ring), value);
 
@@ -791,6 +861,11 @@ script:
           else if (p == ${phase_thinking}) status = "Thinking...";
           else if (p == ${phase_error}) status = "Error";
           else if (muted) status = "Mic muted";
+          char volume_text[16];
+          if (id(show_volume)) {
+            snprintf(volume_text, sizeof(volume_text), "Volume %d%%", (int) roundf(id(player).volume * 100));
+            status = volume_text;
+          }
           lv_label_set_text(id(status_label), status);
 
           // Session text replaces the date while Assist is active.
@@ -1060,8 +1135,19 @@ touchscreen:
     reset_pin:
       pca9554: io_expander
       number: 0
+    on_update:
+      - lambda: |-
+          if (!touches.empty())
+            id(touch_dy) = (int) touches[0].y - (int) touches[0].y_org;
+    # A short vertical travel is a tap (Assist); a longer one is a swipe
+    # (volume: up is louder).
     on_release:
-      - script.execute: toggle_assist
+      - lambda: |-
+          const int dy = id(touch_dy);
+          id(touch_dy) = 0;
+          if (dy <= -50) id(change_volume)->execute(0.1f);
+          else if (dy >= 50) id(change_volume)->execute(-0.1f);
+          else id(toggle_assist)->execute();
 
 light:
   - platform: monochromatic
