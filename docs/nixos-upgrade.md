@@ -84,14 +84,16 @@ options that surface.  Typical error classes at each upgrade cycle:
 - **`allowUnfree` / security flags** — packages sometimes change license
   classification between releases.
 
-Build the NixOS hosts to surface errors:
+Evaluate the NixOS hosts to surface errors (both are aarch64, so evaluate
+rather than build on an x86 machine):
 
 ```sh
-nix build .#nixosConfigurations.attila.config.system.build.toplevel --no-link
+nix eval .#nixosConfigurations.salome.config.system.build.toplevel.drvPath
+nix eval .#nixosConfigurations.vm-iso.config.system.build.toplevel.drvPath
 ```
 
-To catch homelab breakage before pushing, also build aida and aroldo from
-`lab-config` against this checkout:
+To catch breakage in the x86 hosts before pushing, also build the lab hosts
+(aida, aroldo, attila) from `lab-config` against this checkout:
 
 ```sh
 (cd ~/src/lab-config && nix build --override-input config path:../config \
@@ -224,7 +226,7 @@ git push origin main
 
 ## 4. Upgrade `lab-config`
 
-`lab-config` (aida, aroldo) has no version strings of its own: nixpkgs,
+`lab-config` (aida, aroldo, attila) has no version strings of its own: nixpkgs,
 home-manager, disko, agenix and the rest follow the `config` input, so the
 upgrade is a relock plus `stateVersion`.
 
@@ -233,6 +235,7 @@ cd ~/src/lab-config
 nix flake update config          # picks up the commit pushed in step 2
 nix build .#nixosConfigurations.aida.config.system.build.toplevel --no-link
 nix build .#nixosConfigurations.aroldo.config.system.build.toplevel --no-link
+nix build .#nixosConfigurations.attila.config.system.build.toplevel --no-link
 ```
 
 Fix evaluation errors as in 2c (Home Assistant components and the packages in

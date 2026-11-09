@@ -3,6 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # Unused here; pinned for lab-config, whose nixos-hardware follows it.
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     agenix = {
@@ -82,7 +83,6 @@
       disko,
       nix-darwin,
       nix-homebrew,
-      nixos-hardware,
       agenix,
       git-hooks,
       stylix,
@@ -192,78 +192,6 @@
                 users.users.root.openssh.authorizedKeys.keys = [
                   (builtins.readFile (config.settings.sshKeys + "/${config.settings.profile}/id_ed25519.pub"))
                 ];
-              }
-            )
-          ];
-        };
-
-        attila = nixpkgs.lib.nixosSystem rec {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit inputs;
-            pkgs-unstable = pkgsUnstableFor system;
-          };
-          modules = [
-            home-manager.nixosModules.home-manager
-            disko.nixosModules.disko
-            agenix.nixosModules.default
-            nixos-hardware.nixosModules.dell-xps-13-9315
-            self.nixosModules.settings
-            self.nixosModules.user
-            self.nixosModules.nixpkgs
-            self.nixosModules.ssh
-            self.nixosModules.mosh
-            self.nixosModules.configuration-flake
-            self.nixosModules.stylix
-            self.nixosModules.theme
-            self.hardwareModules.dell-xps-9315
-            self.diskModules.dell-xps-9315
-            ./hosts/attila.nix
-            { settings.sshKeys = "${personal}/ssh"; }
-            {
-              networking.hostName = "attila";
-              system.stateVersion = "26.05";
-            }
-            (
-              { config, ... }:
-              let
-                outer = config;
-              in
-              {
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.extraSpecialArgs = specialArgs;
-                home-manager.users.${config.settings.username} =
-                  { config, pkgs, ... }:
-                  {
-                    imports = [
-                      self.homeManagerModules.osconfig-bridge
-                      self.homeManagerModules.home
-                      self.homeManagerModules.home-dev
-                      self.homeManagerModules.home-ai
-                      self.homeManagerModules.home-agenix
-                      self.homeManagerModules.home-gh
-                      self.homeManagerModules.home-sqlit
-                      self.homeManagerModules.homelab-tools
-                    ];
-                    programs.homelab-tools.enable = true;
-                    home.packages = [ pkgs.tramp-rpc-server ]; # remote end of Emacs /rpc: TRAMP
-                    stylix.targets.emacs.enable = false;
-                    programs.dev-toolchain.enable = true;
-                    programs.sqlit.enable = true;
-                    programs.ai-session = {
-                      enable = true;
-                      webServer.enable = true;
-                    };
-                    age.secrets.gh-token-github = {
-                      file = ./secrets/gh-token-github.age;
-                      path = "${config.home.homeDirectory}/.config/agenix/gh-token-github";
-                    };
-                    programs.gh-agenix = {
-                      enable = true;
-                      tokenFile = config.age.secrets.gh-token-github.path;
-                    };
-                  };
               }
             )
           ];
@@ -385,12 +313,10 @@
       hardwareModules = {
         lxc = ./hardware/lxc.nix;
         vmware-fusion-arm = ./hardware/vmware-fusion-arm.nix;
-        dell-xps-9315 = ./hardware/dell-xps-9315.nix;
       };
 
       diskModules = {
         vmware-fusion = ./disk/vmware-fusion.nix;
-        dell-xps-9315 = ./disk/dell-xps-9315.nix;
       };
 
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);

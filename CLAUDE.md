@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a public Nix/NixOS/nix-darwin configuration repository managing personal machines via a single flake. It exports reusable modules consumed by a separate private `work-config` repository for work machines.
 
-The home network (aida, aroldo, Home Assistant and friends) lives in the separate private `lab-config` repo (`~/src/lab-config`), which consumes this flake like work-config does. Homelab work happens there, not here.
+The home network (aida, aroldo, the attila lab server, Home Assistant and friends) lives in the separate private `lab-config` repo (`~/src/lab-config`), which consumes this flake like work-config does. Homelab work happens there, not here.
 
 ## Multi-Repo Architecture
 
@@ -35,7 +35,7 @@ work-config and lab-config import:
 - **config** (this repo): Public personal NixOS/nix-darwin configs + exported modules
 - **personal**: Private repo consumed as a `flake = false` input; contains SSH keys and secrets
 - **work-config**: Private repo for work machines; imports config's modules via flake input
-- **lab-config**: Private repo for the home network (aida, aroldo); imports config's modules via flake input, with nixpkgs/home-manager/etc. following config's pins
+- **lab-config**: Private repo for the home network (aida, aroldo, attila); imports config's modules via flake input, with nixpkgs/home-manager/etc. following config's pins
 - **ai-dev**: Standalone AI development toolkit, consumed by both config and work-config
 
 All cross-repo dependencies use flake inputs — no git submodules between repos.
@@ -68,20 +68,19 @@ task eval
 
 **NixOS hosts** (`nixosConfigurations`):
 - `salome` — aarch64-linux, VMware Fusion guest on M-series Mac
-- `attila` — x86_64-linux, headless Dell XPS 13 9315 laptop
 - `vm-iso` — aarch64-linux, installer ISO image
 
-aida and aroldo are defined in lab-config.
+aida, aroldo and attila are defined in lab-config.
 
 **nix-darwin hosts** (`darwinConfigurations`):
 - `cesare` — aarch64-darwin, personal MacBook Pro (M-series)
 
 **Exported modules** (consumed by work-config and lab-config):
-- `nixosModules` — settings, user, ssh, nixpkgs, networking, virtualization, sound, gui, motd, mosh, vmware-guest, configuration-flake, stylix, theme
+- `nixosModules` — settings, user, ssh, nixpkgs, networking, virtualization, sound, gui, motd, mosh, tailscale-client, vmware-guest, configuration-flake, stylix, theme
 - `homeManagerModules` — osconfig-bridge, home, home-dev, home-gui, home-vm, ssh, stylix, theme, home-ai, home-agenix, home-gh, home-sqlit, home-drift-check, homelab-tools
 - `darwinModules` — configuration, homebrew, home, stylix, theme
-- `hardwareModules` — lxc, vmware-fusion-arm, dell-xps-9315
-- `diskModules` — vmware-fusion, dell-xps-9315
+- `hardwareModules` — lxc, vmware-fusion-arm
+- `diskModules` — vmware-fusion
 - `overlays.default` — general packages only; homelab packages are in lab-config's `pkgs/`
 
 ### Module Composition
@@ -119,11 +118,11 @@ A custom options module that normalizes per-host differences, avoiding host-name
 
 ### Homelab (lab-config)
 
-aida and aroldo, their modules, packages, secrets and runbooks live in `~/src/lab-config` (git@github.com:malloc47/lab-config, private), which takes this repo as its `config` input. What stays here:
+aida, aroldo and attila, their modules, packages, secrets and runbooks live in `~/src/lab-config` (git@github.com:malloc47/lab-config, private), which takes this repo as its `config` input. What stays here:
 
 - `home/modules/homelab-tools.nix` — opt-in operator commands `esphome-deploy`, `z2m-foldin`, `ha-foldin`, enabled on the personal hosts only; they act on `programs.homelab-tools.repo` (default `~/src/lab-config`).
 - `nixos-deploy <host>` (shell-personal) deploys from `~/src/lab-config` when it has `hosts/<host>.nix`, otherwise from this repo.
-- Changes to exported modules can break aida/aroldo: evaluate lab-config against this checkout with `task eval-local` there (`--override-input config path:../config`), push config, then `nix flake update config` in lab-config.
+- Changes to exported modules can break the lab hosts (attila uses the dev/AI home modules): evaluate lab-config against this checkout with `task eval-local` there (`--override-input config path:../config`), push config, then `nix flake update config` in lab-config.
 
 ### CI (`--override-input personal`)
 
@@ -137,4 +136,4 @@ CI cannot access the private `personal` repo. The GitHub Actions workflow create
 
 - When modifying exported modules, test that work-config and lab-config still evaluate (the `nix eval` commands in work-config's taskfile; `task eval-local` in lab-config)
 
-- Don't put homelab-only code (Home Assistant, Zigbee, ESPHome, aida/aroldo services, their packages or tooling) in this repo: it ships to work machines. It belongs in lab-config, or in an opt-in module the personal hosts enable
+- Don't put homelab-only code (Home Assistant, Zigbee, ESPHome, lab host services, their packages or tooling) in this repo: it ships to work machines. It belongs in lab-config, or in an opt-in module the personal hosts enable

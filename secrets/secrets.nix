@@ -9,10 +9,8 @@ in
     cesare
     malloc47
   ];
-  "wifi-unimatrix47.age".publicKeys = [
-    malloc47
-    attila
-  ];
+  # attila now lives in lab-config, which has its own copy of this token; it
+  # stays a recipient here only because the existing ciphertext includes it.
   "gh-token-github.age".publicKeys = [
     malloc47
     malloc47-user

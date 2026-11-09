@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [salome, attila, vm-iso]
+        host: [salome, vm-iso]
     steps:
       - uses: actions/checkout@v5
       - name: Create personal stub
