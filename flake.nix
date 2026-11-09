@@ -348,6 +348,7 @@
         gui = ./nixos/modules/gui.nix;
         motd = ./nixos/modules/motd.nix;
         mosh = ./nixos/modules/mosh.nix;
+        tailscale-client = ./nixos/modules/tailscale-client.nix;
         vmware-guest = ./nixos/modules/vmware-guest.nix;
         configuration-flake = ./nixos/configuration-flake.nix;
         stylix = stylix.nixosModules.stylix;
