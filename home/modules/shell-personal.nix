@@ -44,6 +44,9 @@ in
         # (tmux-256color from ncurses omits the Ms capability otherwise).
         set -s set-clipboard on
         set -as terminal-features ',*:clipboard'
+        # OSC 8 hyperlinks: tmux re-emits them only to clients with this feature, and pi checks
+        # for it before emitting links (mosh drops them, so this helps local sessions).
+        set -as terminal-features ',*:hyperlinks'
         # tmux's own set-clipboard emit (copy-mode → Ms) emits with an empty
         # selection flag (`\E]52;;<b64>\a`), which Ghostty silently ignores.
         # Inner-program OSC 52 with explicit `c` flag works fine, so route

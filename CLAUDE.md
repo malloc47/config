@@ -77,7 +77,7 @@ aida, aroldo and attila are defined in lab-config.
 
 **Exported modules** (consumed by work-config and lab-config):
 - `nixosModules` — settings, user, ssh, nixpkgs, networking, virtualization, sound, gui, motd, mosh, tailscale-client, vmware-guest, configuration-flake, stylix, theme
-- `homeManagerModules` — osconfig-bridge, home, home-dev, home-gui, home-vm, ssh, stylix, theme, home-ai, home-agenix, home-gh, home-sqlit, home-drift-check, homelab-tools
+- `homeManagerModules` — osconfig-bridge, home, home-dev, home-gui, home-vm, ssh, stylix, theme, home-ai, home-pi, home-agenix, home-gh, home-sqlit, home-drift-check, homelab-tools
 - `darwinModules` — configuration, homebrew, home, stylix, theme
 - `hardwareModules` — lxc, vmware-fusion-arm
 - `diskModules` — vmware-fusion

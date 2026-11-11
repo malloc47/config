@@ -1,0 +1,22 @@
+{
+  "name": "pi-personal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Claude Code-like look for pi: tool rows, chrome, and a theme drawn from the terminal's own palette",
+  "type": "module",
+  "keywords": [
+    "pi-package"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/tool-rows.ts",
+      "./extensions/chrome.ts"
+    ],
+    "themes": [
+      "./themes"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}

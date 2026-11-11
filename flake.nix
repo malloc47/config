@@ -293,6 +293,7 @@
         stylix = stylix.homeModules.stylix;
         theme = ./home/modules/theme.nix;
         home-ai = import ./home/modules/ai-session.nix { inherit inputs; };
+        home-pi = import ./home/modules/pi-personal.nix { inherit inputs; };
         home-agenix = import ./home/agenix.nix { inherit inputs; };
         home-gh = ./home/modules/gh.nix;
         home-sqlit = ./home/modules/sqlit.nix;
@@ -321,14 +322,25 @@
 
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
 
-      checks = forAllSystems (system: {
-        pre-commit-check = git-hooks.lib.${system}.run {
-          src = ./.;
-          hooks = {
-            nixfmt-rfc-style.enable = true;
+      checks = forAllSystems (
+        system:
+        {
+          pre-commit-check = git-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              nixfmt-rfc-style.enable = true;
+            };
           };
-        };
-      });
+        }
+        # The pi package's types against the pi it runs on, and its unit tests (llm-agents has no
+        # x86_64-darwin builds).
+        // nixpkgs.lib.optionalAttrs (inputs.llm-agents.packages ? ${system}) {
+          pi-personal = import ./home/pi/check.nix {
+            pkgs = nixpkgs.legacyPackages.${system};
+            inherit (inputs.llm-agents.packages.${system}) pi;
+          };
+        }
+      );
 
       devShells = forAllSystems (system: {
         default = nixpkgs.legacyPackages.${system}.mkShell {
