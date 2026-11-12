@@ -8,7 +8,8 @@
 		"blue": 4,
 		"violet": 5,
 		"cyan": 6,
-		"gray": 8
+		"gray": 8,
+		"highlight": 18
 	},
 	"colors": {
 		"accent": "yellow",
@@ -27,8 +28,8 @@
 		"selectedBg": "",
 		"searchMatchBg": "yellow",
 		"searchMatchText": 0,
-		"userMessageBg": "",
-		"userMessageText": "gray",
+		"userMessageBg": "highlight",
+		"userMessageText": "",
 		"customMessageBg": "",
 		"customMessageText": "gray",
 		"customMessageLabel": "violet",
