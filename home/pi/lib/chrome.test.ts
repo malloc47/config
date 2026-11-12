@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { contextGauge, formatTokens, shortCwd, usageTotals } from "./chrome.ts";
+import { contextGauge, formatTokens, shortCwd, streamedTokens, usageTotals } from "./chrome.ts";
 
 test("usage totals add every entry that carries usage", () => {
   const entries = [
@@ -38,4 +38,11 @@ test("the context gauge fills eight cells and turns at 70% and 90%", () => {
   assert.equal(contextGauge(95).tone, "error");
   assert.equal(contextGauge(150).label, "100%");
   assert.equal(contextGauge(undefined).label, "ctx ?");
+});
+
+test("a streaming message's tokens are estimated from its text, thinking, and tool arguments", () => {
+  assert.equal(streamedTokens([{ type: "text", text: "x".repeat(400) }]), 100);
+  assert.equal(streamedTokens([{ type: "thinking", thinking: "y".repeat(40) }, { type: "toolCall", arguments: { q: "abcd" } }]), 13);
+  assert.equal(streamedTokens(undefined), 0);
+  assert.equal(streamedTokens([{ type: "image" }]), 0);
 });

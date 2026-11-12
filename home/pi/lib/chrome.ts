@@ -45,3 +45,20 @@ export function contextGauge(percent: number | undefined): { bar: string; label:
     tone: clamped > 90 ? "error" : clamped > 70 ? "warning" : "ok",
   };
 }
+
+type Part = { type?: string; text?: string; thinking?: string; arguments?: unknown };
+
+/**
+ * About how many tokens a message being streamed has produced so far, from its text, thinking, and
+ * tool-call arguments: four characters a token, as Claude Code estimates while it streams.
+ */
+export function streamedTokens(content: unknown): number {
+  if (!Array.isArray(content)) return 0;
+  let chars = 0;
+  for (const part of content as Part[]) {
+    if (part?.type === "text") chars += part.text?.length ?? 0;
+    else if (part?.type === "thinking") chars += part.thinking?.length ?? 0;
+    else if (part?.type === "toolCall") chars += JSON.stringify(part.arguments ?? {}).length;
+  }
+  return Math.round(chars / 4);
+}

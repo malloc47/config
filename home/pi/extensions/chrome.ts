@@ -1,20 +1,32 @@
 // Claude Code-style chrome: a compact welcome header, a status-line footer, the "❯ " prompt, the ✻
-// spinner with the run's elapsed time, and "✻ Thinking…" for collapsed thinking.
+// spinner with the run's elapsed time and the tokens it has produced, "✻ Thinking…" for collapsed
+// thinking, and a terminal title that says when pi is working ("✳ name · working").
+//
+// It rings the terminal's bell when something needs you: a run that took a while has finished, or
+// another extension says so on the "attention" event channel (majordomo, when it asks for an
+// approval). The bell crosses tmux and mosh, which marks the window and passes it to your terminal.
 //
 // Other extensions take part without replacing any of it: the footer shows every ctx.ui.setStatus
 // text, and the spinner's message shows the label last sent on the "working-label" event channel
 // (pi.events.emit("working-label", "Searching Slack"); undefined clears it). A later setHeader
-// replaces this header, which is how a desk session shows its own.
+// replaces this header, and a later setTitle the title, which is how a desk session shows its own.
 
 import { basename } from "node:path";
 
 import { CustomEditor, type ExtensionAPI, type ExtensionContext, keyText, VERSION } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-import { contextGauge, formatTokens, shortCwd, usageTotals } from "../lib/chrome.ts";
+import { contextGauge, formatTokens, shortCwd, streamedTokens, usageTotals } from "../lib/chrome.ts";
 import { PROMPT, PROMPT_WIDTH, withPrompt } from "../lib/prompt.ts";
 
 const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
+/** A run at least this long rings the bell when it finishes: long enough that you've looked away. */
+const LONG_RUN_MS = 15_000;
+
+/** The terminal's bell. It doesn't move the cursor, so it can't disturb pi's drawing. */
+function bell(): void {
+  process.stdout.write("\x07");
+}
 const VERBS = ["Thinking", "Pondering", "Working", "Considering", "Mulling", "Puzzling", "Brewing", "Musing"];
 
 /** Left and right text on one line, the right truncated first. */
@@ -106,7 +118,25 @@ function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
   ctx.ui.setEditorComponent((tui, theme, keybindings) => new PromptEditor(tui, theme, keybindings));
   ctx.ui.setWorkingIndicator({ frames: SPINNER.map((frame) => ctx.ui.theme.fg("accent", frame)), intervalMs: 120 });
   ctx.ui.setHiddenThinkingLabel("✻ Thinking…");
-  ctx.ui.setTitle(`✻ ${basename(ctx.cwd)}`);
+  idleTitle(ctx);
+}
+
+/**
+ * The idle title, "✻ <dir>". pi titles the terminal itself once a session's extensions are bound,
+ * and again when the session's name changes, so it's set again just after pi's.
+ */
+function idleTitle(ctx: ExtensionContext): void {
+  const title = `✻ ${basename(ctx.cwd)}`;
+  ctx.ui.setTitle(title);
+  for (const ms of [100, 1000]) {
+    setTimeout(() => {
+      try {
+        ctx.ui.setTitle(title);
+      } catch {
+        // pi has replaced the session; its own session_start titles it.
+      }
+    }, ms).unref();
+  }
 }
 
 export default function chrome(pi: ExtensionAPI): void {
@@ -115,12 +145,17 @@ export default function chrome(pi: ExtensionAPI): void {
   let started = 0;
   let timer: ReturnType<typeof setInterval> | undefined;
   let current: ExtensionContext | undefined;
+  // The run's output tokens: the messages it has finished, and an estimate of the one streaming.
+  let finished = 0;
+  let streaming = 0;
 
   const message = () => {
     const seconds = Math.floor((Date.now() - started) / 1000);
     const elapsed = seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
     const key = keyText("app.interrupt").replace(/\bescape\b/, "esc");
-    current?.ui.setWorkingMessage(`${label ?? verb}… (${elapsed} · ${key} to interrupt)`);
+    const tokens = finished + streaming;
+    const produced = tokens ? ` · ↓ ${formatTokens(tokens)} tokens` : "";
+    current?.ui.setWorkingMessage(`${label ?? verb}… (${elapsed}${produced} · ${key} to interrupt)`);
   };
   const stop = () => {
     if (timer) clearInterval(timer);
@@ -144,20 +179,46 @@ export default function chrome(pi: ExtensionAPI): void {
       }
     });
 
+    pi.events.on("attention", () => {
+      if (current) bell();
+    });
+
     pi.on("agent_start", (_event, ctx) => {
       if (ctx.mode !== "tui") return;
       current = ctx;
       verb = VERBS[Math.floor(Math.random() * VERBS.length)];
       started = Date.now();
+      finished = 0;
+      streaming = 0;
       stop();
       message();
       timer = setInterval(message, 1000);
+      ctx.ui.setTitle(`✳ ${basename(ctx.cwd)} · working`);
+    });
+
+    pi.on("session_info_changed", (_event, ctx) => {
+      if (ctx.mode === "tui") idleTitle(ctx);
+    });
+
+    pi.on("message_update", (event) => {
+      const m = event.message as { role?: string; content?: unknown };
+      if (m.role === "assistant") streaming = streamedTokens(m.content);
+    });
+
+    pi.on("message_end", (event) => {
+      const m = event.message as { role?: string; content?: unknown; usage?: { output?: number } };
+      if (m.role !== "assistant") return;
+      finished += m.usage?.output || streamedTokens(m.content);
+      streaming = 0;
     });
 
     pi.on("agent_end", (_event, ctx) => {
       stop();
       label = undefined;
-      if (ctx.mode === "tui") ctx.ui.setWorkingMessage();
+      if (ctx.mode !== "tui") return;
+      ctx.ui.setWorkingMessage();
+      ctx.ui.setTitle(`✻ ${basename(ctx.cwd)}`);
+      if (started && Date.now() - started >= LONG_RUN_MS) bell();
     });
 
     pi.on("session_shutdown", () => stop());

@@ -10,7 +10,8 @@
   "pi": {
     "extensions": [
       "./extensions/tool-rows.ts",
-      "./extensions/chrome.ts"
+      "./extensions/chrome.ts",
+      "./extensions/transcript.ts"
     ],
     "themes": [
       "./themes"
