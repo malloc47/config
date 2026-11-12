@@ -1,5 +1,5 @@
-// Claude Code-style chrome: a compact welcome header, a status-line footer, the ✻ spinner with the
-// run's elapsed time, and "✻ Thinking…" for collapsed thinking.
+// Claude Code-style chrome: a compact welcome header, a status-line footer, the "❯ " prompt, the ✻
+// spinner with the run's elapsed time, and "✻ Thinking…" for collapsed thinking.
 //
 // Other extensions take part without replacing any of it: the footer shows every ctx.ui.setStatus
 // text, and the spinner's message shows the label last sent on the "working-label" event channel
@@ -8,10 +8,11 @@
 
 import { basename } from "node:path";
 
-import { type ExtensionAPI, type ExtensionContext, keyText, VERSION } from "@earendil-works/pi-coding-agent";
+import { CustomEditor, type ExtensionAPI, type ExtensionContext, keyText, VERSION } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 import { contextGauge, formatTokens, shortCwd, usageTotals } from "../lib/chrome.ts";
+import { PROMPT, PROMPT_WIDTH, withPrompt } from "../lib/prompt.ts";
 
 const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
 const VERBS = ["Thinking", "Pondering", "Working", "Considering", "Mulling", "Puzzling", "Brewing", "Musing"];
@@ -23,6 +24,25 @@ function spread(left: string, right: string, width: number): string {
   const room = width - visibleWidth(left) - 2;
   if (room > 8) return `${left}  ${truncateToWidth(right, room, "…")}`;
   return truncateToWidth(left, width, "…");
+}
+
+/**
+ * pi's editor with the "❯ " prompt, drawn in left padding it keeps for it, in the editor's border
+ * color. It embeds the working status in its border as pi's own editor does; pi carries the text,
+ * callbacks, padding, and autocomplete over to it.
+ */
+class PromptEditor extends CustomEditor {
+  constructor(...[tui, theme, keybindings]: ConstructorParameters<typeof CustomEditor>) {
+    super(tui, theme, keybindings, { paddingX: PROMPT_WIDTH, embedWorkingStatus: true });
+  }
+
+  setPaddingX(padding: number): void {
+    super.setPaddingX(Math.max(PROMPT_WIDTH, padding));
+  }
+
+  render(width: number): string[] {
+    return withPrompt(super.render(width), `${this.borderColor(PROMPT)} `);
+  }
 }
 
 function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
@@ -83,6 +103,7 @@ function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
     };
   });
 
+  ctx.ui.setEditorComponent((tui, theme, keybindings) => new PromptEditor(tui, theme, keybindings));
   ctx.ui.setWorkingIndicator({ frames: SPINNER.map((frame) => ctx.ui.theme.fg("accent", frame)), intervalMs: 120 });
   ctx.ui.setHiddenThinkingLabel("✻ Thinking…");
   ctx.ui.setTitle(`✻ ${basename(ctx.cwd)}`);

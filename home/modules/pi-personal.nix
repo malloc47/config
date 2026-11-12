@@ -1,7 +1,8 @@
 # pi with a Claude Code-like look (../pi): tool rows that collapse to a line under a ⏺ bullet, a
-# status-line footer, the ✻ spinner, and the terminal-ansi theme. The theme names ANSI palette
-# slots instead of colors, so the terminal draws it from whichever solarized palette is active:
-# it follows the light/dark switch even over mosh, which answers none of pi's color queries.
+# status-line footer, the ❯ prompt, the ✻ spinner, and the terminal-ansi theme. The theme names
+# ANSI palette slots instead of colors, so the terminal draws it from whichever solarized palette
+# is active: it follows the light/dark switch even over mosh, which answers none of pi's color
+# queries.
 #
 # Installs pi and the package into ~/.pi/agent, and merges the display settings into pi's
 # settings.json at activation (pi writes the file itself from /settings, so it can't be a
