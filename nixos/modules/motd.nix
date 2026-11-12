@@ -206,6 +206,11 @@ in
   config = mkIf cfg.enable {
     users.motd = "";
     services.openssh.settings.PrintLastLog = false;
-    environment.loginShellInit = "${motd}";
+    # Interactive logins only: non-interactive login shells (`zsh -l -c …`, tools
+    # that wrap commands in a login shell) would otherwise print the banner into
+    # their output.
+    environment.loginShellInit = ''
+      case $- in *i*) ${motd} ;; esac
+    '';
   };
 }
