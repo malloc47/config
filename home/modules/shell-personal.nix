@@ -35,7 +35,7 @@ in
         set -as terminal-features ",*256col*:RGB"
         set -ga update-environment " COLORTERM"
         set-environment -g COLORTERM truecolor
-        set -ag terminal-overrides ",xterm*:Tc:smcup@:rmcup@"
+        set -ag terminal-overrides ",xterm*:Tc"
         set -ag terminal-overrides ",*256col*:Tc"
         # OSC 52 clipboard passthrough: lets tmux mouse selection reach the
         # outer terminal's clipboard (Ghostty → macOS).  `set-clipboard on`
