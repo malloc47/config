@@ -11,7 +11,8 @@
     "extensions": [
       "./extensions/tool-rows.ts",
       "./extensions/chrome.ts",
-      "./extensions/transcript.ts"
+      "./extensions/transcript.ts",
+      "./extensions/drafts.ts"
     ],
     "themes": [
       "./themes"

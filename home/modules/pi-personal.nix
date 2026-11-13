@@ -5,10 +5,15 @@
 # queries. Past prompts are shaded with xterm's color 255, the light gray Claude Code puts under
 # them, which no theme's palette changes.
 #
-# Installs pi and the package into ~/.pi/agent, and merges the display settings into pi's
-# settings.json at activation (pi writes the file itself from /settings, so it can't be a
-# read-only link). The package, theme, and settings are also options for majordomo's desk
-# sessions, which don't read ~/.pi:
+# Drafts work as in Claude Code: ctrl+s stashes the editor's text and brings it back, on a stack
+# that alt+s (or /drafts) browses (programs.pi-personal.drafts). pi's own ctrl+s actions move to
+# ctrl+alt+s, which keeps pi from warning about the clash, and ctrl+p and ctrl+n move the cursor up
+# and down a line, as in Emacs, with model cycling on alt+p (programs.pi-personal.keybindings).
+#
+# Installs pi and the package into ~/.pi/agent, and merges the display settings and keybindings
+# into pi's settings.json and keybindings.json at activation (pi writes settings.json itself from
+# /settings, and both are yours to edit, so neither can be a read-only link). The package, theme,
+# and settings are also options for majordomo's desk sessions, which don't read ~/.pi:
 #
 #   programs.majordomo.pi.ui = {
 #     packages = [ config.programs.pi-personal.package ];
@@ -25,6 +30,33 @@ let
   cfg = config.programs.pi-personal;
   system = pkgs.stdenv.hostPlatform.system;
   settingsFile = pkgs.writeText "pi-personal-settings.json" (builtins.toJSON cfg.settings);
+  keybindingsFile = pkgs.writeText "pi-personal-keybindings.json" (builtins.toJSON cfg.keybindings);
+  # The package as pi loads it, with config.json from the options; tests and the type check stay out.
+  source = builtins.path {
+    path = ../pi;
+    name = "pi-personal-source";
+    filter =
+      path: _type:
+      !(
+        lib.hasSuffix ".test.ts" path || baseNameOf path == "check.nix" || baseNameOf path == "config.json"
+      );
+  };
+  packageConfig = pkgs.writeText "pi-personal-config.json" (
+    builtins.toJSON { inherit (cfg) drafts; }
+  );
+  # Merges managed keys into a JSON file pi or you also write, leaving the rest alone.
+  mergeJson = file: managed: ''
+    file="$HOME/.pi/agent/${file}"
+    run mkdir -p "$HOME/.pi/agent"
+    if [[ ! -s $file ]]; then
+      run cp ${managed} "$file"
+      run chmod u+w "$file"
+    elif merged=$(${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$file" ${managed}); then
+      printf '%s\n' "$merged" | run tee "$file" >/dev/null
+    else
+      warnEcho "pi-personal: $file isn't valid JSON; leaving it alone"
+    fi
+  '';
 in
 {
   options.programs.pi-personal = {
@@ -39,13 +71,59 @@ in
     package = lib.mkOption {
       type = lib.types.path;
       readOnly = true;
-      default = builtins.path {
-        path = ../pi;
-        name = "pi-personal";
-        # Tests and the type check aren't part of what pi loads.
-        filter = path: _type: !(lib.hasSuffix ".test.ts" path || baseNameOf path == "check.nix");
+      default = pkgs.runCommand "pi-personal" { } ''
+        cp -R ${source} "$out"
+        chmod u+w "$out"
+        cp ${packageConfig} "$out/config.json"
+      '';
+      description = "The pi package: its extensions, themes, and configuration.";
+    };
+
+    drafts = {
+      keys = {
+        stash = lib.mkOption {
+          type = lib.types.str;
+          default = "ctrl+s";
+          description = "Stash the editor's text, or bring back the newest stashed draft into an empty editor, as Claude Code's ctrl+s does.";
+        };
+        browse = lib.mkOption {
+          type = lib.types.str;
+          default = "alt+s";
+          description = "Open the stashed drafts, to restore or delete an older one (also /drafts).";
+        };
       };
-      description = "The pi package: its extensions and themes.";
+      limit = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 50;
+        description = "Drafts kept per working directory; a stash past it drops the oldest.";
+      };
+      restoreAfterSubmit = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "After you send a prompt, bring back a draft you stashed earlier in the same pi session, as Claude Code does.";
+      };
+    };
+
+    keybindings = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
+      default = {
+        # pi's ctrl+s actions, out of the drafts' way.
+        "app.thinking.save" = "ctrl+alt+s";
+        "app.models.save" = "ctrl+alt+s";
+        "app.session.toggleSort" = "ctrl+alt+s";
+        # Emacs's line motion; model cycling leaves ctrl+p for alt+p, which crosses mosh as ESC p.
+        "tui.editor.cursorUp" = [
+          "up"
+          "ctrl+p"
+        ];
+        "tui.editor.cursorDown" = [
+          "down"
+          "ctrl+n"
+        ];
+        "app.model.cycleForward" = "alt+p";
+        "app.model.cycleBackward" = "alt+shift+p";
+      };
+      description = "pi keybindings merged into ~/.pi/agent/keybindings.json; other keys there are left alone.";
     };
 
     theme = lib.mkOption {
@@ -76,17 +154,8 @@ in
     home.file.".pi/agent/extensions/pi-personal".source = cfg.package;
     home.file.".pi/agent/themes/${cfg.theme}.json".source = "${cfg.package}/themes/${cfg.theme}.json";
 
-    home.activation.piPersonalSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      settings="$HOME/.pi/agent/settings.json"
-      run mkdir -p "$HOME/.pi/agent"
-      if [[ ! -s $settings ]]; then
-        run cp ${settingsFile} "$settings"
-        run chmod u+w "$settings"
-      elif merged=$(${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$settings" ${settingsFile}); then
-        printf '%s\n' "$merged" | run tee "$settings" >/dev/null
-      else
-        warnEcho "pi-personal: $settings isn't valid JSON; leaving it alone"
-      fi
-    '';
+    home.activation.piPersonalSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      mergeJson "settings.json" settingsFile + mergeJson "keybindings.json" keybindingsFile
+    );
   };
 }

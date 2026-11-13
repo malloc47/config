@@ -1,0 +1,7 @@
+{
+  "drafts": {
+    "keys": { "stash": "ctrl+s", "browse": "alt+s" },
+    "limit": 50,
+    "restoreAfterSubmit": true
+  }
+}
