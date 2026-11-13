@@ -2,9 +2,8 @@
 # status-line footer, the ❯ prompt, the ✻ spinner, and the terminal-ansi theme. The theme names
 # ANSI palette slots instead of colors, so the terminal draws it from whichever solarized palette
 # is active: it follows the light/dark switch even over mosh, which answers none of pi's color
-# queries. Past prompts are shaded with slot 18, base16's highlight background (base2 in solarized
-# light), which ghostty-personal's themes define; a terminal without base16's extended slots
-# draws its own color 18 there instead.
+# queries. Past prompts are shaded with xterm's color 255, the light gray Claude Code puts under
+# them, which no theme's palette changes.
 #
 # Installs pi and the package into ~/.pi/agent, and merges the display settings into pi's
 # settings.json at activation (pi writes the file itself from /settings, so it can't be a

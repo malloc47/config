@@ -36,11 +36,7 @@ in
       package = lib.mkIf stdenv.isDarwin null;
       # Dual solarized themes: Ghostty auto-switches based on OS dark mode
       # (macOS appearance / Linux XDG portal).  Palette mapping mirrors
-      # Stylix's own modules/ghostty/hm.nix for 0-15, plus base16's
-      # extended slots 16-21 (base09, base0F, base01, base02, base04,
-      # base06), which Stylix leaves out.  Slot 18 is solarized's highlight
-      # background (base2 light, base02 dark): pi's terminal-ansi theme
-      # shades past prompts with it, as Claude Code does.
+      # Stylix's own modules/ghostty/hm.nix.
       themes = {
         solarized-light = {
           background = "fdf6e3";
@@ -65,12 +61,6 @@ in
             "13=#6c71c4"
             "14=#2aa198"
             "15=#002b36"
-            "16=#cb4b16"
-            "17=#d33682"
-            "18=#eee8d5"
-            "19=#93a1a1"
-            "20=#657b83"
-            "21=#073642"
           ];
         };
         solarized-dark = {
@@ -96,12 +86,6 @@ in
             "13=#6c71c4"
             "14=#2aa198"
             "15=#fdf6e3"
-            "16=#cb4b16"
-            "17=#d33682"
-            "18=#073642"
-            "19=#586e75"
-            "20=#839496"
-            "21=#eee8d5"
           ];
         };
       };

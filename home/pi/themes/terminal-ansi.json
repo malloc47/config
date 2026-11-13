@@ -9,7 +9,7 @@
 		"violet": 5,
 		"cyan": 6,
 		"gray": 8,
-		"highlight": 18
+		"highlight": 255
 	},
 	"colors": {
 		"accent": "yellow",
