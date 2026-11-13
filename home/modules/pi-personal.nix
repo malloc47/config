@@ -6,9 +6,12 @@
 # them, which no theme's palette changes.
 #
 # Drafts work as in Claude Code: ctrl+s stashes the editor's text and brings it back, on a stack
-# that alt+s (or /drafts) browses (programs.pi-personal.drafts). pi's own ctrl+s actions move to
-# ctrl+alt+s, which keeps pi from warning about the clash, and ctrl+p and ctrl+n move the cursor up
-# and down a line, as in Emacs, with model cycling on alt+p (programs.pi-personal.keybindings).
+# that alt+s (or /drafts) browses (programs.pi-personal.drafts). The prompt takes Claude Code's
+# keys too (programs.pi-personal.editor): ctrl+l clears it, a backslash before Enter makes a
+# newline, and ctrl+r searches the prompts you've sent. pi's own keys move to match
+# (programs.pi-personal.keybindings): the model picker to alt+p, as in Claude Code, model cycling
+# off, ctrl+p and ctrl+n to Emacs line motion, and pi's ctrl+s, ctrl+l, and ctrl+r actions in its
+# pickers to ctrl+alt+, which keeps pi from warning about clashes.
 #
 # Installs pi and the package into ~/.pi/agent, and merges the display settings and keybindings
 # into pi's settings.json and keybindings.json at activation (pi writes settings.json itself from
@@ -42,7 +45,7 @@ let
       );
   };
   packageConfig = pkgs.writeText "pi-personal-config.json" (
-    builtins.toJSON { inherit (cfg) drafts; }
+    builtins.toJSON { inherit (cfg) drafts editor; }
   );
   # Merges managed keys into a JSON file pi or you also write, leaving the rest alone.
   mergeJson = file: managed: ''
@@ -104,14 +107,47 @@ in
       };
     };
 
+    editor = {
+      keys = {
+        clear = lib.mkOption {
+          type = lib.types.str;
+          default = "ctrl+l";
+          description = "Clear the prompt, as Claude Code's ctrl+l does.";
+        };
+        history = lib.mkOption {
+          type = lib.types.str;
+          default = "ctrl+r";
+          description = "Search the prompts you've sent, as Claude Code's ctrl+r does (also /history).";
+        };
+      };
+      backslashNewline = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "A backslash right before the cursor makes Enter insert a newline, as in Claude Code.";
+      };
+      historyLimit = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 1000;
+        description = "Past prompts the history search offers, newest first.";
+      };
+    };
+
     keybindings = lib.mkOption {
       type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
       default = {
-        # pi's ctrl+s actions, out of the drafts' way.
+        # pi's ctrl+s actions, out of the drafts' way, and its ctrl+l and ctrl+r ones in pickers out of
+        # the prompt keys'.
         "app.thinking.save" = "ctrl+alt+s";
         "app.models.save" = "ctrl+alt+s";
         "app.session.toggleSort" = "ctrl+alt+s";
-        # Emacs's line motion; model cycling leaves ctrl+p for alt+p, which crosses mosh as ESC p.
+        "app.tree.filter.labeledOnly" = "ctrl+alt+l";
+        "app.session.rename" = "ctrl+alt+r";
+        # The model picker on Claude Code's alt+p (it crosses mosh as ESC p), and no model cycling,
+        # which Claude Code doesn't have; /model and the picker still switch.
+        "app.model.select" = "alt+p";
+        "app.model.cycleForward" = [ ];
+        "app.model.cycleBackward" = [ ];
+        # Emacs's line motion, as in Claude Code's prompt.
         "tui.editor.cursorUp" = [
           "up"
           "ctrl+p"
@@ -120,8 +156,6 @@ in
           "down"
           "ctrl+n"
         ];
-        "app.model.cycleForward" = "alt+p";
-        "app.model.cycleBackward" = "alt+shift+p";
       };
       description = "pi keybindings merged into ~/.pi/agent/keybindings.json; other keys there are left alone.";
     };

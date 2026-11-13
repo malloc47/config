@@ -2,6 +2,8 @@
 // directory and across restarts. Pure, so it's tested without pi; extensions/drafts.ts binds it to
 // the editor, the keys, and a browser.
 
+import { validKey } from "./keys.ts";
+
 export type Draft = { id: string; text: string; cwd: string; at: string };
 export type Store = { version: 1; drafts: Draft[] };
 
@@ -14,17 +16,6 @@ export type DraftsConfig = {
 };
 
 export const DEFAULTS: DraftsConfig = { keys: { stash: "ctrl+s", browse: "alt+s" }, limit: 50, restoreAfterSubmit: true };
-
-const MODIFIERS = new Set(["ctrl", "shift", "alt", "super"]);
-const NAMED = new Set(["escape", "esc", "enter", "return", "tab", "space", "backspace", "delete", "insert", "clear", "home", "end", "pageup", "pagedown", "up", "down", "left", "right"]);
-
-/** Whether a key reads as pi's key syntax: modifiers joined by "+", then one key ("ctrl+s", "alt+shift+f2"). */
-export function validKey(key: string): boolean {
-  const parts = key.toLowerCase().split("+");
-  const last = parts.pop() ?? "";
-  if (parts.some((p) => !MODIFIERS.has(p)) || new Set(parts).size !== parts.length) return false;
-  return /^[a-z0-9]$/.test(last) || /^f([1-9]|1[0-2])$/.test(last) || NAMED.has(last) || /^[`\-=[\]\\;',./!@#$%^&*()_+|~{}:<>?]$/.test(last);
-}
 
 /** The configuration from the package's config.json, each bad value replaced by its default and named in `problems`. */
 export function configOf(json: unknown): { config: DraftsConfig; problems: string[] } {

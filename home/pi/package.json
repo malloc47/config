@@ -12,7 +12,8 @@
       "./extensions/tool-rows.ts",
       "./extensions/chrome.ts",
       "./extensions/transcript.ts",
-      "./extensions/drafts.ts"
+      "./extensions/drafts.ts",
+      "./extensions/editor-keys.ts"
     ],
     "themes": [
       "./themes"

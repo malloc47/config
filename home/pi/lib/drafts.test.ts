@@ -1,14 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { age, configOf, DEFAULTS, type Draft, draftsIn, firstLine, push, storeOf, take, validKey } from "./drafts.ts";
+import { age, configOf, DEFAULTS, type Draft, draftsIn, firstLine, push, storeOf, take } from "./drafts.ts";
 
 const draft = (id: string, cwd = "/a", text = `text ${id}`): Draft => ({ id, text, cwd, at: "2026-11-13T10:00:00Z" });
-
-test("keys read as pi's key syntax", () => {
-  for (const key of ["ctrl+s", "alt+s", "ctrl+alt+s", "shift+f2", "ctrl+/", "alt+pageDown"]) assert.ok(validKey(key), key);
-  for (const key of ["", "s+ctrl", "ctrl+ctrl+s", "hyper+s", "ctrl+", "ctrl+ss"]) assert.ok(!validKey(key), key);
-});
 
 test("the configuration falls back to defaults, naming each bad value", () => {
   assert.deepEqual(configOf(undefined), { config: DEFAULTS, problems: [] });

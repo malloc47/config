@@ -3,5 +3,10 @@
     "keys": { "stash": "ctrl+s", "browse": "alt+s" },
     "limit": 50,
     "restoreAfterSubmit": true
+  },
+  "editor": {
+    "keys": { "clear": "ctrl+l", "history": "ctrl+r" },
+    "backslashNewline": true,
+    "historyLimit": 1000
   }
 }

@@ -6,17 +6,24 @@
 // another extension says so on the "attention" event channel (majordomo, when it asks for an
 // approval). The bell crosses tmux and mosh, which marks the window and passes it to your terminal.
 //
+// The prompt editor takes Claude Code's backslash before Enter as a newline (editor.backslashNewline
+// in the package's config.json), and submits a prompt another extension sends on the
+// "editor-submit" channel as if you'd typed it: pi.events.emit("editor-submit", request) with
+// request.text, and request.handled set true when it went.
+//
 // Other extensions take part without replacing any of it: the footer shows every ctx.ui.setStatus
 // text, and the spinner's message shows the label last sent on the "working-label" event channel
 // (pi.events.emit("working-label", "Searching Slack"); undefined clears it). A later setHeader
 // replaces this header, and a later setTitle the title, which is how a desk session shows its own.
 
+import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
-import { CustomEditor, type ExtensionAPI, type ExtensionContext, keyText, VERSION } from "@earendil-works/pi-coding-agent";
+import { CustomEditor, type ExtensionAPI, type ExtensionContext, type KeybindingsManager, keyText, VERSION } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 import { contextGauge, formatTokens, shortCwd, streamedTokens, usageTotals } from "../lib/chrome.ts";
+import { backslashBeforeCursor, configOf as editorConfigOf } from "../lib/editor.ts";
 import { PROMPT, PROMPT_WIDTH, withPrompt } from "../lib/prompt.ts";
 
 const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
@@ -44,8 +51,22 @@ function spread(left: string, right: string, width: number): string {
  * callbacks, padding, and autocomplete over to it.
  */
 class PromptEditor extends CustomEditor {
+  private readonly keyMap: KeybindingsManager;
+
   constructor(...[tui, theme, keybindings]: ConstructorParameters<typeof CustomEditor>) {
     super(tui, theme, keybindings, { paddingX: PROMPT_WIDTH, embedWorkingStatus: true });
+    this.keyMap = keybindings;
+    activeEditor = this;
+  }
+
+  handleInput(data: string): void {
+    // A backslash right before the cursor makes Enter a newline, and goes away, as in Claude Code.
+    if (backslashNewline && this.keyMap.matches(data, "tui.input.submit") && !this.isShowingAutocomplete() && backslashBeforeCursor(this.getLines(), this.getCursor())) {
+      super.handleInput("\x7f");
+      this.insertTextAtCursor("\n");
+      return;
+    }
+    super.handleInput(data);
   }
 
   setPaddingX(padding: number): void {
@@ -56,6 +77,10 @@ class PromptEditor extends CustomEditor {
     return withPrompt(super.render(width), `${this.borderColor(PROMPT)} `);
   }
 }
+
+/** The prompt editor pi shows now, for prompts other extensions submit. */
+let activeEditor: PromptEditor | undefined;
+let backslashNewline = true;
 
 function install(pi: ExtensionAPI, ctx: ExtensionContext): void {
   const home = process.env.HOME;
@@ -164,6 +189,21 @@ export default function chrome(pi: ExtensionAPI): void {
 
   // A throw while loading would stop pi from starting, majordomo's desk included.
   try {
+    try {
+      backslashNewline = editorConfigOf(JSON.parse(readFileSync(new URL("../config.json", import.meta.url), "utf8"))).config.backslashNewline;
+    } catch {
+      // No config: the defaults. extensions/editor-keys.ts reports a bad one.
+    }
+
+    pi.events.on("editor-submit", (request) => {
+      const r = request as { text?: unknown; handled?: boolean };
+      if (typeof r.text !== "string" || !activeEditor?.onSubmit) return;
+      // pi's own submit path: commands, steering a running turn, history.
+      activeEditor.setText("");
+      activeEditor.onSubmit(r.text);
+      r.handled = true;
+    });
+
     pi.events.on("working-label", (text) => {
       label = typeof text === "string" && text ? text : undefined;
       if (timer) message();

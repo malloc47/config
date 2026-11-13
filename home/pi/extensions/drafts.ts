@@ -9,6 +9,10 @@
 // from the package's config.json, which the home-manager module writes (programs.pi-personal.drafts).
 // They're extension shortcuts, which pi checks before the editor's own keys; the module moves pi's
 // ctrl+s (app.thinking.save) out of the way.
+//
+// Other extensions stash text with pi.events.emit("drafts:stash", { text, ctx }), which sets
+// handled true on the request once the text is on the stack; it comes back after the next prompt,
+// as a ctrl+s stash does. The history search uses it before it replaces the editor's text.
 
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -213,6 +217,20 @@ export default function drafts(pi: ExtensionAPI): void {
       if (ctx.mode !== "tui") return;
       for (const problem of problems) ctx.ui.notify(`pi-personal: ${problem}`, "warning");
       showCount(ctx);
+    });
+
+    pi.events.on("drafts:stash", (request) => {
+      const r = request as { text?: unknown; ctx?: ExtensionContext; handled?: boolean };
+      if (typeof r.text !== "string" || !r.text.trim() || !r.ctx) return;
+      try {
+        const draft = { id: randomUUID(), text: r.text, cwd: r.ctx.cwd, at: new Date().toISOString() };
+        save(push(load(), draft, config.limit));
+        pending.add(draft.id);
+        showCount(r.ctx);
+        r.handled = true;
+      } catch {
+        // Unhandled: the caller keeps the text.
+      }
     });
 
     pi.on("input", (event, ctx) => {
