@@ -28,6 +28,15 @@
 #     packages = [ config.programs.pi-personal.package ];
 #     inherit (config.programs.pi-personal) theme settings;
 #   };
+#
+# For a consumer that should differ from plain pi, a variant builds the package again with some of
+# the configuration changed (programs.pi-personal.variants.<name>), and exposes the same attributes:
+#
+#   programs.pi-personal.variants.majordomo.toolGroups.include = [ "*" ];
+#   programs.majordomo.pi.ui = {
+#     packages = [ config.programs.pi-personal.variants.majordomo.package ];
+#     inherit (config.programs.pi-personal.variants.majordomo) theme settings keybindings;
+#   };
 { inputs, ... }:
 {
   config,
@@ -60,65 +69,29 @@ let
         lib.hasSuffix ".test.ts" path || baseNameOf path == "check.nix" || baseNameOf path == "config.json"
       );
   };
-  packageConfig = pkgs.writeText "pi-personal-config.json" (
-    builtins.toJSON { inherit (cfg) drafts editor toolGroups; }
+  # The package with the config.json of a set of options: the base's, or a variant's.
+  mkPackage =
+    name: options:
+    let
+      packageConfig = pkgs.writeText "${name}-config.json" (
+        builtins.toJSON { inherit (options) drafts editor toolGroups; }
+      );
+    in
+    pkgs.runCommand name { } ''
+      cp -R ${source} "$out"
+      chmod u+w "$out"
+      cp ${packageConfig} "$out/config.json"
+    '';
+  # The base's values as defaults for a variant, pushed down to each leaf: what the variant sets
+  # replaces only those leaves, so an attribute set such as toolGroups.labels merges key by key.
+  # (mkDefault on a whole attribute set would let one key the variant sets drop all the others.)
+  leafDefaults =
+    value: if builtins.isAttrs value then lib.mapAttrs (_: leafDefaults) value else lib.mkDefault value;
+  keybindingsType = lib.types.attrsOf (
+    lib.types.either lib.types.str (lib.types.listOf lib.types.str)
   );
-  modelsFile = (pkgs.formats.json { }).generate "pi-personal-models.json" cfg.models;
-  piBase = inputs.llm-agents.packages.${system}.pi;
-  # pi reads a model provider's key from the environment; export it from the file at launch, so the
-  # secret never lands in the store or in every shell's environment.
-  piPackage =
-    if cfg.keyFile == null then
-      piBase
-    else
-      pkgs.symlinkJoin {
-        name = "${piBase.name}-with-key";
-        paths = [ piBase ];
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-        postBuild = ''
-          wrapProgram "$out/bin/pi" --run ${lib.escapeShellArg ''
-            if [ -r ${lib.escapeShellArg cfg.keyFile} ]; then
-              export ${cfg.keyEnv}="$(cat ${lib.escapeShellArg cfg.keyFile})"
-            fi
-          ''}
-        '';
-        meta.mainProgram = "pi";
-      };
-  # Merges managed keys into a JSON file pi or you also write, leaving the rest alone.
-  mergeJson = file: managed: ''
-    file="$HOME/.pi/agent/${file}"
-    run mkdir -p "$HOME/.pi/agent"
-    if [[ ! -s $file ]]; then
-      run cp ${managed} "$file"
-      run chmod u+w "$file"
-    elif merged=$(${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$file" ${managed}); then
-      printf '%s\n' "$merged" | run tee "$file" >/dev/null
-    else
-      warnEcho "pi-personal: $file isn't valid JSON; leaving it alone"
-    fi
-  '';
-in
-{
-  options.programs.pi-personal = {
-    enable = lib.mkEnableOption "pi with a Claude Code-like look";
-
-    installPi = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Install pi from llm-agents.";
-    };
-
-    package = lib.mkOption {
-      type = lib.types.path;
-      readOnly = true;
-      default = pkgs.runCommand "pi-personal" { } ''
-        cp -R ${source} "$out"
-        chmod u+w "$out"
-        cp ${packageConfig} "$out/config.json"
-      '';
-      description = "The pi package: its extensions, themes, and configuration.";
-    };
-
+  # The options that go into the package's config.json, declared once for the base and its variants.
+  packageOptions = {
     drafts = {
       keys = {
         stash = lib.mkOption {
@@ -207,6 +180,58 @@ in
         '';
       };
     };
+  };
+  modelsFile = (pkgs.formats.json { }).generate "pi-personal-models.json" cfg.models;
+  piBase = inputs.llm-agents.packages.${system}.pi;
+  # pi reads a model provider's key from the environment; export it from the file at launch, so the
+  # secret never lands in the store or in every shell's environment.
+  piPackage =
+    if cfg.keyFile == null then
+      piBase
+    else
+      pkgs.symlinkJoin {
+        name = "${piBase.name}-with-key";
+        paths = [ piBase ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram "$out/bin/pi" --run ${lib.escapeShellArg ''
+            if [ -r ${lib.escapeShellArg cfg.keyFile} ]; then
+              export ${cfg.keyEnv}="$(cat ${lib.escapeShellArg cfg.keyFile})"
+            fi
+          ''}
+        '';
+        meta.mainProgram = "pi";
+      };
+  # Merges managed keys into a JSON file pi or you also write, leaving the rest alone.
+  mergeJson = file: managed: ''
+    file="$HOME/.pi/agent/${file}"
+    run mkdir -p "$HOME/.pi/agent"
+    if [[ ! -s $file ]]; then
+      run cp ${managed} "$file"
+      run chmod u+w "$file"
+    elif merged=$(${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$file" ${managed}); then
+      printf '%s\n' "$merged" | run tee "$file" >/dev/null
+    else
+      warnEcho "pi-personal: $file isn't valid JSON; leaving it alone"
+    fi
+  '';
+in
+{
+  options.programs.pi-personal = packageOptions // {
+    enable = lib.mkEnableOption "pi with a Claude Code-like look";
+
+    installPi = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Install pi from llm-agents.";
+    };
+
+    package = lib.mkOption {
+      type = lib.types.path;
+      readOnly = true;
+      default = mkPackage "pi-personal" cfg;
+      description = "The pi package: its extensions, themes, and configuration.";
+    };
 
     packages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
@@ -247,7 +272,7 @@ in
     };
 
     keybindings = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
+      type = keybindingsType;
       default = {
         # pi's ctrl+s actions, out of the drafts' way, and its ctrl+l and ctrl+r ones in pickers out of
         # the prompt keys'.
@@ -291,6 +316,65 @@ in
         hideThinkingBlock = true;
       };
       description = "Display settings merged into ~/.pi/agent/settings.json; other keys there are left alone.";
+    };
+
+    variants = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule (
+          { name, config, ... }:
+          {
+            options = packageOptions // {
+              settings = lib.mkOption {
+                type = lib.types.attrsOf lib.types.anything;
+                description = "Display settings for this variant's consumer; the base's `settings`, key by key, except those set here.";
+              };
+              keybindings = lib.mkOption {
+                type = keybindingsType;
+                description = "Keybindings for this variant's consumer; the base's `keybindings`, key by key, except those set here.";
+              };
+              theme = lib.mkOption {
+                type = lib.types.str;
+                readOnly = true;
+                default = cfg.theme;
+                description = "The package's theme, as the base's.";
+              };
+              package = lib.mkOption {
+                type = lib.types.path;
+                readOnly = true;
+                description = "The pi package built with this variant's configuration.";
+              };
+            };
+            # Everything not set in the variant is the base's: lists such as toolGroups.include
+            # replace the base's, and attribute sets such as toolGroups.labels and settings merge
+            # with it key by key.
+            config = {
+              drafts = leafDefaults cfg.drafts;
+              editor = leafDefaults cfg.editor;
+              toolGroups = leafDefaults cfg.toolGroups;
+              # Settings and keybindings merge by their top-level keys; a key's value is replaced whole.
+              settings = lib.mapAttrs (_: lib.mkDefault) cfg.settings;
+              keybindings = lib.mapAttrs (_: lib.mkDefault) cfg.keybindings;
+              package = mkPackage "pi-personal-${name}" config;
+            };
+          }
+        )
+      );
+      default = { };
+      example = lib.literalExpression ''
+        {
+          majordomo.toolGroups = {
+            include = [ "*" ];
+            exclude = [ "todo" ];
+          };
+        }
+      '';
+      description = ''
+        Other builds of the package for other consumers, such as majordomo's desk sessions: each
+        variant takes the base's configuration (drafts, editor, toolGroups, settings, keybindings)
+        and changes what it sets, and exposes its own `package`, `settings`, `keybindings`, and
+        `theme`. Only the base is installed into ~/.pi; a variant is for its consumer to load, for
+        instance `programs.majordomo.pi.ui.packages = [ config.programs.pi-personal.variants.majordomo.package ]`.
+      '';
     };
   };
 
