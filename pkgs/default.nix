@@ -14,4 +14,7 @@
   clipssh = prev.callPackage clipssh/default.nix { };
   claude-history = prev.callPackage claude-history/default.nix { };
   tramp-rpc-server = prev.callPackage tramp-rpc-server/default.nix { };
+  # Overrides nixpkgs' mosh, so pass the previous one explicitly (callPackage
+  # would resolve `mosh` to this attribute and recurse).
+  mosh = prev.callPackage mosh/default.nix { inherit (prev) mosh; };
 })
