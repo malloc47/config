@@ -13,6 +13,10 @@
 # off, ctrl+p and ctrl+n to Emacs line motion, and pi's ctrl+s, ctrl+l, and ctrl+r actions in its
 # pickers to ctrl+alt+, which keeps pi from warning about clashes.
 #
+# A run of tool calls draws as one line, "⏺ Tools: Slack(read channel), Outlook(list mail
+# messages)", whose items open their own rows when clicked (programs.pi-personal.toolGroups: every
+# MCP tool by default, with names for MCP servers).
+#
 # Installs pi and the package into ~/.pi/agent, and merges the display settings and keybindings
 # into pi's settings.json and keybindings.json at activation (pi writes settings.json itself from
 # /settings, and both are yours to edit, so neither can be a read-only link). A model provider is
@@ -57,7 +61,7 @@ let
       );
   };
   packageConfig = pkgs.writeText "pi-personal-config.json" (
-    builtins.toJSON { inherit (cfg) drafts editor; }
+    builtins.toJSON { inherit (cfg) drafts editor toolGroups; }
   );
   modelsFile = (pkgs.formats.json { }).generate "pi-personal-models.json" cfg.models;
   piBase = inputs.llm-agents.packages.${system}.pi;
@@ -162,6 +166,45 @@ in
         type = lib.types.ints.positive;
         default = 1000;
         description = "Past prompts the history search offers, newest first.";
+      };
+    };
+
+    toolGroups = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Draw a run of tool calls as one line, "⏺ Tools: Slack(read channel), Outlook(list mail
+          messages)", in place of a row per call. Clicking an item opens its row; clicking "Tools:"
+          opens or closes them all; ctrl+o shows every row as usual.
+        '';
+      };
+      include = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ "mcp__*" ];
+        example = [
+          "mcp__*"
+          "todo"
+        ];
+        description = "Globs over pi's tool names (`*` matches any run of characters) whose calls are grouped: every MCP tool by default, and none of pi's built-in tools.";
+      };
+      exclude = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "mcp__github__*" ];
+        description = "Globs over tool names never grouped; they win over `include`.";
+      };
+      labels = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = { };
+        example = {
+          ms365 = "Outlook";
+        };
+        description = ''
+          Names to show for MCP servers, by the server's name in pi's mcp__<server>__<tool> tool
+          names (characters other than letters, digits, and _ become _). A server without one shows
+          its name, capitalized.
+        '';
       };
     };
 
