@@ -1,5 +1,6 @@
-# Type-checks the pi package against the pi it runs on, and runs its unit tests. pi's extension
-# API can change in any release, so this is what a bump of llm-agents gets checked against. pi
+# Type-checks the pi package against the pi it runs on, runs its unit tests, and draws pi's own
+# tool rows through the package's tool renderers (extensions/*.test.ts). pi's extension API can
+# change in any release, so this is what a bump of llm-agents gets checked against. pi
 # installs as a compiled binary without its type definitions, so this installs the npm package it
 # was built from, from the same tarball and lockfile.
 { pkgs, pi }:
@@ -59,7 +60,9 @@ pkgs.runCommand "pi-personal-check"
     chmod -R u+w pkg
     cd pkg
     cp ${tsconfig} tsconfig.json
+    # The extensions' tests load pi's own components, from its node_modules beside the package.
+    ln -s ${piTypes}/node_modules node_modules
     tsc -p .
-    node --test lib/*.test.ts
+    HOME="$TMPDIR" node --test lib/*.test.ts extensions/*.test.ts
     touch "$out"
   ''
