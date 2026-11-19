@@ -8,5 +8,11 @@
     "keys": { "clear": "ctrl+l", "history": "ctrl+r" },
     "backslashNewline": true,
     "historyLimit": 1000
+  },
+  "toolGroups": {
+    "enable": true,
+    "include": ["mcp__*"],
+    "exclude": [],
+    "labels": {}
   }
 }
