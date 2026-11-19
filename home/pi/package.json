@@ -9,6 +9,7 @@
   ],
   "pi": {
     "extensions": [
+      "./extensions/tool-groups.ts",
       "./extensions/tool-rows.ts",
       "./extensions/chrome.ts",
       "./extensions/transcript.ts",
