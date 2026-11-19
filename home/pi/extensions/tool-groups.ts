@@ -22,12 +22,13 @@
 // blocks re-registered built-ins.
 
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 
 import type { ExtensionAPI, ExtensionContext, ExtensionUIContext, Theme, ToolRenderers } from "@earendil-works/pi-coding-agent";
 import { type Component, Container, Text, truncateToWidth, type TuiMouseEvent, type TuiMouseEventResult, visibleWidth } from "@earendil-works/pi-tui";
 
 import { blocksOf, type CallState, configOf, DEFAULTS, grouped, itemAt, itemLabel, layout, type Placed, type Run, runsOf, runState, type ToolGroupsConfig } from "../lib/groups.ts";
-import { resultText } from "../lib/rows.ts";
+import { type Args, resultText } from "../lib/rows.ts";
 
 type RenderCall = NonNullable<ToolRenderers["renderCall"]>;
 type RenderResult = NonNullable<ToolRenderers["renderResult"]>;
@@ -38,7 +39,8 @@ let config: ToolGroupsConfig = DEFAULTS;
 let ui: ExtensionUIContext | undefined;
 
 /** What each grouped call last told its renderers, and how to have pi draw its row again. */
-const calls = new Map<string, { name: string; state: CallState; invalidate: () => void }>();
+const calls = new Map<string, { name: string; args: Args; cwd: string; state: CallState; invalidate: () => void }>();
+const home = process.env.HOME || homedir();
 /** Calls whose own row is open under the line. */
 const open = new Set<string>();
 
@@ -79,7 +81,7 @@ function note(toolName: string, context: Context): void {
   const id = context.toolCallId;
   const state = stateOf(context);
   const before = calls.get(id);
-  calls.set(id, { name: toolName, state, invalidate: context.invalidate });
+  calls.set(id, { name: toolName, args: (context.args ?? {}) as Args, cwd: context.cwd, state, invalidate: context.invalidate });
   if (state === "error" && before?.state !== "error") open.add(id);
   if (before && before.state !== state) {
     const anchor = runs.get(id)?.anchor;
@@ -136,7 +138,10 @@ class GroupLine implements Component {
     const bullet = theme.fg(state === "pending" ? "muted" : state === "error" ? "error" : "success", "⏺");
     const prefix = `${" ".repeat(this.pad)}${bullet} ${theme.bold("Tools:")} `;
     this.indent = visibleWidth(prefix);
-    const items = members.map((id) => ({ id, label: itemLabel(calls.get(id)?.name ?? "tool", config.labels) }));
+    const items = members.map((id) => {
+      const call = calls.get(id);
+      return { id, label: itemLabel(call?.name ?? "tool", call?.args ?? {}, config.labels, { cwd: call?.cwd ?? "", home }) };
+    });
     this.placed = layout(items, this.indent, width, visibleWidth, (text, columns) => truncateToWidth(text, columns, "…"));
     const lines: string[] = [];
     for (const p of this.placed) {
