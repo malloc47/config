@@ -6,7 +6,7 @@
 // yours, and no row of a tool that isn't grouped. Thinking doesn't end a run, since a model that
 // thinks before each call would otherwise get a run per call.
 
-import { mcpName, oneLine } from "./rows.ts";
+import { type Args, callArgs, callTitle, isBuiltIn, mcpName, oneLine } from "./rows.ts";
 
 export type ToolGroupsConfig = {
   enable: boolean;
@@ -122,14 +122,27 @@ function titled(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
+/** Where a call ran, for its label's paths: the working directory and the home directory. */
+export type Where = { cwd: string; home: string | undefined };
+
+/** `title(inside)` in at most `max` columns, cutting what's inside the parentheses first; just the title when there's nothing inside. */
+function titledCall(title: string, inside: string, max: number): string {
+  const name = oneLine(title, Math.max(4, max - 6));
+  const flat = oneLine(inside, 1000);
+  return flat ? `${name}(${oneLine(flat, Math.max(1, max - name.length - 2))})` : name;
+}
+
 /**
- * An item's label: "Slack(read channel)" for an MCP tool, from the server's label (or its name,
- * capitalized) and the tool's name in words, without a repeat of the server's name in front; a
- * tool that isn't an MCP tool's name otherwise. Cut to `max` columns.
+ * An item's label, cut to `max` columns:
+ * - an MCP tool: "Slack(read channel)", from the server's label (or its name, capitalized) and the
+ *   tool's name in words, without a repeat of the server's name in front;
+ * - one of pi's built-ins: as its row's call line reads, "Read(USER.md)" or "Update(LOOPS.md)";
+ * - any other tool: its name, capitalized ("Journal").
  */
-export function itemLabel(toolName: string, labels: Readonly<Record<string, string>>, max = MAX_LABEL): string {
+export function itemLabel(toolName: string, args: Args, labels: Readonly<Record<string, string>>, where: Where, max = MAX_LABEL): string {
+  if (isBuiltIn(toolName)) return titledCall(callTitle(toolName), callArgs(toolName, args ?? {}, where.cwd, where.home), max);
   const mcp = mcpName(toolName);
-  if (!mcp) return oneLine(toolName, max);
+  if (!mcp) return oneLine(titled(toolName), max);
   const server = oneLine(labels[mcp.server] ?? titled(mcp.server), Math.max(4, max - 6));
   const repeat = `${mcp.server}_`;
   const tool = mcp.tool.toLowerCase().startsWith(repeat.toLowerCase()) && mcp.tool.length > repeat.length ? mcp.tool.slice(repeat.length) : mcp.tool;

@@ -77,13 +77,26 @@ test("your messages and displayed custom messages end a run, and a call seen twi
 });
 
 test("labels read as the server and the tool in words", () => {
-  assert.equal(itemLabel("mcp__slack__slack_read_channel", {}), "Slack(read channel)", "without the server's name repeated");
-  assert.equal(itemLabel("mcp__ms365__list_mail_messages", { ms365: "Outlook" }), "Outlook(list mail messages)");
-  assert.equal(itemLabel("mcp__servicenow__get-reservation", { servicenow: "ServiceNow" }), "ServiceNow(get reservation)");
-  assert.equal(itemLabel("todo", {}), "todo");
-  const long = itemLabel("mcp__servicenow__get_reservation_details_for_the_trip_and_its_hotels", { servicenow: "ServiceNow" });
+  const where = { cwd: "/data", home: "/home/u" };
+  assert.equal(itemLabel("mcp__slack__slack_read_channel", {}, {}, where), "Slack(read channel)", "without the server's name repeated");
+  assert.equal(itemLabel("mcp__ms365__list_mail_messages", {}, { ms365: "Outlook" }, where), "Outlook(list mail messages)");
+  assert.equal(itemLabel("mcp__servicenow__get-reservation", {}, { servicenow: "ServiceNow" }, where), "ServiceNow(get reservation)");
+  const long = itemLabel("mcp__servicenow__get_reservation_details_for_the_trip_and_its_hotels", {}, { servicenow: "ServiceNow" }, where);
   assert.equal(long.length, 40);
   assert.ok(long.startsWith("ServiceNow(get reservation") && long.endsWith("…)"));
+});
+
+test("built-ins read as their rows do, and other tools by their names", () => {
+  const where = { cwd: "/data", home: "/home/u" };
+  assert.equal(itemLabel("read", { path: "/data/USER.md" }, {}, where), "Read(USER.md)");
+  assert.equal(itemLabel("edit", { path: "/data/LOOPS.md" }, {}, where), "Update(LOOPS.md)");
+  assert.equal(itemLabel("bash", { command: "git status --short" }, {}, where), "Bash(git status --short)");
+  assert.equal(itemLabel("ls", {}, {}, where), "List(.)");
+  const cut = itemLabel("bash", { command: `echo ${"x".repeat(80)}` }, {}, where);
+  assert.equal(cut.length, 40);
+  assert.ok(cut.startsWith("Bash(echo xxx") && cut.endsWith("…)"));
+  assert.equal(itemLabel("journal", { text: "Booked the hotel" }, {}, where), "Journal");
+  assert.equal(itemLabel("write", {}, {}, where), "Write", "nothing inside, no parentheses");
 });
 
 test("a run's bullet is pending while any call runs, else red if any failed", () => {
